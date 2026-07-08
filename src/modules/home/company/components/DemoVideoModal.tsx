@@ -1,5 +1,6 @@
 import { useRef, useState } from "react";
-import { Box, Dialog, DialogContent, IconButton, Typography } from "@mui/material";
+import { cn } from "@/lib/utils";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import {
   X as CloseIcon,
   Play as PlayArrowRoundedIcon,
@@ -72,104 +73,80 @@ const DemoVideoModal: React.FC<DemoVideoModalProps> = ({ open, onClose }) => {
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      maxWidth="md"
-      fullWidth
-      slotProps={{ paper: { sx: { borderRadius: "12px", overflow: "hidden", bgcolor: "#000" } } }}
-    >
-      {/* Header bar */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 2, py: 1, bgcolor: "#111827" }}>
-        <Typography sx={{ fontFamily: "Poppins", fontWeight: 600, fontSize: "14px", color: "#fff" }}>
-          TalentAI — Product Demo
-        </Typography>
-        <IconButton onClick={handleClose} size="small" sx={{ color: "#9CA3AF", "&:hover": { color: "#fff" } }}>
-          <CloseIcon size={18} />
-        </IconButton>
-      </Box>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose(); }}>
+      <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 overflow-hidden rounded-xl bg-black">
+        {/* Header bar */}
+        <div className="flex items-center justify-between bg-[#111827] px-4 py-2">
+          <span className="text-[14px] font-semibold text-white">
+            TalentAI — Product Demo
+          </span>
+          <button onClick={handleClose} className="rounded-md p-1 text-[#9CA3AF] hover:text-white">
+            <CloseIcon size={18} />
+          </button>
+        </div>
 
-      {/* Video area */}
-      <DialogContent sx={{ p: 0, bgcolor: "#000", position: "relative" }}>
-        <Box
-          sx={{
-            position: "relative",
-            cursor: "pointer",
-            "&:hover .modal-controls": { opacity: 1 },
-          }}
-          onClick={togglePlay}
-        >
-          <video
-            ref={videoRef}
-            src="/video/DemoV2.mp4"
-            style={{ width: "100%", display: "block", aspectRatio: "16/9", objectFit: "contain" }}
-            onTimeUpdate={handleTimeUpdate}
-            onLoadedMetadata={() => { const v = videoRef.current; if (v) setDuration(v.duration); }}
-            onEnded={() => { setPlaying(false); }}
-            playsInline
-          />
+        {/* Video area */}
+        <div className="relative bg-black p-0">
+          <div className="group relative cursor-pointer" onClick={togglePlay}>
+            <video
+              ref={videoRef}
+              src="/video/DemoV2.mp4"
+              className="block w-full [aspect-ratio:16/9] object-contain"
+              onTimeUpdate={handleTimeUpdate}
+              onLoadedMetadata={() => { const v = videoRef.current; if (v) setDuration(v.duration); }}
+              onEnded={() => { setPlaying(false); }}
+              playsInline
+            />
 
-          {/* Center play button — pointer-events none so click falls through */}
-          {!playing && (
-            <Box
-              sx={{
-                position: "absolute", inset: 0,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                bgcolor: "rgba(0,0,0,0.4)",
-                pointerEvents: "none",
-              }}
+            {/* Center play button — pointer-events none so click falls through */}
+            {!playing && (
+              <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/40">
+                <div
+                  className="flex h-[70px] w-[70px] items-center justify-center rounded-full"
+                  style={{ backgroundColor: TEAL, boxShadow: `0 0 32px ${TEAL}80` }}
+                >
+                  <PlayArrowRoundedIcon size={42} color="#fff" />
+                </div>
+              </div>
+            )}
+
+            {/* Controls bar */}
+            <div
+              className={cn(
+                "absolute bottom-0 left-0 right-0 flex flex-col gap-1 px-4 pb-3 pt-6 transition-opacity duration-[250ms]",
+                playing ? "opacity-0 group-hover:opacity-100" : "opacity-100",
+              )}
+              style={{ background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)" }}
+              onClick={(e) => e.stopPropagation()}
             >
-              <Box sx={{
-                width: 70, height: 70, borderRadius: "50%", bgcolor: TEAL,
-                display: "flex", alignItems: "center", justifyContent: "center",
-                boxShadow: `0 0 32px ${TEAL}80`,
-              }}>
-                <PlayArrowRoundedIcon size={42} color="#fff" />
-              </Box>
-            </Box>
-          )}
+              {/* Seek bar */}
+              <div className="cursor-pointer py-1.5" onClick={handleSeek}>
+                <div className="relative h-1 overflow-hidden rounded-full bg-white/20">
+                  <div
+                    className="absolute bottom-0 left-0 top-0 rounded-full transition-[width] duration-100 ease-linear"
+                    style={{ width: `${progress}%`, backgroundColor: TEAL }}
+                  />
+                </div>
+              </div>
 
-          {/* Controls bar */}
-          <Box
-            className="modal-controls"
-            sx={{
-              position: "absolute", bottom: 0, left: 0, right: 0,
-              px: 2, pb: 1.5, pt: 3,
-              background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)",
-              opacity: playing ? 0 : 1,
-              transition: "opacity 0.25s",
-              display: "flex", flexDirection: "column", gap: 0.5,
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Seek bar */}
-            <Box sx={{ cursor: "pointer", py: 0.75 }} onClick={handleSeek}>
-              <Box sx={{ height: 4, borderRadius: 2, bgcolor: "rgba(255,255,255,0.2)", position: "relative", overflow: "hidden" }}>
-                <Box sx={{
-                  position: "absolute", left: 0, top: 0, bottom: 0,
-                  width: `${progress}%`, bgcolor: TEAL, borderRadius: 2,
-                  transition: "width 0.1s linear",
-                }} />
-              </Box>
-            </Box>
-
-            {/* Buttons */}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-              <IconButton size="small" onClick={togglePlay} sx={{ color: "#fff" }}>
-                {playing ? <PauseRoundedIcon size={18} /> : <PlayArrowRoundedIcon size={18} />}
-              </IconButton>
-              <IconButton size="small" onClick={toggleMute} sx={{ color: "#fff" }}>
-                {muted ? <VolumeOffRoundedIcon size={18} /> : <VolumeUpRoundedIcon size={18} />}
-              </IconButton>
-              <Typography variant="caption" sx={{ color: "rgba(255,255,255,0.7)", fontFamily: "Poppins", flex: 1, pl: 0.5 }}>
-                {fmt(currentTime)} / {fmt(duration)}
-              </Typography>
-              <IconButton size="small" onClick={handleFullscreen} sx={{ color: "#fff" }}>
-                <FullscreenRoundedIcon size={18} />
-              </IconButton>
-            </Box>
-          </Box>
-        </Box>
+              {/* Buttons */}
+              <div className="flex items-center gap-1">
+                <button onClick={togglePlay} className="rounded-md p-1.5 text-white">
+                  {playing ? <PauseRoundedIcon size={18} /> : <PlayArrowRoundedIcon size={18} />}
+                </button>
+                <button onClick={toggleMute} className="rounded-md p-1.5 text-white">
+                  {muted ? <VolumeOffRoundedIcon size={18} /> : <VolumeUpRoundedIcon size={18} />}
+                </button>
+                <span className="flex-1 pl-1 text-xs text-white/70">
+                  {fmt(currentTime)} / {fmt(duration)}
+                </span>
+                <button onClick={handleFullscreen} className="rounded-md p-1.5 text-white">
+                  <FullscreenRoundedIcon size={18} />
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       </DialogContent>
     </Dialog>
   );

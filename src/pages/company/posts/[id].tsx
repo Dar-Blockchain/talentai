@@ -1,5 +1,5 @@
 ﻿import React from "react";
-import { Box, Alert } from "@mui/material";
+import { Alert, AlertDescription } from "@/modules/shared/ui/shadcn/alert";
 import { useTranslation } from "react-i18next";
 
 import { usePostDetailPage } from "@/modules/company/posts/details/hooks/usePostDetailPage";
@@ -37,10 +37,10 @@ const PostDetailsPage: NextPageWithLayout = () => {
   } = usePostDetailPage();
 
   return (
-      <Box>
+      <div>
 
         {!loading && error && (
-          <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
+          <Alert variant="destructive" className="rounded-lg"><AlertDescription>{error}</AlertDescription></Alert>
         )}
 
         {!loading && !error && job && (
@@ -109,7 +109,7 @@ const PostDetailsPage: NextPageWithLayout = () => {
           onClose={() => setQrOpen(false)}
           onDownload={handleDownloadQr}
         />
-      </Box>
+      </div>
   );
 };
 PostDetailsPage.getLayout = getDashboardLayout;

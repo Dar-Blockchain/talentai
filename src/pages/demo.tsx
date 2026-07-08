@@ -1,6 +1,5 @@
-﻿import Head from "next/head";
+import Head from "next/head";
 import { useRef, useState } from "react";
-import { Box, Container, IconButton, Typography } from "@mui/material";
 import {
   Play as PlayArrowRoundedIcon,
   Pause as PauseRoundedIcon,
@@ -80,60 +79,28 @@ export default function DemoPage() {
         <meta name="description" content="Watch TalentAI in action" />
       </Head>
 
-      <Box sx={{ minHeight: "100vh", bgcolor: DARK, display: "flex", flexDirection: "column" }}>
+      <div className="flex min-h-screen flex-col" style={{ backgroundColor: DARK }}>
         <Header />
 
-        <Box
-          component="main"
-          sx={{
-            flex: 1,
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-            py: { xs: 4, md: 8 },
-          }}
-        >
-          <Container maxWidth="lg">
+        <main className="flex flex-1 flex-col items-center justify-center py-8 md:py-16">
+          <div className="mx-auto w-full max-w-6xl px-4">
             {/* Title */}
-            <Box sx={{ textAlign: "center", mb: 4 }}>
-              <Typography
-                variant="overline"
-                sx={{ color: TEAL, letterSpacing: 3, fontFamily: "Poppins, sans-serif", fontWeight: 600 }}
-              >
+            <div className="mb-8 text-center">
+              <p className="text-[0.75rem] font-semibold uppercase tracking-[3px]" style={{ color: TEAL }}>
                 Product Demo
-              </Typography>
-              <Typography
-                variant="h3"
-                sx={{
-                  color: "#fff",
-                  fontFamily: "Poppins, sans-serif",
-                  fontWeight: 700,
-                  mt: 1,
-                  fontSize: { xs: "1.8rem", md: "2.5rem" },
-                }}
-              >
+              </p>
+              <h1 className="mt-2 text-[1.8rem] md:text-[2.5rem] font-bold text-white">
                 See TalentAI in Action
-              </Typography>
-              <Typography
-                variant="body1"
-                sx={{ color: "rgba(255,255,255,0.55)", mt: 1.5, fontFamily: "Poppins, sans-serif" }}
-              >
+              </h1>
+              <p className="mt-3 text-white/55">
                 Watch how AI transforms your hiring workflow
-              </Typography>
-            </Box>
+              </p>
+            </div>
 
             {/* Video player wrapper */}
-            <Box
-              sx={{
-                position: "relative",
-                borderRadius: 3,
-                overflow: "hidden",
-                bgcolor: "#000",
-                boxShadow: `0 0 0 1px rgba(255,255,255,0.08), 0 24px 80px rgba(0,0,0,0.6)`,
-                cursor: "pointer",
-                "&:hover .controls-bar": { opacity: 1 },
-              }}
+            <div
+              className="group relative cursor-pointer overflow-hidden rounded-xl bg-black"
+              style={{ boxShadow: `0 0 0 1px rgba(255,255,255,0.08), 0 24px 80px rgba(0,0,0,0.6)` }}
               onMouseEnter={() => setShowControls(true)}
               onMouseLeave={() => setShowControls(playing ? false : true)}
               onClick={togglePlay}
@@ -142,7 +109,7 @@ export default function DemoPage() {
               <video
                 ref={videoRef}
                 src="/video/DemoV2.mp4"
-                style={{ width: "100%", display: "block", maxHeight: "70vh", objectFit: "contain" }}
+                className="block w-full max-h-[70vh] object-contain"
                 onTimeUpdate={handleTimeUpdate}
                 onLoadedMetadata={handleLoadedMetadata}
                 onEnded={() => { setPlaying(false); setShowControls(true); }}
@@ -151,119 +118,68 @@ export default function DemoPage() {
 
               {/* Big play button — shown when paused, does NOT stop propagation so parent click still fires */}
               {!playing && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    inset: 0,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    bgcolor: "rgba(0,0,0,0.35)",
-                    pointerEvents: "none", // let click fall through to parent
-                  }}
-                >
-                  <Box
-                    sx={{
-                      width: 80,
-                      height: 80,
-                      borderRadius: "50%",
-                      bgcolor: TEAL,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      boxShadow: `0 0 40px ${TEAL}80`,
-                    }}
+                <div className="pointer-events-none absolute inset-0 flex items-center justify-center bg-black/35">
+                  <div
+                    className="flex h-20 w-20 items-center justify-center rounded-full"
+                    style={{ backgroundColor: TEAL, boxShadow: `0 0 40px ${TEAL}80` }}
                   >
                     <PlayArrowRoundedIcon size={48} color="#fff" />
-                  </Box>
-                </Box>
+                  </div>
+                </div>
               )}
 
               {/* Bottom controls bar */}
-              <Box
-                className="controls-bar"
-                sx={{
-                  position: "absolute",
-                  bottom: 0,
-                  left: 0,
-                  right: 0,
-                  px: 2,
-                  pb: 1.5,
-                  pt: 4,
+              <div
+                className="absolute bottom-0 left-0 right-0 flex flex-col gap-1 px-4 pb-3 pt-8 transition-opacity duration-[250ms]"
+                style={{
                   background: "linear-gradient(to top, rgba(0,0,0,0.8) 0%, transparent 100%)",
                   opacity: showControls ? 1 : 0,
-                  transition: "opacity 0.25s",
-                  display: "flex",
-                  flexDirection: "column",
-                  gap: 0.5,
                 }}
                 onClick={(e) => e.stopPropagation()}
               >
                 {/* Seekable progress bar */}
-                <Box sx={{ cursor: "pointer", py: 0.75 }} onClick={handleSeek}>
-                  <Box
-                    sx={{
-                      height: 4,
-                      borderRadius: 2,
-                      bgcolor: "rgba(255,255,255,0.2)",
-                      position: "relative",
-                      overflow: "hidden",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        position: "absolute",
-                        left: 0,
-                        top: 0,
-                        bottom: 0,
-                        width: `${progress}%`,
-                        bgcolor: TEAL,
-                        borderRadius: 2,
-                        transition: "width 0.1s linear",
-                      }}
+                <div className="cursor-pointer py-1.5" onClick={handleSeek}>
+                  <div className="relative h-1 overflow-hidden rounded-full bg-white/20">
+                    <div
+                      className="absolute bottom-0 left-0 top-0 rounded-full transition-[width] duration-100 ease-linear"
+                      style={{ width: `${progress}%`, backgroundColor: TEAL }}
                     />
-                  </Box>
-                </Box>
+                  </div>
+                </div>
 
                 {/* Buttons row */}
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <IconButton size="small" onClick={togglePlay} sx={{ color: "#fff" }}>
+                <div className="flex items-center gap-1">
+                  <button onClick={togglePlay} className="rounded-md p-1.5 text-white">
                     {playing
                       ? <PauseRoundedIcon size={18} />
                       : <PlayArrowRoundedIcon size={18} />
                     }
-                  </IconButton>
-                  <IconButton size="small" onClick={toggleMute} sx={{ color: "#fff" }}>
+                  </button>
+                  <button onClick={toggleMute} className="rounded-md p-1.5 text-white">
                     {muted
                       ? <VolumeOffRoundedIcon size={18} />
                       : <VolumeUpRoundedIcon size={18} />
                     }
-                  </IconButton>
-                  <Typography
-                    variant="caption"
-                    sx={{ color: "rgba(255,255,255,0.7)", fontFamily: "Poppins, sans-serif", flex: 1, pl: 0.5 }}
-                  >
+                  </button>
+                  <span className="flex-1 pl-1 text-xs text-white/70">
                     {fmt(currentTime)} / {fmt(duration)}
-                  </Typography>
-                  <IconButton size="small" onClick={handleFullscreen} sx={{ color: "#fff" }}>
+                  </span>
+                  <button onClick={handleFullscreen} className="rounded-md p-1.5 text-white">
                     <FullscreenRoundedIcon size={18} />
-                  </IconButton>
-                </Box>
-              </Box>
-            </Box>
+                  </button>
+                </div>
+              </div>
+            </div>
 
             {/* Caption */}
-            <Box sx={{ textAlign: "center", mt: 3 }}>
-              <Typography
-                variant="body2"
-                sx={{ color: "rgba(255,255,255,0.4)", fontFamily: "Poppins, sans-serif" }}
-              >
+            <div className="mt-6 text-center">
+              <p className="text-sm text-white/40">
                 Click the video to play · Click again to pause
-              </Typography>
-            </Box>
-          </Container>
-        </Box>
-      </Box>
+              </p>
+            </div>
+          </div>
+        </main>
+      </div>
     </>
   );
 }

@@ -1,23 +1,16 @@
-import React, { memo, useCallback, useState } from "react";
+import React, { memo } from "react";
+import { cn } from "@/lib/utils";
+import { Avatar, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import {
-  Box,
-  Typography,
-  Avatar,
-  IconButton,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-  Stack,
-  Divider,
-  useTheme,
-  alpha,
-  Tooltip,
-} from "@mui/material";
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { Trash2 as DeleteOutlined, MoreVertical as MoreVert } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Participant, getParticipantDisplayName, getParticipantInitial, chatContextMenuPaperSlotProps, chatContextMenuItemSx } from "./helpers";
+import { Participant, getParticipantDisplayName, getParticipantInitial, chatContextMenuContentCn, chatContextMenuItemCn } from "./helpers";
 
 const ease = "cubic-bezier(0.4, 0, 0.2, 1)";
+const PRIMARY = "#0D9488";
 
 interface ConversationHeaderProps {
   otherUser: Participant | undefined;
@@ -41,131 +34,95 @@ const ConversationHeader = memo(function ConversationHeader({
   compact = false,
   mintLightTeamUi = false,
 }: ConversationHeaderProps) {
-  const theme = useTheme();
   const { t } = useTranslation("shared/chat");
   const showMenu =
     enableDeletes && (showDeleteConversation !== undefined ? showDeleteConversation : isCompany);
-  const primary = mintLightTeamUi ? "#34D399" : theme.palette.primary.main;
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const handleMenuOpen = useCallback((e: React.MouseEvent<HTMLButtonElement>) => setMenuAnchor(e.currentTarget), []);
-  const handleMenuClose = useCallback(() => setMenuAnchor(null), []);
-  const handleDelete = useCallback(() => { handleMenuClose(); onDeleteConversation(); }, [handleMenuClose, onDeleteConversation]);
+  const primary = mintLightTeamUi ? "#34D399" : PRIMARY;
+  const handleDelete = () => onDeleteConversation();
 
   const h = compact
     ? {
-        py: { xs: 1, sm: 1.25 },
-        px: { xs: 1.25, sm: 1.75 },
-        stackGap: 1.25,
-        avatar: 36,
-        avatarFont: "0.8125rem",
-        titleFs: "0.8125rem",
-        titleLh: 1.28,
-        dividerMy: 0.25,
+        pyClass: "py-2 sm:py-2.5",
+        pxClass: "px-2.5 sm:px-3.5",
+        gapClass: "gap-2.5",
+        avatarClass: "size-9",
+        titleClass: "text-[0.8125rem] leading-[1.28]",
+        dividerClass: "my-0.5",
         trashIcon: 20,
       }
     : {
-        py: 1.75,
-        px: { xs: 1.5, sm: 2.5 },
-        stackGap: 1.5,
-        avatar: 44,
-        avatarFont: "0.9375rem",
-        titleFs: "0.9375rem",
-        titleLh: 1.35,
-        dividerMy: 0.5,
+        pyClass: "py-3.5",
+        pxClass: "px-3 sm:px-5",
+        gapClass: "gap-3",
+        avatarClass: "size-11",
+        titleClass: "text-[0.9375rem] leading-[1.35]",
+        dividerClass: "my-1",
         trashIcon: 22,
       };
 
   return (
-    <Box
-      component="header"
-      sx={{
-        px: h.px,
-        py: h.py,
-        borderBottom: mintLightTeamUi ? "1px solid #E5E7EB" : `1px solid ${theme.palette.divider}`,
-        bgcolor: mintLightTeamUi ? "#FFFFFF" : theme.palette.background.paper,
+    <header
+      className={cn(h.pxClass, h.pyClass, "border-b")}
+      style={{
+        borderColor: mintLightTeamUi ? "#E5E7EB" : "#E5E7EB",
+        backgroundColor: mintLightTeamUi ? "#FFFFFF" : "#fff",
       }}
     >
-      <Stack direction="row" alignItems="center" spacing={h.stackGap}>
+      <div className={cn("flex flex-row items-center", h.gapClass)}>
         <Avatar
-          sx={{
-            width: h.avatar,
-            height: h.avatar,
-            bgcolor: mintLightTeamUi ? undefined : primary,
+          className={cn(h.avatarClass, "font-bold text-white transition-transform hover:scale-105")}
+          style={{
+            backgroundColor: mintLightTeamUi ? undefined : primary,
             backgroundImage: mintLightTeamUi ? "linear-gradient(135deg, #34D399 0%, #10B981 100%)" : undefined,
-            fontSize: h.avatarFont,
-            fontWeight: 700,
-            color: "#fff",
-            boxShadow: mintLightTeamUi ? "0 4px 14px rgba(52, 211, 153, 0.35)" : `0 2px 8px ${alpha(primary, 0.35)}`,
+            boxShadow: mintLightTeamUi ? "0 4px 14px rgba(52, 211, 153, 0.35)" : `0 2px 8px ${primary}59`,
             transition: `transform 0.24s ${ease}, box-shadow 0.24s ${ease}`,
-            "@media (hover: hover)": {
-              "&:hover": {
-                transform: "scale(1.05)",
-                boxShadow: mintLightTeamUi ? "0 6px 20px rgba(16, 185, 129, 0.4)" : `0 6px 20px ${alpha(primary, 0.45)}`,
-              },
-            },
           }}
         >
-          {getParticipantInitial(otherUser)}
+          <AvatarFallback className="bg-transparent font-bold text-white">
+            {getParticipantInitial(otherUser)}
+          </AvatarFallback>
         </Avatar>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography
-            fontWeight={700}
-            sx={{ color: mintLightTeamUi ? "#111827" : "text.primary" }}
-            fontSize={h.titleFs}
-            lineHeight={h.titleLh}
-            noWrap
+        <div className="min-w-0 flex-1">
+          <p
+            className={cn(h.titleClass, "truncate font-bold")}
+            style={{ color: mintLightTeamUi ? "#111827" : "#111827" }}
           >
             {getParticipantDisplayName(otherUser)}
-          </Typography>
-        </Box>
+          </p>
+        </div>
 
         {showMenu && (
           <>
-            <Divider orientation="vertical" flexItem sx={{ my: h.dividerMy, borderColor: mintLightTeamUi ? "#E5E7EB" : alpha(theme.palette.divider, 0.8) }} />
-            <Tooltip title={t("header.actions", { defaultValue: "More actions" })}>
-              <IconButton
-                size="small"
-                onClick={handleMenuOpen}
-                aria-label={t("header.actions", { defaultValue: "More actions" })}
-                sx={{
-                  color: mintLightTeamUi ? "#6B7280" : "text.secondary",
-                  borderRadius: 2,
-                  transition: `transform 0.2s ${ease}, background-color 0.2s ${ease}`,
-                  "@media (hover: hover)": {
-                    "&:hover": {
-                      bgcolor: mintLightTeamUi ? "#F3F4F6" : alpha(theme.palette.action.hover, 0.08),
-                      transform: "scale(1.08)",
-                    },
-                  },
-                }}
-              >
-                <MoreVert size={h.trashIcon} />
-              </IconButton>
-            </Tooltip>
-            <Menu
-              anchorEl={menuAnchor}
-              open={Boolean(menuAnchor)}
-              onClose={handleMenuClose}
-              anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-              transformOrigin={{ vertical: "top", horizontal: "right" }}
-              slotProps={{ paper: chatContextMenuPaperSlotProps }}
-              MenuListProps={{ dense: true, sx: { py: 0.5 } }}
-            >
-              <MenuItem
-                onClick={handleDelete}
-                sx={{ ...chatContextMenuItemSx, color: "error.main", fontWeight: 600, "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.08) } }}
-              >
-                <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
+            <div className={cn("w-px self-stretch", h.dividerClass)} style={{ backgroundColor: mintLightTeamUi ? "#E5E7EB" : "#E5E7EBCC" }} />
+            <DropdownMenu>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <DropdownMenuTrigger asChild>
+                      <button
+                        aria-label={t("header.actions", { defaultValue: "More actions" })}
+                        className="rounded-lg p-1.5 transition-transform hover:scale-[1.08]"
+                        style={{ color: mintLightTeamUi ? "#6B7280" : "#6B7280" }}
+                      >
+                        <MoreVert size={h.trashIcon} />
+                      </button>
+                    </DropdownMenuTrigger>
+                  </TooltipTrigger>
+                  <TooltipContent>{t("header.actions", { defaultValue: "More actions" })}</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+              <DropdownMenuContent align="end" className={chatContextMenuContentCn}>
+                <DropdownMenuItem onClick={handleDelete} variant="destructive" className={cn(chatContextMenuItemCn, "font-semibold gap-2")}>
                   <DeleteOutlined size={18} />
-                </ListItemIcon>
-                {t("delete_dialog.title")}
-              </MenuItem>
-            </Menu>
+                  {t("delete_dialog.title")}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </>
         )}
-      </Stack>
-    </Box>
+      </div>
+    </header>
   );
 });
 

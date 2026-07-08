@@ -1,11 +1,17 @@
 "use client";
 
 import React, { ReactNode } from "react";
-import { Box, Typography, Breadcrumbs, Link as MuiLink } from "@mui/material";
 import { ChevronRight, Home } from "lucide-react";
 import Link from "next/link";
+import {
+  Breadcrumb,
+  BreadcrumbList,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbSeparator,
+} from "@/modules/shared/ui/shadcn/breadcrumb";
 
-interface BreadcrumbItem {
+interface BreadcrumbItemType {
   label: string;
   href?: string;
 }
@@ -13,7 +19,7 @@ interface BreadcrumbItem {
 interface PageHeaderProps {
   title: string;
   subtitle?: string;
-  breadcrumbs?: BreadcrumbItem[];
+  breadcrumbs?: BreadcrumbItemType[];
   actions?: ReactNode;
   icon?: React.ElementType;
   accentColor?: string;
@@ -28,126 +34,68 @@ const PageHeader: React.FC<PageHeaderProps> = ({
   accentColor = "#0D9488",
 }) => {
   return (
-    <Box
-      sx={{
-        mb: 3,
-        bgcolor: "#fff",
-        border: "1px solid #E5E7EB",
-        borderRadius: "16px",
-        px: 3,
-        py: 2.5,
-        boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-        display: "flex",
-        flexDirection: { xs: "column", md: "row" },
-        alignItems: { md: "center" },
-        justifyContent: "space-between",
-        gap: 2,
-      }}
-    >
+    <div className="mb-6 flex flex-col gap-4 rounded-2xl border border-gray-200 bg-white px-6 py-5 shadow-[0_1px_4px_rgba(0,0,0,0.04)] md:flex-row md:items-center md:justify-between">
       {/* Left: breadcrumbs + title + subtitle */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+      <div className="flex items-center gap-4">
         {/* Optional icon box */}
         {Icon && (
-          <Box
-            sx={{
-              width: 48,
-              height: 48,
-              borderRadius: "12px",
-              bgcolor: `${accentColor}12`,
-              border: `1.5px solid ${accentColor}25`,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              flexShrink: 0,
-            }}
+          <div
+            className="flex size-12 shrink-0 items-center justify-center rounded-xl"
+            style={{ backgroundColor: `${accentColor}12`, border: `1.5px solid ${accentColor}25` }}
           >
             <Icon size={24} color={accentColor} />
-          </Box>
+          </div>
         )}
 
-        <Box>
+        <div>
           {/* Breadcrumbs */}
           {breadcrumbs.length > 0 && (
-            <Breadcrumbs
-              separator={
-                <ChevronRight size={12} color="#D1D5DB" />
-              }
-              aria-label="breadcrumb"
-              sx={{ mb: 0.5, "& .MuiBreadcrumbs-separator": { mx: 0.25 } }}
-            >
-              <Box sx={{ display: "flex", alignItems: "center" }}>
-                <Home size={11} color="#9CA3AF" />
-              </Box>
-              {breadcrumbs.map((item, index) =>
-                item.href ? (
-                  <MuiLink
-                    key={index}
-                    component={Link}
-                    href={item.href}
-                    underline="none"
-                    sx={{
-                      fontSize: "11.5px",
-                      fontWeight: 500,
-                      color: "#9CA3AF",
-                      transition: "color 0.15s",
-                      "&:hover": { color: accentColor },
-                    }}
-                  >
-                    {item.label}
-                  </MuiLink>
-                ) : (
-                  <Typography
-                    key={index}
-                    sx={{
-                      fontSize: "11.5px",
-                      fontWeight: 600,
-                      color: "#374151",
-                    }}
-                  >
-                    {item.label}
-                  </Typography>
-                )
-              )}
-            </Breadcrumbs>
+            <Breadcrumb className="mb-1">
+              <BreadcrumbList className="flex-nowrap gap-1 text-[11.5px] sm:gap-1">
+                <BreadcrumbItem>
+                  <Home size={11} color="#9CA3AF" />
+                </BreadcrumbItem>
+                {breadcrumbs.map((item, index) => (
+                  <React.Fragment key={index}>
+                    <BreadcrumbSeparator>
+                      <ChevronRight size={12} color="#D1D5DB" />
+                    </BreadcrumbSeparator>
+                    <BreadcrumbItem>
+                      {item.href ? (
+                        <BreadcrumbLink asChild className="text-[11.5px] font-medium text-gray-400 transition-colors">
+                          <Link
+                            href={item.href}
+                            style={{ ["--hover-color" as string]: accentColor } as React.CSSProperties}
+                            className="hover:[color:var(--hover-color)]"
+                          >
+                            {item.label}
+                          </Link>
+                        </BreadcrumbLink>
+                      ) : (
+                        <span className="text-[11.5px] font-semibold text-gray-700">{item.label}</span>
+                      )}
+                    </BreadcrumbItem>
+                  </React.Fragment>
+                ))}
+              </BreadcrumbList>
+            </Breadcrumb>
           )}
 
           {/* Title */}
           {title && (
-            <Typography
-              sx={{
-                fontSize: "20px",
-                fontWeight: 800,
-                color: "#111827",
-                lineHeight: 1.2,
-              }}
-            >
-              {title}
-            </Typography>
+            <p className="text-[20px] font-extrabold leading-[1.2] text-gray-900">{title}</p>
           )}
 
           {/* Subtitle */}
           {subtitle && (
-            <Typography
-              sx={{
-                fontSize: "13px",
-                color: "#6B7280",
-                mt: 0.4,
-                lineHeight: 1.5,
-              }}
-            >
-              {subtitle}
-            </Typography>
+            <p className="mt-1 text-[13px] leading-[1.5] text-gray-500">{subtitle}</p>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Right: actions */}
-      {actions && (
-        <Box sx={{ display: "flex", gap: 1.5, flexShrink: 0 }}>
-          {actions}
-        </Box>
-      )}
-    </Box>
+      {actions && <div className="flex shrink-0 gap-3">{actions}</div>}
+    </div>
   );
 };
 

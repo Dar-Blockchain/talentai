@@ -1,9 +1,8 @@
 ﻿import React from "react";
-import { Box } from "@mui/material";
 import CandidateChatPageContent from "@/modules/chat/candidate-chat/components/CandidateChatPageContent";
 import CompanyChatLayout from "@/modules/chat/shared/components/CompanyChatLayout";
 import MessagesRouteGuard from "@/modules/chat/shared/components/MessagesRouteGuard";
-import { chatDashboardShellFlexSx } from "@/modules/chat/shared/styles/modulePage";
+import { chatDashboardShellFlexCn } from "@/modules/chat/shared/styles/modulePage";
 
 interface CandidatesMessagesShellProps {
   conversationId: string | null;
@@ -16,7 +15,7 @@ interface CandidatesMessagesShellProps {
 const CandidatesMessagesShell: React.FC<CandidatesMessagesShellProps> = ({ conversationId }) => {
   return (
     <MessagesRouteGuard surface="company-candidates">
-      <Box sx={chatDashboardShellFlexSx}>
+      <div className={chatDashboardShellFlexCn}>
         <CompanyChatLayout activeChannel="candidate">
           <CandidateChatPageContent
             initialConversationId={conversationId}
@@ -25,7 +24,7 @@ const CandidatesMessagesShell: React.FC<CandidatesMessagesShellProps> = ({ conve
             embeddedInCompanyHub
           />
         </CompanyChatLayout>
-      </Box>
+      </div>
     </MessagesRouteGuard>
   );
 };

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, Slider, Typography } from "@mui/material";
+import { Slider } from "@/modules/shared/ui/shadcn/slider";
 import { Target as TrackChangesOutlined } from "lucide-react";
 import { useSelector, useDispatch, shallowEqual } from "react-redux";
 import type { RootState } from "@/store/store";
@@ -17,6 +17,12 @@ import { Card } from "@/modules/shared/ui/shadcn/card";
 interface PostPreviewProps {
   generating?: boolean;
 }
+
+const THRESHOLD_MARKS = [
+  { value: 0, label: "0%" },
+  { value: 50, label: "50%" },
+  { value: 100, label: "100%" },
+];
 
 const PostPreview = ({ generating = false }: PostPreviewProps) => {
   const { t, i18n } = useTranslation("posts");
@@ -52,7 +58,7 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
   };
 
   return (
-    <Box sx={{ height: "100%", overflowY: "auto", display: "flex", flexDirection: "column", gap: 2 }}>
+    <div className="flex h-full flex-col gap-4 overflow-y-auto">
       <PreviewHeader />
 
       <DetailsSection
@@ -72,31 +78,37 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
       />
 
       <Card className="p-6 gap-0">
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+        <div className="mb-2 flex items-center gap-2">
           <TrackChangesOutlined size={16} color="#0D9488" />
-          <Typography variant="subtitle2" sx={{ color: "rgba(84, 98, 116, 1)", fontSize: "16px", fontWeight: 600 }}>
+          <p className="text-[16px] font-semibold" style={{ color: "rgba(84, 98, 116, 1)" }}>
             Threshold Score
-          </Typography>
-        </Box>
-        <Typography sx={{ fontSize: "12px", color: "rgba(84, 98, 116, 0.7)", mb: 2 }}>
+          </p>
+        </div>
+        <p className="mb-4 text-xs" style={{ color: "rgba(84, 98, 116, 0.7)" }}>
           Candidates scoring below this threshold are automatically flagged for review.
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-            <Box sx={{ flex: 1 }}>
-              <Slider
-                value={thresholdScore}
-                onChange={(_, v) => dispatch(setThresholdScore(v as number))}
-                min={0} max={100} step={5}
-                aria-label="Threshold score"
-                aria-valuetext={`${thresholdScore}%`}
-                marks={[{ value: 0, label: "0%" }, { value: 50, label: "50%" }, { value: 100, label: "100%" }]}
-                sx={{ color: sliderColor, "& .MuiSlider-thumb": { width: 18, height: 18 }, "& .MuiSlider-markLabel": { fontSize: "11px", color: "#9CA3AF" } }}
-              />
-            </Box>
-            <Box sx={{ minWidth: 52, textAlign: "center", bgcolor: `${sliderColor}15`, border: `1px solid ${sliderColor}40`, borderRadius: 2, px: 1.5, py: 0.75 }}>
-              <Typography sx={{ fontSize: "16px", fontWeight: 800, color: sliderColor }}>{thresholdScore}%</Typography>
-            </Box>
-          </Box>
+        </p>
+        <div className="flex items-center gap-6">
+          <div className="flex-1">
+            <Slider
+              value={[thresholdScore]}
+              onValueChange={(v) => dispatch(setThresholdScore(v[0]))}
+              min={0} max={100} step={5}
+              aria-label="Threshold score"
+              aria-valuetext={`${thresholdScore}%`}
+              className="[&_[data-slot=slider-range]]:bg-[var(--threshold-color)] [&_[data-slot=slider-thumb]]:border-[var(--threshold-color)] [&_[data-slot=slider-thumb]]:size-[18px]"
+              style={{ ["--threshold-color" as string]: sliderColor }}
+            />
+            <div className="mt-1.5 flex justify-between text-[11px] text-[#9CA3AF]">
+              {THRESHOLD_MARKS.map((m) => <span key={m.value}>{m.label}</span>)}
+            </div>
+          </div>
+          <div
+            className="min-w-[52px] rounded-lg px-3 py-1.5 text-center"
+            style={{ background: `${sliderColor}15`, border: `1px solid ${sliderColor}40` }}
+          >
+            <p className="text-[16px] font-extrabold" style={{ color: sliderColor }}>{thresholdScore}%</p>
+          </div>
+        </div>
       </Card>
 
       <ContentSection
@@ -115,7 +127,7 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
           onClose={() => { setOpen(false); setSelectedSkill(null); }}
         />
       )}
-    </Box>
+    </div>
   );
 };
 

@@ -1,18 +1,11 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import {
-  Box,
-  Typography,
-  InputBase,
-  CircularProgress,
-  Popper,
-  Paper,
-  ClickAwayListener,
-} from "@mui/material";
-import { Search, Briefcase, Users, LayoutDashboard, SlidersHorizontal, ArrowRight } from "lucide-react";
+import { Loader2, Search, Briefcase, Users, LayoutDashboard, SlidersHorizontal, ArrowRight } from "lucide-react";
 import { useRouter } from "next/router";
 import axiosInstance from "@/utils/axiosInstance";
+import { Popover, PopoverTrigger, PopoverContent } from "@/modules/shared/ui/shadcn/popover";
+import { cn } from "@/lib/utils";
 
 const TEAL = "#0D9488";
 
@@ -136,223 +129,191 @@ const GlobalSearch: React.FC = () => {
   const showEmpty     = query.trim().length > 0 && !loading && !hasResults;
 
   return (
-    <>
+    <Popover
+      open={open}
+      onOpenChange={(next) => {
+        setOpen(next);
+        if (!next) { setQuery(""); setFocused(-1); }
+      }}
+    >
       {/* ── Trigger ── */}
-      <Box
-        ref={anchorRef}
-        onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50); }}
-        sx={{
-          display: "flex", alignItems: "center", gap: 1,
-          px: 1.5, height: 34,
-          bgcolor: "#F9FAFB", border: "1px solid #E5E7EB",
-          borderRadius: "10px", cursor: "text",
-          transition: "all 0.15s",
-          "&:hover": { borderColor: `${TEAL}50`, bgcolor: "#fff" },
-          width: "100%",
-        }}
-      >
-        <Search size={14} color="#9CA3AF" className="shrink-0" />
-        <Typography sx={{ fontSize: "12.5px", color: "#9CA3AF", flex: 1, userSelect: "none" }}>
-          Search...
-        </Typography>
-        <Box sx={{
-          display: { xs: "none", sm: "flex" }, alignItems: "center", gap: 0.35,
-          bgcolor: "#F3F4F6", border: "1px solid #E5E7EB",
-          borderRadius: "5px", px: "5px", py: "2px",
-        }}>
-          <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: "#9CA3AF" }}>⌘K</Typography>
-        </Box>
-      </Box>
+      <PopoverTrigger asChild>
+        <div
+          ref={anchorRef}
+          onClick={() => { setOpen(true); setTimeout(() => inputRef.current?.focus(), 50); }}
+          className="flex h-[34px] w-full cursor-text items-center gap-2 rounded-[10px] border border-gray-200 bg-gray-50 px-3 transition-all duration-150 hover:border-teal-500/30 hover:bg-white"
+        >
+          <Search size={14} color="#9CA3AF" className="shrink-0" />
+          <span className="flex-1 select-none text-[12.5px] text-gray-400">Search...</span>
+          <div className="hidden items-center gap-[3px] rounded-[5px] border border-gray-200 bg-gray-100 px-[5px] py-[2px] sm:flex">
+            <span className="text-[9.5px] font-bold text-gray-400">⌘K</span>
+          </div>
+        </div>
+      </PopoverTrigger>
 
       {/* ── Dropdown ── */}
-      <Popper
-        open={open}
-        anchorEl={anchorRef.current}
-        placement="bottom-start"
-        style={{ zIndex: 1400, width: anchorRef.current?.offsetWidth ? Math.max(anchorRef.current.offsetWidth, 420) : 420 }}
-        modifiers={[{ name: "offset", options: { offset: [0, 6] } }]}
+      <PopoverContent
+        align="start"
+        sideOffset={6}
+        className="w-[420px] max-w-[90vw] overflow-hidden rounded-[14px] border border-gray-200 p-0 shadow-[0_16px_40px_rgba(0,0,0,0.10),0_4px_12px_rgba(0,0,0,0.06)]"
+        style={{ width: anchorRef.current?.offsetWidth ? Math.max(anchorRef.current.offsetWidth, 420) : 420 }}
+        onOpenAutoFocus={(e) => { e.preventDefault(); inputRef.current?.focus(); }}
       >
-        <ClickAwayListener onClickAway={() => { setOpen(false); setQuery(""); setFocused(-1); }}>
-          <Paper
-            elevation={0}
-            sx={{
-              borderRadius: "14px",
-              border: "1px solid #E5E7EB",
-              boxShadow: "0 16px 40px rgba(0,0,0,0.10), 0 4px 12px rgba(0,0,0,0.06)",
-              overflow: "hidden",
-            }}
-          >
-            {/* Input row */}
-            <Box sx={{
-              display: "flex", alignItems: "center", gap: 1.25,
-              px: 1.75, py: 1.25, borderBottom: "1px solid #F3F4F6",
-            }}>
-              {loading
-                ? <CircularProgress size={14} sx={{ color: TEAL, flexShrink: 0 }} />
-                : <Search size={16} color="#9CA3AF" className="shrink-0" />
-              }
-              <InputBase
-                inputRef={inputRef}
-                fullWidth
-                placeholder="Search posts, candidates..."
-                value={query}
-                onChange={(e) => { setQuery(e.target.value); setFocused(-1); }}
-                onKeyDown={handleKeyDown}
-                sx={{ fontSize: "13.5px", color: "#111827", "& input::placeholder": { color: "#9CA3AF" } }}
-              />
-              {query && (
-                <Box
-                  onClick={() => { setQuery(""); setResults([]); inputRef.current?.focus(); }}
-                  sx={{
-                    fontSize: "9.5px", fontWeight: 700, color: "#9CA3AF",
-                    bgcolor: "#F3F4F6", border: "1px solid #E5E7EB",
-                    borderRadius: "5px", px: "6px", py: "2px", cursor: "pointer",
-                    "&:hover": { color: "#374151" },
-                  }}
+        {/* Input row */}
+        <div className="flex items-center gap-2.5 border-b border-gray-100 px-3.5 py-2.5">
+          {loading
+            ? <Loader2 size={14} color={TEAL} className="shrink-0 animate-spin" />
+            : <Search size={16} color="#9CA3AF" className="shrink-0" />
+          }
+          <input
+            ref={inputRef}
+            placeholder="Search posts, candidates..."
+            value={query}
+            onChange={(e) => { setQuery(e.target.value); setFocused(-1); }}
+            onKeyDown={handleKeyDown}
+            className="w-full flex-1 bg-transparent text-[13.5px] text-gray-900 outline-none placeholder:text-gray-400"
+          />
+          {query && (
+            <div
+              onClick={() => { setQuery(""); setResults([]); inputRef.current?.focus(); }}
+              className="cursor-pointer rounded-[5px] border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[9.5px] font-bold text-gray-400 hover:text-gray-700"
+            >
+              ESC
+            </div>
+          )}
+        </div>
+
+        <div className="max-h-[400px] overflow-y-auto">
+
+          {/* Quick links (no query) */}
+          {!query.trim() && (
+            <div className="p-1">
+              <p className="px-1 pb-[3px] pt-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[#C4C9D4]">
+                Quick navigation
+              </p>
+              {QUICK_LINKS.map((link, i) => (
+                <div
+                  key={link.href}
+                  onClick={() => handleNavigate(link.href)}
+                  onMouseEnter={() => setFocused(i)}
+                  className={cn(
+                    "flex cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 py-[7px] transition-colors duration-100 hover:bg-gray-50",
+                    focused === i ? "bg-gray-100" : "bg-transparent",
+                  )}
                 >
-                  ESC
-                </Box>
-              )}
-            </Box>
-
-            <Box sx={{ maxHeight: 400, overflowY: "auto" }}>
-
-              {/* Quick links (no query) */}
-              {!query.trim() && (
-                <Box sx={{ p: 1 }}>
-                  <Typography sx={{ px: 1, pt: 0.5, pb: 0.75, fontSize: "9.5px", fontWeight: 700, color: "#C4C9D4", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    Quick navigation
-                  </Typography>
-                  {QUICK_LINKS.map((link, i) => (
-                    <Box
-                      key={link.href}
-                      onClick={() => handleNavigate(link.href)}
-                      sx={{
-                        display: "flex", alignItems: "center", gap: 1.25,
-                        px: 1.25, py: 0.875, borderRadius: "9px", cursor: "pointer",
-                        bgcolor: focused === i ? "#F3F4F6" : "transparent",
-                        transition: "background 0.1s",
-                        "&:hover": { bgcolor: "#F9FAFB" },
-                      }}
-                      onMouseEnter={() => setFocused(i)}
-                    >
-                      <Box sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                        <link.Icon size={13} color="#6B7280" />
-                      </Box>
-                      <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#374151" }}>{link.label}</Typography>
-                      <ArrowRight size={12} color="#D1D5DB" className="ml-auto" />
-                    </Box>
-                  ))}
-                </Box>
-              )}
-
-              {/* Post results */}
-              {postResults.length > 0 && (
-                <Box sx={{ p: 1 }}>
-                  <Typography sx={{ px: 1, pt: 0.5, pb: 0.75, fontSize: "9.5px", fontWeight: 700, color: "#C4C9D4", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    Job Posts
-                  </Typography>
-                  {postResults.map((r, i) => {
-                    const idx = i;
-                    return (
-                      <Box
-                        key={r.id}
-                        onClick={() => handleNavigate(r.href)}
-                        sx={{
-                          display: "flex", alignItems: "center", gap: 1.25,
-                          px: 1.25, py: 0.875, borderRadius: "9px", cursor: "pointer",
-                          bgcolor: focused === idx ? "#F3F4F6" : "transparent",
-                          "&:hover": { bgcolor: "#F9FAFB" },
-                        }}
-                        onMouseEnter={() => setFocused(idx)}
-                      >
-                        <Box sx={{ width: 26, height: 26, borderRadius: "7px", bgcolor: `${TEAL}0F`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                          <Briefcase size={13} color={TEAL} />
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography noWrap sx={{ fontSize: "13px", fontWeight: 600, color: "#111827" }}>{r.title}</Typography>
-                          <Typography noWrap sx={{ fontSize: "11px", color: "#9CA3AF" }}>{r.subtitle}</Typography>
-                        </Box>
-                        {r.badge && (
-                          <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: r.badgeColor, bgcolor: `${r.badgeColor}15`, px: "6px", py: "2px", borderRadius: "5px", flexShrink: 0, textTransform: "capitalize" }}>
-                            {r.badge}
-                          </Typography>
-                        )}
-                      </Box>
-                    );
-                  })}
-                </Box>
-              )}
-
-              {/* Application results */}
-              {appResults.length > 0 && (
-                <Box sx={{ p: 1, borderTop: postResults.length > 0 ? "1px solid #F3F4F6" : "none" }}>
-                  <Typography sx={{ px: 1, pt: 0.5, pb: 0.75, fontSize: "9.5px", fontWeight: 700, color: "#C4C9D4", textTransform: "uppercase", letterSpacing: "0.08em" }}>
-                    Candidates
-                  </Typography>
-                  {appResults.map((r, i) => {
-                    const idx = postResults.length + i;
-                    return (
-                      <Box
-                        key={r.id}
-                        onClick={() => handleNavigate(r.href)}
-                        sx={{
-                          display: "flex", alignItems: "center", gap: 1.25,
-                          px: 1.25, py: 0.875, borderRadius: "9px", cursor: "pointer",
-                          bgcolor: focused === idx ? "#F3F4F6" : "transparent",
-                          "&:hover": { bgcolor: "#F9FAFB" },
-                        }}
-                        onMouseEnter={() => setFocused(idx)}
-                      >
-                        <Box sx={{
-                          width: 26, height: 26, borderRadius: "50%",
-                          bgcolor: `${TEAL}12`,
-                          display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                        }}>
-                          <Typography sx={{ fontSize: "10px", fontWeight: 700, color: TEAL }}>
-                            {r.title[0]?.toUpperCase()}
-                          </Typography>
-                        </Box>
-                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                          <Typography noWrap sx={{ fontSize: "13px", fontWeight: 600, color: "#111827" }}>{r.title}</Typography>
-                          <Typography noWrap sx={{ fontSize: "11px", color: "#9CA3AF" }}>{r.subtitle}</Typography>
-                        </Box>
-                        {r.badge && (
-                          <Typography sx={{ fontSize: "9.5px", fontWeight: 700, color: TEAL, bgcolor: `${TEAL}12`, px: "6px", py: "2px", borderRadius: "5px", flexShrink: 0 }}>
-                            {r.badge}
-                          </Typography>
-                        )}
-                      </Box>
-                    );
-                  })}
-                </Box>
-              )}
-
-              {/* Empty state */}
-              {showEmpty && (
-                <Box sx={{ py: 5, textAlign: "center" }}>
-                  <Search size={32} color="#E5E7EB" className="mb-2" />
-                  <Typography sx={{ fontSize: "13px", fontWeight: 500, color: "#9CA3AF" }}>No results for "{query}"</Typography>
-                  <Typography sx={{ fontSize: "11.5px", color: "#C4C9D4", mt: 0.5 }}>Try a job title or candidate name</Typography>
-                </Box>
-              )}
-            </Box>
-
-            {/* Footer hint */}
-            <Box sx={{ px: 2, py: 1, borderTop: "1px solid #F3F4F6", display: "flex", alignItems: "center", gap: 2 }}>
-              {[["↑↓", "navigate"], ["↵", "open"], ["esc", "close"]].map(([key, action]) => (
-                <Box key={key} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                  <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#9CA3AF", bgcolor: "#F3F4F6", border: "1px solid #E5E7EB", borderRadius: "4px", px: "5px", py: "1px" }}>
-                    {key}
-                  </Typography>
-                  <Typography sx={{ fontSize: "10px", color: "#C4C9D4" }}>{action}</Typography>
-                </Box>
+                  <div className="flex size-[26px] shrink-0 items-center justify-center rounded-[7px] bg-gray-100">
+                    <link.Icon size={13} color="#6B7280" />
+                  </div>
+                  <span className="text-[13px] font-medium text-gray-700">{link.label}</span>
+                  <ArrowRight size={12} color="#D1D5DB" className="ml-auto" />
+                </div>
               ))}
-            </Box>
-          </Paper>
-        </ClickAwayListener>
-      </Popper>
-    </>
+            </div>
+          )}
+
+          {/* Post results */}
+          {postResults.length > 0 && (
+            <div className="p-1">
+              <p className="px-1 pb-[3px] pt-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[#C4C9D4]">
+                Job Posts
+              </p>
+              {postResults.map((r, i) => {
+                const idx = i;
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => handleNavigate(r.href)}
+                    onMouseEnter={() => setFocused(idx)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 py-[7px] hover:bg-gray-50",
+                      focused === idx ? "bg-gray-100" : "bg-transparent",
+                    )}
+                  >
+                    <div className="flex size-[26px] shrink-0 items-center justify-center rounded-[7px]" style={{ backgroundColor: `${TEAL}0F` }}>
+                      <Briefcase size={13} color={TEAL} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-gray-900">{r.title}</p>
+                      <p className="truncate text-[11px] text-gray-400">{r.subtitle}</p>
+                    </div>
+                    {r.badge && (
+                      <span
+                        className="shrink-0 rounded-[5px] px-1.5 py-0.5 text-[9.5px] font-bold capitalize"
+                        style={{ color: r.badgeColor, backgroundColor: `${r.badgeColor}15` }}
+                      >
+                        {r.badge}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Application results */}
+          {appResults.length > 0 && (
+            <div className={cn("p-1", postResults.length > 0 && "border-t border-gray-100")}>
+              <p className="px-1 pb-[3px] pt-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[#C4C9D4]">
+                Candidates
+              </p>
+              {appResults.map((r, i) => {
+                const idx = postResults.length + i;
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => handleNavigate(r.href)}
+                    onMouseEnter={() => setFocused(idx)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 py-[7px] hover:bg-gray-50",
+                      focused === idx ? "bg-gray-100" : "bg-transparent",
+                    )}
+                  >
+                    <div className="flex size-[26px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${TEAL}12` }}>
+                      <span className="text-[10px] font-bold" style={{ color: TEAL }}>
+                        {r.title[0]?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-gray-900">{r.title}</p>
+                      <p className="truncate text-[11px] text-gray-400">{r.subtitle}</p>
+                    </div>
+                    {r.badge && (
+                      <span
+                        className="shrink-0 rounded-[5px] px-1.5 py-0.5 text-[9.5px] font-bold"
+                        style={{ color: TEAL, backgroundColor: `${TEAL}12` }}
+                      >
+                        {r.badge}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Empty state */}
+          {showEmpty && (
+            <div className="py-10 text-center">
+              <Search size={32} color="#E5E7EB" className="mx-auto mb-2" />
+              <p className="text-[13px] font-medium text-gray-400">No results for "{query}"</p>
+              <p className="mt-1 text-[11.5px] text-[#C4C9D4]">Try a job title or candidate name</p>
+            </div>
+          )}
+        </div>
+
+        {/* Footer hint */}
+        <div className="flex items-center gap-4 border-t border-gray-100 px-4 py-2">
+          {[["↑↓", "navigate"], ["↵", "open"], ["esc", "close"]].map(([key, action]) => (
+            <div key={key} className="flex items-center gap-1">
+              <span className="rounded border border-gray-200 bg-gray-100 px-[5px] py-px text-[9px] font-bold text-gray-400">
+                {key}
+              </span>
+              <span className="text-[10px] text-[#C4C9D4]">{action}</span>
+            </div>
+          ))}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 

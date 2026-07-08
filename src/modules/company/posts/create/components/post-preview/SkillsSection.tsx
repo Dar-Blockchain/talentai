@@ -1,4 +1,3 @@
-import { Box, Typography } from "@mui/material";
 import { Info as InfoOutlined } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
@@ -28,18 +27,18 @@ const SkillsSection = ({ hardSkills, softSkills, onEdit, onAdd }: Props) => {
 
   return (
     <Card className="p-6 gap-0">
-      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 1.5 }}>{t("create.preview.section_skills")}</Typography>
+      <p className="mb-3 text-[13px] font-bold text-[#111827]">{t("create.preview.section_skills")}</p>
 
-      <Box sx={{ display: "flex", gap: 1, p: 1.5, borderRadius: 2, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", mb: 2 }}>
+      <div className="mb-4 flex gap-2 rounded-lg border border-[#BFDBFE] bg-[#EFF6FF] p-3">
         <InfoOutlined size={16} color="#3B82F6" className="shrink-0 mt-px" />
-        <Typography sx={{ fontSize: "12px", color: "#1E40AF", lineHeight: 1.5 }}>
+        <p className="text-xs leading-relaxed text-[#1E40AF]">
           <Trans i18nKey="create.preview.skills_info" ns="posts" components={{ bold: <b /> }} />
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 1 }}>{t("create.preview.hard_skills")}</Typography>
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      <div className="mb-4">
+        <p className="mb-2 text-xs font-bold text-[#374151]">{t("create.preview.hard_skills")}</p>
+        <div className="flex flex-wrap gap-2">
           {hardSkills.map((skill, index) => (
             <SkillChip
               key={`hard-${skill.name}-${index}`}
@@ -49,12 +48,12 @@ const SkillsSection = ({ hardSkills, softSkills, onEdit, onAdd }: Props) => {
             />
           ))}
           <AddSkillButton skillType="hard" onClick={() => onAdd("hard")} />
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Box>
-        <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151", mb: 1 }}>{t("create.preview.soft_skills")}</Typography>
-        <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+      <div>
+        <p className="mb-2 text-xs font-bold text-[#374151]">{t("create.preview.soft_skills")}</p>
+        <div className="flex flex-wrap gap-2">
           {softSkills.map((skill, index) => (
             <SkillChip
               key={`soft-${skill.name}-${index}`}
@@ -64,8 +63,8 @@ const SkillsSection = ({ hardSkills, softSkills, onEdit, onAdd }: Props) => {
             />
           ))}
           <AddSkillButton skillType="soft" onClick={() => onAdd("soft")} />
-        </Box>
-      </Box>
+        </div>
+      </div>
     </Card>
   );
 };

@@ -1,6 +1,5 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box } from "@mui/material";
 import { Briefcase as WorkOutlined } from "lucide-react";
 import { getPostSkills } from '@/modules/company/posts/utils/postHelpers';
 import ThresholdCard from "./overview/ThresholdCard";
@@ -23,7 +22,7 @@ const PostBasicDetails: React.FC<Props> = ({ job, canEdit }) => {
   const languages     = job.interviewLanguages?.length ? job.interviewLanguages : ["en"];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+    <div className="flex flex-col gap-5">
       <ThresholdCard
         jobId={job._id}
         initial={job.thresholdScore ?? 50}
@@ -48,7 +47,7 @@ const PostBasicDetails: React.FC<Props> = ({ job, canEdit }) => {
         items={jd.responsibilities || []}
         bulletColor="#6366F1"
       />
-    </Box>
+    </div>
   );
 };
 

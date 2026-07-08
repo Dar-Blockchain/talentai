@@ -1,5 +1,7 @@
 import React, { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, Chip, CircularProgress } from "@mui/material";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
   X as CloseIcon,
@@ -134,9 +136,9 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
       </div>
 
       {/* Detail dialog */}
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", maxHeight: "90vh" } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 700, fontSize: "0.95rem", pb: 1, borderBottom: "1px solid #F1F5F9" }}>
+      <Dialog open={open} onOpenChange={(next) => { if (!next) setOpen(false); }}>
+      <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden" style={{ borderRadius: "16px" }}>
+        <div className="flex items-center justify-between px-5 pb-2.5 pt-4 border-b border-slate-100 font-bold text-[0.95rem]">
           <span className="flex items-center gap-2 flex-wrap">
             <span>{nom}</span>
             {sub.scoring?.tier && <TierBadge tier={sub.scoring.tier} />}
@@ -145,15 +147,15 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
               return m ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ color: m.color, borderColor: m.color + "40", background: m.color + "10" }}>{m.label}</span> : null;
             })()}
             {sub.completed
-              ? <Chip label="Completed" size="small" color="success" sx={{ height: 18, fontSize: 10, fontWeight: 700 }} />
-              : <Chip label="In progress" size="small" sx={{ height: 18, fontSize: 10, bgcolor: "#F1F5F9", color: "#64748B" }} />}
+              ? <Badge className="h-[18px] rounded-full border-transparent bg-emerald-50 px-2 text-[10px] font-bold text-emerald-700">Completed</Badge>
+              : <Badge variant="outline" className="h-[18px] rounded-full border-transparent bg-slate-100 px-2 text-[10px] font-bold text-slate-500">In progress</Badge>}
           </span>
           <Button variant="ghost" onClick={() => setOpen(false)} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
             <CloseIcon size={18} />
           </Button>
-        </DialogTitle>
+        </div>
 
-        <DialogContent dividers sx={{ p: 0 }}>
+        <div className="overflow-y-auto">
           {/* Contact */}
           <div className="px-5 py-4 space-y-1 border-b border-slate-100">
             <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-2">Contact</p>
@@ -302,7 +304,8 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
               </div>
             </div>
           )}
-        </DialogContent>
+        </div>
+      </DialogContent>
       </Dialog>
     </>
   );
@@ -326,9 +329,9 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
   if (!webinar) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth
-      PaperProps={{ sx: { borderRadius: "16px", maxHeight: "90vh" } }}>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 700, fontSize: "1rem", borderBottom: "1px solid #F1F5F9", pb: 1.5 }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+    <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden" style={{ borderRadius: "16px" }}>
+      <div className="flex items-center justify-between px-5 pb-1.5 pt-4 border-b border-slate-100 font-bold text-base">
         <div className="flex items-center gap-3">
           <span>Registrants — {webinar.title}</span>
           <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[12px] font-bold border border-teal-100">
@@ -338,7 +341,7 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
         <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
           <CloseIcon size={18} />
         </Button>
-      </DialogTitle>
+      </div>
 
       {/* Filter tabs */}
       <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-slate-50/50">
@@ -364,10 +367,10 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
         </span>
       </div>
 
-      <DialogContent sx={{ p: 0, overflowY: "auto" }}>
+      <div className="overflow-y-auto flex-1">
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <CircularProgress size={28} sx={{ color: ADMIN_ACCENT }} />
+            <Spinner className="size-7" style={{ color: ADMIN_ACCENT }} />
           </div>
         ) : submissions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
@@ -379,7 +382,8 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
             <SubmissionRow key={sub._id} sub={sub} webinar={webinar} />
           ))
         )}
-      </DialogContent>
+      </div>
+    </DialogContent>
     </Dialog>
   );
 };

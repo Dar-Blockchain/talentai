@@ -1,13 +1,5 @@
 import React, { memo, useCallback } from "react";
-import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  useTheme,
-  alpha,
-} from "@mui/material";
+import { Dialog, DialogContent, DialogFooter } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 
@@ -30,48 +22,34 @@ const DeleteConversationDialog = memo(function DeleteConversationDialog({
   description,
 }: DeleteConversationDialogProps) {
   const { t } = useTranslation("shared/chat");
-  const theme = useTheme();
   const handleClose = useCallback(() => {
     if (!isDeleting) onClose();
   }, [isDeleting, onClose]);
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      slotProps={{
-        paper: {
-          elevation: 12,
-          sx: {
-            borderRadius: 2,
-            minWidth: { xs: "min(100%, 360px)", sm: 400 },
-            border: `1px solid ${alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.4 : 0.9)}`,
-          },
-        },
-      }}
-    >
-      <DialogTitle sx={{ fontWeight: 700, color: "text.primary", fontSize: "1rem", pb: 0.5 }}>
-        {title ?? t("delete_dialog.title")}
-      </DialogTitle>
-      <DialogContent>
-        <DialogContentText sx={{ color: "text.secondary", fontSize: "0.8125rem", lineHeight: 1.55, mt: 0.5 }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose(); }}>
+      <DialogContent className="min-w-[min(100%,360px)] sm:min-w-[400px] rounded-xl border border-[rgba(0,0,0,0.1)]">
+        <p className="pb-1 text-[1rem] font-bold text-[#111827]">
+          {title ?? t("delete_dialog.title")}
+        </p>
+        <p className="mt-0.5 text-[0.8125rem] leading-[1.55] text-[#6B7280]">
           {description ?? t("delete_dialog.description")}
-        </DialogContentText>
+        </p>
+        <DialogFooter>
+          <Button onClick={onClose} disabled={isDeleting} variant="ghost" className="rounded-xl px-4 font-semibold">
+            {t("delete_dialog.cancel")}
+          </Button>
+          <Button
+            onClick={onConfirm}
+            disabled={isDeleting}
+            loading={isDeleting}
+            variant="destructive"
+            className="min-w-[120px] rounded-xl px-5 font-bold shadow-none"
+          >
+            {t("delete_dialog.delete")}
+          </Button>
+        </DialogFooter>
       </DialogContent>
-      <DialogActions sx={{ px: 2.5, pb: 2, pt: 0.5, gap: 1 }}>
-        <Button onClick={onClose} disabled={isDeleting} variant="ghost" className="rounded-xl px-4 font-semibold">
-          {t("delete_dialog.cancel")}
-        </Button>
-        <Button
-          onClick={onConfirm}
-          disabled={isDeleting}
-          loading={isDeleting}
-          variant="destructive"
-          className="min-w-[120px] rounded-xl px-5 font-bold shadow-none"
-        >
-          {t("delete_dialog.delete")}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 });

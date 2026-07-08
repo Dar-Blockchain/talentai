@@ -22,7 +22,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
 import { cn } from '@/lib/utils';
 import { ADMIN_ACCENT, AdminPageHeading, AdminStatCard, AdminTableErrorRow } from '@/modules/admin/shared';
-import { Tooltip, IconButton } from '@mui/material';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/modules/shared/ui/shadcn/tooltip';
 
 const roleBadgeClass = (role: string) => {
   switch (role?.toLowerCase()) {
@@ -90,6 +90,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
   }, []);
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       <AdminPageHeading title="User Management" subtitle={`${totalUsers.toLocaleString()} total users across the platform`} />
 
@@ -229,20 +230,29 @@ const UserManagement: React.FC<UserManagementProps> = ({
                   <td className={TD}>{user.lastLogin ? new Date(user.lastLogin).toLocaleDateString() : 'Never'}</td>
                   <td className={TD}>
                     <div className="flex items-center gap-0.5">
-                      <Tooltip title="View">
-                        <IconButton size="small" onClick={() => onUserSelect?.(user)} sx={{ color: '#64748B', '&:hover': { color: '#0D9488' } }}>
-                          <VisibilityIcon size={18} />
-                        </IconButton>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button onClick={() => onUserSelect?.(user)} className="rounded-md p-1.5 text-[#64748B] hover:text-teal-600">
+                            <VisibilityIcon size={18} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>View</TooltipContent>
                       </Tooltip>
-                      <Tooltip title="Edit">
-                        <IconButton size="small" onClick={() => onUserEdit?.(user)} sx={{ color: '#64748B', '&:hover': { color: '#0D9488' } }}>
-                          <EditIcon size={18} />
-                        </IconButton>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button onClick={() => onUserEdit?.(user)} className="rounded-md p-1.5 text-[#64748B] hover:text-teal-600">
+                            <EditIcon size={18} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Edit</TooltipContent>
                       </Tooltip>
-                      <Tooltip title="Delete">
-                        <IconButton size="small" onClick={() => onUserDelete?.(user._id)} sx={{ color: '#CBD5E1', '&:hover': { color: '#ef4444' } }}>
-                          <DeleteIcon size={18} />
-                        </IconButton>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button onClick={() => onUserDelete?.(user._id)} className="rounded-md p-1.5 text-[#CBD5E1] hover:text-red-500">
+                            <DeleteIcon size={18} />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>Delete</TooltipContent>
                       </Tooltip>
                     </div>
                   </td>
@@ -271,6 +281,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
         </div>
       </Card>
     </div>
+    </TooltipProvider>
   );
 };
 

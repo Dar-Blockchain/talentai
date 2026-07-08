@@ -1,12 +1,11 @@
-import { Box, MenuItem, TextField, Typography } from "@mui/material";
 import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { contractTypes, workModes } from "@/modules/company/posts/shared/constants";
 import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "../../utils";
 import FieldLabel from "./FieldLabel";
 import SectionLabel from "./SectionLabel";
-import { fieldSx } from "./styles";
 
 interface Props {
   employmentType: string;
@@ -18,40 +17,55 @@ interface Props {
   onExpirationChange: (val: string) => void;
 }
 
+const selectClasses =
+  "h-[38px] w-full rounded-lg border border-[#E5E7EB] bg-[#FAFAFA] px-3 text-[12.5px] outline-none transition-colors hover:border-[#0D9488] focus:border-[#0D9488]";
+
 const RoleFields = ({ employmentType, workMode, expirationDate, errors, onEmploymentChange, onWorkModeChange, onExpirationChange }: Props) => {
   const { t } = useTranslation("posts");
   return (
-    <Box>
+    <div>
       <SectionLabel>{t("create.form.section_role")}</SectionLabel>
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1.5 }}>
-        <Box>
+      <div className="grid grid-cols-3 gap-3">
+        <div>
           <FieldLabel icon={WorkOutlined} label={t("create.post_form.labels.employment_type")} />
-          <TextField select fullWidth value={employmentType} onChange={(e) => onEmploymentChange(e.target.value)} error={!!errors.employmentType} sx={fieldSx}>
-            <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.post_form.placeholders.select_employment_type")}</MenuItem>
-            {contractTypes.map((c) => <MenuItem key={c} value={c} sx={{ fontSize: "12px" }}>{optionLabel(t, c, EMPLOYMENT_OPTION_KEY)}</MenuItem>)}
-          </TextField>
-          {errors.employmentType && <Typography sx={{ fontSize: "10.5px", color: "#EF4444", mt: 0.25 }}>{errors.employmentType}</Typography>}
-        </Box>
+          <select
+            value={employmentType}
+            onChange={(e) => onEmploymentChange(e.target.value)}
+            className={cn(selectClasses, errors.employmentType && "border-red-500")}
+          >
+            <option disabled value="" className="text-[12px]">{t("create.post_form.placeholders.select_employment_type")}</option>
+            {contractTypes.map((c) => (
+              <option key={c} value={c} className="text-[12px]">{optionLabel(t, c, EMPLOYMENT_OPTION_KEY)}</option>
+            ))}
+          </select>
+          {errors.employmentType && <p className="mt-0.5 text-[10.5px] text-[#EF4444]">{errors.employmentType}</p>}
+        </div>
 
-        <Box>
+        <div>
           <FieldLabel icon={LocationOnOutlined} label={t("create.post_form.labels.work_mode")} />
-          <TextField select fullWidth value={workMode} onChange={(e) => onWorkModeChange(e.target.value)} error={!!errors.workMode} sx={fieldSx}>
-            <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.post_form.placeholders.select_work_mode")}</MenuItem>
-            {workModes.map((m) => <MenuItem key={m} value={m} sx={{ fontSize: "12px" }}>{optionLabel(t, m, WORK_MODE_OPTION_KEY)}</MenuItem>)}
-          </TextField>
-          {errors.workMode && <Typography sx={{ fontSize: "10.5px", color: "#EF4444", mt: 0.25 }}>{errors.workMode}</Typography>}
-        </Box>
+          <select
+            value={workMode}
+            onChange={(e) => onWorkModeChange(e.target.value)}
+            className={cn(selectClasses, errors.workMode && "border-red-500")}
+          >
+            <option disabled value="" className="text-[12px]">{t("create.post_form.placeholders.select_work_mode")}</option>
+            {workModes.map((m) => (
+              <option key={m} value={m} className="text-[12px]">{optionLabel(t, m, WORK_MODE_OPTION_KEY)}</option>
+            ))}
+          </select>
+          {errors.workMode && <p className="mt-0.5 text-[10.5px] text-[#EF4444]">{errors.workMode}</p>}
+        </div>
 
-        <Box>
+        <div>
           <FieldLabel icon={CalendarTodayOutlined} label={t("create.post_form.labels.expires")} />
           <DatePicker
             value={expirationDate ?? ""}
             onChange={onExpirationChange}
             minDate={new Date()}
           />
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

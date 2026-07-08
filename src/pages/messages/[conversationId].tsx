@@ -1,6 +1,6 @@
 import React from "react";
 import { useRouter } from "next/router";
-import { Box, CircularProgress } from "@mui/material";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import MessagesShell from "@/modules/chat/shared/components/MessagesShell";
 import { getMessagesLayout } from "@/modules/chat/shared/components/MessagesLayout";
 import type { NextPageWithLayout } from "@/pages/_app";
@@ -12,9 +12,9 @@ const MessagesConversationPage: NextPageWithLayout = function MessagesConversati
 
   if (!router.isReady) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 280 }}>
-        <CircularProgress sx={{ color: "#0D9488" }} />
-      </Box>
+      <div className="flex items-center justify-center min-h-[280px]">
+        <Spinner style={{ color: "#0D9488" }} />
+      </div>
     );
   }
 

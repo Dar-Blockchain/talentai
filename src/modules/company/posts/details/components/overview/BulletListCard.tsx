@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import SectionTitle from "./SectionTitle";
 
@@ -16,14 +15,14 @@ const BulletListCard: React.FC<Props> = ({ icon, title, items, bulletColor = "#0
   return (
     <Card className="p-6 gap-0">
       <SectionTitle icon={icon} title={title} />
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+      <div className="flex flex-col gap-2">
         {items.map((item, i) => (
-          <Box key={i} sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-            <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: bulletColor, mt: 0.75, flexShrink: 0 }} />
-            <Typography sx={{ fontSize: "13px", color: "#374151", lineHeight: 1.7 }}>{item}</Typography>
-          </Box>
+          <div key={i} className="flex items-start gap-3">
+            <div className="mt-[6px] h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: bulletColor }} />
+            <p className="text-[13px] leading-[1.7] text-gray-700">{item}</p>
+          </div>
         ))}
-      </Box>
+      </div>
     </Card>
   );
 };

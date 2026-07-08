@@ -1,15 +1,13 @@
-import { Typography } from "@mui/material";
-
 interface Props {
   icon?: React.ElementType;
   label: string;
 }
 
 const FieldLabel = ({ icon: Icon, label }: Props) => (
-  <Typography sx={{ fontSize: "11px", fontWeight: 600, color: "#6B7280", mb: 0.5, display: "flex", alignItems: "center", gap: 0.5 }}>
+  <label className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-[#6B7280]">
     {Icon && <Icon size={12} />}
     {label}
-  </Typography>
+  </label>
 );
 
 export default FieldLabel;

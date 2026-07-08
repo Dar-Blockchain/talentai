@@ -1,6 +1,4 @@
 import React, { useEffect, useState } from "react";
-import { Box, MenuItem, TextField, Typography } from "@mui/material";
-import InputAdornment from "@mui/material/InputAdornment";
 import { TrendingUp as TrendingUpIcon } from "lucide-react";
 import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
@@ -11,25 +9,22 @@ import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
 import SkillEditorModal from "@/modules/company/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/modules/company/posts/shared/constants";
 import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
 import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import EditSkillsSection from "./edit/EditSkillsSection";
 import EditThresholdScore from "./edit/EditThresholdScore";
 
 // ── Styles ────────────────────────────────────────────────────────────────────
 
-const inputStyle = {
-  height: 40,
-  "& .MuiInputBase-root": { height: 40, fontSize: "12px", fontWeight: 500 },
-};
+const selectBoxClass =
+  "flex h-10 items-center gap-2 rounded-md border border-input bg-transparent px-3 text-[12px] font-medium shadow-xs transition-[color,box-shadow] focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50";
 
-const labelSx = {
-  lineHeight: "42px", fontWeight: 500, fontSize: "12px",
-  color: "rgba(84,98,116,0.53)",
-} as const;
+const selectClass = "flex-1 appearance-none bg-transparent text-[12px] font-medium outline-none";
 
-const sectionTitleSx = {
-  color: "rgba(84,98,116,1)", fontWeight: 600, fontSize: "20px",
-} as const;
+const labelClass = "leading-[42px] text-[12px] font-medium text-[rgba(84,98,116,0.53)]";
+
+const sectionTitleClass = "text-[20px] font-semibold text-[rgba(84,98,116,1)]";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -125,34 +120,34 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
-    <Box component="form" onSubmit={handleSubmit(onSubmit)} sx={{ p: 2 }}>
+    <form onSubmit={handleSubmit(onSubmit)} className="p-4">
 
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
-        <Box sx={{
-          display: "flex", justifyContent: "center", alignItems: "center",
-          background: "rgba(13,148,136,0.1)", width: 45, height: 45, borderRadius: "5px",
-        }}>
+      <div className="mb-4 flex items-center gap-4">
+        <div
+          className="flex h-[45px] w-[45px] items-center justify-center rounded-[5px]"
+          style={{ background: "rgba(13,148,136,0.1)" }}
+        >
           <Image src="/icons/edit.svg" alt="edit" width={25} height={25} />
-        </Box>
-        <Box>
-          <Typography sx={{ color: "#0D9488", fontWeight: 600, fontSize: "20px" }}>Edit Job Post</Typography>
-          <Typography sx={{ fontSize: "12px", color: "#546274" }}>Update the job details for this position</Typography>
-        </Box>
-      </Box>
+        </div>
+        <div>
+          <p className="text-[20px] font-semibold text-[#0D9488]">Edit Job Post</p>
+          <p className="text-[12px] text-[#546274]">Update the job details for this position</p>
+        </div>
+      </div>
 
       {/* ── Job Details Section ── */}
-      <Box sx={{ mt: 1 }}>
-        <Typography sx={sectionTitleSx}>Job Details</Typography>
+      <div className="mt-2">
+        <p className={sectionTitleClass}>Job Details</p>
 
         {/* Title + Expiration */}
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={labelSx}>Job Title</Typography>
-            <TextField fullWidth variant="outlined" sx={inputStyle} {...register("jobDetails.title")} />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography sx={labelSx}>Expiration Date</Typography>
+        <div className="flex gap-4">
+          <div className="flex-1">
+            <p className={labelClass}>Job Title</p>
+            <Input className="h-10 text-[12px] font-medium" {...register("jobDetails.title")} />
+          </div>
+          <div className="flex-1">
+            <p className={labelClass}>Expiration Date</p>
             <Controller
               name="expirationDate"
               control={control}
@@ -172,61 +167,62 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
                 );
               }}
             />
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {/* Work Mode */}
-        <Box sx={{ flex: 1 }}>
-          <Typography variant="subtitle2" sx={labelSx}>Work Mode</Typography>
+        <div className="flex-1">
+          <p className={labelClass}>Work Mode</p>
           <Controller
             name="jobDetails.workMode"
             control={control}
             render={({ field }) => (
-              <TextField select {...field} fullWidth sx={inputStyle}
-                FormHelperTextProps={{ sx: { marginLeft: 0 } }}
-                InputProps={{ startAdornment: <InputAdornment position="start"><Image src="/icons/building3.svg" alt="work mode" width={16} height={16} /></InputAdornment> }}
-              >
-                <MenuItem disabled value="" sx={{ fontSize: "12px", fontWeight: 500 }}>Work Mode</MenuItem>
-                {workModes.map((m) => <MenuItem key={m} value={m} sx={{ fontSize: "12px", fontWeight: 500 }}>{m}</MenuItem>)}
-              </TextField>
+              <div className={selectBoxClass}>
+                <Image src="/icons/building3.svg" alt="work mode" width={16} height={16} />
+                <select {...field} className={selectClass}>
+                  <option disabled value="">Work Mode</option>
+                  {workModes.map((m) => <option key={m} value={m}>{m}</option>)}
+                </select>
+              </div>
             )}
           />
-        </Box>
+        </div>
 
         {/* Employment Type + Experience Level */}
-        <Box sx={{ display: "flex", gap: 2, mb: 2 }}>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" sx={labelSx}>Employment Type</Typography>
+        <div className="mb-4 flex gap-4">
+          <div className="flex-1">
+            <p className={labelClass}>Employment Type</p>
             <Controller
               name="jobDetails.employmentType"
               control={control}
               render={({ field }) => (
-                <TextField select {...field} fullWidth sx={inputStyle}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><Image src="/icons/bag.svg" alt="employment" width={16} height={16} /></InputAdornment> }}
-                  FormHelperTextProps={{ sx: { marginLeft: 0 } }}
-                >
-                  <MenuItem disabled value="" sx={{ fontSize: "12px", fontWeight: 500 }}>Employment Type</MenuItem>
-                  {contractTypes.map((c) => <MenuItem key={c} value={c} sx={{ fontSize: "12px", fontWeight: 500 }}>{c}</MenuItem>)}
-                </TextField>
+                <div className={selectBoxClass}>
+                  <Image src="/icons/bag.svg" alt="employment" width={16} height={16} />
+                  <select {...field} className={selectClass}>
+                    <option disabled value="">Employment Type</option>
+                    {contractTypes.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
               )}
             />
-          </Box>
-          <Box sx={{ flex: 1 }}>
-            <Typography variant="subtitle2" sx={labelSx}>Experience Level</Typography>
+          </div>
+          <div className="flex-1">
+            <p className={labelClass}>Experience Level</p>
             <Controller
               name="jobDetails.experienceLevel"
               control={control}
               render={({ field }) => (
-                <TextField select {...field} fullWidth sx={inputStyle}
-                  InputProps={{ startAdornment: <InputAdornment position="start"><TrendingUpIcon size={16} color="rgba(98,111,134,1)" /></InputAdornment> }}
-                >
-                  <MenuItem disabled value="" sx={{ fontSize: "12px", fontWeight: 500 }}>Experience Level</MenuItem>
-                  {experienceLevels.map((l) => <MenuItem key={l} value={l} sx={{ fontSize: "12px", fontWeight: 500 }}>{l}</MenuItem>)}
-                </TextField>
+                <div className={selectBoxClass}>
+                  <TrendingUpIcon size={16} color="rgba(98,111,134,1)" />
+                  <select {...field} className={selectClass}>
+                    <option disabled value="">Experience Level</option>
+                    {experienceLevels.map((l) => <option key={l} value={l}>{l}</option>)}
+                  </select>
+                </div>
               )}
             />
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         <SalaryRange
           salaryRange={salary}
@@ -236,7 +232,7 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
 
         {/* Skills (AI posts only) */}
         {job?.creationType === "ai" && (
-          <Box sx={{ mt: 2 }}>
+          <div className="mt-4">
             <EditSkillsSection
               requiredSkills={requiredSkills}
               softSkills={softSkills}
@@ -244,54 +240,56 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
               onEdit={handleEdit}
               onDelete={handleDelete}
             />
-          </Box>
+          </div>
         )}
 
         {/* Description */}
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" sx={sectionTitleSx}>Description</Typography>
-          <TextField
+        <div className="mt-4">
+          <p className={sectionTitleClass}>Description</p>
+          <Textarea
             placeholder="Job Description"
-            multiline minRows={4} fullWidth
-            sx={{ mt: 2, "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 } }}
+            rows={4}
+            className="mt-4 text-[12px] font-medium"
             {...register("jobDetails.description")}
           />
-        </Box>
+        </div>
 
         {/* Requirements */}
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" sx={sectionTitleSx}>Requirements</Typography>
+        <div className="mt-4">
+          <p className={sectionTitleClass}>Requirements</p>
           <Controller
             name="jobDetails.requirements"
             control={control}
             render={({ field }) => (
-              <TextField
+              <Textarea
                 value={Array.isArray(field.value) ? field.value.join("\n") : ""}
                 onChange={(e) => field.onChange(e.target.value.split("\n"))}
-                placeholder="Job Requirements" multiline minRows={4} fullWidth
-                sx={{ mt: 2, "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 } }}
+                placeholder="Job Requirements"
+                rows={4}
+                className="mt-4 text-[12px] font-medium"
               />
             )}
           />
-        </Box>
+        </div>
 
         {/* Responsibilities */}
-        <Box sx={{ mt: 2 }}>
-          <Typography variant="subtitle2" sx={sectionTitleSx}>Responsibilities</Typography>
+        <div className="mt-4">
+          <p className={sectionTitleClass}>Responsibilities</p>
           <Controller
             name="jobDetails.responsibilities"
             control={control}
             render={({ field }) => (
-              <TextField
+              <Textarea
                 value={Array.isArray(field.value) ? field.value.join("\n") : ""}
                 onChange={(e) => field.onChange(e.target.value.split("\n"))}
-                placeholder="Job Responsibilities" multiline minRows={4} fullWidth
-                sx={{ mt: 2, "& .MuiInputBase-root": { fontSize: "12px", fontWeight: 500 } }}
+                placeholder="Job Responsibilities"
+                rows={4}
+                className="mt-4 text-[12px] font-medium"
               />
             )}
           />
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Threshold Score */}
       <EditThresholdScore control={control} />
@@ -312,7 +310,7 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
       )}
 
       {/* Actions */}
-      <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 1, mt: 4, pt: 3, borderTop: "1px solid #E5E7EB" }}>
+      <div className="mt-8 flex justify-end gap-2 border-t border-[#E5E7EB] pt-6">
         <Button
           variant="ghost"
           onClick={() => { reset(getInitialValues(job)); onCancel(); }}
@@ -323,8 +321,8 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
         <Button variant="default" type="submit" className="h-[42px] w-[120px] rounded-[38px]">
           Save
         </Button>
-      </Box>
-    </Box>
+      </div>
+    </form>
   );
 };
 

@@ -1,7 +1,7 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Skeleton } from "@mui/material";
 import { Briefcase as WorkOutlineOutlined, CheckCircle2 as CheckCircleOutline, FileEdit as EditNoteOutlined, Clock as AccessTimeOutlined } from "lucide-react";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { usePostMetricsQuery } from "../queries";
 
 const CARD_DEFS = [
@@ -11,33 +11,27 @@ const CARD_DEFS = [
   { key: "closed", Icon: AccessTimeOutlined,  color: "#DC2626", bg: "#FEF2F2" },
 ] as const;
 
-const GRID_SX  = { display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 2, mb: 3 } as const;
-const CARD_SX  = { bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 2.5, display: "flex", alignItems: "center", gap: 2 } as const;
-const ICON_BOX_BASE = { width: 42, height: 42, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } as const;
-const LABEL_SX = { fontSize: "0.68rem", fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.05em", mt: 0.4 } as const;
-const VALUE_SX = { fontSize: "1.4rem", fontWeight: 800, color: "#111827", lineHeight: 1 } as const;
-
 const PostsStats: React.FC = memo(() => {
   const { t } = useTranslation("posts");
   const { data: metrics, isLoading } = usePostMetricsQuery();
 
   return (
-    <Box sx={GRID_SX}>
+    <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-4">
       {CARD_DEFS.map(({ key, Icon, color, bg }) => (
-        <Box key={key} sx={CARD_SX}>
-          <Box sx={{ ...ICON_BOX_BASE, bgcolor: bg }}>
+        <div key={key} className="flex items-center gap-4 rounded-2xl border border-[#E5E7EB] bg-white p-5">
+          <div className="flex h-[42px] w-[42px] shrink-0 items-center justify-center rounded-[10px]" style={{ backgroundColor: bg }}>
             <Icon size={20} color={color} />
-          </Box>
-          <Box>
+          </div>
+          <div>
             {isLoading
-              ? <Skeleton variant="text" width={50} height={28} />
-              : <Typography sx={VALUE_SX}>{(metrics as any)?.[key] ?? 0}</Typography>
+              ? <Skeleton className="h-7 w-[50px]" />
+              : <p className="text-[1.4rem] leading-none font-extrabold text-[#111827]">{(metrics as any)?.[key] ?? 0}</p>
             }
-            <Typography sx={LABEL_SX}>{t(`stats.${key}`)}</Typography>
-          </Box>
-        </Box>
+            <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-wider text-[#9CA3AF]">{t(`stats.${key}`)}</p>
+          </div>
+        </div>
       ))}
-    </Box>
+    </div>
   );
 });
 

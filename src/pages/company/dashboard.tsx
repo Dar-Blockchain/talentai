@@ -1,5 +1,4 @@
 import React, { memo, useMemo } from "react";
-import { Box } from "@mui/material";
 import { useDashboard } from "@/modules/company/dashboard/hooks/useDashboard";
 import KpiStatCards         from "@/modules/company/dashboard/components/KpiStatCards";
 import KpiFiltersBar        from "@/modules/company/dashboard/components/KpiFiltersBar";
@@ -27,10 +26,8 @@ const CompanyDashboardContent = memo(() => {
     [postsQ.data],
   );
 
-  const CONTAINER_SX = { maxWidth: 1440, mx: "auto" } as const;
-
   return (
-      <Box sx={CONTAINER_SX}>
+      <div className="max-w-[1440px] mx-auto">
         <KpiStatCards />
         <KpiFiltersBar
           postId={postId}
@@ -65,7 +62,7 @@ const CompanyDashboardContent = memo(() => {
           data={roiQ.data}
           loading={roiQ.isLoading}
         />
-      </Box>
+      </div>
   );
 });
 CompanyDashboardContent.displayName = "CompanyDashboardContent";

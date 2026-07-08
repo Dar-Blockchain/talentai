@@ -1,4 +1,3 @@
-import { Box } from "@mui/material";
 import { Search as SearchIcon } from "lucide-react";
 import { RefObject } from "react";
 
@@ -9,44 +8,27 @@ interface Props {
 }
 
 const CurrencySearchInput = ({ value, onChange, inputRef }: Props) => (
-  <Box sx={{ p: "8px 10px", borderBottom: "1px solid #F3F4F6", bgcolor: "#FAFAFA" }}>
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "center",
-        gap: 1,
-        bgcolor: "#fff",
-        border: "1px solid #E5E7EB",
-        borderRadius: "7px",
-        px: 1,
-        height: 34,
-      }}
-    >
+  <div className="border-b border-[#F3F4F6] bg-[#FAFAFA] px-2.5 py-2">
+    <div className="flex h-[34px] items-center gap-2 rounded-[7px] border border-[#E5E7EB] bg-white px-2">
       <SearchIcon size={15} color="#9CA3AF" className="shrink-0" />
       <input
         ref={inputRef}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder="Search currency…"
-        style={{
-          border: "none",
-          outline: "none",
-          fontSize: "12px",
-          width: "100%",
-          background: "transparent",
-          color: "#374151",
-        }}
+        className="w-full border-none bg-transparent text-xs text-[#374151] outline-none"
       />
       {value && (
-        <Box
+        <button
+          type="button"
           onClick={() => onChange("")}
-          sx={{ fontSize: "12px", color: "#9CA3AF", cursor: "pointer", "&:hover": { color: "#374151" } }}
+          className="text-xs text-[#9CA3AF] hover:text-[#374151]"
         >
           ✕
-        </Box>
+        </button>
       )}
-    </Box>
-  </Box>
+    </div>
+  </div>
 );
 
 export default CurrencySearchInput;

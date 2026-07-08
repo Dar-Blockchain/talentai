@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import {
-  Box, Typography, IconButton, Chip, Tabs, Tab,
-  CircularProgress, Divider, Pagination, Dialog, DialogContent,
-} from '@mui/material';
+import { Dialog, DialogContent } from '@/modules/shared/ui/shadcn/dialog';
+import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
+import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import {
   CheckCircle2 as CheckCircleIcon,
@@ -76,34 +77,23 @@ const DeleteConfirmDialog: React.FC<{
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate_settings.notifications.${k}`);
   return (
-    <Dialog open={confirm.open} onClose={onCancel}
-      PaperProps={{
-        sx: {
-          borderRadius: '20px', p: 0, minWidth: 400, maxWidth: 420,
-          overflow: 'hidden', boxShadow: '0 32px 80px rgba(0,0,0,0.18)',
-          border: '1px solid #F3F4F6',
-        },
-      }}
-    >
-      <DialogContent sx={{ p: 0 }}>
-        <Box sx={{ bgcolor: '#fff', px: 3.5, pt: 4, pb: 3, textAlign: 'center' }}>
-          <Box sx={{
-            width: 80, height: 80, borderRadius: '50%',
-            background: 'radial-gradient(circle, #FEE2E2 60%, #FECACA 100%)',
-            boxShadow: '0 0 0 10px rgba(239,68,68,0.08)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            mx: 'auto', mb: 2.5,
-          }}>
+    <Dialog open={confirm.open} onOpenChange={(next) => { if (!next) onCancel(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="min-w-[400px] max-w-[420px] gap-0 overflow-hidden rounded-[20px] border border-[#F3F4F6] p-0 shadow-[0_32px_80px_rgba(0,0,0,0.18)]"
+      >
+        <div className="bg-white px-[28px] pt-8 pb-6 text-center">
+          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full shadow-[0_0_0_10px_rgba(239,68,68,0.08)]" style={{ background: 'radial-gradient(circle, #FEE2E2 60%, #FECACA 100%)' }}>
             <DeleteForeverIcon size={36} color='#EF4444' />
-          </Box>
-          <Typography sx={{ fontWeight: 800, fontSize: '1.1rem', color: '#111827', mb: 1 }}>
+          </div>
+          <p className="mb-1 text-[1.1rem] font-extrabold text-[#111827]">
             {confirm.type === 'all' ? s('confirm_delete_all_title') : s('confirm_delete_one_title')}
-          </Typography>
-          <Typography sx={{ fontSize: '0.82rem', color: '#9CA3AF', lineHeight: 1.7, px: 1 }}>
+          </p>
+          <p className="px-1 text-[0.82rem] leading-[1.7] text-[#9CA3AF]">
             {confirm.type === 'all' ? s('confirm_delete_all_body') : s('confirm_delete_one_body')}
-          </Typography>
-        </Box>
-        <Divider sx={{ borderColor: '#F3F4F6' }} />
+          </p>
+        </div>
+        <hr className="border-[#F3F4F6]" />
         <div className="flex gap-2 p-3">
           <Button variant="outline" onClick={onCancel} className="flex-1">
             {s('btn_cancel')}
@@ -157,8 +147,8 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
   const totalPages   = Math.ceil(currentList.length / PAGE_SIZE);
   const visibleItems = currentList.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
 
-  const handleTabChange = (_: React.SyntheticEvent, value: number) => {
-    setActiveTab(value);
+  const handleTabChange = (value: string) => {
+    setActiveTab(Number(value));
     setPage(1);
   };
 
@@ -191,7 +181,7 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
   const actionButtonClass = `rounded-lg font-semibold ${isPage ? 'text-[13px]' : 'text-xs'}`;
 
   const actionButtons = currentList.length > 0 && (
-    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+    <div className="flex flex-wrap gap-2">
       {!isOnArchivedTab && unreadCount > 0 && (
         <Button
           size="sm"
@@ -225,69 +215,69 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
         <DeleteForeverIcon size={14} />
         {s('delete_all')}
       </Button>
-    </Box>
+    </div>
   );
 
   const emptyState = (
-    <Box sx={{ py: isPage ? 10 : 6, textAlign: 'center', ...(!isPage ? { border: '2px dashed #E5E7EB', borderRadius: '12px', bgcolor: '#FAFAFA' } : {}) }}>
-      <Box sx={{ width: isPage ? 64 : 56, height: isPage ? 64 : 56, borderRadius: '50%', bgcolor: isPage ? '#F3F4F6' : '#F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'center', mx: 'auto', mb: isPage ? 2 : 1.5 }}>
+    <div className={`text-center ${isPage ? 'py-10' : 'py-6 rounded-xl border-2 border-dashed border-[#E5E7EB] bg-[#FAFAFA]'}`}>
+      <div className={`mx-auto flex items-center justify-center rounded-full ${isPage ? 'w-16 h-16 mb-4 bg-[#F3F4F6]' : 'w-14 h-14 mb-3 bg-[#F1F5F9]'}`}>
         <InfoIcon size={isPage ? 32 : 28} color={isPage ? '#9CA3AF' : '#CBD5E1'} />
-      </Box>
-      <Typography sx={{ fontWeight: 600, fontSize: '0.9rem', color: isPage ? '#374151' : NAVY, mb: 0.5 }}>
+      </div>
+      <p className="mb-0.5 text-[0.9rem] font-semibold" style={{ color: isPage ? '#374151' : NAVY }}>
         {isOnArchivedTab ? s('empty_archived_title') : s(isPage ? 'page_empty_title' : 'empty_title')}
-      </Typography>
-      <Typography sx={{ fontSize: '0.78rem', color: '#9CA3AF' }}>
+      </p>
+      <p className="text-[0.78rem] text-[#9CA3AF]">
         {isOnArchivedTab
           ? s('empty_archived_subtitle')
           : (isPage ? s('page_empty_subtitle') : isConnected ? s('empty_subtitle') : s('empty_connecting'))}
-      </Typography>
-    </Box>
+      </p>
+    </div>
   );
 
   const renderList = (items: NotificationItem[]) => items.map((n, index) => {
     const colors = getPanelTypeStyle(n.type);
     return (
       <React.Fragment key={n.id}>
-        <Box
+        <div
           onClick={() => !n.isRead && markAsRead(n.id)}
-          sx={{
-            p: isPage ? 2.5 : 2,
-            display: 'flex', gap: isPage ? 2 : 1.5, alignItems: 'flex-start',
-            borderRadius: isPage ? 0 : '12px',
+          className={`flex items-start transition-colors hover:[box-shadow:var(--row-hover-shadow)] hover:bg-[var(--row-hover-bg)] ${isPage ? 'gap-4 p-5 rounded-none' : 'gap-3 p-4 rounded-xl'} ${!n.isRead ? 'cursor-pointer' : 'cursor-default'}`}
+          style={{
             border: isPage ? 'none' : `1px solid ${n.isRead ? '#F1F5F9' : colors.border}`,
-            bgcolor: n.isRead ? (isPage ? 'transparent' : '#FAFAFA') : (isPage ? '#F9FAFB' : colors.bg),
-            cursor: !n.isRead ? 'pointer' : 'default',
-            transition: 'background-color 0.15s',
-            '&:hover': { bgcolor: isPage ? '#F3F4F6' : undefined, boxShadow: isPage ? 'none' : '0 2px 8px rgba(0,0,0,0.06)' },
+            backgroundColor: n.isRead ? (isPage ? 'transparent' : '#FAFAFA') : (isPage ? '#F9FAFB' : colors.bg),
+            ['--row-hover-bg' as string]: isPage ? '#F3F4F6' : (n.isRead ? '#FAFAFA' : colors.bg),
+            ['--row-hover-shadow' as string]: isPage ? 'none' : '0 2px 8px rgba(0,0,0,0.06)',
           }}
         >
-          <Box sx={{
-            width: isPage ? 42 : 36, height: isPage ? 42 : 36, minWidth: isPage ? 42 : 36,
-            borderRadius: isPage ? '50%' : '10px', bgcolor: colors.bg,
-            border: isPage ? 'none' : `1px solid ${colors.border}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', color: colors.color, flexShrink: 0,
-          }}>
+          <div
+            className={`flex shrink-0 items-center justify-center ${isPage ? 'w-[42px] h-[42px] rounded-full' : 'w-9 h-9 rounded-[10px]'}`}
+            style={{ background: colors.bg, border: isPage ? 'none' : `1px solid ${colors.border}`, color: colors.color }}
+          >
             {getIcon(n.type)}
-          </Box>
-          <Box sx={{ flex: 1, minWidth: 0 }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.25, justifyContent: 'space-between' }}>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <Typography sx={{ fontWeight: 600, fontSize: '0.85rem', color: NAVY }}>{n.title}</Typography>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="mb-0.5 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="text-[0.85rem] font-semibold" style={{ color: NAVY }}>{n.title}</span>
                 {!n.isRead && (
-                  <Chip label={s(isPage ? 'badge_new_inline' : 'badge_new')} size="small" sx={{
-                    height: 18, fontSize: '0.65rem', fontWeight: 700,
-                    bgcolor: isPage ? '#EFF6FF' : TBG,
-                    color:   isPage ? '#1D4ED8' : T,
-                    border:  `1px solid ${isPage ? '#BFDBFE' : TBRD}`,
-                  }} />
+                  <Badge
+                    variant="outline"
+                    className="h-[18px] rounded-full text-[0.65rem] font-bold"
+                    style={{
+                      backgroundColor: isPage ? '#EFF6FF' : TBG,
+                      color: isPage ? '#1D4ED8' : T,
+                      borderColor: isPage ? '#BFDBFE' : TBRD,
+                    }}
+                  >
+                    {s(isPage ? 'badge_new_inline' : 'badge_new')}
+                  </Badge>
                 )}
-              </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, color: '#94A3B8', flexShrink: 0 }}>
+              </div>
+              <div className="flex shrink-0 items-center gap-1 text-[#94A3B8]">
                 <AccessTimeIcon size={13} />
-                <Typography sx={{ fontSize: '0.7rem' }}>{n.timestamp}</Typography>
-              </Box>
-            </Box>
-            <Typography sx={{ fontSize: '0.78rem', color: '#6B7280', lineHeight: 1.5 }}>{n.message}</Typography>
+                <span className="text-[0.7rem]">{n.timestamp}</span>
+              </div>
+            </div>
+            <p className="text-[0.78rem] leading-[1.5] text-[#6B7280]">{n.message}</p>
             {n.link && (
               <Button
                 size="sm"
@@ -298,90 +288,92 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
                 <ArrowForwardIcon size={14} />
               </Button>
             )}
-          </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.25, alignSelf: 'flex-start' }}>
+          </div>
+          <div className="flex shrink-0 flex-col gap-0.5 self-start">
             {!isOnArchivedTab && (
-              <IconButton size="small" title="Archive"
+              <button title="Archive"
                 onClick={(e) => { e.stopPropagation(); handleArchive(n.id); }}
-                sx={{ borderRadius: 1.5, '&:hover': { bgcolor: '#F1F5F9' } }}>
+                className="rounded-md p-1.5 hover:bg-[#F1F5F9]">
                 <ArchiveIcon size={17} color='#9CA3AF' />
-              </IconButton>
+              </button>
             )}
-            <IconButton size="small" title="Delete"
+            <button title="Delete"
               onClick={(e) => { e.stopPropagation(); setConfirm({ open: true, type: 'single', id: n.id }); }}
-              sx={{ borderRadius: 1.5, bgcolor: '#FEF2F2', border: '1px solid #FECACA', '&:hover': { bgcolor: '#FEE2E2', borderColor: '#FCA5A5' } }}>
+              className="rounded-md border border-[#FECACA] bg-[#FEF2F2] p-1.5 hover:border-[#FCA5A5] hover:bg-[#FEE2E2]">
               <DeleteIcon size={17} color='#EF4444' />
-            </IconButton>
-          </Box>
-        </Box>
-        {isPage && index < items.length - 1 && <Divider />}
+            </button>
+          </div>
+        </div>
+        {isPage && index < items.length - 1 && <hr className="border-slate-100" />}
       </React.Fragment>
     );
   });
 
   return (
     <>
-      <Box sx={{ bgcolor: '#fff', borderRadius: '16px', border: '1px solid #E5E7EB', overflow: 'hidden', boxShadow: '0 1px 4px rgba(0,0,0,0.04)', mb: isPage ? 0 : 2 }}>
-        <Box sx={{ px: 2.5, py: 2, borderBottom: '1px solid #F1F5F9', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 1 }}>
-          <Box>
-            <Typography sx={{ fontWeight: 700, fontSize: '0.95rem', color: NAVY }}>
+      <div className={`overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)] ${isPage ? '' : 'mb-4'}`}>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[#F1F5F9] px-5 py-4">
+          <div>
+            <p className="text-[0.95rem] font-bold" style={{ color: NAVY }}>
               {s(isPage ? 'page_title' : 'title')}
-            </Typography>
+            </p>
             {!isPage && (
-              <Typography sx={{ fontSize: '0.72rem', color: '#94A3B8', mt: 0.25 }}>{s('subtitle')}</Typography>
+              <p className="mt-0.5 text-[0.72rem] text-[#94A3B8]">{s('subtitle')}</p>
             )}
-          </Box>
-          <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+          </div>
+          <div className="flex flex-wrap items-center gap-2">
             {!isPage && (
-              <Chip
-                icon={isConnected ? <WifiIcon size={14} /> : <WifiOffIcon size={14} />}
-                label={isConnected ? s('connected') : s('disconnected')}
-                size="small" color={isConnected ? 'success' : 'error'}
-                sx={{ fontWeight: 600, fontSize: '0.72rem' }}
-              />
+              <Badge
+                variant="outline"
+                className="gap-1 border-transparent text-[0.72rem] font-semibold"
+                style={isConnected
+                  ? { backgroundColor: '#ECFDF5', color: '#059669' }
+                  : { backgroundColor: '#FEF2F2', color: '#DC2626' }}
+              >
+                {isConnected ? <WifiIcon size={14} /> : <WifiOffIcon size={14} />}
+                {isConnected ? s('connected') : s('disconnected')}
+              </Badge>
             )}
             {actionButtons}
-          </Box>
-        </Box>
-        <Box sx={{ p: 2.5 }}>
+          </div>
+        </div>
+        <div className="p-5">
           {!isPage && (
-            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 1.5, mb: 2.5 }}>
+            <div className="mb-5 grid grid-cols-4 gap-3">
               {statItems.map(({ label, value, color }) => (
-                <Box key={label} sx={{ textAlign: 'center', p: 1.5, borderRadius: '12px', border: '1px solid #F1F5F9', bgcolor: '#FAFAFA' }}>
-                  <Typography sx={{ fontWeight: 800, fontSize: '1.4rem', color, lineHeight: 1 }}>{value}</Typography>
-                  <Typography sx={{ fontSize: '0.68rem', color: '#94A3B8', mt: 0.5, fontWeight: 600 }}>{label}</Typography>
-                </Box>
+                <div key={label} className="rounded-xl border border-[#F1F5F9] bg-[#FAFAFA] p-3 text-center">
+                  <p className="text-[1.4rem] font-extrabold leading-none" style={{ color }}>{value}</p>
+                  <p className="mt-1 text-[0.68rem] font-semibold text-[#94A3B8]">{label}</p>
+                </div>
               ))}
-            </Box>
+            </div>
           )}
-          <Box sx={{ borderBottom: '1px solid #F1F5F9', mb: 2 }}>
-            <Tabs value={activeTab} onChange={handleTabChange}
-              sx={{
-                minHeight: 40,
-                '& .MuiTab-root': { textTransform: 'none', fontWeight: 600, fontSize: '0.82rem', minHeight: 40, py: 0.5 },
-                '& .Mui-selected': { color: T },
-                '& .MuiTabs-indicator': { backgroundColor: T, height: 2 },
-              }}>
-              <Tab label={t('candidate_settings.notifications.tab_active', { count: notifications.length })} />
-              <Tab label={t('candidate_settings.notifications.tab_archived', { count: archivedCount })} />
+          <div className="mb-4 border-b border-[#F1F5F9]">
+            <Tabs value={String(activeTab)} onValueChange={handleTabChange}>
+              <TabsList variant="line" className="h-10 w-auto gap-0 rounded-none border-b-0 bg-transparent">
+                <TabsTrigger value="0" className="rounded-none px-4 text-[0.82rem] data-[state=active]:text-teal-600 data-[state=active]:after:bg-teal-500">
+                  {t('candidate_settings.notifications.tab_active', { count: notifications.length })}
+                </TabsTrigger>
+                <TabsTrigger value="1" className="rounded-none px-4 text-[0.82rem] data-[state=active]:text-teal-600 data-[state=active]:after:bg-teal-500">
+                  {t('candidate_settings.notifications.tab_archived', { count: archivedCount })}
+                </TabsTrigger>
+              </TabsList>
             </Tabs>
-          </Box>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: isPage ? 0 : 1.5 }}>
+          </div>
+          <div className={`flex flex-col ${isPage ? 'gap-0' : 'gap-3'}`}>
             {isOnArchivedTab && archivedLoading ? (
-              <Box sx={{ py: 6, textAlign: 'center' }}>
-                <CircularProgress size={24} sx={{ color: T }} />
-              </Box>
+              <div className="py-6 text-center">
+                <Spinner className="mx-auto size-6" style={{ color: T }} />
+              </div>
             ) : visibleItems.length === 0 ? emptyState : renderList(visibleItems)}
-          </Box>
+          </div>
           {totalPages > 1 && (
-            <Box sx={{ display: 'flex', justifyContent: 'center', pt: 2, borderTop: '1px solid #E5E7EB', mt: 2 }}>
-              <Pagination count={totalPages} page={page} onChange={(_, v) => setPage(v)} shape="rounded"
-                sx={{ '& .MuiPaginationItem-root': { fontWeight: 500, '&.Mui-selected': { bgcolor: 'rgba(13,148,136,0.1)', color: T, fontWeight: 700 }, '&:hover': { bgcolor: '#F3F4F6' } } }}
-              />
-            </Box>
+            <div className="mt-4 flex justify-center border-t border-[#E5E7EB] pt-4">
+              <Pagination page={page} totalPages={totalPages} onPageChange={setPage} />
+            </div>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
       <DeleteConfirmDialog confirm={confirm} onCancel={() => setConfirm(CLOSED)} onConfirm={handleConfirmDelete} />
     </>
   );

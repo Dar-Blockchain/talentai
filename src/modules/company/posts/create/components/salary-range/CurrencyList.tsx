@@ -1,5 +1,5 @@
-import { Box, Typography } from "@mui/material";
 import { Check as CheckIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface CurrencyOption {
   value: string;
@@ -15,76 +15,48 @@ interface Props {
 const currencyName = (label: string) => label.split("–")[1]?.trim() ?? label;
 
 const CurrencyList = ({ options, selected, onSelect }: Props) => (
-  <Box
-    sx={{
-      maxHeight: 240,
-      overflowY: "auto",
-      "&::-webkit-scrollbar": { width: "4px" },
-      "&::-webkit-scrollbar-track": { bgcolor: "transparent" },
-      "&::-webkit-scrollbar-thumb": { bgcolor: "#D1D5DB", borderRadius: "4px" },
-    }}
-  >
+  <div className="max-h-[240px] overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-[#D1D5DB]">
     {options.length === 0 ? (
-      <Box sx={{ px: 2, py: 3, textAlign: "center" }}>
-        <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>No currencies found</Typography>
-      </Box>
+      <div className="px-4 py-6 text-center">
+        <p className="text-xs text-[#9CA3AF]">No currencies found</p>
+      </div>
     ) : (
       options.map((c) => {
         const isSelected = c.value === selected;
         return (
-          <Box
+          <div
             key={c.value}
             onMouseDown={(e) => {
               e.preventDefault();
               onSelect(c.value);
             }}
-            sx={{
-              px: "12px",
-              py: "7px",
-              display: "flex",
-              alignItems: "center",
-              gap: 1.5,
-              cursor: "pointer",
-              bgcolor: isSelected ? "#F0F9FF" : "transparent",
-              "&:hover": { bgcolor: isSelected ? "#E0F2FE" : "#F9FAFB" },
-            }}
+            className={cn(
+              "flex cursor-pointer items-center gap-3 px-3 py-[7px]",
+              isSelected ? "bg-[#F0F9FF] hover:bg-[#E0F2FE]" : "bg-transparent hover:bg-[#F9FAFB]"
+            )}
           >
-            <Box
-              sx={{
-                minWidth: 40,
-                textAlign: "center",
-                px: 0.5,
-                py: 0.2,
-                bgcolor: isSelected ? "#DBEAFE" : "#F3F4F6",
-                borderRadius: "4px",
-                fontSize: "10px",
-                fontWeight: 700,
-                color: isSelected ? "#1D4ED8" : "#6B7280",
-                flexShrink: 0,
-                letterSpacing: "0.02em",
-              }}
+            <div
+              className={cn(
+                "min-w-[40px] shrink-0 rounded px-1 py-px text-center text-[10px] font-bold tracking-[0.02em]",
+                isSelected ? "bg-[#DBEAFE] text-[#1D4ED8]" : "bg-[#F3F4F6] text-[#6B7280]"
+              )}
             >
               {c.value}
-            </Box>
-            <Typography
-              sx={{
-                fontSize: "12px",
-                color: isSelected ? "#0C4A6E" : "#374151",
-                fontWeight: isSelected ? 500 : 400,
-                flex: 1,
-                overflow: "hidden",
-                textOverflow: "ellipsis",
-                whiteSpace: "nowrap",
-              }}
+            </div>
+            <p
+              className={cn(
+                "flex-1 overflow-hidden text-ellipsis whitespace-nowrap text-xs",
+                isSelected ? "font-medium text-[#0C4A6E]" : "font-normal text-[#374151]"
+              )}
             >
               {currencyName(c.label)}
-            </Typography>
+            </p>
             {isSelected && <CheckIcon size={14} color="#0891B2" className="shrink-0" />}
-          </Box>
+          </div>
         );
       })
     )}
-  </Box>
+  </div>
 );
 
 export default CurrencyList;

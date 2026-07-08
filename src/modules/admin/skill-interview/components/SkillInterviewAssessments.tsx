@@ -1,22 +1,12 @@
 import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Dialog, DialogContent } from '@/modules/shared/ui/shadcn/dialog';
+import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/modules/shared/ui/shadcn/tooltip';
 import {
-  CircularProgress,
-  IconButton,
-  Dialog,
-  DialogContent,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  SelectChangeEvent,
-  Tooltip,
-  Menu,
-  ListItemIcon,
-  ListItemText,
-} from '@mui/material';
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from '@/modules/shared/ui/shadcn/dropdown-menu';
 import {
   Eye as VisibilityIcon,
-  X as CloseIcon,
   Trophy as ExcellentIcon,
   TrendingUp as SatisfactoryIcon,
   TrendingDown as NeedsImprovementIcon,
@@ -33,6 +23,7 @@ import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
 import { ScoreBadge, scoreTone, ADMIN_NEUTRAL, ADMIN_RADIUS, AdminPageHeading, AdminStatCard, AdminTableErrorRow, ConfirmDialog } from '@/modules/admin/shared';
+import { cn } from '@/lib/utils';
 
 interface IndicatorData { name: string; covered: boolean; evidence: string[]; quality: number; aiGenerated: boolean; reasoning?: string; }
 interface AreaData { percentage: number; indicators: IndicatorData[]; weight: number; depth?: string; completed: boolean; lastUpdated?: string; aiAnalysis?: { qualityScore?: number; reasoning?: string; indicators?: string[] }; questionsAsked: number; lastQuestionTime?: string; }
@@ -83,8 +74,6 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
 
   const [selectedAssessment, setSelectedAssessment] = useState<SkillInterviewAssessmentData | null>(null);
   const [detailsDialogOpen, setDetailsDialogOpen]   = useState(false);
-  const [menuAnchor, setMenuAnchor]                 = useState<HTMLElement | null>(null);
-  const [menuAssessment, setMenuAssessment]         = useState<SkillInterviewAssessmentData | null>(null);
   const [deleteTarget, setDeleteTarget]             = useState<SkillInterviewAssessmentData | null>(null);
 
   const archiveMutation   = useArchiveSkillAssessmentMutation();
@@ -136,19 +125,15 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
     return true;
   }), [results, debounced, scoreTab]);
 
-  const openMenu  = useCallback((e: React.MouseEvent<HTMLElement>, a: SkillInterviewAssessmentData) => { setMenuAnchor(e.currentTarget); setMenuAssessment(a); }, []);
-  const closeMenu = useCallback(() => { setMenuAnchor(null); setMenuAssessment(null); }, []);
+  const handleArchiveToggle = useCallback((a: SkillInterviewAssessmentData) => {
+    a.archived ? unarchiveMutation.mutate(a._id) : archiveMutation.mutate(a._id);
+  }, [archiveMutation, unarchiveMutation]);
 
-  const handleArchiveToggle = useCallback(() => {
-    if (!menuAssessment) return;
-    menuAssessment.archived ? unarchiveMutation.mutate(menuAssessment._id) : archiveMutation.mutate(menuAssessment._id);
-    closeMenu();
-  }, [menuAssessment, archiveMutation, unarchiveMutation, closeMenu]);
-
-  const handleDeleteRequest = useCallback(() => { if (menuAssessment) { setDeleteTarget(menuAssessment); closeMenu(); } }, [menuAssessment, closeMenu]);
+  const handleDeleteRequest = useCallback((a: SkillInterviewAssessmentData) => { setDeleteTarget(a); }, []);
   const handleConfirmDelete = useCallback(() => { if (deleteTarget) deleteMutation.mutate(deleteTarget._id, { onSuccess: () => setDeleteTarget(null) }); }, [deleteTarget, deleteMutation]);
 
   return (
+    <TooltipProvider>
     <div className="space-y-6">
       <AdminPageHeading title="Skill Interview Assessments" subtitle={`${totalCount.toLocaleString()} assessments recorded`} />
 
@@ -171,15 +156,15 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
               className="w-full text-[13px] outline-none placeholder:text-slate-400 bg-transparent"
             />
           </div>
-          <FormControl size="small" sx={{ minWidth: 180 }}>
-            <InputLabel id="skill-filter-label">Skill</InputLabel>
-            <Select labelId="skill-filter-label" value={selectedSkill} label="Skill"
-              onChange={(e: SelectChangeEvent<string>) => { setSelectedSkill(e.target.value); setPage(1); }}>
-              <MenuItem value=""><em>All Skills</em></MenuItem>
-              {skills.map((s) => <MenuItem key={s} value={s}>{s}</MenuItem>)}
-            </Select>
-          </FormControl>
-          {loading && <CircularProgress size={16} sx={{ color: '#0D9488' }} />}
+          <select
+            value={selectedSkill}
+            onChange={(e) => { setSelectedSkill(e.target.value); setPage(1); }}
+            className="text-[13px] border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-teal-400 text-slate-600 bg-white min-w-[180px]"
+          >
+            <option value="">All Skills</option>
+            {skills.map((s) => <option key={s} value={s}>{s}</option>)}
+          </select>
+          {loading && <Spinner className="size-4" style={{ color: '#0D9488' }} />}
           <div className="flex-1" />
           <span className="text-[12px] text-slate-400">{filteredResults.length} of {totalCount}</span>
         </div>
@@ -229,15 +214,31 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                   <td className={TD}><ScoreBadge score={getScore(a)} /></td>
                   <td className={TD}><span className="capitalize text-slate-500">{a.interviewData?.interviewType?.replace(/_/g, ' ').toLowerCase() || 'N/A'}</span></td>
                   <td className={TD}><span className="text-slate-500">{formatDate(a.createdAt)}</span></td>
-                  <td className={TD}>
-                    <Tooltip title="View Details">
-                      <IconButton size="small" onClick={() => { setSelectedAssessment(a); setDetailsDialogOpen(true); }} sx={{ color: ADMIN_NEUTRAL }}>
-                        <VisibilityIcon size={18} />
-                      </IconButton>
+                  <td className={cn(TD, "flex items-center gap-0.5")}>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => { setSelectedAssessment(a); setDetailsDialogOpen(true); }} className="rounded-md p-1.5 hover:bg-slate-100" style={{ color: ADMIN_NEUTRAL }}>
+                          <VisibilityIcon size={18} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>View Details</TooltipContent>
                     </Tooltip>
-                    <IconButton size="small" onClick={(e) => openMenu(e, a)} sx={{ color: ADMIN_NEUTRAL }}>
-                      <MoreVertIcon size={18} />
-                    </IconButton>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <button className="rounded-md p-1.5 hover:bg-slate-100" style={{ color: ADMIN_NEUTRAL }}>
+                          <MoreVertIcon size={18} />
+                        </button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuItem onClick={() => handleArchiveToggle(a)} className="gap-2">
+                          {a.archived ? <UnarchiveIcon size={18} /> : <ArchiveIcon size={18} />}
+                          {a.archived ? 'Unarchive' : 'Archive'}
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleDeleteRequest(a)} variant="destructive" className="gap-2">
+                          <DeleteForeverIcon size={18} /> Delete permanently
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </td>
                 </tr>
               ))}
@@ -257,17 +258,14 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
       </Card>
 
       {/* Details Dialog */}
-      <Dialog open={detailsDialogOpen} onClose={() => setDetailsDialogOpen(false)} maxWidth="md" fullWidth
-        PaperProps={{ sx: { borderRadius: ADMIN_RADIUS, overflow: 'hidden', boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)' } }}>
+      <Dialog open={detailsDialogOpen} onOpenChange={(next) => { if (!next) setDetailsDialogOpen(false); }}>
+      <DialogContent className="sm:max-w-2xl p-0 gap-0 overflow-hidden" style={{ borderRadius: ADMIN_RADIUS, boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)' }}>
         {selectedAssessment && (() => {
           const score = getScore(selectedAssessment);
           const tone  = scoreTone(score);
           return (
             <>
               <div className="relative px-6 pt-6 pb-4">
-                <IconButton onClick={() => setDetailsDialogOpen(false)} sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#0D9488' } }}>
-                  <CloseIcon size={18} />
-                </IconButton>
                 <span className="text-[11px] uppercase tracking-[1.5px] text-slate-400">Skill Interview Assessment</span>
                 <h2 className="text-[1.35rem] font-semibold text-slate-900 mt-1 pr-8">{selectedAssessment.skill || 'Assessment Review'}</h2>
                 <div className="flex gap-2 mt-3 flex-wrap">
@@ -275,7 +273,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                   {selectedAssessment.category    && <Badge variant="outline" className="border-transparent bg-slate-100 text-slate-500">{selectedAssessment.category}</Badge>}
                 </div>
               </div>
-              <DialogContent sx={{ p: 0 }}>
+              <div>
                 <div className="px-6">
                   <div className="bg-white rounded-xl p-5 shadow-[0_1px_3px_rgba(15,23,42,0.06)] border border-slate-100 flex items-center gap-5">
                     <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0" style={{ background: `${tone.color}14` }}>
@@ -405,22 +403,12 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                   <span className="text-[10.5px] font-mono text-slate-400">ID: {selectedAssessment._id}</span>
                   <span className="text-[11px] text-slate-400">{formatDate(selectedAssessment.createdAt)}</span>
                 </div>
-              </DialogContent>
+              </div>
             </>
           );
         })()}
+      </DialogContent>
       </Dialog>
-
-      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-        <MenuItem onClick={handleArchiveToggle}>
-          <ListItemIcon>{menuAssessment?.archived ? <UnarchiveIcon size={18} /> : <ArchiveIcon size={18} />}</ListItemIcon>
-          <ListItemText>{menuAssessment?.archived ? 'Unarchive' : 'Archive'}</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleDeleteRequest} sx={{ color: '#DC2626' }}>
-          <ListItemIcon sx={{ color: '#DC2626' }}><DeleteForeverIcon size={18} /></ListItemIcon>
-          <ListItemText>Delete permanently</ListItemText>
-        </MenuItem>
-      </Menu>
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
@@ -433,6 +421,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
         onCancel={() => setDeleteTarget(null)}
       />
     </div>
+    </TooltipProvider>
   );
 };
 

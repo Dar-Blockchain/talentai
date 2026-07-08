@@ -1,35 +1,19 @@
 import React, { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Box,
-  Typography,
-  IconButton,
-  Paper,
-  Stack,
-  useTheme,
-  alpha,
-  Fade,
-  Grow,
-  Tooltip,
-  Menu,
-  MenuItem,
-  ListItemIcon,
-} from "@mui/material";
-import { keyframes } from "@mui/system";
 import { MessageCircle as ChatOutlined, Trash2 as DeleteOutlined, XCircle as CancelOutlined, MoreVertical as MoreVert } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { formatTime, getParticipantDisplayName, isSameCalendarDay, messageDayKey, chatContextMenuPaperSlotProps, chatContextMenuItemSx } from "./helpers";
+import { cn } from "@/lib/utils";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { formatTime, getParticipantDisplayName, isSameCalendarDay, messageDayKey, chatContextMenuContentCn, chatContextMenuItemCn } from "./helpers";
 import type { Participant } from "./helpers";
 import type { ChatShellConversation } from "@/modules/chat/shared/types/shell";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/chat/team-chat/constants/lastMessagePreview";
-import { safeAlpha } from "@/utils/safeMuiAlpha";
-import { TEAM_MINT_UI, TEAM_MINT_SCROLLBAR_SX } from "@/modules/chat/shared/constants/teamMintUi";
+import { TEAM_MINT_UI } from "@/modules/chat/shared/constants/teamMintUi";
 
-const bubbleIn = keyframes`
-  from { opacity: 0; transform: translateY(6px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-
-const easeOut = "cubic-bezier(0.4, 0, 0.2, 1)";
+const PRIMARY = "#0D9488";
+const EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
 
 /** Synthetic row when API returns no messages but conversation tail is "deleted for everyone" (e.g. clearedAt / race). */
 const THREAD_DELETED_PLACEHOLDER_ID = "__thread_deleted_placeholder__";
@@ -44,37 +28,24 @@ const DaySeparator = memo(function DaySeparator({
   label: string;
   mintLightTeamUi: boolean;
 }) {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
   return (
-    <Box sx={{ display: "flex", justifyContent: "center", py: mintLightTeamUi ? 1 : 1.25 }}>
-      <Paper
-        elevation={0}
-        sx={{
-          px: 1.75,
-          py: 0.5,
-          borderRadius: 999,
-          bgcolor: mintLightTeamUi
-            ? TEAM_MINT_UI.bgCard
-            : (isDark ? safeAlpha(theme.palette.background.paper, 0.85) : theme.palette.background.paper),
-          border: mintLightTeamUi
-            ? `1px solid ${TEAM_MINT_UI.border}`
-            : `1px solid ${alpha(theme.palette.divider, isDark ? 0.35 : 0.8)}`,
-          boxShadow: mintLightTeamUi
-            ? TEAM_MINT_UI.shadowSoft
-            : (isDark ? `0 1px 6px ${alpha("#000", 0.35)}` : `0 1px 4px ${alpha("#000", 0.05)}`),
+    <div className={cn("flex justify-center", mintLightTeamUi ? "py-2" : "py-2.5")}>
+      <div
+        className="rounded-full px-3.5 py-1"
+        style={{
+          backgroundColor: mintLightTeamUi ? TEAM_MINT_UI.bgCard : "#fff",
+          border: mintLightTeamUi ? `1px solid ${TEAM_MINT_UI.border}` : "1px solid #E5E7EBCC",
+          boxShadow: mintLightTeamUi ? TEAM_MINT_UI.shadowSoft : "0 1px 4px rgba(0,0,0,0.05)",
         }}
       >
-        <Typography
-          variant="caption"
-          fontWeight={600}
-          letterSpacing={0.02}
-          sx={{ color: mintLightTeamUi ? TEAM_MINT_UI.textSecondary : undefined }}
+        <span
+          className="text-xs font-semibold tracking-[0.02em]"
+          style={{ color: mintLightTeamUi ? TEAM_MINT_UI.textSecondary : undefined }}
         >
           {label}
-        </Typography>
-      </Paper>
-    </Box>
+        </span>
+      </div>
+    </div>
   );
 });
 
@@ -164,9 +135,6 @@ const MessageBubble = memo(function MessageBubble({
   mintLightTeamUi = false,
   isPending = false,
 }: BubbleProps) {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
-  const primary = theme.palette.primary.main;
   const textEmpty = !String(message.text ?? "").trim();
   const showDeleted =
     isDeletedForEveryone
@@ -175,170 +143,123 @@ const MessageBubble = memo(function MessageBubble({
 
   const showDeliveryBlocked = isOwn && !!message.deliveryBlocked && !showDeleted;
 
-  const ownBg = mintLightTeamUi ? "transparent" : (isDark ? alpha(primary, 0.85) : primary);
-  const otherBg = mintLightTeamUi
-    ? TEAM_MINT_UI.bgCard
-    : (isDark ? safeAlpha(theme.palette.common.white, 0.06) : theme.palette.background.paper);
-  const ownColor = mintLightTeamUi ? "#FFFFFF" : theme.palette.primary.contrastText;
-  const otherColor = mintLightTeamUi ? TEAM_MINT_UI.textPrimary : theme.palette.text.primary;
-  const borderOther = mintLightTeamUi
-    ? `1px solid ${TEAM_MINT_UI.border}`
-    : (isDark ? `1px solid ${alpha(theme.palette.divider, 0.35)}` : `1px solid ${alpha(theme.palette.divider, 0.9)}`);
+  const ownBg = mintLightTeamUi ? "transparent" : PRIMARY;
+  const otherBg = mintLightTeamUi ? TEAM_MINT_UI.bgCard : "#fff";
+  const ownColor = mintLightTeamUi ? "#FFFFFF" : "#fff";
+  const otherColor = mintLightTeamUi ? TEAM_MINT_UI.textPrimary : "#111827";
+  const borderOther = mintLightTeamUi ? `1px solid ${TEAM_MINT_UI.border}` : "1px solid #E5E7EBE6";
 
-  const deletedPaper = mintLightTeamUi
-    ? "rgba(243, 244, 246, 0.95)"
-    : (isDark ? alpha(theme.palette.action.hover, 0.35) : alpha(theme.palette.grey[500], 0.08));
-
-  const blockedBg = mintLightTeamUi
-    ? "rgba(254, 226, 226, 0.9)"
-    : (isDark ? alpha(theme.palette.error.main, 0.18) : alpha(theme.palette.error.main, 0.07));
-
+  const deletedPaper = mintLightTeamUi ? "rgba(243, 244, 246, 0.95)" : "#9E9E9E14";
+  const blockedBg = mintLightTeamUi ? "rgba(254, 226, 226, 0.9)" : "#EF444412";
   const ownBubbleGradient = mintLightTeamUi ? TEAM_MINT_UI.ownBubbleGradient : undefined;
 
   const bubbleSurface =
     showDeleted
-      ? { bgcolor: deletedPaper, backgroundImage: "none" }
+      ? { backgroundColor: deletedPaper, backgroundImage: "none" }
       : showDeliveryBlocked
-        ? { bgcolor: blockedBg, backgroundImage: "none" }
+        ? { backgroundColor: blockedBg, backgroundImage: "none" }
         : mintLightTeamUi && isOwn
-          ? { bgcolor: "transparent", backgroundImage: ownBubbleGradient }
-          : { bgcolor: isOwn ? ownBg : otherBg, backgroundImage: "none" };
+          ? { backgroundColor: "transparent", backgroundImage: ownBubbleGradient }
+          : { backgroundColor: isOwn ? ownBg : otherBg, backgroundImage: "none" };
+
+  const color = showDeleted
+    ? (mintLightTeamUi ? TEAM_MINT_UI.textSecondary : "#6B7280")
+    : showDeliveryBlocked
+      ? "#111827"
+      : isOwn
+        ? ownColor
+        : otherColor;
+
+  const border = showDeleted
+    ? `1px solid ${mintLightTeamUi ? TEAM_MINT_UI.border : "#E5E7EB80"}`
+    : showDeliveryBlocked
+      ? "2px solid #EF44448C"
+      : isOwn
+        ? "none"
+        : borderOther;
+
+  const boxShadow = showDeleted
+    ? "none"
+    : mintLightTeamUi
+      ? (isOwn ? "0 4px 18px rgba(16, 185, 129, 0.22)" : TEAM_MINT_UI.shadowSoft)
+      : isOwn
+        ? "0 2px 12px #0D948847"
+        : "0 1px 4px rgba(0,0,0,0.06)";
+
+  const hoverTransform = showDeleted ? "none" : "translateY(-2px)";
+  const hoverFilter = showDeleted || !isOwn ? "none" : mintLightTeamUi ? "brightness(1.02)" : "brightness(1.03)";
+  const hoverShadow = showDeleted
+    ? "0 1px 8px rgba(0,0,0,0.04)"
+    : showDeliveryBlocked
+      ? "0 6px 20px #EF444438"
+      : mintLightTeamUi
+        ? (isOwn ? "0 8px 28px rgba(16, 185, 129, 0.32)" : TEAM_MINT_UI.shadowLift)
+        : isOwn
+          ? "0 8px 24px #0D948861"
+          : "0 6px 20px rgba(0,0,0,0.09)";
+  const hoverBg = showDeleted
+    ? (mintLightTeamUi ? "rgba(243, 244, 246, 1)" : "#9E9E9E1C")
+    : showDeliveryBlocked
+      ? undefined
+      : (mintLightTeamUi && isOwn ? "transparent" : undefined);
+  const hoverBorder = showDeleted ? (mintLightTeamUi ? TEAM_MINT_UI.border : "#E5E7EBA6") : undefined;
+  const hoverTimeOpacity = showDeleted ? 0.78 : isOwn ? 0.95 : 0.72;
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        maxWidth: { xs: "88%", sm: "72%", md: "68%" },
-        px: 2,
-        py: 1.25,
-        borderRadius: mintLightTeamUi
-          ? (isOwn ? "18px 18px 6px 18px" : "18px 18px 18px 6px")
-          : (isOwn ? "18px 18px 4px 18px" : "18px 18px 18px 4px"),
+    <div
+      className={cn(
+        "group/bubble max-w-[88%] sm:max-w-[72%] md:max-w-[68%] px-4 py-2.5 cursor-default",
+        "hover:[transform:var(--bubble-hover-transform)] hover:[filter:var(--bubble-hover-filter)] hover:[box-shadow:var(--bubble-hover-shadow)]",
+        hoverBg !== undefined && "hover:[background-color:var(--bubble-hover-bg)]",
+        hoverBorder !== undefined && "hover:[border-color:var(--bubble-hover-border)]",
+        mintLightTeamUi
+          ? (isOwn ? "rounded-[18px_18px_6px_18px]" : "rounded-[18px_18px_18px_6px]")
+          : (isOwn ? "rounded-[18px_18px_4px_18px]" : "rounded-[18px_18px_18px_4px]"),
+      )}
+      style={{
         ...bubbleSurface,
-        color: showDeleted
-          ? (mintLightTeamUi ? TEAM_MINT_UI.textSecondary : theme.palette.text.secondary)
-          : showDeliveryBlocked
-            ? (isDark ? alpha(theme.palette.error.light, 0.92) : theme.palette.text.primary)
-            : isOwn
-              ? ownColor
-              : otherColor,
-        border: showDeleted
-          ? `1px solid ${mintLightTeamUi ? TEAM_MINT_UI.border : alpha(theme.palette.divider, isDark ? 0.25 : 0.5)}`
-          : showDeliveryBlocked
-            ? `2px solid ${alpha(theme.palette.error.main, isDark ? 0.7 : 0.55)}`
-            : isOwn
-              ? "none"
-              : borderOther,
-        boxShadow: showDeleted
-          ? "none"
-          : mintLightTeamUi
-            ? (isOwn ? "0 4px 18px rgba(16, 185, 129, 0.22)" : TEAM_MINT_UI.shadowSoft)
-            : isOwn
-              ? `0 2px 12px ${alpha(primary, isDark ? 0.35 : 0.28)}`
-              : isDark
-                ? `0 1px 4px ${alpha("#000", 0.35)}`
-                : `0 1px 4px ${alpha("#000", 0.06)}`,
-        transition: `box-shadow 0.2s ${easeOut}, transform 0.2s ${easeOut}, background-color 0.2s ${easeOut}, border-color 0.2s ${easeOut}, filter 0.2s ${easeOut}, opacity 0.2s ${easeOut}`,
-        animation: `${bubbleIn} 0.22s ease-out both`,
+        color,
+        border,
+        boxShadow,
+        transition: `box-shadow 0.2s ${EASE}, transform 0.2s ${EASE}, background-color 0.2s ${EASE}, border-color 0.2s ${EASE}, filter 0.2s ${EASE}, opacity 0.2s ${EASE}`,
+        animation: "chatBubbleIn 0.22s ease-out both",
         opacity: isPending ? 0.65 : 1,
-        cursor: "default",
-        "@media (hover: hover)": {
-          "&:hover": {
-            transform: showDeleted ? "none" : "translateY(-2px)",
-            filter: showDeleted || !isOwn ? "none" : mintLightTeamUi ? "brightness(1.02)" : (isDark ? "brightness(1.06)" : "brightness(1.03)"),
-            boxShadow: showDeleted
-              ? `0 1px 8px ${safeAlpha(theme.palette.common.black, mintLightTeamUi ? 0.04 : (isDark ? 0.2 : 0.04))}`
-              : showDeliveryBlocked
-                ? `0 6px 20px ${alpha(theme.palette.error.main, isDark ? 0.38 : 0.22)}`
-                : mintLightTeamUi
-                  ? (isOwn ? "0 8px 28px rgba(16, 185, 129, 0.32)" : TEAM_MINT_UI.shadowLift)
-                  : isOwn
-                    ? `0 8px 24px ${alpha(primary, isDark ? 0.5 : 0.38)}`
-                    : isDark
-                      ? `0 6px 20px ${alpha("#000", 0.42)}`
-                      : `0 6px 20px ${alpha("#000", 0.09)}`,
-            bgcolor: showDeleted
-              ? (mintLightTeamUi ? "rgba(243, 244, 246, 1)" : (isDark ? alpha(theme.palette.action.hover, 0.5) : alpha(theme.palette.grey[500], 0.11)))
-              : showDeliveryBlocked
-                ? undefined
-                : mintLightTeamUi && isOwn && !showDeleted
-                  ? "transparent"
-                  : undefined,
-            borderColor: showDeleted ? (mintLightTeamUi ? TEAM_MINT_UI.border : alpha(theme.palette.divider, isDark ? 0.45 : 0.65)) : undefined,
-            "& .chat-bubble-time": {
-              opacity: showDeleted ? 0.78 : isOwn ? 0.95 : 0.72,
-            },
-          },
-        },
+        ["--bubble-hover-transform" as string]: hoverTransform,
+        ["--bubble-hover-filter" as string]: hoverFilter,
+        ["--bubble-hover-shadow" as string]: hoverShadow,
+        ...(hoverBg !== undefined ? { ["--bubble-hover-bg" as string]: hoverBg } : {}),
+        ...(hoverBorder !== undefined ? { ["--bubble-hover-border" as string]: hoverBorder } : {}),
+        ["--bubble-hover-time-opacity" as string]: String(hoverTimeOpacity),
       }}
     >
       {showDeleted ? (
-        <Typography
-          component="p"
-          sx={{
-            m: 0,
-            fontSize: "0.8125rem",
-            lineHeight: 1.55,
-            fontStyle: "italic",
-            fontWeight: 500,
-            letterSpacing: "0.01em",
-          }}
-        >
+        <p className="m-0 text-[0.8125rem] leading-[1.55] italic font-medium tracking-[0.01em]">
           {deletedLabel || "This message was deleted"}
-        </Typography>
+        </p>
       ) : (
-        <Typography
-          component="p"
-          sx={{
-            m: 0,
-            fontSize: "0.8125rem",
-            lineHeight: 1.55,
-            wordBreak: "break-word",
-            fontWeight: 400,
-          }}
-        >
+        <p className="m-0 text-[0.8125rem] leading-[1.55] break-words font-normal">
           {message.text}
-        </Typography>
+        </p>
       )}
       {showDeliveryBlocked && deliveryBlockedCaption ? (
-        <Stack direction="row" spacing={0.75} alignItems="flex-start" sx={{ mt: 0.75 }}>
-          <CancelOutlined
-            size={16}
-            color={isDark ? alpha(theme.palette.error.light, 0.9) : theme.palette.error.main}
-            className="mt-px shrink-0"
-          />
-          <Typography
-            component="p"
-            variant="caption"
-            sx={{
-              m: 0,
-              fontSize: "0.6875rem",
-              lineHeight: 1.45,
-              fontWeight: 600,
-              color: isDark ? alpha(theme.palette.error.light, 0.85) : theme.palette.error.dark,
-            }}
-          >
+        <div className="mt-1.5 flex flex-row items-start gap-1.5">
+          <CancelOutlined size={16} color="#EF4444" className="mt-px shrink-0" />
+          <p className="m-0 text-[0.6875rem] leading-[1.45] font-semibold" style={{ color: "#EF4444" }}>
             {deliveryBlockedCaption}
-          </Typography>
-        </Stack>
+          </p>
+        </div>
       ) : null}
-      <Typography
-        component="span"
-        className="chat-bubble-time"
-        sx={{
-          display: "block",
-          textAlign: "right",
-          mt: 0.5,
-          fontSize: "0.6875rem",
-          fontWeight: 500,
+      <span
+        className="chat-bubble-time block text-right mt-1 text-[0.6875rem] font-medium group-hover/bubble:[opacity:var(--bubble-hover-time-opacity)]"
+        style={{
           opacity: showDeleted ? 0.65 : isOwn ? 0.82 : 0.55,
           color: mintLightTeamUi && !isOwn ? TEAM_MINT_UI.textMuted : "inherit",
-          transition: `opacity 0.22s ${easeOut}`,
+          transition: `opacity 0.22s ${EASE}`,
         }}
       >
         {isPending ? "···" : timeLabel}
-      </Typography>
-    </Paper>
+      </span>
+    </div>
   );
 });
 
@@ -368,15 +289,13 @@ const MessageRow = memo(function MessageRow({
   teamScopedDeletes,
   mintLightTeamUi,
 }: MessageRowProps) {
-  const theme = useTheme();
   const { t } = useTranslation("shared/chat");
   const { t: tTeam } = useTranslation("modules/company/teamChat");
-  const isDark = theme.palette.mode === "dark";
 
-  // Decide at mount time whether to animate in. `appear` on <Grow> only fires once
-  // (at mount), so this never needs to change — using useState initializer avoids
-  // the need for `isLatest` prop which would flip true→false on the previous-last row
-  // every time a new message arrives (causing a wasted rerender with no visual change).
+  // Decide at mount time whether to animate in. Only fires once (at mount), since
+  // it's computed via useState initializer — this avoids the need for an `isLatest`
+  // prop which would flip true→false on the previous-last row every time a new
+  // message arrives (causing a wasted rerender with no visual change).
   const [shouldAnimateIn] = useState(() => {
     // Pending (optimistic) messages always animate in — they're just sent.
     if (message.pending) return true;
@@ -416,11 +335,13 @@ const MessageRow = memo(function MessageRow({
     return tTeam("message.this_message_was_deleted", { defaultValue: "This message was deleted" });
   }, [teamScopedDeletes, isDeletedForEveryone, message.deletedForEveryoneBy, currentUserId, otherUser, t, tTeam]);
 
-  const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
-  const handleMenuOpen = useCallback((e: React.MouseEvent<HTMLButtonElement>) => setMenuAnchor(e.currentTarget), []);
-  const handleMenuClose = useCallback(() => setMenuAnchor(null), []);
-  const handleDeleteForMe = useCallback(() => { handleMenuClose(); onDeleteMessage(message._id, "me"); }, [handleMenuClose, onDeleteMessage, message._id]);
-  const handleDeleteForEveryone = useCallback(() => { handleMenuClose(); onDeleteMessage(message._id, "everyone"); }, [handleMenuClose, onDeleteMessage, message._id]);
+  const handleDeleteForMe = useCallback(() => {
+    onDeleteMessage(message._id, "me");
+  }, [onDeleteMessage, message._id]);
+
+  const handleDeleteForEveryone = useCallback(() => {
+    onDeleteMessage(message._id, "everyone");
+  }, [onDeleteMessage, message._id]);
 
   const handleDeleteSingle = useCallback(() => {
     onDeleteMessage(message._id);
@@ -447,76 +368,59 @@ const MessageRow = memo(function MessageRow({
   );
 
   const menuButton = teamScopedDeletes && enableDeletes && !isSyntheticDeleted && !message.pending ? (
-    <>
-      <Tooltip title={t("messages.more_actions", { defaultValue: "More actions" })}>
-        <IconButton
-          className="delete-btn"
-          onClick={handleMenuOpen}
-          size="small"
-          sx={{
-            opacity: 0,
-            transition: `opacity 0.22s ${easeOut}, transform 0.2s ${easeOut}`,
-            color: mintLightTeamUi ? "#6B7280" : "text.secondary",
-            p: "4px",
-            borderRadius: "8px",
-            "&:hover": {
-              bgcolor: mintLightTeamUi ? "#F3F4F6" : alpha(theme.palette.action.hover, 0.08),
-              transform: "scale(1.08)",
-            },
-          }}
-        >
-          <MoreVert size={18} />
-        </IconButton>
-      </Tooltip>
-      <Menu
-        anchorEl={menuAnchor}
-        open={Boolean(menuAnchor)}
-        onClose={handleMenuClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: isOwn ? "right" : "left" }}
-        transformOrigin={{ vertical: "top", horizontal: isOwn ? "right" : "left" }}
-        slotProps={{ paper: chatContextMenuPaperSlotProps }}
-        MenuListProps={{ dense: true, sx: { py: 0.5 } }}
-      >
-        <MenuItem onClick={handleDeleteForMe} sx={chatContextMenuItemSx}>
-          <ListItemIcon sx={{ minWidth: 32 }}>
-            <DeleteOutlined size={18} />
-          </ListItemIcon>
+    <DropdownMenu>
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <DropdownMenuTrigger asChild>
+              <button
+                type="button"
+                aria-label={t("messages.more_actions", { defaultValue: "More actions" })}
+                className={cn(
+                  "delete-btn shrink-0 rounded-lg p-1 opacity-0 transition-[opacity,transform,background-color] duration-200 group-hover/row:opacity-100 hover:scale-[1.08]",
+                  mintLightTeamUi ? "hover:bg-[#F3F4F6]" : "hover:bg-[#F3F4F614]",
+                )}
+                style={{ color: "#6B7280" }}
+              >
+                <MoreVert size={18} />
+              </button>
+            </DropdownMenuTrigger>
+          </TooltipTrigger>
+          <TooltipContent>{t("messages.more_actions", { defaultValue: "More actions" })}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+      <DropdownMenuContent align={isOwn ? "end" : "start"} className={chatContextMenuContentCn}>
+        <DropdownMenuItem onClick={handleDeleteForMe} className={chatContextMenuItemCn}>
+          <DeleteOutlined size={18} />
           {tTeam("message.delete_for_me", { defaultValue: "Delete for me" })}
-        </MenuItem>
+        </DropdownMenuItem>
         {isOwn && (
-          <MenuItem
+          <DropdownMenuItem
             onClick={handleDeleteForEveryone}
-            sx={{ ...chatContextMenuItemSx, color: "error.main", fontWeight: 600, "&:hover": { bgcolor: alpha(theme.palette.error.main, 0.08) } }}
+            variant="destructive"
+            className={cn(chatContextMenuItemCn, "font-semibold gap-2")}
           >
-            <ListItemIcon sx={{ minWidth: 32, color: "inherit" }}>
-              <DeleteOutlined size={18} />
-            </ListItemIcon>
+            <DeleteOutlined size={18} />
             {tTeam("message.delete_for_everyone", { defaultValue: "Delete for everyone" })}
-          </MenuItem>
+          </DropdownMenuItem>
         )}
-      </Menu>
-    </>
+      </DropdownMenuContent>
+    </DropdownMenu>
   ) : null;
 
   const messageRow = (
-    <Stack
-      direction="row"
-      spacing={0.5}
-      justifyContent={isOwn ? "flex-end" : "flex-start"}
-      alignItems="flex-end"
-      sx={{
-        py: mintLightTeamUi ? 0.2 : 0.35,
-        px: { xs: 0.25, sm: 0.5 },
-        mx: { xs: -0.25, sm: -0.5 },
-        borderRadius: mintLightTeamUi ? "14px" : 2,
-        transition: `background-color 0.2s ${easeOut}, box-shadow 0.2s ${easeOut}`,
-        "@media (hover: hover)": {
-          "&:hover": {
-            bgcolor: mintLightTeamUi ? "rgba(236, 253, 245, 0.55)" : alpha(theme.palette.primary.main, isDark ? 0.04 : 0.03),
-            boxShadow: mintLightTeamUi ? "none" : `inset 0 0 0 1px ${alpha(theme.palette.divider, isDark ? 0.12 : 0.06)}`,
-          },
-        },
-        "&:hover .delete-btn": { opacity: 1 },
+    <div
+      className={cn(
+        "group/row flex flex-row items-end gap-1",
+        isOwn ? "justify-end" : "justify-start",
+        "px-0.5 sm:px-1 -mx-0.5 sm:-mx-1",
+        mintLightTeamUi ? "py-[1.6px] rounded-[14px]" : "py-[2.8px] rounded-lg",
+        "hover:[background-color:var(--row-hover-bg)] hover:[box-shadow:var(--row-hover-shadow)]",
+      )}
+      style={{
+        transition: `background-color 0.2s ${EASE}, box-shadow 0.2s ${EASE}`,
+        ["--row-hover-bg" as string]: mintLightTeamUi ? "rgba(236, 253, 245, 0.55)" : "#0D948808",
+        ["--row-hover-shadow" as string]: mintLightTeamUi ? "none" : "inset 0 0 0 1px #E5E7EB0F",
       }}
     >
       {teamScopedDeletes && enableDeletes && !isSyntheticDeleted && !message.pending ? (
@@ -524,36 +428,36 @@ const MessageRow = memo(function MessageRow({
       ) : (
         <>
           {!teamScopedDeletes && isCompany && enableDeletes && isOwn && !isSyntheticDeleted && !message.pending && (
-            <Tooltip title={t("delete_dialog.delete")}>
-              <IconButton
-                className="delete-btn"
-                onClick={handleDeleteSingle}
-                size="small"
-                sx={{
-                  opacity: 0,
-                  transition: `opacity 0.22s ${easeOut}, transform 0.2s ${easeOut}`,
-                  color: theme.palette.error.main,
-                  p: "6px",
-                  "&:hover": {
-                    bgcolor: alpha(theme.palette.error.main, 0.12),
-                    transform: "scale(1.08)",
-                  },
-                }}
-              >
-                <DeleteOutlined size={18} />
-              </IconButton>
-            </Tooltip>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={handleDeleteSingle}
+                    aria-label={t("delete_dialog.delete")}
+                    className="delete-btn shrink-0 rounded-md p-1.5 opacity-0 transition-[opacity,transform,background-color] duration-200 group-hover/row:opacity-100 hover:scale-[1.08] hover:bg-[#EF44441F]"
+                    style={{ color: "#EF4444" }}
+                  >
+                    <DeleteOutlined size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t("delete_dialog.delete")}</TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
           {bubble}
         </>
       )}
-    </Stack>
+    </div>
   );
 
   return (
-    <Grow in timeout={240} appear={shouldAnimateIn}>
-      <Box sx={{ width: "100%" }}>{messageRow}</Box>
-    </Grow>
+    <div
+      className="w-full"
+      style={shouldAnimateIn ? { animation: `chatRowGrowIn 0.24s ${EASE} both` } : undefined}
+    >
+      {messageRow}
+    </div>
   );
 });
 
@@ -568,7 +472,6 @@ const MessageList = memo(function MessageList({
   teamScopedDeletes = false,
   mintLightTeamUi = false,
 }: MessageListProps) {
-  const theme = useTheme();
   const { t, i18n } = useTranslation("shared/chat");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
@@ -625,80 +528,50 @@ const MessageList = memo(function MessageList({
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [effectiveMessages.length, lastMsgId]);
 
-  const isDark = theme.palette.mode === "dark";
-  const surface = mintLightTeamUi
-    ? TEAM_MINT_UI.bgMain
-    : (isDark ? safeAlpha(theme.palette.background.default, 0.6) : alpha(theme.palette.grey[50], 0.95));
+  const surface = mintLightTeamUi ? TEAM_MINT_UI.bgMain : "#FAFAFAF2";
+  const backgroundImage = mintLightTeamUi ? "none" : "linear-gradient(180deg, #FFFFFFE6 0%, transparent 32%)";
 
   return (
-    <Box
+    <div
       ref={listRef}
-      sx={{
-        flex: 1,
-        overflowY: "auto",
-        overflowX: "hidden",
-        scrollBehavior: "smooth",
-        px: { xs: 1.5, sm: 2 },
-        py: mintLightTeamUi ? 1.75 : 2,
-        bgcolor: surface,
-        minHeight: 0,
-        backgroundImage: mintLightTeamUi
-          ? "none"
-          : (isDark
-            ? `linear-gradient(180deg, ${safeAlpha(theme.palette.common.black, 0.2)} 0%, transparent 40%)`
-            : `linear-gradient(180deg, ${safeAlpha(theme.palette.common.white, 0.9)} 0%, transparent 32%)`),
-        ...(mintLightTeamUi
-          ? TEAM_MINT_SCROLLBAR_SX
-          : {
-              scrollbarWidth: "thin",
-              scrollbarColor: `${alpha(theme.palette.text.primary, 0.22)} transparent`,
-              "&::-webkit-scrollbar": { width: "6px" },
-              "&::-webkit-scrollbar-track": { background: "transparent" },
-              "&::-webkit-scrollbar-thumb": {
-                background: alpha(theme.palette.text.primary, 0.12),
-                borderRadius: "8px",
-              },
-              "@media (hover: hover)": {
-                "&:hover::-webkit-scrollbar-thumb": {
-                  background: alpha(theme.palette.text.primary, 0.22),
-                },
-              },
-            }),
-      }}
+      className={cn(
+        "flex-1 overflow-y-auto overflow-x-hidden min-h-0 px-3 sm:px-4 [scroll-behavior:smooth]",
+        mintLightTeamUi ? "py-3.5" : "py-4",
+        mintLightTeamUi
+          ? "[scrollbar-width:thin] [scrollbar-color:rgba(17,24,39,0.22)_transparent] [&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:border-2 [&::-webkit-scrollbar-thumb]:border-transparent [&::-webkit-scrollbar-thumb]:[background-clip:content-box] [&::-webkit-scrollbar-thumb]:bg-[rgba(17,24,39,0.12)] hover:[&::-webkit-scrollbar-thumb]:bg-[rgba(17,24,39,0.22)]"
+          : "[scrollbar-width:thin] [scrollbar-color:#11182738_transparent] [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-lg [&::-webkit-scrollbar-thumb]:bg-[#1118271F] hover:[&::-webkit-scrollbar-thumb]:bg-[#11182738]",
+      )}
+      style={{ backgroundColor: surface, backgroundImage }}
     >
+      <style>{`
+        @keyframes chatBubbleIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes chatRowGrowIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
+        @keyframes chatListFadeIn { from { opacity: 0; } to { opacity: 1; } }
+      `}</style>
       {effectiveMessages.length === 0 ? (
-        <Fade in timeout={280}>
-          <Stack
-            alignItems="center"
-            justifyContent="center"
-            spacing={1.5}
-            sx={{ minHeight: 220, py: 4 }}
+        <div
+          className="flex min-h-[220px] flex-col items-center justify-center gap-3 py-8"
+          style={{ animation: "chatListFadeIn 0.28s ease-out both" }}
+        >
+          <div
+            className={cn("flex h-14 w-14 items-center justify-center", mintLightTeamUi ? "rounded-2xl" : "rounded-full")}
+            style={{
+              backgroundColor: mintLightTeamUi ? TEAM_MINT_UI.primarySoft : "#0D94881F",
+              border: mintLightTeamUi ? "1px solid rgba(52, 211, 153, 0.2)" : "none",
+              boxShadow: mintLightTeamUi ? TEAM_MINT_UI.shadowSoft : undefined,
+            }}
           >
-            <Box
-              sx={{
-                width: 56,
-                height: 56,
-                borderRadius: mintLightTeamUi ? "16px" : "50%",
-                bgcolor: mintLightTeamUi ? TEAM_MINT_UI.primarySoft : alpha(theme.palette.primary.main, 0.12),
-                border: mintLightTeamUi ? `1px solid rgba(52, 211, 153, 0.2)` : "none",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                boxShadow: mintLightTeamUi ? TEAM_MINT_UI.shadowSoft : undefined,
-              }}
-            >
-              <ChatOutlined size={28} color={mintLightTeamUi ? TEAM_MINT_UI.primaryHover : theme.palette.primary.main} />
-            </Box>
-            <Typography sx={{ color: mintLightTeamUi ? TEAM_MINT_UI.textPrimary : "text.primary", fontWeight: 600, fontSize: "0.875rem" }}>
-              {t("messages.no_messages")}
-            </Typography>
-            <Typography sx={{ color: mintLightTeamUi ? TEAM_MINT_UI.textSecondary : "text.secondary", fontSize: "0.75rem", textAlign: "center", maxWidth: 280 }}>
-              {t("messages.start_conversation")}
-            </Typography>
-          </Stack>
-        </Fade>
+            <ChatOutlined size={28} color={mintLightTeamUi ? TEAM_MINT_UI.primaryHover : PRIMARY} />
+          </div>
+          <p className="text-sm font-semibold" style={{ color: mintLightTeamUi ? TEAM_MINT_UI.textPrimary : "#111827" }}>
+            {t("messages.no_messages")}
+          </p>
+          <p className="max-w-[280px] text-center text-xs" style={{ color: mintLightTeamUi ? TEAM_MINT_UI.textSecondary : "#6B7280" }}>
+            {t("messages.start_conversation")}
+          </p>
+        </div>
       ) : (
-        <Stack spacing={mintLightTeamUi ? 0.35 : 0.5}>
+        <div className={cn("flex flex-col", mintLightTeamUi ? "gap-[2.8px]" : "gap-1")}>
           {rows.map((row) => {
             if (row.kind === "separator") {
               return (
@@ -730,10 +603,10 @@ const MessageList = memo(function MessageList({
               />
             );
           })}
-        </Stack>
+        </div>
       )}
       <div ref={messagesEndRef} />
-    </Box>
+    </div>
   );
 });
 

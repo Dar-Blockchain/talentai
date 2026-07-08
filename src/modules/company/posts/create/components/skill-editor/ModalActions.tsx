@@ -1,4 +1,4 @@
-import { DialogActions } from "@mui/material";
+import { DialogFooter } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 
@@ -15,7 +15,7 @@ const ModalActions = ({ mode, disabled, onClose, onSave }: Props) => {
     mode === "edit" ? "create.post_form.skill_modal.btn_edit" : "create.post_form.skill_modal.btn_add";
 
   return (
-    <DialogActions sx={{ p: 3, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+    <DialogFooter className="border-t border-white/10 p-6">
       <Button
         variant="ghost"
         onClick={onClose}
@@ -33,7 +33,7 @@ const ModalActions = ({ mode, disabled, onClose, onSave }: Props) => {
       >
         {t(confirmKey)}
       </Button>
-    </DialogActions>
+    </DialogFooter>
   );
 };
 

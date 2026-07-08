@@ -1,19 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Alert,
-  Avatar,
-  Box,
-  Chip,
-  CircularProgress,
-  IconButton,
-  InputAdornment,
-  Paper,
-  Skeleton,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import { alpha } from "@mui/material/styles";
 import { Search as SearchOutlined, X as CloseRounded, Users as PeopleOutlineOutlined, SearchX as SearchOffOutlined } from "lucide-react";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
@@ -22,7 +7,12 @@ import type { Member } from "@/modules/company/members/types";
 import { useMembersQuery } from "@/modules/company/employees/queries";
 import { useStartTeamChat } from "@/modules/chat/team-chat/hooks/useStartTeamChat";
 import { getRoleLabel } from '@/modules/company/employees/utils/employeeRoleI18n';
-import { TEAM_MINT_UI, TEAM_MINT_SCROLLBAR_SX } from "@/modules/chat/shared/constants/teamMintUi";
+import { TEAM_MINT_UI } from "@/modules/chat/shared/constants/teamMintUi";
+import { Avatar, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import { Alert, AlertDescription } from "@/modules/shared/ui/shadcn/alert";
+import { cn } from "@/lib/utils";
 
 const M = TEAM_MINT_UI;
 const PAGE_SIZE = 50;
@@ -32,37 +22,24 @@ const getMemberName = (member: Member) => {
   return full || member.username || "Unnamed";
 };
 
-const colleaguesGridSx = {
-  display: "flex",
-  flexDirection: "column",
-  gap: 1,
-} as const;
-
 const ColleagueSkeleton: React.FC = () => (
-  <Paper
-    elevation={0}
-    sx={{
-      p: 1,
-      borderRadius: "12px",
+  <div
+    style={{
       border: `1px solid ${M.border}`,
-      bgcolor: M.bgCard,
+      backgroundColor: M.bgCard,
       boxShadow: M.shadowSoft,
-      height: "100%",
-      display: "flex",
-      flexDirection: "column",
-      gap: 0.75,
-      minWidth: 0,
     }}
+    className="flex h-full min-w-0 flex-col gap-1.5 rounded-xl p-2"
   >
-    <Stack direction="row" spacing={1} alignItems="center" sx={{ minWidth: 0 }}>
-      <Skeleton variant="circular" width={32} height={32} />
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Skeleton variant="rounded" width="72%" height={13} sx={{ borderRadius: 0.75, bgcolor: alpha(M.textMuted, 0.22) }} />
-        <Skeleton variant="rounded" width="48%" height={11} sx={{ borderRadius: 0.75, mt: 0.5, bgcolor: alpha(M.textMuted, 0.16) }} />
-      </Box>
-    </Stack>
-    <Skeleton variant="rounded" height={28} sx={{ borderRadius: "10px", bgcolor: alpha(M.primary, 0.1) }} />
-  </Paper>
+    <div className="flex min-w-0 items-center gap-2">
+      <Skeleton className="size-8 shrink-0 rounded-full" />
+      <div className="min-w-0 flex-1">
+        <Skeleton className="h-[13px] w-[72%] rounded-[6px]" style={{ backgroundColor: `${M.textMuted}38` }} />
+        <Skeleton className="mt-1 h-[11px] w-[48%] rounded-[6px]" style={{ backgroundColor: `${M.textMuted}29` }} />
+      </div>
+    </div>
+    <Skeleton className="h-7 rounded-[10px]" style={{ backgroundColor: `${M.primary}1A` }} />
+  </div>
 );
 
 interface CompanyContactRowProps {
@@ -83,91 +60,57 @@ const CompanyContactRow: React.FC<CompanyContactRowProps> = ({
   const initial = name[0]?.toUpperCase() || "C";
 
   return (
-    <Paper
-      elevation={0}
-      component="article"
+    <article
       onClick={isLoading ? undefined : onMessage}
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 1.5,
-        px: 1.25,
-        py: 0.9,
-        borderRadius: "12px",
-        position: "relative",
-        overflow: "hidden",
-        border: `1px solid ${alpha(M.primary, 0.22)}`,
-        bgcolor: M.primarySoft,
+      style={{
+        border: `1px solid ${M.primary}38`,
+        backgroundColor: M.primarySoft,
         boxShadow: M.shadowSoft,
         transition: M.transition,
-        minWidth: 0,
         cursor: isLoading ? "default" : "pointer",
         opacity: isLoading ? 0.75 : 1,
-        "@media (hover: hover)": {
-          "&:hover": isLoading ? {} : {
-            borderColor: alpha(M.primary, 0.35),
-            boxShadow: M.shadowLift,
-            bgcolor: alpha(M.primary, 0.08),
-          },
-        },
+        ["--company-row-hover-border" as string]: `${M.primary}59`,
+        ["--company-row-hover-shadow" as string]: M.shadowLift,
+        ["--company-row-hover-bg" as string]: `${M.primary}14`,
       }}
+      className={cn(
+        "relative flex min-w-0 flex-row items-center gap-3 overflow-hidden rounded-xl px-[10px] py-[7px]",
+        !isLoading &&
+          "hover:[border-color:var(--company-row-hover-border)] hover:[box-shadow:var(--company-row-hover-shadow)] hover:[background-color:var(--company-row-hover-bg)]",
+      )}
     >
-      <Box
+      <span
         aria-hidden
-        sx={{
-          position: "absolute",
-          left: 0,
-          top: 8,
-          bottom: 8,
-          width: 3,
-          borderRadius: "0 4px 4px 0",
-          bgcolor: M.primary,
-        }}
+        className="absolute bottom-2 left-0 top-2 w-[3px] rounded-r-[4px]"
+        style={{ backgroundColor: M.primary }}
       />
       <Avatar
-        sx={{
-          width: 34,
-          height: 34,
-          fontSize: "0.8rem",
-          fontWeight: 700,
-          flexShrink: 0,
-          bgcolor: alpha(M.primary, 0.15),
-          color: M.primaryHover,
-          boxShadow: `0 0 0 2px ${M.bgCard}`,
-          ml: 0.5,
-        }}
+        className="ml-1 size-[34px] shrink-0"
+        style={{ boxShadow: `0 0 0 2px ${M.bgCard}` }}
       >
-        {initial}
+        <AvatarFallback
+          className="text-[0.8rem] font-bold"
+          style={{ backgroundColor: `${M.primary}26`, color: M.primaryHover }}
+        >
+          {initial}
+        </AvatarFallback>
       </Avatar>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          sx={{
-            fontWeight: 700,
-            fontSize: "0.8125rem",
-            letterSpacing: "-0.02em",
-            color: M.textPrimary,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
+      <div className="min-w-0 flex-1">
+        <p
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-[0.8125rem] font-bold tracking-[-0.02em]"
+          style={{ color: M.textPrimary }}
         >
           {name}
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: "0.6875rem",
-            color: M.textSecondary,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
+        </p>
+        <p
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem]"
+          style={{ color: M.textSecondary }}
         >
           {username ? `@${username} · ${roleLabel}` : roleLabel}
-        </Typography>
-      </Box>
-      {isLoading && <CircularProgress size={18} thickness={4} sx={{ color: M.primary, flexShrink: 0 }} />}
-    </Paper>
+        </p>
+      </div>
+      {isLoading && <Spinner className="size-[18px] shrink-0" style={{ color: M.primary }} />}
+    </article>
   );
 };
 
@@ -188,76 +131,52 @@ const ColleagueRow: React.FC<ColleagueRowProps> = ({
   const initial = name[0]?.toUpperCase() || "U";
 
   return (
-    <Paper
-      elevation={0}
-      component="article"
+    <article
       onClick={isLoading ? undefined : () => { onMessage(member.userId); }}
-      sx={{
-        display: "flex",
-        flexDirection: "row",
-        alignItems: "center",
-        gap: 1.5,
-        px: 1.25,
-        py: 0.9,
-        borderRadius: "12px",
+      style={{
         border: `1px solid ${M.border}`,
-        bgcolor: M.bgCard,
+        backgroundColor: M.bgCard,
         boxShadow: M.shadowSoft,
         transition: M.transition,
-        minWidth: 0,
         cursor: isLoading ? "default" : "pointer",
         opacity: isLoading ? 0.75 : 1,
-        "@media (hover: hover)": {
-          "&:hover": isLoading ? {} : {
-            borderColor: alpha(M.primary, 0.25),
-            boxShadow: M.shadowLift,
-            bgcolor: alpha(M.primary, 0.04),
-          },
-        },
+        ["--colleague-row-hover-border" as string]: `${M.primary}40`,
+        ["--colleague-row-hover-shadow" as string]: M.shadowLift,
+        ["--colleague-row-hover-bg" as string]: `${M.primary}0A`,
       }}
+      className={cn(
+        "flex min-w-0 flex-row items-center gap-3 rounded-xl px-[10px] py-[7px]",
+        !isLoading &&
+          "hover:[border-color:var(--colleague-row-hover-border)] hover:[box-shadow:var(--colleague-row-hover-shadow)] hover:[background-color:var(--colleague-row-hover-bg)]",
+      )}
     >
       <Avatar
-        sx={{
-          width: 34,
-          height: 34,
-          fontSize: "0.8rem",
-          fontWeight: 700,
-          flexShrink: 0,
-          bgcolor: alpha(M.textPrimary, 0.06),
-          color: M.textSecondary,
-          boxShadow: `0 0 0 2px ${alpha(M.bgCard, 1)}`,
-        }}
+        className="size-[34px] shrink-0"
+        style={{ boxShadow: `0 0 0 2px ${M.bgCard}` }}
       >
-        {initial}
+        <AvatarFallback
+          className="text-[0.8rem] font-bold"
+          style={{ backgroundColor: `${M.textPrimary}0F`, color: M.textSecondary }}
+        >
+          {initial}
+        </AvatarFallback>
       </Avatar>
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography
-          sx={{
-            fontWeight: 700,
-            fontSize: "0.8125rem",
-            letterSpacing: "-0.02em",
-            color: M.textPrimary,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
+      <div className="min-w-0 flex-1">
+        <p
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-[0.8125rem] font-bold tracking-[-0.02em]"
+          style={{ color: M.textPrimary }}
         >
           {name}
-        </Typography>
-        <Typography
-          sx={{
-            fontSize: "0.6875rem",
-            color: M.textSecondary,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
+        </p>
+        <p
+          className="overflow-hidden text-ellipsis whitespace-nowrap text-[0.6875rem]"
+          style={{ color: M.textSecondary }}
         >
           {member.username ? `@${member.username} · ${roleLabel}` : roleLabel}
-        </Typography>
-      </Box>
-      {isLoading && <CircularProgress size={18} thickness={4} sx={{ color: M.primary, flexShrink: 0 }} />}
-    </Paper>
+        </p>
+      </div>
+      {isLoading && <Spinner className="size-[18px] shrink-0" style={{ color: M.primary }} />}
+    </article>
   );
 };
 
@@ -269,33 +188,27 @@ const EmptyState: React.FC<{ title: string; subtitle?: string; icon: "people" | 
   const Icon = icon === "search" ? SearchOffOutlined : PeopleOutlineOutlined;
 
   return (
-    <Box sx={{ py: { xs: 6, sm: 8 }, px: 2, textAlign: "center", maxWidth: 380, mx: "auto" }}>
-      <Box
-        sx={{
-          width: 72,
-          height: 72,
-          mx: "auto",
-          mb: 2.5,
+    <div className="mx-auto max-w-[380px] px-4 py-12 text-center sm:py-16">
+      <div
+        className="mx-auto mb-5 flex h-[72px] w-[72px] items-center justify-center"
+        style={{
           borderRadius: M.radiusOuter,
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          bgcolor: M.primarySoft,
-          border: `1px solid ${alpha(M.primary, 0.15)}`,
+          backgroundColor: M.primarySoft,
+          border: `1px solid ${M.primary}26`,
           boxShadow: M.shadowSoft,
         }}
       >
         <Icon size={34} color={M.primaryHover} />
-      </Box>
-      <Typography sx={{ fontSize: "1rem", fontWeight: 700, color: M.textPrimary, letterSpacing: "-0.02em" }}>
+      </div>
+      <p className="text-base font-bold tracking-[-0.02em]" style={{ color: M.textPrimary }}>
         {title}
-      </Typography>
+      </p>
       {subtitle ? (
-        <Typography sx={{ fontSize: "0.875rem", color: M.textSecondary, mt: 1.25, lineHeight: 1.6 }}>
+        <p className="mt-[10px] text-sm leading-[1.6]" style={{ color: M.textSecondary }}>
           {subtitle}
-        </Typography>
+        </p>
       ) : null}
-    </Box>
+    </div>
   );
 };
 
@@ -398,143 +311,118 @@ const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClo
   const isSearchEmpty = debouncedSearch.length > 0 && visibleCount === 0 && !loading;
 
   return (
-    <Box
-      sx={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        minHeight: 0,
-        bgcolor: M.bgMain,
-      }}
-    >
-      <Paper
-        elevation={0}
-        sx={{
-          flex: 1,
+    <div className="flex flex-1 flex-col" style={{ minHeight: 0, backgroundColor: M.bgMain }}>
+      <div
+        className="mx-3 my-3 flex flex-1 flex-col overflow-hidden rounded-[20px] sm:mx-4 sm:my-4"
+        style={{
           minHeight: 0,
-          display: "flex",
-          flexDirection: "column",
-          mx: { xs: 1.5, sm: 2 },
-          mt: { xs: 1.5, sm: 2 },
-          mb: { xs: 1.5, sm: 2 },
           borderRadius: M.radiusOuter,
           border: `1px solid ${M.border}`,
-          bgcolor: M.bgCard,
+          backgroundColor: M.bgCard,
           boxShadow: M.shadowSoft,
-          overflow: "hidden",
         }}
       >
-        <Box sx={{ flexShrink: 0, px: { xs: 2, sm: 2.5 }, pt: 2, pb: 1.5, borderBottom: `1px solid ${M.border}` }}>
-          <Stack direction="row" alignItems="center" justifyContent="space-between" gap={2} sx={{ mb: 1.25 }}>
-            <Box sx={{ minWidth: 0 }}>
-              <Typography
-                sx={{
-                  fontSize: { xs: "1.05rem", sm: "1.125rem" },
-                  fontWeight: 800,
-                  letterSpacing: "-0.03em",
-                  color: M.textPrimary,
-                  lineHeight: 1.25,
-                }}
+        <div
+          className="shrink-0 px-4 pb-3 pt-4 sm:px-5"
+          style={{ borderBottom: `1px solid ${M.border}` }}
+        >
+          <div className="mb-[10px] flex items-center justify-between gap-4">
+            <div className="min-w-0">
+              <p
+                className="text-[1.05rem] font-extrabold leading-[1.25] tracking-[-0.03em] sm:text-[1.125rem]"
+                style={{ color: M.textPrimary }}
               >
                 {t("colleagues.title")}
-              </Typography>
-            </Box>
+              </p>
+            </div>
             {!isInitialLoading && visibleCount > 0 && (
-              <Chip
-                size="small"
-                label={t("colleagues.count", { count: visibleCount })}
-                sx={{
-                  height: 26,
-                  fontWeight: 700,
-                  fontSize: "0.6875rem",
-                  flexShrink: 0,
-                  bgcolor: M.primarySoft,
+              <span
+                className="flex h-[26px] shrink-0 items-center rounded-full px-[10px] text-[0.6875rem] font-bold"
+                style={{
+                  backgroundColor: M.primarySoft,
                   color: M.primaryHover,
-                  border: `1px solid ${alpha(M.primary, 0.2)}`,
-                  "& .MuiChip-label": { px: 1.25 },
+                  border: `1px solid ${M.primary}33`,
                 }}
-              />
+              >
+                {t("colleagues.count", { count: visibleCount })}
+              </span>
             )}
-          </Stack>
+          </div>
 
-          <TextField
-            fullWidth
-            size="small"
-            value={search}
-            onChange={(e) => handleSearchChange(e.target.value)}
-            placeholder={t("colleagues.search_placeholder")}
-            InputProps={{
-              startAdornment: (
-                <InputAdornment position="start" sx={{ mr: 0.25 }}>
-                  <SearchOutlined size={18} color={M.textMuted} />
-                </InputAdornment>
-              ),
-              endAdornment: search ? (
-                <InputAdornment position="end" sx={{ ml: 0 }}>
-                  <IconButton size="small" onClick={clearSearch} aria-label={t("colleagues.clear_search")} edge="end" sx={{ color: M.textMuted, p: "4px" }}>
-                    <CloseRounded size={18} />
-                  </IconButton>
-                </InputAdornment>
-              ) : undefined,
-            }}
-            sx={{
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "14px",
+          <div className="relative">
+            <SearchOutlined
+              size={18}
+              className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2"
+              style={{ color: M.textMuted }}
+            />
+            <input
+              value={search}
+              onChange={(e) => handleSearchChange(e.target.value)}
+              placeholder={t("colleagues.search_placeholder")}
+              className={cn(
+                "w-full rounded-[14px] border py-[6px] pl-9 text-[0.8125rem] outline-none placeholder:text-[0.8125rem]",
+                search ? "pr-9" : "pr-3",
+                "hover:[background-color:var(--search-hover-bg)] hover:[border-color:var(--search-hover-border)]",
+                "focus:[background-color:var(--search-focus-bg)] focus:[border-color:var(--search-focus-border)] focus:[box-shadow:var(--search-focus-shadow)]",
+              )}
+              style={{
                 minHeight: 34,
-                py: 0,
-                bgcolor: M.bgMain,
-                fontSize: "0.8125rem",
+                backgroundColor: M.bgMain,
+                borderColor: M.border,
                 transition: M.transition,
-                "& fieldset": { borderColor: M.border },
-                "&:hover": {
-                  bgcolor: "#fff",
-                  "& fieldset": { borderColor: alpha(M.textPrimary, 0.12) },
-                },
-                "&.Mui-focused": {
-                  bgcolor: "#fff",
-                  boxShadow: `0 0 0 2px ${alpha(M.primary, 0.16)}`,
-                  "& fieldset": { borderColor: M.primary, borderWidth: 1 },
-                },
-              },
-              "& .MuiOutlinedInput-input": {
-                py: "6px",
-                px: 0.25,
-              },
-              "& .MuiOutlinedInput-input::placeholder": { color: M.textMuted, opacity: 1, fontSize: "0.8125rem" },
-            }}
-          />
-        </Box>
+                color: M.textPrimary,
+                ["--search-hover-bg" as string]: "#fff",
+                ["--search-hover-border" as string]: `${M.textPrimary}1F`,
+                ["--search-focus-bg" as string]: "#fff",
+                ["--search-focus-border" as string]: M.primary,
+                ["--search-focus-shadow" as string]: `0 0 0 2px ${M.primary}29`,
+              }}
+            />
+            {search ? (
+              <button
+                type="button"
+                onClick={clearSearch}
+                aria-label={t("colleagues.clear_search")}
+                className="absolute right-1.5 top-1/2 -translate-y-1/2 rounded-full p-1 transition-colors hover:bg-[#F3F4F6]"
+                style={{ color: M.textMuted }}
+              >
+                <CloseRounded size={18} />
+              </button>
+            ) : null}
+          </div>
+        </div>
 
-        <Box
-          sx={{
-            flex: 1,
+        <div
+          className={cn(
+            "flex-1 overflow-y-auto px-3 py-3 sm:px-4",
+            "[&::-webkit-scrollbar]:w-2 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:rounded-full [&::-webkit-scrollbar-thumb]:bg-[#1118271F] hover:[&::-webkit-scrollbar-thumb]:bg-[#11182738]",
+          )}
+          style={{
             minHeight: 0,
-            overflowY: "auto",
-            px: { xs: 1.5, sm: 2 },
-            py: 1.5,
             WebkitOverflowScrolling: "touch",
-            bgcolor: M.bgMain,
-            ...TEAM_MINT_SCROLLBAR_SX,
+            backgroundColor: M.bgMain,
+            scrollbarWidth: "thin",
+            scrollbarColor: "rgba(17, 24, 39, 0.22) transparent",
           }}
         >
           {error && (
-            <Alert severity="error" sx={{ borderRadius: M.radiusInner, mb: 1.5, border: `1px solid ${M.border}` }}>
-              {error}
+            <Alert variant="destructive" className="mb-3 rounded-2xl" style={{ borderColor: M.border }}>
+              <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
 
           {isInitialLoading ? (
-            <Box sx={colleaguesGridSx}>
+            <div className="flex flex-col gap-2">
               {Array.from({ length: 6 }).map((_, index) => (
                 <ColleagueSkeleton key={index} />
               ))}
-            </Box>
+            </div>
           ) : isSearchEmpty ? (
             <EmptyState icon="search" title={t("colleagues.no_results")} subtitle={t("colleagues.no_results_hint")} />
           ) : visibleCount === 0 ? (
             <EmptyState icon="people" title={t("colleagues.empty")} />
           ) : (
-            <Box sx={colleaguesGridSx}>
+            <div className="flex flex-col gap-2">
               {showCompanyContact && companyContact && (
                 <CompanyContactRow
                   name={companyContact.name}
@@ -553,11 +441,11 @@ const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClo
                   isLoading={loadingUserId === member.userId}
                 />
               ))}
-            </Box>
+            </div>
           )}
-        </Box>
-      </Paper>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

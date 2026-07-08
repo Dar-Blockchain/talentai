@@ -1,5 +1,4 @@
-﻿import React, { useState } from "react";
-import { Box } from "@mui/material";
+import React, { useState } from "react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Briefcase as WorkOutlineOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -34,7 +33,7 @@ const CreatePostPage: React.FC = () => {
   };
 
   return (
-    <Box>
+    <div>
       <PageHeader
         title={t("create.title")}
         subtitle={t("create.subtitle")}
@@ -46,20 +45,15 @@ const CreatePostPage: React.FC = () => {
         ]}
       />
 
-      <Box sx={{ mb: 12 }}>
+      <div className="mb-24">
         <PostDetailsStep />
-      </Box>
+      </div>
 
-      <Box
-        sx={{
-          position: "fixed", bottom: 0,
+      <div
+        className="fixed bottom-0 z-[1200] flex items-center justify-end gap-4 border-t border-[#E5E7EB] bg-white px-4 py-4 transition-[left,width] duration-300 md:px-8"
+        style={{
           left: "var(--layout-sidebar-width, 0px)",
           width: "calc(100% - var(--layout-sidebar-width, 0px))",
-          bgcolor: "#fff", borderTop: "1px solid #E5E7EB",
-          py: 2, px: { xs: 2, md: 4 },
-          display: "flex", justifyContent: "flex-end", alignItems: "center",
-          gap: 2, zIndex: 1200,
-          transition: "left 0.3s, width 0.3s",
         }}
       >
         <Button
@@ -79,14 +73,14 @@ const CreatePostPage: React.FC = () => {
         >
           {isFinishing ? t("create.btn_saving") : t("create.btn_save_draft")}
         </Button>
-      </Box>
+      </div>
 
       <InterviewLanguagesModal
         open={langModalOpen}
         onConfirm={handleLanguageConfirm}
         onClose={() => setLangModalOpen(false)}
       />
-    </Box>
+    </div>
   );
 };
 

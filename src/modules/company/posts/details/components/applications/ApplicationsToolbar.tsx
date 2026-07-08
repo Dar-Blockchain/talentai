@@ -1,10 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import {
-  Box, Chip, Divider, FormControl, InputBase,
-  ListSubheader, MenuItem, Select, Typography,
-} from "@mui/material";
-import {
   Search as SearchOutlined,
   ArrowDownUp as SortOutlined,
   Users as PeopleAltOutlined,
@@ -12,7 +8,16 @@ import {
   Star as StarOutlineOutlined,
   Brain as PsychologyOutlined,
   ArrowDownAZ as SortByAlphaOutlined,
+  type LucideIcon,
 } from "lucide-react";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
@@ -22,7 +27,14 @@ const STATUS_I18N_KEYS: Record<string, string> = {
   withdrawn:           "pages.applications.status.withdrawn",
 };
 
-const SORT_GROUP_DEFS = [
+interface SortGroup {
+  labelKey: string;
+  Icon: LucideIcon;
+  color: string;
+  options: { value: string; labelKey: string }[];
+}
+
+const SORT_GROUP_DEFS: SortGroup[] = [
   { labelKey: "pages.applications.sort.date_applied",    Icon: CalendarTodayOutlined, color: "#6B7280",
     options: [
       { value: "appliedAt_desc", labelKey: "pages.applications.sort.most_recent" },
@@ -49,11 +61,7 @@ const SORT_GROUP_DEFS = [
   },
 ];
 
-const selectSx = {
-  height: 34, fontSize: "13px", bgcolor: "#fff",
-  border: "1px solid #E5E7EB", borderRadius: "8px",
-  "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-};
+const SORT_OPTIONS_FLAT = SORT_GROUP_DEFS.flatMap((g) => g.options);
 
 interface Props {
   searchInput: string;
@@ -72,73 +80,92 @@ const ApplicationsToolbar: React.FC<Props> = ({
 }) => {
   const { t } = useTranslation("dashboard");
 
+  const currentSortLabel = SORT_OPTIONS_FLAT.find((o) => o.value === sort)?.labelKey;
+
   return (
-    <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 1.5, mb: 2.5 }}>
+    <div className="mb-5 flex flex-wrap items-center justify-between gap-3">
       {/* Title + count */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-        <Box sx={{ width: 32, height: 32, borderRadius: "8px", bgcolor: `${TEAL}15`, display: "flex", alignItems: "center", justifyContent: "center" }}>
+      <div className="flex items-center gap-2.5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg" style={{ backgroundColor: `${TEAL}15` }}>
           <PeopleAltOutlined size={17} color={TEAL} />
-        </Box>
-        <Typography sx={{ fontWeight: 700, fontSize: "15px", color: "#111827" }}>{t("pages.applications.title")}</Typography>
+        </div>
+        <span className="text-[15px] font-bold text-gray-900">{t("pages.applications.title")}</span>
         {!loading && totalCount !== undefined && (
-          <Chip label={totalCount} size="small"
-            sx={{ bgcolor: `${TEAL}15`, color: TEAL, fontWeight: 700, fontSize: "11px", height: 20, minWidth: 28 }} />
+          <Badge
+            variant="outline"
+            className="h-5 min-w-[28px] justify-center rounded-full border-transparent text-[11px] font-bold"
+            style={{ backgroundColor: `${TEAL}15`, color: TEAL }}
+          >
+            {totalCount}
+          </Badge>
         )}
-      </Box>
+      </div>
 
       {/* Filters */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+      <div className="flex flex-wrap items-center gap-2">
         {/* Search */}
-        <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.25, height: 34, minWidth: 210, "&:focus-within": { borderColor: TEAL }, transition: "border-color 0.15s" }}>
+        <div className="flex h-[34px] min-w-[210px] items-center rounded-lg border border-gray-200 bg-white px-3 transition-colors focus-within:border-teal-500">
           <SearchOutlined size={15} color="#9CA3AF" className="mr-1.5" />
-          <InputBase
+          <input
             placeholder={t("pages.applications.search_placeholder")}
             value={searchInput}
             onChange={(e) => onSearchChange(e.target.value)}
-            sx={{ fontSize: "13px", flex: 1 }}
+            className="flex-1 bg-transparent text-[13px] outline-none placeholder:text-gray-400"
           />
-        </Box>
+        </div>
 
         {/* Status filter */}
-        <FormControl size="small">
-          <Select value={status} onChange={(e) => onStatusChange(e.target.value)} displayEmpty sx={selectSx}>
-            <MenuItem value=""><em style={{ color: "#9CA3AF", fontStyle: "normal" }}>{t("pages.applications.status.all")}</em></MenuItem>
-            {Object.entries(STATUS_I18N_KEYS).map(([val, key]) => (
-              <MenuItem key={val} value={val} sx={{ fontSize: "13px" }}>{t(key)}</MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <select
+          value={status}
+          onChange={(e) => onStatusChange(e.target.value)}
+          className="h-[34px] cursor-pointer rounded-lg border border-gray-200 bg-white px-2 text-[13px] outline-none transition-colors focus:border-teal-500"
+        >
+          <option value="">{t("pages.applications.status.all")}</option>
+          {Object.entries(STATUS_I18N_KEYS).map(([val, key]) => (
+            <option key={val} value={val}>{t(key)}</option>
+          ))}
+        </select>
 
         {/* Sort */}
-        <FormControl size="small">
-          <Select
-            value={sort}
-            onChange={(e) => onSortChange(e.target.value)}
-            startAdornment={<SortOutlined size={14} color="#9CA3AF" className="mr-1" />}
-            renderValue={(val) => {
-              const opt = SORT_GROUP_DEFS.flatMap(g => g.options).find(o => o.value === val);
-              return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt ? t(opt.labelKey) : t("pages.applications.sort.most_recent")}</Typography>;
-            }}
-            sx={selectSx}
-            MenuProps={{ PaperProps: { sx: { borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)", border: "1px solid #E5E7EB", mt: 0.5, minWidth: 200 } } }}
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button className="flex h-[34px] min-w-[200px] items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-2 text-[13px] text-gray-700 outline-none transition-colors hover:border-gray-300">
+              <SortOutlined size={14} color="#9CA3AF" />
+              <span className="flex-1 truncate text-left">
+                {currentSortLabel ? t(currentSortLabel) : t("pages.applications.sort.most_recent")}
+              </span>
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent
+            align="end"
+            className="mt-0.5 min-w-[200px] rounded-xl border border-gray-200 p-1 shadow-[0_12px_32px_rgba(0,0,0,0.12)]"
           >
-            {SORT_GROUP_DEFS.flatMap((group, gi) => [
-              <ListSubheader key={`h-${gi}`} sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "10px", fontWeight: 700, color: group.color, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: "32px", bgcolor: "#fff", px: 1.5 }}>
-                <group.Icon size={12} />{t(group.labelKey)}
-              </ListSubheader>,
-              ...group.options.map(({ value, labelKey }) => (
-                <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5, "&:hover": { bgcolor: `${group.color}0D` }, "&.Mui-selected": { bgcolor: `${group.color}12`, "&:hover": { bgcolor: `${group.color}1A` } } }}>
-                  <Typography sx={{ fontSize: "13px", fontWeight: sort === value ? 700 : 400, color: sort === value ? group.color : "#374151" }}>
-                    {t(labelKey)}
-                  </Typography>
-                </MenuItem>
-              )),
-              gi < SORT_GROUP_DEFS.length - 1 ? <Divider key={`d-${gi}`} sx={{ my: 0.5, borderColor: "#F3F4F6" }} /> : null,
-            ])}
-          </Select>
-        </FormControl>
-      </Box>
-    </Box>
+            {SORT_GROUP_DEFS.map((group, gi) => (
+              <React.Fragment key={group.labelKey}>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider" style={{ color: group.color }}>
+                  <group.Icon size={12} />{t(group.labelKey)}
+                </div>
+                {group.options.map(({ value, labelKey }) => (
+                  <DropdownMenuItem
+                    key={value}
+                    onClick={() => onSortChange(value)}
+                    className="mx-0.5 rounded-lg px-3 py-1.5"
+                  >
+                    <span
+                      className="text-[13px]"
+                      style={{ fontWeight: sort === value ? 700 : 400, color: sort === value ? group.color : "#374151" }}
+                    >
+                      {t(labelKey)}
+                    </span>
+                  </DropdownMenuItem>
+                ))}
+                {gi < SORT_GROUP_DEFS.length - 1 && <DropdownMenuSeparator className="my-1 bg-gray-100" />}
+              </React.Fragment>
+            ))}
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+    </div>
   );
 };
 

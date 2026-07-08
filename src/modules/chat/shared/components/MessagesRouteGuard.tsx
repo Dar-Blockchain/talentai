@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, CircularProgress } from "@mui/material";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { useMessagesRouteAccess } from "@/modules/chat/shared/hooks/useMessagesRouteAccess";
 import type { MessagesRouteSurface } from "@/modules/chat/shared/constants/messagesRouteAccess";
 
@@ -13,9 +13,9 @@ const MessagesRouteGuard: React.FC<MessagesRouteGuardProps> = ({ surface, childr
 
   if (checking) {
     return (
-      <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", minHeight: 240 }}>
-        <CircularProgress sx={{ color: "#0D9488" }} />
-      </Box>
+      <div className="flex items-center justify-center min-h-[240px]">
+        <Spinner style={{ color: "#0D9488" }} />
+      </div>
     );
   }
 

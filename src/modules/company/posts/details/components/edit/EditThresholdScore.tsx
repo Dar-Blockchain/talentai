@@ -1,7 +1,7 @@
 import React from "react";
-import { Box, Slider, Typography } from "@mui/material";
 import { Target as TrackChangesOutlined } from "lucide-react";
 import { Controller, Control } from "react-hook-form";
+import { Slider } from "@/modules/shared/ui/shadcn/slider";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
@@ -16,16 +16,16 @@ const MARKS = [
 ];
 
 const EditThresholdScore: React.FC<Props> = ({ control }) => (
-  <Box sx={{ mt: 3 }}>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+  <div className="mt-6">
+    <div className="mb-2 flex items-center gap-2">
       <TrackChangesOutlined size={16} color={TEAL} />
-      <Typography variant="subtitle2" sx={{ color: "rgba(84,98,116,1)", fontSize: "16px", fontWeight: 600 }}>
+      <p className="text-[16px] font-semibold text-[rgba(84,98,116,1)]">
         Threshold Score
-      </Typography>
-    </Box>
-    <Typography sx={{ fontSize: "12px", color: "rgba(84,98,116,0.7)", mb: 2 }}>
+      </p>
+    </div>
+    <p className="mb-4 text-[12px] text-[rgba(84,98,116,0.7)]">
       Candidates scoring below this threshold are automatically flagged for review.
-    </Typography>
+    </p>
 
     <Controller
       name="thresholdScore"
@@ -34,34 +34,34 @@ const EditThresholdScore: React.FC<Props> = ({ control }) => (
         const score = field.value as number;
         const color = score >= 70 ? "#16A34A" : score >= 40 ? "#D97706" : "#DC2626";
         return (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 3 }}>
-            <Box sx={{ flex: 1 }}>
+          <div className="flex items-center gap-6">
+            <div className="flex-1">
               <Slider
-                value={score}
-                onChange={(_, v) => field.onChange(v)}
+                value={[score]}
+                onValueChange={(v) => field.onChange(v[0])}
                 min={0}
                 max={100}
                 step={5}
-                marks={MARKS}
-                sx={{
-                  color,
-                  "& .MuiSlider-thumb":     { width: 18, height: 18 },
-                  "& .MuiSlider-markLabel": { fontSize: "11px", color: "#9CA3AF" },
-                }}
+                className="[&_[data-slot=slider-range]]:bg-[var(--threshold-color)] [&_[data-slot=slider-thumb]]:size-[18px] [&_[data-slot=slider-thumb]]:border-[var(--threshold-color)]"
+                style={{ ["--threshold-color" as string]: color }}
               />
-            </Box>
-            <Box sx={{
-              minWidth: 52, textAlign: "center",
-              bgcolor: `${color}15`, border: `1px solid ${color}40`,
-              borderRadius: 2, px: 1.5, py: 0.75,
-            }}>
-              <Typography sx={{ fontSize: "16px", fontWeight: 800, color }}>{score}%</Typography>
-            </Box>
-          </Box>
+              <div className="mt-1.5 flex justify-between">
+                {MARKS.map((m) => (
+                  <span key={m.value} className="text-[11px] text-gray-400">{m.label}</span>
+                ))}
+              </div>
+            </div>
+            <div
+              className="min-w-[52px] rounded-lg px-3 py-1.5 text-center"
+              style={{ backgroundColor: `${color}15`, border: `1px solid ${color}40` }}
+            >
+              <span className="text-[16px] font-extrabold" style={{ color }}>{score}%</span>
+            </div>
+          </div>
         );
       }}
     />
-  </Box>
+  </div>
 );
 
 export default EditThresholdScore;

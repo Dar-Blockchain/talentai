@@ -1,8 +1,9 @@
 import React, { useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { toast } from 'sonner';
-import { Alert, CircularProgress } from '@mui/material';
-import { Building2 as BusinessIcon } from 'lucide-react';
+import { Alert, AlertDescription } from '@/modules/shared/ui/shadcn/alert';
+import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
+import { Building2 as BusinessIcon, AlertCircle, Info } from 'lucide-react';
 import { AppDispatch } from '@/store/store';
 import { fetchPlanLimits } from '../api';
 import { selectPlanLimits, selectPlanLimitsLoading, selectPlanLimitsError } from '../queries';
@@ -24,15 +25,16 @@ const CompanyConfig: React.FC = () => {
   if (loading) {
     return (
       <div className="flex justify-center items-center min-h-[400px]">
-        <CircularProgress sx={{ color: ADMIN_NEUTRAL }} />
+        <Spinner className="size-9" style={{ color: ADMIN_NEUTRAL }} />
       </div>
     );
   }
 
   if (error) {
     return (
-      <Alert severity="error" sx={{ borderRadius: '12px' }}>
-        {error}
+      <Alert variant="destructive" className="rounded-xl">
+        <AlertCircle />
+        <AlertDescription>{error}</AlertDescription>
       </Alert>
     );
   }
@@ -61,8 +63,11 @@ const CompanyConfig: React.FC = () => {
      />
 
       {plans.length === 0 && !loading && (
-        <Alert severity="info" sx={{ borderRadius: '12px' }}>
-          No plan configurations found. Please create a plan first.
+        <Alert className="rounded-xl border-blue-200 bg-blue-50 text-blue-700 [&>svg]:text-blue-600">
+          <Info />
+          <AlertDescription className="text-blue-700">
+            No plan configurations found. Please create a plan first.
+          </AlertDescription>
         </Alert>
       )}
 

@@ -1,15 +1,7 @@
-import React, { memo, useMemo } from "react";
-import { Box, Typography } from "@mui/material";
+import React, { memo } from "react";
+import { cn } from "@/lib/utils";
 
 const PURPLE = "#8310FF";
-
-const BASE_SX = {
-  display: "flex", alignItems: "center", gap: 0.875,
-  px: 2, py: 0.875, borderRadius: "10px", cursor: "pointer",
-  transition: "all 0.18s ease",
-} as const;
-
-const ICON_SX = { display: "flex", "& svg": { fontSize: 16 } } as const;
 
 interface DetailTabProps {
   active: boolean;
@@ -19,25 +11,23 @@ interface DetailTabProps {
 }
 
 const DetailTab: React.FC<DetailTabProps> = memo(({ active, label, icon, onClick }) => {
-  const sx = useMemo(() => ({
-    ...BASE_SX,
-    bgcolor: active ? "#fff" : "transparent",
-    boxShadow: active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-    color: active ? PURPLE : "#6B7280",
-    "&:hover": !active ? { bgcolor: "#EAECF0" } : {},
-  }), [active]);
-
-  const labelSx = useMemo(() => ({
-    fontSize: "13px", fontWeight: 700,
-    color: active ? "#111827" : "#6B7280",
-    whiteSpace: "nowrap",
-  }), [active]);
-
   return (
-    <Box onClick={onClick} sx={sx}>
-      <Box sx={ICON_SX}>{icon}</Box>
-      <Typography sx={labelSx}>{label}</Typography>
-    </Box>
+    <div
+      onClick={onClick}
+      className={cn(
+        "flex cursor-pointer items-center gap-[7px] rounded-[10px] px-4 py-[7px] transition-all duration-[180ms] ease-in-out",
+        active ? "bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)]" : "bg-transparent hover:bg-[#EAECF0]",
+      )}
+      style={{ color: active ? PURPLE : "#6B7280" }}
+    >
+      <div className="flex">{icon}</div>
+      <span
+        className="whitespace-nowrap text-[13px] font-bold"
+        style={{ color: active ? "#111827" : "#6B7280" }}
+      >
+        {label}
+      </span>
+    </div>
   );
 });
 

@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import { Briefcase as BusinessCenterOutlined } from "lucide-react";
 import Section from "./Section";
 import { T, NAVY } from "../utils/constants";
@@ -21,26 +20,26 @@ const CvMatchScore: React.FC<CvMatchScoreProps> = ({ score, title, strongLabel, 
 
   return (
     <Section icon={<BusinessCenterOutlined size={14} color={T} />} title={title}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2.5 }}>
-        <Box sx={{ position: "relative", width: 80, height: 80, flexShrink: 0 }}>
+      <div className="flex items-center gap-5">
+        <div className="relative shrink-0" style={{ width: 80, height: 80 }}>
           <svg width={80} height={80} style={{ transform: "rotate(-90deg)" }}>
             <circle cx={40} cy={40} r={r} fill="none" stroke={`${scoreColor}18`} strokeWidth={7} />
             <circle cx={40} cy={40} r={r} fill="none" stroke={scoreColor} strokeWidth={7}
               strokeDasharray={`${filled} ${circ}`} strokeLinecap="round" />
           </svg>
-          <Box sx={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color: scoreColor, lineHeight: 1 }}>{score}%</Typography>
-          </Box>
-        </Box>
-        <Box>
-          <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: NAVY }}>
+          <div className="absolute inset-0 flex items-center justify-center">
+            <span className="text-[1.1rem] font-black leading-none" style={{ color: scoreColor }}>{score}%</span>
+          </div>
+        </div>
+        <div>
+          <p className="text-[0.9rem] font-bold" style={{ color: NAVY }}>
             {score >= 70 ? strongLabel : score >= 50 ? goodLabel : lowLabel}
-          </Typography>
-          <Typography sx={{ fontSize: "0.8rem", color: "#6B7280", mt: 0.5 }}>
+          </p>
+          <p className="text-[0.8rem] text-[#6B7280] mt-1">
             {subtitle(score)}
-          </Typography>
-        </Box>
-      </Box>
+          </p>
+        </div>
+      </div>
     </Section>
   );
 };

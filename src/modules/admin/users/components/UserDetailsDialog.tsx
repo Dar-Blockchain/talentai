@@ -1,7 +1,7 @@
 import React from 'react';
-import { Dialog, DialogContent, IconButton, Avatar } from '@mui/material';
+import { Dialog, DialogContent } from '@/modules/shared/ui/shadcn/dialog';
+import { Avatar, AvatarFallback } from '@/modules/shared/ui/shadcn/avatar';
 import {
-  X as CloseIcon,
   Mail as EmailIcon,
   Calendar as CalendarIcon,
   LogIn as LoginIcon,
@@ -31,40 +31,17 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
       : user.username;
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: ADMIN_RADIUS,
-          overflow: 'hidden',
-          boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)',
-        },
-      }}
-    >
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent
+        className="max-w-2xl p-0 gap-0 overflow-hidden"
+        style={{ borderRadius: ADMIN_RADIUS, boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)' }}
+      >
       {/* Header */}
       <div className="relative px-6 pt-6 pb-5 text-center">
-        <IconButton
-          onClick={onClose}
-          sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}
-        >
-          <CloseIcon size={18} />
-        </IconButton>
-        <Avatar
-          sx={{
-            width: 64,
-            height: 64,
-            mx: 'auto',
-            mb: 1.5,
-            bgcolor: '#EEF2FF',
-            color: ADMIN_ACCENT,
-            fontSize: '1.5rem',
-            fontWeight: 700,
-          }}
-        >
-          {user.username?.charAt(0).toUpperCase() || 'U'}
+        <Avatar className="mx-auto mb-3 size-16" style={{ backgroundColor: '#EEF2FF' }}>
+          <AvatarFallback className="bg-transparent text-2xl font-bold" style={{ color: ADMIN_ACCENT }}>
+            {user.username?.charAt(0).toUpperCase() || 'U'}
+          </AvatarFallback>
         </Avatar>
         <h2 className="text-[1.15rem] font-semibold text-slate-900">{displayName}</h2>
         <p className="text-[13px] text-slate-500 mt-0.5">@{user.username}</p>
@@ -83,7 +60,7 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
         </div>
       </div>
 
-      <DialogContent sx={{ p: 0 }}>
+      <div>
         {/* Info List */}
         <div className="px-6 pt-4 pb-1">
           <InfoRow icon={<EmailIcon size={18} color={ADMIN_NEUTRAL} />} label="Email" value={user.email} />
@@ -132,6 +109,7 @@ const UserDetailsDialog: React.FC<UserDetailsDialogProps> = ({ open, user, onClo
         <div className="px-6 py-3 bg-slate-50 border-t border-slate-200">
           <span className="text-[11px] font-mono text-slate-400">ID: {user._id}</span>
         </div>
+      </div>
       </DialogContent>
     </Dialog>
   );

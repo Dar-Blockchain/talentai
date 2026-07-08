@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Award as WorkspacePremiumIcon, Plus as AddIcon, Pencil as EditIcon } from 'lucide-react';
-import { IconButton, Tooltip, CircularProgress } from '@mui/material';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Button } from '@/modules/shared/ui/shadcn/button';
+import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/modules/shared/ui/shadcn/tooltip';
 import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
 import { useUpdatePlanMutation } from '../queries';
 import PlanFormDialog from './PlanFormDialog';
@@ -49,6 +50,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
   };
 
   return (
+    <TooltipProvider>
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[13px] font-semibold text-slate-500 uppercase tracking-wide">Available Plans</span>
@@ -81,10 +83,13 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
                         Inactive
                       </Badge>
                     )}
-                    <Tooltip title="Edit plan">
-                      <IconButton size="small" onClick={() => openEdit(plan)} sx={{ color: '#64748B' }}>
-                        <EditIcon size={18} />
-                      </IconButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => openEdit(plan)} className="rounded-md p-1.5 text-[#64748B] hover:bg-slate-100">
+                          <EditIcon size={18} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit plan</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
@@ -110,7 +115,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
                   disabled={togglingName === plan.name}
                   className="w-full rounded-lg py-1.5 text-[12px] font-semibold text-slate-600"
                 >
-                  {togglingName === plan.name && <CircularProgress size={12} sx={{ color: ADMIN_NEUTRAL }} />}
+                  {togglingName === plan.name && <Spinner className="size-3" style={{ color: ADMIN_NEUTRAL }} />}
                   {plan.isActive ? 'Deactivate' : 'Reactivate'}
                 </Button>
               </div>
@@ -129,6 +134,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
         }}
       />
     </div>
+    </TooltipProvider>
   );
 };
 

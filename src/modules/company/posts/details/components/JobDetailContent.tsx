@@ -1,5 +1,4 @@
 import React from "react";
-import { Box } from "@mui/material";
 import PostBasicDetails from "./PostBasicDetails";
 import EditPostDetails from "./EditPostDetails";
 
@@ -22,14 +21,14 @@ const JobDetailContent: React.FC<Props> = ({
   onCancelEdit,
   onSaveSuccess,
 }) => (
-  <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+  <div className="flex flex-col gap-4">
     {activeEdit === "post" && (
       <EditPostDetails key="edit-post" job={job} onCancel={onCancelEdit} onSaveSuccess={onSaveSuccess} />
     )}
     {activeEdit === null && (
       <PostBasicDetails job={job} onEdit={onEditPost} canEdit={isOwner} />
     )}
-  </Box>
+  </div>
 );
 
 export default JobDetailContent;

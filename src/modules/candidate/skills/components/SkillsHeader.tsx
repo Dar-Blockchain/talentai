@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
@@ -20,51 +19,58 @@ const SkillsHeader: React.FC = () => {
   const quota      = profile?.quota ?? 0;
 
   return (
-    <Box sx={{
-      bgcolor: "#fff", borderRadius: "18px", border: "1px solid #E5E7EB",
-      p: 3, mb: 2.5, overflow: "hidden", position: "relative",
-    }}>
-      <Box sx={{ position: "absolute", top: -50, right: -50, width: 180, height: 180, borderRadius: "50%", bgcolor: `${T}07`, pointerEvents: "none" }} />
+    <div className="bg-white rounded-[18px] border border-[#E5E7EB] p-6 mb-5 overflow-hidden relative">
+      <div className="absolute -top-[50px] -right-[50px] w-[180px] h-[180px] rounded-full pointer-events-none" style={{ backgroundColor: `${T}07` }} />
 
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ width: 42, height: 42, borderRadius: "12px", bgcolor: TBG, border: `1px solid ${TBD}`, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+      <div className="flex items-center justify-between flex-wrap gap-4">
+        <div className="flex items-center gap-3">
+          <div
+            className="w-[42px] h-[42px] rounded-xl flex items-center justify-center shrink-0"
+            style={{ backgroundColor: TBG, border: `1px solid ${TBD}` }}
+          >
             <PsychologyOutlined size={22} color={T} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontSize: "1.2rem", fontWeight: 900, color: NAVY, lineHeight: 1 }}>{s("title")}</Typography>
-            <Typography sx={{ fontSize: "0.75rem", color: "#9CA3AF", mt: 0.2 }}>{s("subtitle", { count: techSkills + softSkills })}</Typography>
-          </Box>
-        </Box>
+          </div>
+          <div>
+            <p className="text-[1.2rem] font-black leading-none" style={{ color: NAVY }}>{s("title")}</p>
+            <p className="text-[0.75rem] text-[#9CA3AF] mt-0.5">{s("subtitle", { count: techSkills + softSkills })}</p>
+          </div>
+        </div>
 
-        <Box sx={{ display: "flex", gap: 1.5, flexWrap: "wrap" }}>
+        <div className="flex gap-3 flex-wrap">
           {[
             { icon: CodeOutlined,   labelKey: "technical", value: techSkills, color: "#2563EB" },
             { icon: PeopleOutlined, labelKey: "soft",      value: softSkills, color: "#D97706" },
           ].map(({ icon: Icon, labelKey, value, color }) => (
-            <Box key={labelKey} sx={{ textAlign: "center", px: 1.75, py: 1, borderRadius: "12px", bgcolor: `${color}0D`, border: `1px solid ${color}25`, minWidth: 64 }}>
-              <Typography sx={{ fontSize: "1.1rem", fontWeight: 900, color, lineHeight: 1 }}>{value}</Typography>
-              <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF", fontWeight: 500, mt: 0.25 }}>{s(labelKey)}</Typography>
-            </Box>
+            <div
+              key={labelKey}
+              className="text-center px-3.5 py-2 rounded-xl min-w-16"
+              style={{ backgroundColor: `${color}0D`, border: `1px solid ${color}25` }}
+            >
+              <p className="text-[1.1rem] font-black leading-none" style={{ color }}>{value}</p>
+              <p className="text-[0.62rem] text-[#9CA3AF] font-medium mt-0.5">{s(labelKey)}</p>
+            </div>
           ))}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Box sx={{ mt: 2.5, pt: 2, borderTop: "1px solid #F3F4F6" }}>
-        <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.75 }}>
-          <Typography sx={{ fontSize: "0.72rem", color: "#6B7280", fontWeight: 600 }}>{s("monthly_quota")}</Typography>
-          <Typography sx={{ fontSize: "0.72rem", fontWeight: 800, color: quota >= 5 ? "#DC2626" : T }}>{s("quota_used", { used: quota })}</Typography>
-        </Box>
-        <Box sx={{ height: 6, bgcolor: "#F3F4F6", borderRadius: "99px", overflow: "hidden" }}>
-          <Box sx={{ height: "100%", width: `${(quota / 5) * 100}%`, bgcolor: quota >= 5 ? "#DC2626" : T, borderRadius: "99px", transition: "width 0.6s ease" }} />
-        </Box>
+      <div className="mt-5 pt-4 border-t border-[#F3F4F6]">
+        <div className="flex justify-between mb-1.5">
+          <span className="text-[0.72rem] text-[#6B7280] font-semibold">{s("monthly_quota")}</span>
+          <span className="text-[0.72rem] font-extrabold" style={{ color: quota >= 5 ? "#DC2626" : T }}>{s("quota_used", { used: quota })}</span>
+        </div>
+        <div className="h-1.5 bg-[#F3F4F6] rounded-full overflow-hidden">
+          <div
+            className="h-full rounded-full transition-[width] duration-[600ms] ease-out"
+            style={{ width: `${(quota / 5) * 100}%`, backgroundColor: quota >= 5 ? "#DC2626" : T }}
+          />
+        </div>
         {quota >= 5 && (
-          <Typography sx={{ fontSize: "0.67rem", color: "#DC2626", mt: 0.5, fontWeight: 500 }}>
+          <p className="text-[0.67rem] text-[#DC2626] mt-1 font-medium">
             {s("quota_limit")}
-          </Typography>
+          </p>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

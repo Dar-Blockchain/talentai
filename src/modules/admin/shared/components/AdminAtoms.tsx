@@ -49,24 +49,6 @@ export const AdminTableErrorRow = memo<{ message?: string; onRetry: () => void }
 );
 AdminTableErrorRow.displayName = "AdminTableErrorRow";
 
-/** MUI TableCell sx — teal-tinted sticky header (used by CompanySubscriptionsTable). */
-export const ADMIN_TABLE_HEAD_CELL_SX = {
-  fontWeight: 700,
-  backgroundColor: "#F0FDFA",
-  color: "#0D9488",
-  borderBottom: "1px solid #CCFBF1",
-  fontSize: "0.75rem",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-} as const;
-
-/** MUI TableRow sx — teal hover highlight (used by CompanySubscriptionsTable). */
-export const ADMIN_TABLE_ROW_SX = {
-  "& td": { borderBottom: "1px solid #F1F4F8" },
-  "&:hover": { backgroundColor: "#F0FDFA !important" },
-  "&:last-of-type td": { borderBottom: "none" },
-} as const;
-
 /** Tab-level page heading — bold title, light subtitle. */
 export const AdminPageHeading = memo<{ title: string; subtitle?: string }>(
   ({ title, subtitle }) => (

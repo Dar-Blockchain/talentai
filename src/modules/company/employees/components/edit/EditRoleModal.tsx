@@ -1,9 +1,6 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Typography, Box, IconButton,
-  Alert, Select, MenuItem, FormControl,
-} from "@mui/material";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Alert, AlertDescription } from "@/modules/shared/ui/shadcn/alert";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { X as CloseIcon, Pencil as EditOutlined, Building2 as BusinessOutlined, CheckCircle as CheckCircleIcon, ChevronDown, Search, X, Check } from "lucide-react";
 import { useDepartmentsQuery } from "@/modules/company/employees/queries";
@@ -12,11 +9,8 @@ import { ROLES } from "@/modules/shared/constants/employee";
 import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/modules/company/employees/utils/employeeRoleI18n';
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
 import { cn } from "@/lib/utils";
-import {
-  DIALOG_PAPER_SX, HEADER_ICON_SX, CLOSE_BTN_SX,
-  SELECT_SX,
-  FIELD_LABEL_SX,
-} from "../shared/modalStyles";
+
+const PURPLE = "#8310FF";
 
 interface EditRoleModalProps {
   open: boolean;
@@ -111,40 +105,55 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
   const SelectedRoleIcon = selectedRole?.icon;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth
-      slotProps={{ paper: { sx: DIALOG_PAPER_SX } }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose(); }}>
+    <DialogContent
+      showCloseButton={false}
+      className="sm:max-w-sm p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col"
+      style={{ borderRadius: 12, boxShadow: "0 20px 48px rgba(0,0,0,0.12)" }}
+    >
 
-      <DialogTitle sx={{ p: 0 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, py: 2.5, borderBottom: "1px solid #f3f4f6" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={HEADER_ICON_SX}>
-              <EditOutlined size={20} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827", lineHeight: 1.2 }}>
-                {m("title")}
-              </Typography>
-              <Typography sx={{ fontSize: "0.775rem", color: "#9CA3AF", mt: 0.25 }}>
-                {m("subtitle_intro")}{" "}
-                <strong style={{ color: "#374151" }}>{memberName}</strong>
-              </Typography>
-            </Box>
-          </Box>
-          <IconButton onClick={handleClose} disabled={loading} size="small" sx={CLOSE_BTN_SX}>
-            <CloseIcon size={18} />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#f3f4f6]">
+        <div className="flex items-center gap-3">
+          <div className="flex h-[38px] w-[38px] items-center justify-center rounded-lg" style={{ backgroundColor: `${PURPLE}18`, color: PURPLE }}>
+            <EditOutlined size={20} />
+          </div>
+          <div>
+            <p className="text-[1rem] font-bold leading-tight text-[#111827]">
+              {m("title")}
+            </p>
+            <p className="mt-0.5 text-[0.775rem] text-[#9CA3AF]">
+              {m("subtitle_intro")}{" "}
+              <strong className="text-[#374151]">{memberName}</strong>
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleClose}
+          disabled={loading}
+          className="rounded-md p-1.5 text-[#9CA3AF] hover:bg-[#F3F4F6] hover:text-[#374151] disabled:pointer-events-none disabled:opacity-50"
+        >
+          <CloseIcon size={18} />
+        </button>
+      </div>
 
-      <DialogContent sx={{ px: 3, pt: 3, pb: 1 }}>
-        {error   && <Alert severity="error"   sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 2, borderRadius: 2 }}>{m("success")}</Alert>}
+      <div className="overflow-y-auto px-6 pt-6 pb-1">
+        {error && (
+          <Alert variant="destructive" className="mb-4 rounded-lg">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {success && (
+          <Alert className="mb-4 rounded-lg border-transparent bg-emerald-50 text-emerald-700 [&>svg]:text-emerald-600">
+            <CheckCircleIcon />
+            <AlertDescription className="text-emerald-700">{m("success")}</AlertDescription>
+          </Alert>
+        )}
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+        <div className="flex flex-col gap-5">
 
           {/* Role */}
-          <Box>
-            <Typography sx={FIELD_LABEL_SX}>{m("role_label")}</Typography>
+          <div>
+            <p className="mb-2 text-[0.8rem] font-semibold text-[#374151]">{m("role_label")}</p>
             <Popover open={roleOpen} onOpenChange={setRoleOpen}>
               <PopoverTrigger asChild>
                 <button
@@ -250,38 +259,35 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
                 </div>
               </PopoverContent>
             </Popover>
-          </Box>
+          </div>
 
           {/* Department */}
-          <Box>
-            <Typography sx={FIELD_LABEL_SX}>
+          <div>
+            <p className="mb-2 text-[0.8rem] font-semibold text-[#374151]">
               {m("department_label")}{" "}
-              <Typography component="span" sx={{ fontWeight: 400, color: "#9CA3AF", fontSize: "0.75rem" }}>
+              <span className="text-[0.75rem] font-normal text-[#9CA3AF]">
                 {m("optional")}
-              </Typography>
-            </Typography>
-            <FormControl fullWidth size="small">
-              <Select
+              </span>
+            </p>
+            <div className="relative">
+              <BusinessOutlined size={18} color="#9CA3AF" className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2" />
+              <select
                 value={departmentId}
-                onChange={handleDeptChange}
+                onChange={(e) => handleDeptChange({ target: { value: e.target.value } })}
                 disabled={loading || departmentsLoading}
-                displayEmpty
-                startAdornment={<BusinessOutlined size={18} color="#9CA3AF" className="mr-2" />}
-                sx={SELECT_SX}
+                className="h-10 w-full rounded-xl border border-[#E2E8F0] bg-[#F8FAFC] pl-10 pr-3 text-sm text-[#111827] outline-none transition-colors hover:border-[#CBD5E1] focus:border-2 focus:border-[#8310FF] disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <MenuItem value="">
-                  <Typography sx={{ color: "#9CA3AF", fontSize: "0.875rem" }}>{m("no_department")}</Typography>
-                </MenuItem>
+                <option value="" className="text-[#9CA3AF]">{m("no_department")}</option>
                 {departments.map((d) => (
-                  <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
+                  <option key={d._id} value={d._id}>{d.name}</option>
                 ))}
-              </Select>
-            </FormControl>
-          </Box>
-        </Box>
-      </DialogContent>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <DialogActions sx={{ px: 3, pb: 3, pt: 2.5, gap: 1.5 }}>
+      <div className="flex items-center justify-end gap-3 px-6 pb-6 pt-5">
         <Button onClick={handleClose} disabled={loading} variant="ghost" className="rounded-lg px-6 font-semibold text-gray-500">
           {m("cancel")}
         </Button>
@@ -294,7 +300,8 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
         >
           {loading ? m("updating_btn") : m("save")}
         </Button>
-      </DialogActions>
+      </div>
+    </DialogContent>
     </Dialog>
   );
 });

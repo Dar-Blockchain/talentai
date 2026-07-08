@@ -1,6 +1,6 @@
 import React, { memo, useState, useCallback, useEffect, useMemo } from "react";
 import { useUpdatePermissionsMutation } from "@/modules/company/employees/queries";
-import { Box, Typography, Avatar } from "@mui/material";
+import { Avatar, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 import { AnimatePresence } from "framer-motion";
 import {
   ArrowLeft as ArrowBackOutlined,
@@ -24,16 +24,6 @@ import { PURPLE, ROLE_STYLES, STATUS_STYLES, pickPalette, fmtDate } from "@/modu
 import DetailTab from "./DetailTab";
 import OverviewTab from "./OverviewTab";
 import PermissionsTab from "./PermissionsTab";
-
-const NAV_ROW_SX   = { display: "flex", alignItems: "center", justifyContent: "space-between", mb: 3 } as const;
-const ACTIONS_SX   = { display: "flex", gap: 0.875 } as const;
-const IDENTITY_SX  = { display: "flex", alignItems: "center", gap: 2.5, flexWrap: "wrap" } as const;
-const AVATAR_POS   = { position: "relative" as const, flexShrink: 0 } as const;
-const INFO_BOX_SX  = { flex: 1, minWidth: 0 } as const;
-const BADGES_SX    = { display: "flex", alignItems: "center", gap: 0.75, mt: 1.25, flexWrap: "wrap" } as const;
-const BACK_SX      = { display: "inline-flex", alignItems: "center", gap: 0.75, cursor: "pointer", color: "#94A3B8", transition: "color 0.15s", "&:hover": { color: "#475569" } } as const;
-const TAB_BAR_SX   = { display: "flex", alignItems: "center", gap: 0.5, mb: 2.5, bgcolor: "#F3F4F6", borderRadius: "12px", p: 0.5, width: "fit-content" } as const;
-const MSG_BTN_BASE = { display: "flex", alignItems: "center", gap: 0.625, px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer", transition: "all 0.15s" } as const;
 
 interface EmployeeDetailProps {
   member: ExtendedMember;
@@ -90,22 +80,18 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = memo(({
   const status    = STATUS_STYLES[member.status] ?? STATUS_STYLES.pending!;
   const dept      = member.department?.name ?? member.departmentName ?? null;
 
-  const heroBg = useMemo(() => ({
-    bgcolor: "#fff", border: "1px solid #EDEEF0", borderRadius: "22px",
-    overflow: "hidden", boxShadow: "0 1px 6px rgba(0,0,0,0.05)", mb: 2.5,
+  const heroStyle = useMemo(() => ({
     background: `linear-gradient(135deg, ${palette.from}07 0%, transparent 50%)`,
   }), [palette.from]);
 
-  const avatarSx = useMemo(() => ({
-    width: 72, height: 72, fontSize: "1.6rem", fontWeight: 800, color: "#fff",
+  const avatarStyle = useMemo(() => ({
     background: `linear-gradient(145deg, ${palette.from}, ${palette.to})`,
     boxShadow: `0 4px 18px ${palette.to}38`,
   }), [palette.from, palette.to]);
 
-  const rolePillSx = useMemo(() => ({
-    display: "inline-flex", alignItems: "center", gap: 0.5,
-    px: 1.125, py: "3px", borderRadius: "999px",
-    bgcolor: `${roleColor}10`, border: `1px solid ${roleColor}22`,
+  const rolePillStyle = useMemo(() => ({
+    backgroundColor: `${roleColor}10`,
+    borderColor: `${roleColor}22`,
   }), [roleColor]);
 
   const handleSavePermissions = useCallback(() => {
@@ -126,83 +112,105 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = memo(({
   const setPermissionsTab  = useCallback(() => setTab("permissions"),  []);
 
   return (
-    <Box>
-      <Box sx={heroBg}>
-        <Box sx={{ px: { xs: 2.5, sm: 3.5 }, pt: 2.5, pb: 3 }}>
-          <Box sx={NAV_ROW_SX}>
-            <Box onClick={onBack} sx={BACK_SX}>
+    <div>
+      <div
+        className="mb-2.5 overflow-hidden rounded-[22px] border border-[#EDEEF0] bg-white shadow-[0_1px_6px_rgba(0,0,0,0.05)]"
+        style={heroStyle}
+      >
+        <div className="px-5 pt-5 pb-6 sm:px-7">
+          <div className="mb-6 flex items-center justify-between">
+            <div onClick={onBack} className="inline-flex cursor-pointer items-center gap-1.5 text-[#94A3B8] transition-colors hover:text-[#475569]">
               <ArrowBackOutlined size={15} />
-              <Typography sx={{ fontSize: "0.8rem", fontWeight: 600, color: "inherit" }}>Employees</Typography>
-            </Box>
+              <span className="text-[0.8rem] font-semibold text-inherit">Employees</span>
+            </div>
 
-            <Box sx={ACTIONS_SX}>
+            <div className="flex items-center gap-[7px]">
               {!isSelf && member.status === "active" && (
-                <Box onClick={handleChatClick} sx={{ ...MSG_BTN_BASE, border: "1px solid #CCFBF1", bgcolor: "#F0FDFA", "&:hover": { bgcolor: "#CCFBF1", borderColor: "#99F6E4", "& *": { color: "#0F766E" } } }}>
-                  <ChatBubbleOutlineOutlined size={14} color="#0D9488" />
-                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#0F766E" }}>Message</Typography>
-                </Box>
+                <div
+                  onClick={handleChatClick}
+                  className="group flex cursor-pointer items-center gap-[5px] rounded-[10px] border border-[#CCFBF1] bg-[#F0FDFA] px-[13px] py-3 transition-all hover:border-[#99F6E4] hover:bg-[#CCFBF1]"
+                >
+                  <ChatBubbleOutlineOutlined size={14} className="text-[#0D9488] group-hover:text-[#0F766E]" />
+                  <span className="text-[0.775rem] font-semibold text-[#0F766E]">Message</span>
+                </div>
               )}
               {canAssignRoles && (
-                <Box onClick={handleEditClick} sx={{ ...MSG_BTN_BASE, border: "1px solid #E2E8F0", bgcolor: "#F8FAFC", "&:hover": { bgcolor: `${PURPLE}08`, borderColor: `${PURPLE}30`, "& *": { color: PURPLE } } }}>
-                  <EditOutlined size={14} color="#64748B" />
-                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#475569" }}>Edit</Typography>
-                </Box>
+                <div
+                  onClick={handleEditClick}
+                  className="group flex cursor-pointer items-center gap-[5px] rounded-[10px] border border-[#E2E8F0] bg-[#F8FAFC] px-[13px] py-3 transition-all hover:border-[#8310FF]/30 hover:bg-[#8310FF]/[0.03]"
+                >
+                  <EditOutlined size={14} className="text-[#64748B] group-hover:text-[#8310FF]" />
+                  <span className="text-[0.775rem] font-semibold text-[#475569] group-hover:text-[#8310FF]">Edit</span>
+                </div>
               )}
               {canRemove && (
-                <Box onClick={handleDeleteClick} sx={{ ...MSG_BTN_BASE, border: "1px solid #FECACA", bgcolor: "#FEF7F7", "&:hover": { bgcolor: "#FEE2E2", borderColor: "#FCA5A5" } }}>
+                <div
+                  onClick={handleDeleteClick}
+                  className="group flex cursor-pointer items-center gap-[5px] rounded-[10px] border border-[#FECACA] bg-[#FEF7F7] px-[13px] py-3 transition-all hover:border-[#FCA5A5] hover:bg-[#FEE2E2]"
+                >
                   <DeleteOutlineOutlined size={14} color="#F87171" />
-                  <Typography sx={{ fontSize: "0.775rem", fontWeight: 600, color: "#EF4444" }}>Remove</Typography>
-                </Box>
+                  <span className="text-[0.775rem] font-semibold text-[#EF4444]">Remove</span>
+                </div>
               )}
-            </Box>
-          </Box>
+            </div>
+          </div>
 
-          <Box sx={IDENTITY_SX}>
-            <Box sx={AVATAR_POS}>
-              <Avatar sx={avatarSx}>{letter}</Avatar>
-              <Box sx={{ position: "absolute", bottom: 2, right: 2, width: 14, height: 14, borderRadius: "50%", bgcolor: status.dot, border: "2.5px solid #fff" }} />
-            </Box>
+          <div className="flex flex-wrap items-center gap-5">
+            <div className="relative shrink-0">
+              <Avatar className="size-[72px]" style={avatarStyle}>
+                <AvatarFallback
+                  className="bg-transparent text-[1.6rem] font-extrabold text-white"
+                  style={avatarStyle}
+                >
+                  {letter}
+                </AvatarFallback>
+              </Avatar>
+              <div
+                className="absolute bottom-0.5 right-0.5 size-3.5 rounded-full border-[2.5px] border-white"
+                style={{ backgroundColor: status.dot }}
+              />
+            </div>
 
-            <Box sx={INFO_BOX_SX}>
-              <Typography sx={{ fontWeight: 700, fontSize: "1.125rem", color: "#0F172A", lineHeight: 1.25 }}>{name}</Typography>
-              <Typography sx={{ fontSize: "0.8125rem", color: "#94A3B8", mt: 0.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{email}</Typography>
+            <div className="min-w-0 flex-1">
+              <p className="text-[1.125rem] font-bold leading-tight text-[#0F172A]">{name}</p>
+              <p className="mt-1 overflow-hidden text-ellipsis whitespace-nowrap text-[0.8125rem] text-[#94A3B8]">{email}</p>
 
-              <Box sx={BADGES_SX}>
-                <Box sx={rolePillSx}>
-                  <Box sx={{ width: 5, height: 5, borderRadius: "50%", bgcolor: roleColor }} />
-                  <Typography sx={{ fontSize: "11px", fontWeight: 700, color: roleColor }}>{roleLabel}</Typography>
-                </Box>
+              <div className="mt-[10px] flex flex-wrap items-center gap-1.5">
+                <div className="inline-flex items-center gap-1 rounded-full border px-[9px] py-[3px]" style={rolePillStyle}>
+                  <div className="size-[5px] rounded-full" style={{ backgroundColor: roleColor }} />
+                  <span className="text-[11px] font-bold" style={{ color: roleColor }}>{roleLabel}</span>
+                </div>
 
-                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "3px", borderRadius: "999px", bgcolor: status.bg }}>
-                  <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: status.dot }} />
-                  <Typography sx={{ fontSize: "11.5px", fontWeight: 700, color: status.color }}>{status.label}</Typography>
-                </Box>
+                <div className="inline-flex items-center gap-1 rounded-full px-[9px] py-[3px]" style={{ backgroundColor: status.bg }}>
+                  <div className="size-1.5 rounded-full" style={{ backgroundColor: status.dot }} />
+                  <span className="text-[11.5px] font-bold" style={{ color: status.color }}>{status.label}</span>
+                </div>
 
                 {dept && (
-                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.25, py: "4px", borderRadius: "999px", bgcolor: "#F1F5F9", border: "1px solid #E2E8F0" }}>
+                  <div className="inline-flex items-center gap-1 rounded-full border border-[#E2E8F0] bg-[#F1F5F9] px-2.5 py-1">
                     <BusinessOutlined size={11} color="#64748B" />
-                    <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#475569" }}>{dept}</Typography>
-                  </Box>
+                    <span className="text-[11.5px] font-semibold text-[#475569]">{dept}</span>
+                  </div>
                 )}
 
                 {member.createdAt && (
-                  <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.5 }}>
+                  <div className="inline-flex items-center gap-1">
                     <CalendarTodayOutlined size={11} color="#CBD5E1" />
-                    <Typography sx={{ fontSize: "11.5px", color: "#94A3B8", fontWeight: 500 }}>Joined {fmtDate(member.createdAt)}</Typography>
-                  </Box>
+                    <span className="text-[11.5px] font-medium text-[#94A3B8]">Joined {fmtDate(member.createdAt)}</span>
+                  </div>
                 )}
-              </Box>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
 
-      <Box sx={TAB_BAR_SX}>
+      <div className="mb-5 flex w-fit items-center gap-1 rounded-xl bg-[#F3F4F6] p-1">
         <DetailTab active={tab === "overview"}    label="Overview"    icon={<PersonOutlined />} onClick={setOverviewTab} />
         {canManagePermissions && (
           <DetailTab active={tab === "permissions"} label="Permissions" icon={<TuneOutlined />} onClick={setPermissionsTab} />
         )}
-      </Box>
+      </div>
 
       <AnimatePresence mode="wait">
         {tab === "overview" && (
@@ -216,7 +224,7 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = memo(({
           />
         )}
       </AnimatePresence>
-    </Box>
+    </div>
   );
 });
 

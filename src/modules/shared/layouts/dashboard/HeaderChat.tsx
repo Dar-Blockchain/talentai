@@ -1,16 +1,9 @@
 "use client";
 
 import React, { useState } from "react";
-import {
-  Avatar,
-  Badge,
-  Box,
-  Divider,
-  IconButton,
-  Popover,
-  Typography,
-} from "@mui/material";
 import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Avatar, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Popover, PopoverTrigger, PopoverContent } from "@/modules/shared/ui/shadcn/popover";
 import { MessageCircle } from "lucide-react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
@@ -29,6 +22,7 @@ import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBa
 import { normalizeConversationUnreadCount } from "@/modules/chat/shared/utils/normalizeConversationUnread";
 import { getParticipantDisplayName } from "@/modules/chat/shared/components/helpers";
 import { TEAM_LAST_MESSAGE_DELETED_SENTINEL } from "@/modules/chat/team-chat/constants/lastMessagePreview";
+import { cn } from "@/lib/utils";
 
 const TEAL    = "#0D9488";
 const TEAL_BG = "#F0FDFA";
@@ -73,104 +67,46 @@ const HeaderChat: React.FC = () => {
     return d.toLocaleDateString(locale, { month: "short", day: "numeric" });
   };
 
-  const [anchor, setAnchor] = useState<null | HTMLElement>(null);
+  const [open, setOpen] = useState(false);
   const totalBadge = activeModuleUnread;
-  const close = () => setAnchor(null);
+  const close = () => setOpen(false);
 
   return (
-    <>
-      <IconButton
-        onClick={(e) => setAnchor(e.currentTarget)}
-        sx={{ color: "#6B7280" }}
-      >
-        <div style={{ position: "relative", display: "inline-flex" }}>
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button className="relative inline-flex items-center justify-center rounded-lg p-2 text-gray-500 hover:bg-gray-100">
           <MessageCircle size={20} />
           {totalBadge > 0 && (
-            <span
-              style={{
-                position: "absolute",
-                top: 1,
-                right: 1,
-                width: 10,
-                height: 10,
-                borderRadius: "50%",
-                backgroundColor: "#EF4444",
-                boxShadow: "0 0 0 2px #fff",
-              }}
-            />
+            <span className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-red-500 shadow-[0_0_0_2px_#fff]" />
           )}
-        </div>
-      </IconButton>
+        </button>
+      </PopoverTrigger>
 
-      <Popover
-        open={Boolean(anchor)}
-        anchorEl={anchor}
-        onClose={close}
-        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-        transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{
-          paper: {
-            sx: {
-              width: 340,
-              borderRadius: 3,
-              boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-              overflow: "hidden",
-              mt: 1,
-              border: "1px solid #E5E7EB",
-            },
-          },
-        }}
+      <PopoverContent
+        align="end"
+        sideOffset={4}
+        className="w-[340px] overflow-hidden rounded-xl border border-gray-200 p-0 shadow-[0_8px_32px_rgba(0,0,0,0.12)]"
       >
-        <Box
-          sx={{
-            px: 2.5,
-            py: 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            borderBottom: "1px solid #E5E7EB",
-          }}
-        >
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-              {headerTitle}
-            </Typography>
+        <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
+          <div className="flex items-center gap-2">
+            <span className="text-[15px] font-bold text-gray-900">{headerTitle}</span>
             {totalBadge > 0 && (
-              <Box
-                sx={{
-                  bgcolor: TEAL,
-                  color: "#fff",
-                  borderRadius: "50%",
-                  width: 20,
-                  height: 20,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  fontSize: "10px",
-                  fontWeight: 700,
-                }}
+              <span
+                className="flex size-5 items-center justify-center rounded-full text-[10px] font-bold text-white"
+                style={{ backgroundColor: TEAL }}
               >
                 {totalBadge > 9 ? "9+" : totalBadge}
-              </Box>
+              </span>
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
-        <Box
-          sx={{
-            maxHeight: 340,
-            overflowY: "auto",
-            "&::-webkit-scrollbar": { width: 4 },
-            "&::-webkit-scrollbar-thumb": { bgcolor: "#E5E7EB", borderRadius: 2 },
-          }}
-        >
+        <div className="max-h-[340px] overflow-y-auto [&::-webkit-scrollbar]:w-1 [&::-webkit-scrollbar-thumb]:rounded [&::-webkit-scrollbar-thumb]:bg-gray-200">
           {conversations.length === 0 ? (
-            <Box sx={{ py: 6, textAlign: "center" }}>
-              <MessageCircle size={40} color="#D1D5DB" className="mb-2" />
-              <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
-                {emptyLabel}
-              </Typography>
-            </Box>
+            <div className="py-12 text-center">
+              <MessageCircle size={40} color="#D1D5DB" className="mx-auto mb-2" />
+              <p className="text-[13px] text-gray-400">{emptyLabel}</p>
+            </div>
           ) : (
             conversations.slice(0, 8).map((conv, i) => {
               const uid = currentUser?._id != null ? String(currentUser._id) : "";
@@ -190,81 +126,58 @@ const HeaderChat: React.FC = () => {
 
               return (
                 <React.Fragment key={conv._id}>
-                  <Box
+                  <div
                     onClick={() => { router.push(conversationPath); close(); }}
-                    sx={{
-                      display: "flex",
-                      gap: 1.5,
-                      px: 2,
-                      py: 1.5,
-                      cursor: "pointer",
-                      bgcolor: hasUnread ? TEAL_BG : "transparent",
-                      transition: "background 0.15s",
-                      "&:hover": { bgcolor: "#F9FAFB" },
-                    }}
+                    className="flex cursor-pointer gap-3 px-4 py-3 transition-colors duration-150 hover:bg-gray-50"
+                    style={{ backgroundColor: hasUnread ? TEAL_BG : "transparent" }}
                   >
-                    <Badge
-                      overlap="circular"
-                      anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
-                      badgeContent={unreadN > 0 ? unreadN : 0}
-                      sx={{
-                        "& .MuiBadge-badge": {
-                          bgcolor: TEAL,
-                          color: "#fff",
-                          fontSize: "9px",
-                          minWidth: 16,
-                          height: 16,
-                        },
-                      }}
-                    >
-                      <Avatar sx={{ width: 38, height: 38, bgcolor: TEAL, fontSize: 14, flexShrink: 0 }}>
-                        {initial}
+                    <div className="relative shrink-0">
+                      <Avatar className="size-[38px]" style={{ backgroundColor: TEAL }}>
+                        <AvatarFallback className="bg-transparent text-sm text-white">{initial}</AvatarFallback>
                       </Avatar>
-                    </Badge>
+                      {unreadN > 0 && (
+                        <span
+                          className="absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold text-white ring-2 ring-white"
+                          style={{ backgroundColor: TEAL }}
+                        >
+                          {unreadN}
+                        </span>
+                      )}
+                    </div>
 
-                    <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 0.25 }}>
-                        <Typography
-                          sx={{
-                            fontSize: "13px",
-                            fontWeight: hasUnread ? 700 : 600,
-                            color: "#111827",
-                            overflow: "hidden",
-                            textOverflow: "ellipsis",
-                            whiteSpace: "nowrap",
-                          }}
+                    <div className="min-w-0 flex-1">
+                      <div className="mb-0.5 flex items-center justify-between">
+                        <span
+                          className="overflow-hidden text-ellipsis whitespace-nowrap text-[13px] text-gray-900"
+                          style={{ fontWeight: hasUnread ? 700 : 600 }}
                         >
                           {name}
-                        </Typography>
-                        <Typography sx={{ fontSize: "11px", color: "#9CA3AF", flexShrink: 0, ml: 1 }}>
+                        </span>
+                        <span className="ml-2 shrink-0 text-[11px] text-gray-400">
                           {fmtTime(lastMsg?.timestamp)}
-                        </Typography>
-                      </Box>
-                      <Typography
-                        sx={{
-                          fontSize: "12px",
-                          color: hasUnread ? TEAL : "#6B7280",
-                          overflow: "hidden",
-                          textOverflow: "ellipsis",
-                          whiteSpace: "nowrap",
-                          fontWeight: hasUnread ? 600 : 400,
-                          fontStyle: teamLastPreviewDeleted ? "italic" : undefined,
-                        }}
+                        </span>
+                      </div>
+                      <p
+                        className={cn(
+                          "overflow-hidden text-ellipsis whitespace-nowrap text-xs",
+                          teamLastPreviewDeleted && "italic",
+                        )}
+                        style={{ color: hasUnread ? TEAL : "#6B7280", fontWeight: hasUnread ? 600 : 400 }}
                       >
                         {teamLastPreviewDeleted
                           ? tShared("messages.this_message_was_deleted")
                           : lastMsg?.text || tShared("header.no_messages_yet")}
-                      </Typography>
-                    </Box>
-                  </Box>
-                  {i < Math.min(conversations.length, 8) - 1 && <Divider />}
+                      </p>
+                    </div>
+                  </div>
+                  {i < Math.min(conversations.length, 8) - 1 && <hr className="border-gray-100" />}
                 </React.Fragment>
               );
             })
           )}
-        </Box>
+        </div>
 
-        <Box sx={{ borderTop: "1px solid #E5E7EB", p: 1.5 }}>
+        <div className="border-t border-gray-200 p-3">
           <Button
             variant="ghost"
             size="sm"
@@ -277,9 +190,9 @@ const HeaderChat: React.FC = () => {
           >
             {openLabel}
           </Button>
-        </Box>
-      </Popover>
-    </>
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 };
 
