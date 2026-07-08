@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Dialog, DialogContent } from '@/modules/shared/ui/shadcn/dialog';
+import { ConfirmDialog } from '@/modules/shared/ui/ConfirmDialog';
 import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
@@ -77,38 +77,16 @@ const DeleteConfirmDialog: React.FC<{
   const { t } = useTranslation('dashboard');
   const s = (k: string) => t(`candidate_settings.notifications.${k}`);
   return (
-    <Dialog open={confirm.open} onOpenChange={(next) => { if (!next) onCancel(); }}>
-      <DialogContent
-        showCloseButton={false}
-        className="min-w-[400px] max-w-[420px] gap-0 overflow-hidden rounded-[20px] border border-[#F3F4F6] p-0 shadow-[0_32px_80px_rgba(0,0,0,0.18)]"
-      >
-        <div className="bg-white px-[28px] pt-8 pb-6 text-center">
-          <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full shadow-[0_0_0_10px_rgba(239,68,68,0.08)]" style={{ background: 'radial-gradient(circle, #FEE2E2 60%, #FECACA 100%)' }}>
-            <DeleteForeverIcon size={36} color='#EF4444' />
-          </div>
-          <p className="mb-1 text-[1.1rem] font-extrabold text-[#111827]">
-            {confirm.type === 'all' ? s('confirm_delete_all_title') : s('confirm_delete_one_title')}
-          </p>
-          <p className="px-1 text-[0.82rem] leading-[1.7] text-[#9CA3AF]">
-            {confirm.type === 'all' ? s('confirm_delete_all_body') : s('confirm_delete_one_body')}
-          </p>
-        </div>
-        <hr className="border-[#F3F4F6]" />
-        <div className="flex gap-2 p-3">
-          <Button variant="outline" onClick={onCancel} className="flex-1">
-            {s('btn_cancel')}
-          </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            className="flex-1"
-          >
-            <DeleteForeverIcon size={18} />
-            {s('btn_delete')}
-          </Button>
-        </div>
-      </DialogContent>
-    </Dialog>
+    <ConfirmDialog
+      open={confirm.open}
+      onCancel={onCancel}
+      onConfirm={onConfirm}
+      icon={DeleteForeverIcon}
+      title={confirm.type === 'all' ? s('confirm_delete_all_title') : s('confirm_delete_one_title')}
+      description={confirm.type === 'all' ? s('confirm_delete_all_body') : s('confirm_delete_one_body')}
+      cancelLabel={s('btn_cancel')}
+      confirmLabel={s('btn_delete')}
+    />
   );
 };
 

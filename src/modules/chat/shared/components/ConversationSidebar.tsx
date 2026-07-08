@@ -131,6 +131,7 @@ const ConversationRow = memo(function ConversationRow({
   const hoverBg = mintLightTeamUi ? "#DEEBEB" : "#0000000A";
 
   const nameColor = isActive ? (mintLightTeamUi ? "#065F46" : PRIMARY) : "#111827";
+  const nameHoverColor = mintLightTeamUi ? "#065F46" : PRIMARY;
   const timeColor = isActive
     ? (mintLightTeamUi ? "#10B981" : PRIMARY)
     : hasUnread
@@ -203,13 +204,17 @@ const ConversationRow = memo(function ConversationRow({
         <div className="min-w-0 flex-1">
           <div className="mb-0.5 flex items-center justify-between">
             <p
-              className="mr-1.5 min-w-0 flex-1 truncate"
+              className={cn(
+                "mr-1.5 min-w-0 flex-1 truncate transition-colors",
+                !isActive && "group-hover:[color:var(--conv-name-hover-color)]",
+              )}
               style={{
                 fontSize: row.nameFont,
                 fontWeight: hasUnread ? 700 : isActive ? 700 : 600,
                 color: nameColor,
                 letterSpacing: "-0.02em",
                 lineHeight: 1.3,
+                ["--conv-name-hover-color" as string]: nameHoverColor,
               }}
             >
               {displayName}

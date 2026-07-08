@@ -119,6 +119,7 @@ interface ColleagueRowProps {
   roleLabel: string;
   onMessage: (userId: string) => void;
   isLoading?: boolean;
+  isSelected?: boolean;
 }
 
 const ColleagueRow: React.FC<ColleagueRowProps> = ({
@@ -126,26 +127,29 @@ const ColleagueRow: React.FC<ColleagueRowProps> = ({
   roleLabel,
   onMessage,
   isLoading = false,
+  isSelected = false,
 }) => {
   const name = getMemberName(member);
   const initial = name[0]?.toUpperCase() || "U";
+  const highlighted = isLoading || isSelected;
 
   return (
     <article
       onClick={isLoading ? undefined : () => { onMessage(member.userId); }}
       style={{
-        border: `1px solid ${M.border}`,
-        backgroundColor: M.bgCard,
-        boxShadow: M.shadowSoft,
+        border: `1px solid ${highlighted ? M.primary : M.border}`,
+        backgroundColor: highlighted ? M.primarySoft : M.bgCard,
+        boxShadow: highlighted ? M.shadowLift : M.shadowSoft,
         transition: M.transition,
         cursor: isLoading ? "default" : "pointer",
         opacity: isLoading ? 0.75 : 1,
         ["--colleague-row-hover-border" as string]: `${M.primary}66`,
         ["--colleague-row-hover-shadow" as string]: M.shadowLift,
         ["--colleague-row-hover-bg" as string]: `${M.primary}1F`,
+        ["--colleague-row-hover-name" as string]: M.primary,
       }}
       className={cn(
-        "flex min-w-0 flex-row items-center gap-3 rounded-xl px-[10px] py-[7px]",
+        "group flex min-w-0 flex-row items-center gap-3 rounded-xl px-[10px] py-[7px]",
         !isLoading &&
           "hover:[border-color:var(--colleague-row-hover-border)] hover:[box-shadow:var(--colleague-row-hover-shadow)] hover:[background-color:var(--colleague-row-hover-bg)]",
       )}
@@ -156,15 +160,18 @@ const ColleagueRow: React.FC<ColleagueRowProps> = ({
       >
         <AvatarFallback
           className="text-[0.8rem] font-bold"
-          style={{ backgroundColor: `${M.textPrimary}0F`, color: M.textSecondary }}
+          style={{ backgroundColor: highlighted ? `${M.primary}26` : `${M.textPrimary}0F`, color: highlighted ? M.primaryHover : M.textSecondary }}
         >
           {initial}
         </AvatarFallback>
       </Avatar>
       <div className="min-w-0 flex-1">
         <p
-          className="overflow-hidden text-ellipsis whitespace-nowrap text-[0.8125rem] font-bold tracking-[-0.02em]"
-          style={{ color: M.textPrimary }}
+          className={cn(
+            "overflow-hidden text-ellipsis whitespace-nowrap text-[0.8125rem] font-bold tracking-[-0.02em] transition-colors",
+            !isLoading && "group-hover:[color:var(--colleague-row-hover-name)]",
+          )}
+          style={{ color: highlighted ? M.primaryHover : M.textPrimary }}
         >
           {name}
         </p>
@@ -226,6 +233,7 @@ const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClo
   const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
 
   const [loadingUserId, setLoadingUserId] = useState<string | null>(null);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [debouncedSearch, setDebouncedSearch] = useState("");
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -242,6 +250,7 @@ const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClo
 
   const handleStartChat = useCallback(async (userId: string) => {
     if (loadingUserId) return;
+    setSelectedUserId(userId);
     setLoadingUserId(userId);
     try {
       await startTeamChat(userId);
@@ -439,6 +448,7 @@ const TeamChatColleaguesPanel: React.FC<TeamChatColleaguesPanelProps> = ({ onClo
                   roleLabel={getRoleLabel(member.role, tDashboard)}
                   onMessage={(userId) => { void handleStartChat(userId); }}
                   isLoading={loadingUserId === member.userId}
+                  isSelected={selectedUserId === member.userId}
                 />
               ))}
             </div>
