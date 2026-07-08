@@ -160,7 +160,11 @@ const GlobalSearch: React.FC = () => {
         onOpenAutoFocus={(e) => { e.preventDefault(); inputRef.current?.focus(); }}
       >
         {/* Input row */}
-        <div className="flex items-center gap-2.5 border-b border-gray-100 px-3.5 py-2.5">
+        <form
+          autoComplete="off"
+          onSubmit={(e) => e.preventDefault()}
+          className="flex items-center gap-2.5 border-b border-gray-100 px-3.5 py-2.5"
+        >
           {loading
             ? <Loader2 size={14} color={TEAL} className="shrink-0 animate-spin" />
             : <Search size={16} color="#9CA3AF" className="shrink-0" />
@@ -168,6 +172,8 @@ const GlobalSearch: React.FC = () => {
           <input
             ref={inputRef}
             placeholder="Search posts, candidates..."
+            name="global-search-query"
+            autoComplete="off"
             value={query}
             onChange={(e) => { setQuery(e.target.value); setFocused(-1); }}
             onKeyDown={handleKeyDown}
@@ -181,7 +187,7 @@ const GlobalSearch: React.FC = () => {
               ESC
             </div>
           )}
-        </div>
+        </form>
 
         <div className="max-h-[400px] overflow-y-auto">
 

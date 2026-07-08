@@ -140,20 +140,22 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
         <div className="flex flex-col gap-5 px-6 py-6">
 
           {/* Email */}
-          <div className="flex flex-col gap-1.5">
+          <form autoComplete="off" onSubmit={e => e.preventDefault()} className="flex flex-col gap-1.5">
             <Label htmlFor="inv-email" className="text-xs font-semibold text-foreground/80 uppercase tracking-wide">
               {m("email_label")}
             </Label>
             <Input
               id="inv-email"
+              name="email"
               type="email"
+              autoComplete="email"
               placeholder={m("email_placeholder")}
               value={email}
               onChange={e => setEmail(e.target.value)}
               disabled={loading}
             />
             <p className="text-[11px] text-muted-foreground">{m("email_helper")}</p>
-          </div>
+          </form>
 
           {/* Department */}
           <div className="flex flex-col gap-1.5">
