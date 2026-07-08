@@ -42,8 +42,10 @@ const MessageInput = memo(function MessageInput({
   const resizeTextarea = useCallback(() => {
     const el = textareaRef.current;
     if (!el) return;
+    const maxHeight = LINE_HEIGHT_PX * MAX_ROWS;
     el.style.height = "auto";
-    el.style.height = `${Math.min(el.scrollHeight, LINE_HEIGHT_PX * MAX_ROWS)}px`;
+    el.style.height = `${Math.min(el.scrollHeight, maxHeight)}px`;
+    el.style.overflowY = el.scrollHeight > maxHeight ? "auto" : "hidden";
   }, []);
 
   const handleSend = useCallback(async () => {
@@ -97,7 +99,7 @@ const MessageInput = memo(function MessageInput({
           disabled={sending}
           rows={1}
           className={cn(
-            "flex-1 resize-none border px-3.5 py-2 text-[0.8125rem] leading-[1.45] outline-none transition-colors",
+            "flex-1 resize-none overflow-hidden border px-3.5 py-2 text-[0.8125rem] leading-[1.45] outline-none transition-colors",
             "placeholder:text-slate-400 disabled:cursor-not-allowed disabled:opacity-60",
             "focus:[box-shadow:var(--ta-focus-shadow)] focus:[border-color:var(--ta-focus-border)]",
             mintLightTeamUi ? "rounded-[18px]" : "rounded-[22px]",
