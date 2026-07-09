@@ -1,6 +1,6 @@
 import type { WebinarContact, WebinarSubmission } from "./types";
 
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BACKEND = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
 const BASE    = `${BACKEND}/webinar-agent`;
 
 async function post<T>(url: string, body: unknown): Promise<T> {

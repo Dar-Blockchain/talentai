@@ -561,7 +561,7 @@ function WebinarCard({ w, onEdit, onSubs, onQuestions, onVerify, verifyPending, 
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 const WebinarManagement: React.FC = () => {
-  const [page]         = useState(1);
+  const page = 1;
   const [statusFilter, setStatusFilter] = useState<string>("");
 
   const { data, isLoading, isError, refetch } = useAdminWebinarsQuery({ page, status: statusFilter || undefined });
@@ -617,6 +617,11 @@ const WebinarManagement: React.FC = () => {
       setExportingId(null);
     }
   };
+
+  const handleRefresh = (id: string) => statsMut.mutate(id, {
+    onSuccess: () => ok("Stats refreshed."),
+    onError:   () => err("Failed to refresh stats."),
+  });
 
   const handleSave = (values: WebinarFormValues) => {
     if (editTarget) {
@@ -713,7 +718,7 @@ const WebinarManagement: React.FC = () => {
               onQuestions={() => setQTargetId(w._id)}
               onVerify={() => handleVerify(w)}   verifyPending={verifyMut.isPending}
               onArchive={() => handleArchive(w)} archivePending={archiveMut.isPending}
-              onRefresh={() => statsMut.mutate(w._id, { onSuccess: () => ok("Stats refreshed."), onError: () => err("Failed to refresh stats.") })}
+              onRefresh={() => handleRefresh(w._id)}
               refreshPending={statsMut.isPending}
               onExport={() => handleExport(w)}   exportPending={exportingId === w._id}
               onSendLink={() => setReminderTarget(w)} sendLinkPending={sendingReminderId === w._id}

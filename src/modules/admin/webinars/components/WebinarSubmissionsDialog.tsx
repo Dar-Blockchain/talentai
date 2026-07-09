@@ -70,12 +70,16 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
   const nom    = sub.contact?.nom   || "—";
   const email  = sub.contact?.email || "—";
   const co     = sub.contact?.entreprise;
-  const date   = new Date(sub.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-  const time   = new Date(sub.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const d      = new Date(sub.createdAt);
+  const date   = d.toLocaleDateString("fr-FR",  { day: "numeric", month: "short", year: "numeric" });
+  const time   = d.toLocaleTimeString("fr-FR",  { hour: "2-digit", minute: "2-digit" });
   const mia    = sub.scoring?.maturite_ia;
   const pain   = sub.scoring?.intensite_pain;
   const ready  = sub.scoring?.readiness_score;
   const mColor = mia == null ? "#94A3B8" : mia < 35 ? "#F59E0B" : mia < 65 ? "#6366F1" : "#10B981";
+  const icpM         = sub.scoring?.icp_fit ? ICP_META[sub.scoring.icp_fit] : null;
+  const hasStrengths = (sub.scoring?.strengths?.length ?? 0) > 0;
+  const hasBlockers  = (sub.scoring?.blockers?.length  ?? 0) > 0;
 
   return (
     <>
@@ -142,9 +146,9 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
           <span className="flex items-center gap-2 flex-wrap">
             <span>{nom}</span>
             {sub.scoring?.tier && <TierBadge tier={sub.scoring.tier} />}
-            {sub.scoring?.icp_fit && ICP_META[sub.scoring.icp_fit] && (
-              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ color: ICP_META[sub.scoring.icp_fit].color, borderColor: ICP_META[sub.scoring.icp_fit].color + "40", background: ICP_META[sub.scoring.icp_fit].color + "10" }}>
-                {ICP_META[sub.scoring.icp_fit].label}
+            {icpM && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ color: icpM.color, borderColor: icpM.color + "40", background: icpM.color + "10" }}>
+                {icpM.label}
               </span>
             )}
             {sub.completed
@@ -234,10 +238,10 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
           )}
 
           {/* Strengths & Blockers */}
-          {((sub.scoring?.strengths?.length ?? 0) > 0 || (sub.scoring?.blockers?.length ?? 0) > 0) && (
+          {(hasStrengths || hasBlockers) && (
             <div className="px-5 py-4 border-b border-slate-100">
               <div className="grid grid-cols-2 gap-4">
-                {(sub.scoring?.strengths?.length ?? 0) > 0 && (
+                {hasStrengths && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <StrengthIcon size={13} color="#10B981" />
@@ -253,7 +257,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                     </ul>
                   </div>
                 )}
-                {(sub.scoring?.blockers?.length ?? 0) > 0 && (
+                {hasBlockers && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <BlockerIcon size={13} color="#F59E0B" />

@@ -2,6 +2,17 @@ const Webinar           = require("./webinar.model");
 const WebinarSubmission = require("./webinar-submission.model");
 const { sendWebinarReminderEmail } = require("../../utils/email.service");
 
+// ── Helpers ───────────────────────────────────────────────────────────────────
+
+/** Set a single status field and return the updated doc. */
+async function setStatus(id, status) {
+  const doc = await Webinar.findByIdAndUpdate(id, { $set: { status } }, { new: true });
+  if (!doc) throw new Error("Webinar not found");
+  return doc;
+}
+
+// ── Exports ───────────────────────────────────────────────────────────────────
+
 exports.listWebinars = async ({ page = 1, limit = 20, status } = {}) => {
   const filter = status ? { status } : {};
   const skip   = (page - 1) * limit;
@@ -19,11 +30,10 @@ exports.getWebinar = async (id) => {
 };
 
 exports.getActiveWebinar = async () => {
-  const doc = await Webinar.findOne({ status: "active" })
+  return Webinar.findOne({ status: "active" })
     .sort({ createdAt: -1 })
     .select("title description date lang questions highlights stats about_fr about_en webinar_link")
-    .lean();
-  return doc || null;
+    .lean() ?? null;
 };
 
 exports.getPublicWebinar = async (id) => {
@@ -37,24 +47,20 @@ exports.getPublicWebinar = async (id) => {
 exports.createWebinar = async ({ title, description, date, status, lang, userId, questions: passedQuestions, highlights, about_fr, about_en, webinar_link, ai_context }) => {
   return Webinar.create({
     title, description, date,
-    status:       status       || "draft",
-    lang:         lang         || "fr",
-    questions:    passedQuestions || [],
-    highlights:   highlights   || [],
-    about_fr:     about_fr     || "",
-    about_en:     about_en     || "",
-    webinar_link: webinar_link || "",
-    ai_context:   ai_context   || "",
-    created_by:   userId       || null,
+    status:       status           || "draft",
+    lang:         lang             || "fr",
+    questions:    passedQuestions  || [],
+    highlights:   highlights       || [],
+    about_fr:     about_fr         || "",
+    about_en:     about_en         || "",
+    webinar_link: webinar_link     || "",
+    ai_context:   ai_context       || "",
+    created_by:   userId           || null,
   });
 };
 
 exports.updateWebinar = async (id, patch) => {
-  const doc = await Webinar.findByIdAndUpdate(
-    id,
-    { $set: patch },
-    { new: true, runValidators: false },
-  );
+  const doc = await Webinar.findByIdAndUpdate(id, { $set: patch }, { new: true, runValidators: false });
   if (!doc) throw new Error("Webinar not found");
   return doc;
 };
@@ -64,17 +70,8 @@ exports.deleteWebinar = async (id) => {
   if (!doc) throw new Error("Webinar not found");
 };
 
-exports.verifyWebinar = async (id) => {
-  const doc = await Webinar.findByIdAndUpdate(id, { $set: { status: "active" } }, { new: true });
-  if (!doc) throw new Error("Webinar not found");
-  return doc;
-};
-
-exports.archiveWebinar = async (id) => {
-  const doc = await Webinar.findByIdAndUpdate(id, { $set: { status: "archived" } }, { new: true });
-  if (!doc) throw new Error("Webinar not found");
-  return doc;
-};
+exports.verifyWebinar  = (id) => setStatus(id, "active");
+exports.archiveWebinar = (id) => setStatus(id, "archived");
 
 exports.listSubmissions = async ({ webinarId, page = 1, limit = 50, completed }) => {
   const filter = { webinar_id: webinarId };
@@ -119,17 +116,16 @@ exports.refreshStats = async (id) => {
   const tierBreakdown = {};
   let totalMaturite = 0;
   for (const s of scoring) {
-    if (s.scoring?.tier)           tierBreakdown[s.scoring.tier] = (tierBreakdown[s.scoring.tier] || 0) + 1;
+    if (s.scoring?.tier)              tierBreakdown[s.scoring.tier] = (tierBreakdown[s.scoring.tier] || 0) + 1;
     if (s.scoring?.maturite_ia != null) totalMaturite += s.scoring.maturite_ia;
   }
-  const avg_maturite_ia = scoring.length ? Math.round(totalMaturite / scoring.length) : null;
 
   const doc = await Webinar.findByIdAndUpdate(
     id,
     { $set: {
       "stats.total_registrations": total,
       "stats.total_completions":   completed,
-      "stats.avg_maturite_ia":     avg_maturite_ia,
+      "stats.avg_maturite_ia":     scoring.length ? Math.round(totalMaturite / scoring.length) : null,
       "stats.tier_breakdown":      tierBreakdown,
     }},
     { new: true },
