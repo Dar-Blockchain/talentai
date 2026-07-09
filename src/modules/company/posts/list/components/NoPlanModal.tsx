@@ -1,8 +1,7 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { RocketLaunchOutlined, WorkspacePremiumOutlined, CloseOutlined } from "@mui/icons-material";
-import { IconButton } from "@mui/material";
+import { Rocket, Award, X } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
@@ -50,13 +49,14 @@ const NoPlanModal: React.FC<Props> = ({ open, isAtLimit, postsUsed = 0, postsLim
         <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${TEAL}, #0F766E)` }} />
 
         {/* Close */}
-        <IconButton
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          className="absolute top-3 right-3 text-[#9CA3AF] hover:text-gray-600"
           onClick={onClose}
-          size="small"
-          sx={{ position: "absolute", top: 12, right: 12, color: "#9CA3AF" }}
         >
-          <CloseOutlined fontSize="small" />
-        </IconButton>
+          <X className="size-4.5" />
+        </Button>
 
         <div className="px-7 pt-6 pb-7 flex flex-col items-center text-center gap-5">
           {/* Icon */}
@@ -65,8 +65,8 @@ const NoPlanModal: React.FC<Props> = ({ open, isAtLimit, postsUsed = 0, postsLim
             style={{ background: `linear-gradient(135deg, ${TEAL}18, ${TEAL}30)` }}
           >
             {isAtLimit
-              ? <WorkspacePremiumOutlined sx={{ fontSize: 32, color: TEAL }} />
-              : <RocketLaunchOutlined    sx={{ fontSize: 32, color: TEAL }} />
+              ? <Award  size={32} color={TEAL} />
+              : <Rocket size={32} color={TEAL} />
             }
           </div>
 
@@ -93,7 +93,7 @@ const NoPlanModal: React.FC<Props> = ({ open, isAtLimit, postsUsed = 0, postsLim
             <div className="flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold"
               style={{ borderColor: `${TEAL}40`, color: TEAL, background: `${TEAL}0D` }}
             >
-              <WorkspacePremiumOutlined sx={{ fontSize: 16 }} />
+              <Award size={16} />
               {t("no_plan_modal.posts_used", "Posts used")}: {limitLabel}
             </div>
           )}
