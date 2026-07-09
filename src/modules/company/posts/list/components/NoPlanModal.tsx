@@ -3,7 +3,7 @@ import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { RocketLaunchOutlined, WorkspacePremiumOutlined, CloseOutlined } from "@mui/icons-material";
 import { IconButton } from "@mui/material";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
 interface Props {
@@ -119,18 +119,17 @@ const NoPlanModal: React.FC<Props> = ({ open, isAtLimit, postsUsed = 0, postsLim
 
           {/* Actions */}
           <div className="w-full flex flex-col gap-2 pt-1">
-            <AppButton
-              label={t("no_plan_modal.cta", "View plans & upgrade")}
-              variant="contained"
-              fullWidth
-              onClick={handleUpgrade}
-              sx={{
-                borderRadius: "10px", height: 42,
+            <Button
+              variant="gradient"
+              className="w-full h-10.5 rounded-md"
+              style={{
                 background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
                 boxShadow: `0 2px 10px ${TEAL}40`,
-                "&:hover": { opacity: 0.9, boxShadow: `0 4px 16px ${TEAL}50` },
               }}
-            />
+              onClick={handleUpgrade}
+            >
+              {t("no_plan_modal.cta", "View plans & upgrade")}
+            </Button>
             <button
               onClick={onClose}
               className="text-sm text-gray-400 hover:text-gray-600 transition-colors py-1"
