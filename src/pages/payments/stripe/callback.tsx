@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useDispatch } from "react-redux";
 import Link from "next/link";
@@ -13,11 +13,6 @@ const PaymentResultPage: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { status, session_id } = router.query;
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!router.isReady) return;
@@ -27,7 +22,10 @@ const PaymentResultPage: React.FC = () => {
     }
   }, [router.isReady, status]);
 
-  if (!mounted) {
+  // Wait for the router to hydrate the query string before deciding
+  // success vs. cancelled — otherwise `status` is briefly undefined and
+  // the page flashes the "cancelled" state before showing the real result.
+  if (!router.isReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner />
