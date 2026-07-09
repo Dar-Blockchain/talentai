@@ -78,7 +78,7 @@ const JobPostsList = memo<JobPostsListProps>(({
   if (jobs.length === 0) {
     return (
       <div className="rounded-xl border-[1.5px] border-dashed border-[#E5E7EB] bg-[#FAFAFA] py-24 text-center">
-        <WorkOutlined size={44} color="#D1D5DB" className="mb-3" />
+        <WorkOutlined size={44} color="#D1D5DB" className="mx-auto mb-3" />
         <p className="mb-1 text-sm font-semibold text-[#374151]">
           {hasFilters ? t("empty.no_match") : t("empty.no_posts")}
         </p>

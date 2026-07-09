@@ -2,8 +2,6 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   Briefcase as WorkOutlineOutlined,
-  Sparkles as AutoAwesomeOutlined,
-  FileEdit as EditNoteOutlined,
   MoreVertical as MoreVertOutlined,
   Trash2 as DeleteOutlineOutlined,
   ExternalLink as OpenInNewOutlined,
@@ -19,11 +17,6 @@ import {
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 
-const CREATION_TYPE: Record<string, { i18nKey: string; color: string; bg: string; Icon: React.ElementType }> = {
-  ai:     { i18nKey: "ai",     color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  manual: { i18nKey: "manual", color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
-};
-
 const STATUS_STYLES: Record<string, { i18nKey: string; color: string; bg: string; dot: string }> = {
   active:  { i18nKey: "open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
   open:    { i18nKey: "open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
@@ -35,7 +28,6 @@ const STATUS_STYLES: Record<string, { i18nKey: string; color: string; bg: string
 interface Props {
   jobId: string;
   title: string;
-  creationType: string;
   statusKey: string;
   isDraft: boolean;
   copied: boolean;
@@ -48,14 +40,12 @@ interface Props {
 }
 
 const CardHeader: React.FC<Props> = ({
-  jobId, title, creationType, statusKey, isDraft, copied,
+  jobId, title, statusKey, isDraft, copied,
   menuAnchor, onMenuOpen, onMenuClose, onDelete, onPublish, onCopyLink,
 }) => {
   const { t } = useTranslation("posts");
   const router = useRouter();
-  const ctInfo = CREATION_TYPE[creationType] || CREATION_TYPE.manual;
   const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.active;
-  const { Icon: CtIcon } = ctInfo;
 
   return (
     <div className="flex items-start gap-2.5">
@@ -68,15 +58,6 @@ const CardHeader: React.FC<Props> = ({
           {title || t("card.untitled")}
         </p>
         <div className="flex items-center gap-1">
-          <div
-            className="inline-flex items-center gap-1 rounded-[5px] px-[7px] py-[3px]"
-            style={{ backgroundColor: ctInfo.bg, border: `1px solid ${ctInfo.color}28` }}
-          >
-            <CtIcon size={10} color={ctInfo.color} />
-            <span className="text-[10.5px] font-bold leading-none" style={{ color: ctInfo.color }}>
-              {t(`card.creation_type.${ctInfo.i18nKey}`)}
-            </span>
-          </div>
           <div
             className="inline-flex items-center gap-1 rounded-[5px] px-[7px] py-[3px]"
             style={{ backgroundColor: statusStyle.bg, border: `1px solid ${statusStyle.color}28` }}

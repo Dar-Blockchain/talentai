@@ -55,7 +55,6 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
           <CardHeader
             jobId={job._id}
             title={jd.title}
-            creationType={job.creationType}
             statusKey={statusKey}
             isDraft={isDraft}
             copied={copied}
@@ -71,7 +70,6 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             location={jd.location}
             employmentType={jd.employmentType}
             workMode={jd.workMode}
-            description={jd.description}
           />
 
           <CardFooter
@@ -81,6 +79,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             daysLeft={daysLeft}
             isExpired={isExpired}
             copied={copied}
+            applicationsCount={job.applicationsCount}
             onOpenQr={(e) => { e.stopPropagation(); setQrOpen(true); }}
             onCopyLink={handleCopyLink}
           />

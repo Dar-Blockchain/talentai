@@ -1,6 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Clock as AccessTimeOutlined, QrCode as QrCode2Outlined, Copy as ContentCopyOutlined } from "lucide-react";
+import { Clock as AccessTimeOutlined, QrCode as QrCode2Outlined, Copy as ContentCopyOutlined, Users as UsersOutlined } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import { fmtDate } from "../../utils";
 
@@ -11,11 +11,12 @@ interface Props {
   daysLeft: number | null;
   isExpired: boolean;
   copied: boolean;
+  applicationsCount?: number;
   onOpenQr: (e: React.MouseEvent) => void;
   onCopyLink: (e: React.MouseEvent) => void;
 }
 
-const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysLeft, isExpired, copied, onOpenQr, onCopyLink }) => {
+const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysLeft, isExpired, copied, applicationsCount, onOpenQr, onCopyLink }) => {
   const { t } = useTranslation("posts");
 
   return (
@@ -46,6 +47,15 @@ const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysL
 
         {!isDraft && (
           <div className="flex items-center gap-1.5">
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="flex items-center gap-1 rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-[#6B7280]">
+                  <UsersOutlined size={13} />
+                  <span className="text-[11.5px] font-semibold">{applicationsCount ?? 0}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">{t("card.applications", { count: applicationsCount ?? 0 })}</TooltipContent>
+            </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
                 <button

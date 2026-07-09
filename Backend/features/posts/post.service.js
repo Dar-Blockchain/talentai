@@ -318,12 +318,25 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
       Post.countDocuments(query)
     ]);
 
+    const postIds = posts.map((p) => p._id);
+    const applicationCounts = postIds.length
+      ? await JobApplication.aggregate([
+          { $match: { post: { $in: postIds } } },
+          { $group: { _id: "$post", count: { $sum: 1 } } },
+        ])
+      : [];
+    const countsByPostId = new Map(applicationCounts.map((c) => [c._id.toString(), c.count]));
+    const postsWithCounts = posts.map((p) => ({
+      ...p,
+      applicationsCount: countsByPostId.get(p._id.toString()) || 0,
+    }));
+
     const totalPages = Math.ceil(total / limitNum);
     const hasNextPage = pageNum < totalPages;
     const hasPrevPage = pageNum > 1;
 
     return {
-      posts,
+      posts: postsWithCounts,
       pagination: {
         total,
         page: pageNum,
