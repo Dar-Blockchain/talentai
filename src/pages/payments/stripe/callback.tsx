@@ -13,21 +13,19 @@ const PaymentResultPage: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { status, session_id } = router.query;
-  const [mounted, setMounted] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!router.isReady) return;
     if (status === "success" && session_id) {
+      setIsSuccess(true);
       dispatch(verifyPayment({ sessionId: session_id as string }))
         .finally(() => localStorage.removeItem("pending_payment_id"));
     }
   }, [router.isReady, status]);
 
-  if (!mounted) {
+  if (!router.isReady) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Spinner />
@@ -35,7 +33,7 @@ const PaymentResultPage: React.FC = () => {
     );
   }
 
-  const isSuccess = status === "success";
+  
 
   return (
     <div className="flex items-center justify-center min-h-screen bg-[#f9fafb] px-4">
