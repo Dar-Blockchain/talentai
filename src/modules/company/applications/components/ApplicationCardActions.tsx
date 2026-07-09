@@ -121,6 +121,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
 
   const [decidingShortlist, setDecidingShortlist] = useState(false);
   const [decidingReject,    setDecidingReject]    = useState(false);
+  const requestInFlight = useRef(false);
 
   const patchSummary = useCallback((decision: "shortlisted" | "rejected" | null) => {
     qc.setQueriesData<SummaryPage>(
@@ -132,6 +133,8 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
   }, [qc, appId]);
 
   const handleDecision = useCallback(async (decision: "shortlisted" | "rejected") => {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
     onMenuClose();
     const prev = app.recruiterDecision as "shortlisted" | "rejected" | null | undefined;
     decision === "shortlisted" ? setDecidingShortlist(true) : setDecidingReject(true);
@@ -141,6 +144,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
     } catch {
       patchSummary(prev ?? null);
     } finally {
+      requestInFlight.current = false;
       setDecidingShortlist(false);
       setDecidingReject(false);
     }

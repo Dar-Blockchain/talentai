@@ -143,7 +143,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         data-tour={`nav-${item.id}`}
         className={cn(
           "group relative flex items-center rounded-[9px] no-underline transition-all duration-100",
-          isCollapsed ? "h-7 justify-center gap-0 px-0 py-0" : "gap-[5px] justify-start px-[5px] py-[1px]",
+          isCollapsed ? "h-7 justify-center gap-0 px-0 py-0" : "gap-[5px] justify-start px-2 py-[1px]",
         )}
         style={{
           backgroundColor: isActive ? "rgba(82,232,153,0.13)" : "transparent",
@@ -241,7 +241,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* ── Nav ── */}
-        <div className="flex-1 overflow-y-auto px-1 py-4 [scrollbar-color:#D1D5DB_transparent] [scrollbar-width:thin]">
+        <div className="flex-1 overflow-y-auto px-2.5 py-4 [scrollbar-color:#D1D5DB_transparent] [scrollbar-width:thin]">
           {/* ── Company nav ── */}
           {!isEmployee && GROUPS.map((group, gi) => {
             const items = navigation.filter((i) => group.ids.includes(i.id));
@@ -250,7 +250,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             return (
               <div key={group.groupKey || gi} className="mb-3">
                 {!isCollapsed && (
-                  <p className={cn("px-[5px] pb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400", gi === 0 ? "pt-0" : "pt-1")}>
+                  <p className={cn("px-2 pb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400", gi === 0 ? "pt-0" : "pt-1")}>
                     {t(`sidebar.groups.${group.groupKey}`)}
                   </p>
                 )}
@@ -268,7 +268,7 @@ const Sidebar: React.FC<SidebarProps> = ({
           {isEmployee && activeEmployeeGroups.map((group, gi) => (
             <div key={group.group || gi} className="mb-3">
               {group.group && !isCollapsed && (
-                <p className={cn("px-[5px] pb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400", gi === 0 ? "pt-0" : "pt-1")}>
+                <p className={cn("px-2 pb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400", gi === 0 ? "pt-0" : "pt-1")}>
                   {t(`sidebar.groups.${group.group.toLowerCase()}`, { defaultValue: group.group })}
                 </p>
               )}
@@ -283,7 +283,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         </div>
 
         {/* ── Footer ── */}
-        <div className="shrink-0 border-t border-gray-200 bg-[#F7FBF9] px-1 pb-3 pt-2.5">
+        <div className="shrink-0 border-t border-gray-200 bg-[#F7FBF9] px-2.5 pb-3 pt-2.5">
           <div
             onClick={() => router.push(settingsHref)}
             className={cn(
