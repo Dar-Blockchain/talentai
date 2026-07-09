@@ -9,12 +9,13 @@ import QuestionnaireForm from './QuestionnaireForm';
 interface QuestionnaireAssessmentProps {
   campaign:      Campaign;
   participantId: string;
+  isLoggedIn?:   boolean;
   onBack:        () => void;
   onComplete:    () => void;
 }
 
 const QuestionnaireAssessment: React.FC<QuestionnaireAssessmentProps> = ({
-  campaign, participantId, onBack, onComplete,
+  campaign, participantId, isLoggedIn, onBack, onComplete,
 }) => {
   const questions = (campaign.module as any)?.config?.questions ?? [];
   const showResults = (campaign.module as any)?.config?.showResultsToParticipants !== false;
@@ -35,6 +36,7 @@ const QuestionnaireAssessment: React.FC<QuestionnaireAssessmentProps> = ({
           participantId={participantId}
           questions={questions}
           showResults={showResults}
+          isLoggedIn={isLoggedIn}
           onComplete={onComplete}
           onBack={onBack}
         />

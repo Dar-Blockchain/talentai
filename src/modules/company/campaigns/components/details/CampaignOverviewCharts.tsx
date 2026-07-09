@@ -1,6 +1,6 @@
 import React, { memo, useMemo, useState } from "react";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip } from "recharts";
-import { Users, CheckCircle2, Clock4, TrendingUp, UserX, Trophy, History } from "lucide-react";
+import { Users, CheckCircle2, Clock4, TrendingUp, Trophy, History } from "lucide-react";
 import { Campaign, CampaignSession } from "@/modules/company/campaigns/types/campaign";
 import { ChartConfig } from "@/modules/shared/ui/shadcn/chart";
 import { useTranslation } from "react-i18next";
@@ -168,10 +168,11 @@ const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor })
   const op = "pages.campaigns.detail.overview";
   const [selectedParticipant, setSelectedParticipant] = useState<{ id: string; name: string } | null>(null);
 
-  const breakdown = campaign.statusBreakdown;
-  const total     = campaign.participantCount ?? 0;
-  const completed = campaign.sessionCount ?? 0;
-  const pct       = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const breakdown   = campaign.statusBreakdown;
+  const total       = campaign.participantCount ?? 0;
+  const completed   = campaign.sessionCount ?? 0;
+  const pct         = total > 0 ? Math.round((completed / total) * 100) : 0;
+  const isLinkBased = campaign.accessMethod === "LINK";
 
   const { data: topScoresData } = useCampaignSessionsQuery({
     campaignId: completed > 0 ? campaign._id : "",
@@ -196,16 +197,16 @@ const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor })
     return [
       { name: "completed",  value: breakdown.completed,  color: STATUS_COLOR.completed  },
       { name: "inProgress", value: breakdown.inProgress, color: STATUS_COLOR.inProgress },
-      { name: "invited",    value: breakdown.invited,    color: STATUS_COLOR.invited    },
+      ...(isLinkBased ? [] : [{ name: "invited", value: breakdown.invited, color: STATUS_COLOR.invited }]),
       { name: "dropped",    value: breakdown.dropped,    color: STATUS_COLOR.dropped    },
     ].filter((d) => d.value > 0);
-  }, [breakdown, total, completed]);
+  }, [breakdown, total, completed, isLinkBased]);
 
   const hasParticipants = total > 0;
 
   return (
     <div className="flex flex-col gap-4">
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 items-start">
+    <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
       {/* ── Donut chart card ────────────────────────────────────────────────── */}
       <Card className="rounded-2xl border border-border/60 bg-card p-5 shadow-sm">
@@ -262,7 +263,9 @@ const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor })
                 <>
                   <LegendItem color={STATUS_COLOR.completed}  label={t(`${op}.status.completed`)}   count={breakdown.completed}  total={total} />
                   <LegendItem color={STATUS_COLOR.inProgress} label={t(`${op}.status.in_progress`)} count={breakdown.inProgress} total={total} />
-                  <LegendItem color={STATUS_COLOR.invited}    label={t(`${op}.status.invited`)}     count={breakdown.invited}    total={total} />
+                  {!isLinkBased && (
+                    <LegendItem color={STATUS_COLOR.invited} label={t(`${op}.status.invited`)} count={breakdown.invited} total={total} />
+                  )}
                   {breakdown.dropped > 0 && (
                     <LegendItem color={STATUS_COLOR.dropped} label={t(`${op}.status.dropped`)} count={breakdown.dropped} total={total} />
                   )}
@@ -311,13 +314,6 @@ const CampaignOverviewCharts: React.FC<Props> = memo(({ campaign, moduleColor })
             iconBg={breakdown?.inProgress ? "#fffbeb" : "#f1f5f9"}
             label={t(`${op}.stat_in_progress`)}
             value={breakdown?.inProgress ?? "—"}
-          />
-          <StatCard
-            icon={UserX}
-            iconColor={breakdown?.dropped ? "#ef4444" : "#94a3b8"}
-            iconBg={breakdown?.dropped ? "#fee2e2" : "#f1f5f9"}
-            label={t(`${op}.stat_dropped`)}
-            value={breakdown?.dropped ?? "—"}
           />
         </div>
       </Card>

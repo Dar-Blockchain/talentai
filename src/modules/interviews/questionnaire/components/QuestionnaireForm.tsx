@@ -29,6 +29,7 @@ interface Props {
   participantId: string;
   questions:     Question[];
   showResults?:  boolean;
+  isLoggedIn?:   boolean;
   onComplete:    () => void;
   onBack:        () => void;
 }
@@ -199,8 +200,9 @@ const CompletedScreen: React.FC<{
   participantId: string;
   questions: Question[];
   showResults?: boolean;
+  isLoggedIn?: boolean;
   onDone: () => void;
-}> = ({ campaignId, campaignTitle, participantId, questions, showResults, onDone }) => (
+}> = ({ campaignId, campaignTitle, participantId, questions, showResults, isLoggedIn, onDone }) => (
   <div className="flex flex-col items-center gap-5 px-6 py-12 text-center">
     <div
       className="flex h-20 w-20 items-center justify-center rounded-full"
@@ -221,15 +223,17 @@ const CompletedScreen: React.FC<{
       <QuestionnaireResultsPanel campaignId={campaignId} participantId={participantId} questions={questions} />
     )}
 
-    <Button variant="outline" onClick={onDone} className="mt-1 rounded-[20px] px-8 py-5 font-semibold">
-      Back to Dashboard
-    </Button>
+    {isLoggedIn && (
+      <Button variant="outline" onClick={onDone} className="mt-1 rounded-[20px] px-8 py-5 font-semibold">
+        Back to Dashboard
+      </Button>
+    )}
   </div>
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, participantId, questions, showResults, onComplete, onBack }) => {
+const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, participantId, questions, showResults, isLoggedIn, onComplete, onBack }) => {
   const draftKey = DRAFT_KEY(campaignId, participantId);
 
   // Load draft from localStorage on first render
@@ -346,6 +350,7 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
       participantId={participantId}
       questions={questions}
       showResults={showResults}
+      isLoggedIn={isLoggedIn}
       onDone={onComplete}
     />
   );
