@@ -58,6 +58,7 @@ interface DecisionButtonProps {
 export function DecisionButton({ active, loading, disabled, activeColor, activeBg, icon, label, onClick }: DecisionButtonProps) {
   return (
     <button
+      type="button"
       onClick={onClick}
       disabled={disabled}
       title={label}

@@ -42,16 +42,20 @@ const SkillNameField = ({ skillType, value, onChange }: Props) => {
           <input
             value={value}
             onChange={(e) => { onChange(e.target.value); setOpen(true); }}
-            onFocus={() => setOpen(true)}
+            onClick={() => setOpen(true)}
             placeholder={t("create.post_form.placeholders.skill_autocomplete")}
-            className="flex h-10 w-full rounded-md border border-input bg-transparent px-3 py-1 text-[12px] font-medium shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+            className="flex h-10 w-full cursor-pointer rounded-md border border-input bg-transparent px-3 py-1 text-[12px] font-medium shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
         </PopoverAnchor>
         <PopoverContent
           align="start"
           sideOffset={4}
           onOpenAutoFocus={(e) => e.preventDefault()}
-          className="w-(--radix-popover-trigger-width) p-1.5"
+          onWheel={(e) => {
+            e.currentTarget.scrollTop += e.deltaY;
+            e.stopPropagation();
+          }}
+          className="w-(--radix-popover-trigger-width) max-h-56 overflow-y-auto overscroll-contain p-1.5"
         >
           {filtered.length === 0 ? (
             <p className="py-4 text-center text-[12px] text-gray-400">No options found</p>
@@ -62,15 +66,15 @@ const SkillNameField = ({ skillType, value, onChange }: Props) => {
                 type="button"
                 onMouseDown={(e) => e.preventDefault()}
                 onClick={() => handleSelect(option)}
-                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-[#F9FAFB]"
+                className="group flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors duration-100 hover:bg-primary/[0.07]"
               >
                 <Badge
                   variant="outline"
-                  className="h-4 rounded border-transparent bg-[#F3F4F6] px-1.5 text-[9px] font-normal text-[#6B7280]"
+                  className="h-4 rounded border-transparent bg-[#F3F4F6] px-1.5 text-[9px] font-normal text-[#6B7280] transition-colors duration-100 group-hover:bg-primary/15 group-hover:text-primary"
                 >
                   {option.category}
                 </Badge>
-                <span className="text-[12.5px] text-[#111827]">{option.label}</span>
+                <span className="text-[12.5px] text-[#111827] transition-colors duration-100 group-hover:text-primary">{option.label}</span>
               </button>
             ))
           )}

@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { plansApi } from "../api";
+import { emailSchema } from "@/lib/validation/email";
 
 type Status = "idle" | "sending" | "sent";
 
@@ -13,8 +14,10 @@ export function useContactForm(onClose: () => void) {
     (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
       setForm((f) => ({ ...f, [field]: e.target.value }));
 
+  const isEmailValid = emailSchema.safeParse(form.email).success;
+
   const handleSend = async () => {
-    if (!form.name || !form.email) return;
+    if (!form.name || !isEmailValid) return;
     setStatus("sending");
     try {
       await plansApi.contactEnterprise(form);
@@ -30,7 +33,7 @@ export function useContactForm(onClose: () => void) {
 
   return {
     form, status,
-    canSubmit: !!form.name && !!form.email,
+    canSubmit: !!form.name && isEmailValid,
     setField, handleSend, handleClose,
   };
 }

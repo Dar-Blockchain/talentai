@@ -182,9 +182,9 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
           {/* Sort dropdown */}
           <DropdownMenu open={sortOpen} onOpenChange={setSortOpen}>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1.5 h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] text-slate-700 outline-none hover:border-slate-300 transition-colors min-w-[120px]">
-                <ArrowDownUp size={14} className="text-gray-400" />
-                <span className="flex-1 text-left truncate">
+              <button className="flex items-center gap-1.5 h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] text-slate-700 outline-none hover:border-slate-300 transition-colors shrink-0">
+                <ArrowDownUp size={14} className="text-gray-400 shrink-0" />
+                <span className="text-left whitespace-nowrap">
                   {currentSortLabel ? t(currentSortLabel) : t("pages.common.sort")}
                 </span>
               </button>

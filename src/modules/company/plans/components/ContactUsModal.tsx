@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { CheckCircle } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useContactForm } from "../hooks/useContactForm";
+import { emailKeyDownGuard } from "@/lib/validation/email";
 
 interface Props {
   open: boolean;
@@ -57,7 +58,7 @@ const ContactUsModal: React.FC<Props> = ({ open, onClose }) => {
                   <span className="mb-1 block text-xs font-medium text-gray-600">
                     {t("pages.subscription.enterprise_modal.email")}
                   </span>
-                  <input className={inputCls} value={form.email} onChange={setField("email")} />
+                  <input className={inputCls} type="email" value={form.email} onChange={setField("email")} onKeyDown={emailKeyDownGuard} />
                 </label>
               </div>
               <label>

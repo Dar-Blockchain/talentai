@@ -23,8 +23,8 @@ import {
 } from "@/modules/shared/ui/shadcn/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
 import { cn } from "@/lib/utils";
+import { emailSchema, emailKeyDownGuard } from "@/lib/validation/email";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type RoleOption = typeof ROLES[number];
 
 interface AddEmployeeModalProps {
@@ -74,7 +74,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
   }, [roleOpen]);
 
   const isFormValid = useMemo(
-    () => email.trim() && EMAIL_REGEX.test(email) && !!role,
+    () => emailSchema.safeParse(email).success && !!role,
     [email, role],
   );
 
@@ -152,6 +152,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
               placeholder={m("email_placeholder")}
               value={email}
               onChange={e => setEmail(e.target.value)}
+              onKeyDown={emailKeyDownGuard}
               disabled={loading}
             />
             <p className="text-[11px] text-muted-foreground">{m("email_helper")}</p>

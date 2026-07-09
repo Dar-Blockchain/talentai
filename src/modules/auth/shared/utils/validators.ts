@@ -1,8 +1,9 @@
+import { validateEmail } from "@/lib/validation/email";
+
 /** Reusable field-level validators for react-hook-form `rules.validate` */
 
 export const validators = {
-  email: (v: string) =>
-    /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || "Please enter a valid email address.",
+  email: validateEmail,
 
   url: (v: string) => {
     if (!v) return true; // optional
