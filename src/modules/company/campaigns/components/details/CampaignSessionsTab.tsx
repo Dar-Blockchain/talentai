@@ -154,7 +154,7 @@ SessionCard.displayName = "SessionCard";
 
 // ─── Sessions view ────────────────────────────────────────────────────────────
 
-const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
+const SessionsView = memo<{ campaignId: string; isAnonymous?: boolean }>(({ campaignId, isAnonymous }) => {
   const { t } = useTranslation("dashboard");
   const sp = SP;
 
@@ -183,7 +183,7 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
   const handlePeriodChange = useCallback((value: string) => { setPeriod(value); setPage(1); }, []);
   const handleSortChange   = useCallback((value: string) => { setSortValue(value as SortValue); setPage(1); }, []);
 
-  const hasActiveFilters = !!(debouncedSearch || period || sortValue !== "date_desc");
+  const hasActiveFilters = !!((!isAnonymous && debouncedSearch) || period || sortValue !== "date_desc");
   const clearFilters = useCallback(() => {
     handleSearchChange("");
     setPeriod("");
@@ -209,6 +209,7 @@ const SessionsView = memo<{ campaignId: string }>(({ campaignId }) => {
           search={search}
           onSearchChange={handleSearchChange}
           searchPlaceholder={t(`${sp}.search_placeholder`)}
+          showSearch={!isAnonymous}
           period={period}
           onPeriodChange={handlePeriodChange}
           periodOptions={periodOptions}
@@ -289,8 +290,8 @@ interface Props {
   anonymityMode?: string;
 }
 
-const CampaignSessionsTab = memo<Props>(({ campaignId }) => (
-  <SessionsView campaignId={campaignId} />
+const CampaignSessionsTab = memo<Props>(({ campaignId, anonymityMode }) => (
+  <SessionsView campaignId={campaignId} isAnonymous={anonymityMode === "ANONYMOUS"} />
 ));
 CampaignSessionsTab.displayName = "CampaignSessionsTab";
 

@@ -505,8 +505,8 @@
       "metrics": {
         "total_applicants": "Total Applicants",
         "job_posts": "Job Posts",
-        "avg_cv_score": "Avg CV Score",
-        "top_cv_score": "Top CV Score"
+        "top_match_score": "Top Match Score",
+        "top_interview_score": "Top Interview Score"
       }
     },
     "settings": {

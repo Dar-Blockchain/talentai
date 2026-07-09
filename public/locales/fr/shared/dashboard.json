@@ -501,8 +501,8 @@
       "metrics": {
         "total_applicants": "Total candidats",
         "job_posts": "Offres d'emploi",
-        "avg_cv_score": "Score CV moyen",
-        "top_cv_score": "Meilleur score CV"
+        "top_match_score": "Meilleur score de correspondance",
+        "top_interview_score": "Meilleur score d'entretien"
       }
     },
     "settings": {
