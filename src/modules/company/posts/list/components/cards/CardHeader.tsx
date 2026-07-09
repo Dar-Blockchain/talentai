@@ -16,6 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 const STATUS_STYLES: Record<string, { i18nKey: string; color: string; bg: string; dot: string }> = {
   active:  { i18nKey: "open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
@@ -72,12 +73,14 @@ const CardHeader: React.FC<Props> = ({
 
       <DropdownMenu open={Boolean(menuAnchor)} onOpenChange={(next) => { if (!next) onMenuClose(); }}>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
+            variant="ghost"
+            size="icon-xs"
             onClick={(e) => { e.stopPropagation(); onMenuOpen(e); }}
-            className="shrink-0 rounded-md p-[3px] text-[#9CA3AF] hover:bg-[#F3F4F6] hover:text-[#374151]"
+            className="shrink-0 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
           >
             <MoreVertOutlined size={15} />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent

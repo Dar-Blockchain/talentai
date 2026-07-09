@@ -1,9 +1,9 @@
 import React from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { Rocket, Award, X } from "lucide-react";
+import { Rocket, Award, Check } from "lucide-react";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import { TEAL } from "@/modules/company/posts/shared/constants";
 
 interface Props {
   open: boolean;
@@ -14,11 +14,15 @@ interface Props {
   onClose: () => void;
 }
 
-const NoPlanModal: React.FC<Props> = ({ open, isAtLimit, postsUsed = 0, postsLimit, onClose }) => {
+const NoPlanModal: React.FC<Props> = ({
+  open,
+  isAtLimit,
+  postsUsed = 0,
+  postsLimit,
+  onClose,
+}) => {
   const { t } = useTranslation("posts");
   const router = useRouter();
-
-  if (!open) return null;
 
   const handleUpgrade = () => {
     onClose();
@@ -31,86 +35,79 @@ const NoPlanModal: React.FC<Props> = ({ open, isAtLimit, postsUsed = 0, postsLim
       : null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-[2px]"
-        onClick={onClose}
-        aria-hidden="true"
-      />
+    <Dialog
+      open={open}
+      onOpenChange={(o) => {
+        if (!o) onClose();
+      }}
+    >
+      <DialogContent className="w-full max-w-[420px] overflow-hidden rounded-2xl p-0">
+        {/* Brand accent bar */}
+        <div className="h-0.75 w-full bg-linear-to-r from-[#6AD39C] to-[#52E899]" />
 
-      {/* Card */}
-      <div
-        role="dialog"
-        aria-modal="true"
-        className="relative w-full max-w-md rounded-2xl bg-white shadow-2xl overflow-hidden"
-      >
-        {/* Teal accent bar */}
-        <div className="h-1 w-full" style={{ background: `linear-gradient(90deg, ${TEAL}, #0F766E)` }} />
-
-        {/* Close */}
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className="absolute top-3 right-3 text-[#9CA3AF] hover:text-gray-600"
-          onClick={onClose}
-        >
-          <X className="size-4.5" />
-        </Button>
-
-        <div className="px-7 pt-6 pb-7 flex flex-col items-center text-center gap-5">
+        <div className="flex flex-col items-center gap-5 px-8 pb-8 pt-8 text-center">
           {/* Icon */}
           <div
-            className="size-16 rounded-2xl flex items-center justify-center"
-            style={{ background: `linear-gradient(135deg, ${TEAL}18, ${TEAL}30)` }}
+            className={`flex size-17 items-center justify-center rounded-xl ${
+              isAtLimit ? "bg-amber-100" : "bg-primary/15"
+            }`}
           >
-            {isAtLimit
-              ? <Award  size={32} color={TEAL} />
-              : <Rocket size={32} color={TEAL} />
-            }
+            {isAtLimit ? (
+              <Award
+                size={30}
+                className="text-amber-600"
+                strokeWidth={2}
+              />
+            ) : (
+              <Rocket
+                size={30}
+                className="text-primary-foreground"
+                strokeWidth={2}
+              />
+            )}
           </div>
 
           {/* Heading */}
           <div>
-            <h2 className="text-[1.15rem] font-extrabold text-gray-900 mb-1.5">
+            <h2 className="mb-1.5 text-[1.2rem] font-extrabold tracking-tight text-gray-900">
               {isAtLimit
-                ? t("no_plan_modal.limit_title",  "Post limit reached")
-                : t("no_plan_modal.no_plan_title", "No active plan")
-              }
+                ? t("no_plan_modal.limit_title", "Post limit reached")
+                : t("no_plan_modal.no_plan_title", "No active plan")}
             </h2>
-            <p className="text-sm text-gray-500 leading-relaxed max-w-[320px] mx-auto">
+            <p className="mx-auto max-w-75 text-[13.5px] leading-relaxed text-gray-500">
               {isAtLimit
-                ? t("no_plan_modal.limit_body",
-                    "You've used all your job posts for this billing period. Upgrade your plan to publish more roles and keep hiring.")
-                : t("no_plan_modal.no_plan_body",
-                    "You need an active subscription to create job posts. Choose a plan that fits your team and start hiring in minutes.")
-              }
+                ? t(
+                    "no_plan_modal.limit_body",
+                    "You've used all your job posts for this billing period. Upgrade your plan to publish more roles and keep hiring.",
+                  )
+                : t(
+                    "no_plan_modal.no_plan_body",
+                    "You need an active subscription to create job posts. Choose a plan that fits your team and start hiring in minutes.",
+                  )}
             </p>
           </div>
 
           {/* Limit badge (only shown when at limit) */}
           {isAtLimit && limitLabel && (
-            <div className="flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-semibold"
-              style={{ borderColor: `${TEAL}40`, color: TEAL, background: `${TEAL}0D` }}
-            >
-              <Award size={16} />
+            <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-4 py-1.5 text-[13px] font-semibold text-amber-700">
+              <Award size={14} />
               {t("no_plan_modal.posts_used", "Posts used")}: {limitLabel}
             </div>
           )}
 
           {/* Perks */}
-          <ul className="w-full text-left flex flex-col gap-2">
+          <ul className="flex w-full flex-col gap-2 rounded-2xl bg-gray-50 p-4 text-left">
             {[
               t("no_plan_modal.perk_1", "Unlimited AI-powered job posts"),
               t("no_plan_modal.perk_2", "Automated candidate screening"),
               t("no_plan_modal.perk_3", "Pay-per-hire — no bloated contracts"),
             ].map((perk) => (
-              <li key={perk} className="flex items-start gap-2.5 text-sm text-gray-600">
-                <span
-                  className="mt-0.5 size-4 rounded-full flex items-center justify-center flex-shrink-0 text-white text-[10px] font-bold"
-                  style={{ background: TEAL }}
-                >
-                  ✓
+              <li
+                key={perk}
+                className="flex items-center gap-2.5 text-[13.5px] font-medium text-gray-700"
+              >
+                <span className="flex size-4.5 shrink-0 items-center justify-center rounded-full bg-primary text-primary-foreground">
+                  <Check size={11} strokeWidth={3} />
                 </span>
                 {perk}
               </li>
@@ -118,28 +115,26 @@ const NoPlanModal: React.FC<Props> = ({ open, isAtLimit, postsUsed = 0, postsLim
           </ul>
 
           {/* Actions */}
-          <div className="w-full flex flex-col gap-2 pt-1">
+          <div className="flex w-full flex-col gap-2 pt-1">
             <Button
-              variant="gradient"
-              className="w-full h-10.5 rounded-md"
-              style={{
-                background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
-                boxShadow: `0 2px 10px ${TEAL}40`,
-              }}
+              size="lg"
+              className="w-full rounded-xl"
               onClick={handleUpgrade}
             >
               {t("no_plan_modal.cta", "View plans & upgrade")}
             </Button>
-            <button
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-gray-400 hover:bg-transparent hover:text-gray-600"
               onClick={onClose}
-              className="text-sm text-gray-400 hover:text-gray-600 transition-colors py-1"
             >
               {t("no_plan_modal.cancel", "Maybe later")}
-            </button>
+            </Button>
           </div>
         </div>
-      </div>
-    </div>
+      </DialogContent>
+    </Dialog>
   );
 };
 

@@ -2,6 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Clock as AccessTimeOutlined, QrCode as QrCode2Outlined, Copy as ContentCopyOutlined, Users as UsersOutlined } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { fmtDate } from "../../utils";
 
 interface Props {
@@ -58,24 +59,29 @@ const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysL
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
+                <Button
+                  variant="outline"
+                  size="icon-sm"
                   onClick={onOpenQr}
-                  className="rounded-lg border border-[#E5E7EB] p-1.5 text-[#9CA3AF] transition-all hover:bg-[#F3F4F6] hover:text-[#374151]"
+                  className="border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                 >
                   <QrCode2Outlined size={14} />
-                </button>
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="top">{t("card.qr.show")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
+                <Button
+                  variant="outline"
+                  size="icon-sm"
                   onClick={onCopyLink}
-                  className="rounded-lg border border-[#E5E7EB] p-1.5 transition-all hover:bg-[#F3F4F6] hover:text-[#374151]"
-                  style={{ color: copied ? "#374151" : "#9CA3AF", backgroundColor: copied ? "#F3F4F6" : "transparent" }}
+                  className={copied
+                    ? "border-gray-200 bg-gray-100 text-gray-700"
+                    : "border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-700"}
                 >
                   <ContentCopyOutlined size={14} />
-                </button>
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="top">{copied ? t("card.copied") : t("card.menu.share_title")}</TooltipContent>
             </Tooltip>
