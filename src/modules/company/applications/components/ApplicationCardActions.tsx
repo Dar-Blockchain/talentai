@@ -30,7 +30,7 @@ interface ActionButtonProps {
 const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, onInvite, onContact, sendInviteLabel, contactLabel }) => {
   if (isInvited) {
     return (
-      <div className="flex items-center justify-center gap-1 h-[30px] w-[108px] shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600">
+      <div className="flex items-center justify-center gap-1 h-[30px] w-29.5 shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600">
         <Check size={14} />
         <span className="text-[12px] font-semibold whitespace-nowrap">Invited</span>
       </div>
@@ -39,7 +39,7 @@ const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, 
 
   if (isVisited) {
     return (
-      <Button variant="secondary" size="sm" onClick={onInvite}>
+      <Button variant="secondary" size="sm" className="w-29.5 shrink-0" onClick={onInvite}>
         <Video size={14} />
         {sendInviteLabel}
       </Button>
@@ -47,7 +47,7 @@ const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, 
   }
 
   return (
-    <Button variant="outline" size="sm" disabled={!hasEmail} onClick={onContact}>
+    <Button variant="outline" size="sm" className="w-29.5 shrink-0" disabled={!hasEmail} onClick={onContact}>
       <Mail size={14} />
       {contactLabel}
     </Button>
@@ -182,14 +182,14 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
       {/* Shortlist / Reject */}
       <div className="flex gap-1.5 shrink-0" onClick={stopProp}>
         <DecisionButton
-          active={isShortlisted} loading={decidingShortlist} disabled={busy}
+          active={isShortlisted} loading={decidingShortlist} disabled={busy || isShortlisted}
           activeColor="#059669" activeBg="#ECFDF5"
           icon={<Star size={13} />}
           label={isShortlisted ? "Shortlisted" : "Shortlist"}
           onClick={handleShortlist}
         />
         <DecisionButton
-          active={isRejected} loading={decidingReject} disabled={busy}
+          active={isRejected} loading={decidingReject} disabled={busy || isRejected}
           activeColor="#DC2626" activeBg="#FEF2F2"
           icon={<XCircle size={13} />}
           label={isRejected ? "Rejected" : "Reject"}
