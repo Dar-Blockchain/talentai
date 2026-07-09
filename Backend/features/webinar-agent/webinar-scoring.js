@@ -24,6 +24,11 @@ const COUNTRY_TO_MARCHE = {
   "Jordan": "moyen_orient", "Lebanon": "moyen_orient", "Iraq": "moyen_orient",
 };
 
+// Valid enum values — used for both LLM response validation and fallback scoring
+const VALID_ICP_FIT = ["ok", "faible", "hors"];
+const VALID_THESE   = ["v1", "v2", "v3", "indetermine"];
+const VALID_TIER    = ["A", "B", "C", "D"];
+
 function deriverMarche(pays) {
   if (!pays) return "autre";
   return COUNTRY_TO_MARCHE[pays.trim()] || "autre";
@@ -192,9 +197,9 @@ Analyze these answers and return the full qualification JSON.`;
       maturite_ia:        clamp100(p.maturite_ia),
       intensite_pain:     clamp100(p.intensite_pain),
       readiness_score:    clamp100(p.readiness_score),
-      icp_fit:            ["ok", "faible", "hors"].includes(p.icp_fit)               ? p.icp_fit    : "faible",
-      these:              ["v1", "v2", "v3", "indetermine"].includes(p.these)         ? p.these      : "indetermine",
-      tier:               ["A", "B", "C", "D"].includes(p.tier)                      ? p.tier       : "C",
+      icp_fit:            VALID_ICP_FIT.includes(p.icp_fit) ? p.icp_fit : "faible",
+      these:              VALID_THESE.includes(p.these)     ? p.these   : "indetermine",
+      tier:               VALID_TIER.includes(p.tier)       ? p.tier    : "C",
       key_insight:        typeof p.key_insight        === "string" ? p.key_insight.slice(0, 300)        : null,
       main_pain:          typeof p.main_pain          === "string" ? p.main_pain.slice(0, 300)          : null,
       recommended_action: typeof p.recommended_action === "string" ? p.recommended_action.slice(0, 300) : null,
@@ -208,17 +213,38 @@ Analyze these answers and return the full qualification JSON.`;
 }
 
 // ── Deterministic fallback ────────────────────────────────────────────────────
+
+// Each answer may come from a legacy key or the new DB-driven key (qN_xxx).
+const ANSWER_KEY_MAP = {
+  role:                    ["role",     "q1_role"],
+  secteur:                 ["secteur",  "q2_secteur"],
+  volume:                  ["volume",   "q3_volume"],
+  pays:                    ["pays",     "q4_pays"],
+  usage_ia:                ["usage_ia", "q5_usage_ia"],
+  frein:                   ["frein",    "q6_frein"],
+  legitimite_entretien_ia: ["legitimite_entretien_ia", "q7_legitimite"],
+  etape_douloureuse:       ["etape_douloureuse",       "q8_etape"],
+  time_to_hire:            ["time_to_hire",            "q9_tth"],
+  verbatim:                ["verbatim", "q10_verbatim"],
+  intention:               ["intention","q11_intention"],
+};
+
+function pick(answers, key) {
+  const [primary, fallback] = ANSWER_KEY_MAP[key];
+  return answers[primary] ?? answers[fallback];
+}
+
 function calculerScoreFallback(answers) {
-  const usage_ia                = answers.usage_ia                || answers.q5_usage_ia;
-  const legitimite_entretien_ia = answers.legitimite_entretien_ia || answers.q7_legitimite;
-  const etape_douloureuse       = answers.etape_douloureuse       || answers.q8_etape;
-  const time_to_hire            = answers.time_to_hire            || answers.q9_tth;
-  const verbatim                = answers.verbatim                || answers.q10_verbatim;
-  const volume                  = answers.volume                  || answers.q3_volume;
-  const role                    = answers.role                    || answers.q1_role;
-  const secteur                 = answers.secteur                 || answers.q2_secteur;
-  const intention               = answers.intention               || answers.q11_intention;
-  const marche                  = deriverMarche(answers.pays      || answers.q4_pays);
+  const usage_ia                = pick(answers, "usage_ia");
+  const legitimite_entretien_ia = pick(answers, "legitimite_entretien_ia");
+  const etape_douloureuse       = pick(answers, "etape_douloureuse");
+  const time_to_hire            = pick(answers, "time_to_hire");
+  const verbatim                = pick(answers, "verbatim");
+  const volume                  = pick(answers, "volume");
+  const role                    = pick(answers, "role");
+  const secteur                 = pick(answers, "secteur");
+  const intention               = pick(answers, "intention");
+  const marche                  = deriverMarche(pick(answers, "pays"));
 
   const baseMap     = { jamais: 0, curieux: 33, ponctuel: 66, integre: 100 };
   const base        = baseMap[usage_ia] ?? 0;
