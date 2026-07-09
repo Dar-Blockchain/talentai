@@ -45,19 +45,26 @@ export const DatePicker: React.FC<DatePickerProps> = ({
     <div>
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
-          <Button
+          <button
             type="button"
-            variant="outline"
             disabled={disabled}
+            data-state={open ? "open" : "closed"}
             className={cn(
-              "h-10 w-full justify-start gap-2 text-sm font-normal",
-              !value && "text-muted-foreground",
+              "group relative flex h-10 w-full cursor-pointer items-center justify-start gap-2 whitespace-nowrap",
+              "rounded-xl border px-3.5 text-sm font-normal outline-none transition-all duration-200",
+              "border-input bg-background text-foreground",
+              "shadow-[0_1px_3px_rgba(0,0,0,0.06),0_1px_2px_rgba(0,0,0,0.04)]",
+              "hover:border-primary/40 hover:shadow-[0_2px_8px_rgba(106,211,156,0.12)]",
+              "data-[state=open]:border-primary data-[state=open]:ring-2 data-[state=open]:ring-primary/20",
+              "data-[state=open]:shadow-[0_0_0_3px_rgba(106,211,156,0.12),0_2px_8px_rgba(106,211,156,0.15)]",
+              "disabled:cursor-not-allowed disabled:opacity-50 disabled:bg-muted/40",
+              !value && "text-muted-foreground/60",
               className,
             )}
           >
-            <CalendarIcon className="size-4 shrink-0" />
+            <CalendarIcon className="size-4 shrink-0 text-muted-foreground/60" />
             {value ? dayjs(value).format(formatStr) : placeholder}
-          </Button>
+          </button>
         </PopoverTrigger>
         <PopoverContent className="w-auto p-0" align="start">
           <Calendar

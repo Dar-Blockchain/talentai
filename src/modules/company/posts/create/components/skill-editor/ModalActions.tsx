@@ -15,21 +15,20 @@ const ModalActions = ({ mode, disabled, onClose, onSave }: Props) => {
     mode === "edit" ? "create.post_form.skill_modal.btn_edit" : "create.post_form.skill_modal.btn_add";
 
   return (
-    <DialogFooter className="border-t border-white/10 p-6">
+    <DialogFooter className="border-t border-[rgba(227,229,233,1)] px-6 py-4">
       <Button
         variant="ghost"
         onClick={onClose}
-        style={{ color: "rgba(133, 169, 227, 1)" }}
+        className="h-[42px] w-[110px] rounded-full text-muted-foreground hover:text-foreground"
       >
         {t("create.post_form.skill_modal.cancel")}
       </Button>
 
       <Button
-        variant="outline"
+        variant="default"
         onClick={onSave}
         disabled={disabled}
-        className="h-[42px] w-[130px] rounded-[38px] text-sm font-semibold"
-        style={{ borderColor: "rgba(77, 217, 163, 1)", color: "rgba(77, 217, 163, 1)" }}
+        className="h-[42px] w-[130px] rounded-full text-sm font-semibold"
       >
         {t(confirmKey)}
       </Button>

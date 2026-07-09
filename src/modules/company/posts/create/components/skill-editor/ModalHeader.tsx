@@ -1,3 +1,4 @@
+import { Sparkles as SparklesIcon } from "lucide-react";
 import { DialogHeader, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { useTranslation } from "react-i18next";
 
@@ -19,8 +20,11 @@ const ModalHeader = ({ skillType, mode }: Props) => {
         : "create.post_form.skill_modal.title_add_soft";
 
   return (
-    <DialogHeader className="border-b border-[rgba(227,229,233,1)] pb-4 text-black">
-      <DialogTitle className="text-[20px] font-semibold text-[rgba(41,210,145,1)]">
+    <DialogHeader className="flex-row items-center gap-3 border-b border-[rgba(227,229,233,1)] px-6 py-4">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <SparklesIcon className="size-4.5 text-primary" />
+      </div>
+      <DialogTitle className="text-[18px] font-semibold text-foreground">
         {t(titleKey)}
       </DialogTitle>
     </DialogHeader>

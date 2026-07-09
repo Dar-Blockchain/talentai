@@ -70,10 +70,10 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-      <DialogContent className="sm:max-w-sm">
+      <DialogContent className="rounded-2xl p-0 sm:max-w-md">
         <ModalHeader skillType={skillType} mode={mode} />
 
-        <div className="mt-2 flex flex-col gap-4">
+        <div className="flex flex-col gap-4 px-6 py-5">
           <SkillNameField
             skillType={skillType}
             value={localSkill.name}

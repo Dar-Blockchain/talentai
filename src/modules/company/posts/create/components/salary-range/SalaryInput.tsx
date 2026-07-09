@@ -12,9 +12,15 @@ interface Props {
 const SalaryInput = ({ label, value, currencyCode, error, onChange }: Props) => (
   <>
     <p className="mb-1 text-xs font-medium text-[#475569]">{label}</p>
-    <div className="relative">
+    <div
+      className={cn(
+        "flex h-10 items-stretch overflow-hidden rounded-md border border-input bg-transparent transition-[color,box-shadow]",
+        "focus-within:border-ring focus-within:ring-[3px] focus-within:ring-ring/50",
+        error && "border-destructive focus-within:ring-destructive/30"
+      )}
+    >
       {currencyCode && (
-        <span className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[11px] font-semibold text-[#6B7280]">
+        <span className="flex shrink-0 items-center border-r border-input bg-muted/40 px-2.5 text-[11px] font-semibold text-[#6B7280]">
           {currencyCode}
         </span>
       )}
@@ -23,11 +29,7 @@ const SalaryInput = ({ label, value, currencyCode, error, onChange }: Props) => 
         value={value || ""}
         placeholder="0"
         onChange={onChange}
-        className={cn(
-          "h-10 text-xs font-medium",
-          currencyCode && "pl-7",
-          error && "border-destructive focus-visible:ring-destructive/30"
-        )}
+        className="h-full flex-1 rounded-none border-0 text-xs font-medium shadow-none focus-visible:ring-0"
       />
     </div>
     {error && <p className="mt-1 text-[10px] text-destructive">{error}</p>}
