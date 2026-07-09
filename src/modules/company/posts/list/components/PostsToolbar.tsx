@@ -23,6 +23,7 @@ import {
   Sparkles as AutoAwesomeOutlined,
   FileEdit as EditNoteOutlined,
   ListFilter as FilterListOutlined,
+  Lock as LockOutlined,
 } from "lucide-react";
 import type { StatusFilter, SortOption, TypeFilter } from "../types";
 
@@ -219,8 +220,12 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <span className="inline-block">
-                    <Button size="sm" disabled onClick={onCreateClick}>
-                      <AddOutlined size={16} />
+                    <Button
+                      size="sm"
+                      className="cursor-pointer border border-amber-500 bg-amber-500 text-white opacity-100 shadow-sm hover:bg-amber-600 hover:text-white"
+                      onClick={onCreateClick}
+                    >
+                      <LockOutlined size={14} />
                       {t("limit_reached", { used: postsUsed, limit: postsLimit })}
                     </Button>
                   </span>

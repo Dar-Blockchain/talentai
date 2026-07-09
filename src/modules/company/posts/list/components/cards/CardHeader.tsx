@@ -2,8 +2,6 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import {
   Briefcase as WorkOutlineOutlined,
-  Sparkles as AutoAwesomeOutlined,
-  FileEdit as EditNoteOutlined,
   MoreVertical as MoreVertOutlined,
   Trash2 as DeleteOutlineOutlined,
   ExternalLink as OpenInNewOutlined,
@@ -18,11 +16,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
-
-const CREATION_TYPE: Record<string, { i18nKey: string; color: string; bg: string; Icon: React.ElementType }> = {
-  ai:     { i18nKey: "ai",     color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  manual: { i18nKey: "manual", color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
-};
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 const STATUS_STYLES: Record<string, { i18nKey: string; color: string; bg: string; dot: string }> = {
   active:  { i18nKey: "open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
@@ -35,7 +29,6 @@ const STATUS_STYLES: Record<string, { i18nKey: string; color: string; bg: string
 interface Props {
   jobId: string;
   title: string;
-  creationType: string;
   statusKey: string;
   isDraft: boolean;
   copied: boolean;
@@ -48,14 +41,12 @@ interface Props {
 }
 
 const CardHeader: React.FC<Props> = ({
-  jobId, title, creationType, statusKey, isDraft, copied,
+  jobId, title, statusKey, isDraft, copied,
   menuAnchor, onMenuOpen, onMenuClose, onDelete, onPublish, onCopyLink,
 }) => {
   const { t } = useTranslation("posts");
   const router = useRouter();
-  const ctInfo = CREATION_TYPE[creationType] || CREATION_TYPE.manual;
   const statusStyle = STATUS_STYLES[statusKey] ?? STATUS_STYLES.active;
-  const { Icon: CtIcon } = ctInfo;
 
   return (
     <div className="flex items-start gap-2.5">
@@ -70,15 +61,6 @@ const CardHeader: React.FC<Props> = ({
         <div className="flex items-center gap-1">
           <div
             className="inline-flex items-center gap-1 rounded-[5px] px-[7px] py-[3px]"
-            style={{ backgroundColor: ctInfo.bg, border: `1px solid ${ctInfo.color}28` }}
-          >
-            <CtIcon size={10} color={ctInfo.color} />
-            <span className="text-[10.5px] font-bold leading-none" style={{ color: ctInfo.color }}>
-              {t(`card.creation_type.${ctInfo.i18nKey}`)}
-            </span>
-          </div>
-          <div
-            className="inline-flex items-center gap-1 rounded-[5px] px-[7px] py-[3px]"
             style={{ backgroundColor: statusStyle.bg, border: `1px solid ${statusStyle.color}28` }}
           >
             <span className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: statusStyle.dot }} />
@@ -91,12 +73,14 @@ const CardHeader: React.FC<Props> = ({
 
       <DropdownMenu open={Boolean(menuAnchor)} onOpenChange={(next) => { if (!next) onMenuClose(); }}>
         <DropdownMenuTrigger asChild>
-          <button
+          <Button
+            variant="ghost"
+            size="icon-xs"
             onClick={(e) => { e.stopPropagation(); onMenuOpen(e); }}
-            className="shrink-0 rounded-md p-[3px] text-[#9CA3AF] hover:bg-[#F3F4F6] hover:text-[#374151]"
+            className="shrink-0 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
           >
             <MoreVertOutlined size={15} />
-          </button>
+          </Button>
         </DropdownMenuTrigger>
 
         <DropdownMenuContent

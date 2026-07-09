@@ -1,7 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Clock as AccessTimeOutlined, QrCode as QrCode2Outlined, Copy as ContentCopyOutlined } from "lucide-react";
+import { Clock as AccessTimeOutlined, QrCode as QrCode2Outlined, Copy as ContentCopyOutlined, Users as UsersOutlined } from "lucide-react";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { fmtDate } from "../../utils";
 
 interface Props {
@@ -11,11 +12,12 @@ interface Props {
   daysLeft: number | null;
   isExpired: boolean;
   copied: boolean;
+  applicationsCount?: number;
   onOpenQr: (e: React.MouseEvent) => void;
   onCopyLink: (e: React.MouseEvent) => void;
 }
 
-const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysLeft, isExpired, copied, onOpenQr, onCopyLink }) => {
+const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysLeft, isExpired, copied, applicationsCount, onOpenQr, onCopyLink }) => {
   const { t } = useTranslation("posts");
 
   return (
@@ -48,24 +50,38 @@ const CardFooter: React.FC<Props> = ({ isDraft, createdAt, expirationDate, daysL
           <div className="flex items-center gap-1.5">
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
+                <div className="flex items-center gap-1 rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-[#6B7280]">
+                  <UsersOutlined size={13} />
+                  <span className="text-[11.5px] font-semibold">{applicationsCount ?? 0}</span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent side="top">{t("card.applications", { count: applicationsCount ?? 0 })}</TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
                   onClick={onOpenQr}
-                  className="rounded-lg border border-[#E5E7EB] p-1.5 text-[#9CA3AF] transition-all hover:bg-[#F3F4F6] hover:text-[#374151]"
+                  className="border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
                 >
                   <QrCode2Outlined size={14} />
-                </button>
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="top">{t("card.qr.show")}</TooltipContent>
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <button
+                <Button
+                  variant="outline"
+                  size="icon-sm"
                   onClick={onCopyLink}
-                  className="rounded-lg border border-[#E5E7EB] p-1.5 transition-all hover:bg-[#F3F4F6] hover:text-[#374151]"
-                  style={{ color: copied ? "#374151" : "#9CA3AF", backgroundColor: copied ? "#F3F4F6" : "transparent" }}
+                  className={copied
+                    ? "border-gray-200 bg-gray-100 text-gray-700"
+                    : "border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-700"}
                 >
                   <ContentCopyOutlined size={14} />
-                </button>
+                </Button>
               </TooltipTrigger>
               <TooltipContent side="top">{copied ? t("card.copied") : t("card.menu.share_title")}</TooltipContent>
             </Tooltip>

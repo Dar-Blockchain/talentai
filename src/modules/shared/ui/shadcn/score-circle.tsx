@@ -63,7 +63,7 @@ export function DecisionButton({ active, loading, disabled, activeColor, activeB
       disabled={disabled}
       title={label}
       className={cn(
-        "flex items-center justify-center gap-1 h-7 px-[9px] rounded-[7px] border text-[11px] font-semibold transition-all duration-150 outline-none",
+        "flex items-center justify-center gap-1 h-7 px-[9px] rounded-[7px] border text-[11px] font-semibold transition-all duration-150 outline-none cursor-pointer",
         "disabled:opacity-50 disabled:cursor-not-allowed",
       )}
       style={{
