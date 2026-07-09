@@ -7,6 +7,7 @@ import Header from "@/modules/shared/layouts/home/HomeHeader";
 import { webinarApi } from "@/modules/webinar/api";
 import type { WebinarScoring } from "@/modules/webinar/types";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
+import { validateEmail, emailKeyDownGuard } from "@/lib/validation/email";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface QuestionOption { key: string; label_fr: string; label_en: string; }
@@ -19,7 +20,6 @@ interface WebinarData { _id: string; title: string; questions: DBQuestion[]; lan
 const EASE    = [0.32, 0.72, 0, 1] as [number, number, number, number];
 const ALPHA   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const COUNTRIES = [
   "Tunisie","France","Belgique","Luxembourg","Suisse","Monaco",
@@ -418,7 +418,7 @@ export default function WebinarAgentPage() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const emailVal       = contact.email.trim();
-  const validEmail     = EMAIL_RE.test(emailVal);
+  const validEmail     = validateEmail(emailVal) === true;
   const showEmailError = emailVal.length > 0 && !validEmail;
   const canStart       = consent && contact.nom.trim() !== "" && validEmail;
 
@@ -620,6 +620,7 @@ export default function WebinarAgentPage() {
                     <div className="relative">
                       <input type="email" value={contact.email}
                         onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
+                        onKeyDown={emailKeyDownGuard}
                         placeholder={isEn ? "you@company.com" : "vous@entreprise.com"}
                         className={`w-full rounded-2xl border-2 outline-none px-5 py-4 text-[15px] text-slate-800 placeholder:text-slate-300 transition-all bg-white
                           ${showEmailError ? "border-red-400 bg-red-50/20" : validEmail ? "border-teal-400 bg-teal-50/20" : "border-slate-200 focus:border-teal-400 focus:bg-teal-50/10"}`}

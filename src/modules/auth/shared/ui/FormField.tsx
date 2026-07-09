@@ -7,6 +7,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/modules/shared/ui/shadcn/select";
 import { cn } from "@/lib/utils";
+import { emailKeyDownGuard } from "@/lib/validation/email";
 
 interface SelectOption { label: string; value: string; }
 
@@ -74,6 +75,7 @@ export function FormField<T extends FieldValues>({
                   value={overrideValue ?? field.value ?? ""}
                   onChange={field.onChange}
                   onBlur={field.onBlur}
+                  onKeyDown={type === "email" ? emailKeyDownGuard : undefined}
                   aria-invalid={!!error}
                   className={cn(
                     "h-10 text-sm font-sans",

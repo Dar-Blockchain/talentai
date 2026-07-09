@@ -4,6 +4,7 @@ import { Card, CardContent } from '@/modules/shared/ui/shadcn/card';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import { Input } from '@/modules/shared/ui/shadcn/input';
 import { Label } from '@/modules/shared/ui/shadcn/label';
+import { emailKeyDownGuard } from '@/lib/validation/email';
 import type { Campaign } from '@/modules/company/campaigns/types/campaign';
 import type { ModuleMeta } from './types';
 import { SessionShell } from './SessionShell';
@@ -68,6 +69,7 @@ export const IdentityGate: React.FC<Props> = ({
             <Input
               className="pl-9" type="email" placeholder="you@example.com" value={email}
               onChange={(e) => onEmailChange(e.target.value)}
+              onKeyDown={emailKeyDownGuard}
               aria-invalid={!!emailErr}
             />
           </div>

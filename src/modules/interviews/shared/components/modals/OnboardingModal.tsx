@@ -32,6 +32,7 @@ import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
+import { validateEmail, emailKeyDownGuard } from "@/lib/validation/email";
 
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
@@ -43,7 +44,7 @@ const CODE_EXPIRY_KEY = "job_apply_code_expires_at";
 type Step = "email" | "register" | "otp";
 
 function isValidEmail(v: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  return validateEmail(v) === true;
 }
 
 export interface OnboardingModalProps {
@@ -495,6 +496,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
                           setRoleError("");
                           setApiError("");
                         }}
+                        onKeyDown={emailKeyDownGuard}
                         aria-invalid={!!signinEmailError}
                         className={cn(
                           "pl-9 h-10 text-sm font-sans",
@@ -611,6 +613,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
                       value={reg.email}
                       disabled={loading}
                       onChange={updateReg("email")}
+                      onKeyDown={emailKeyDownGuard}
                       aria-invalid={!!regErrors.email}
                       className={cn(
                         "pl-9 h-10 text-sm font-sans",
