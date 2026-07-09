@@ -36,6 +36,7 @@
     "total": "Total",
     "active": "Actives",
     "drafts": "Brouillons",
+    "paused": "En pause",
     "closed_expired": "Clôturées / expirées",
     "completed_participants": "Participants ayant terminé"
   },

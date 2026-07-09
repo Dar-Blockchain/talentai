@@ -15,8 +15,15 @@ export function useCampaignCard(
   const p = "pages.campaigns";
   const isEmployee = variant === "employee";
 
-  const statusBadge = useMemo(() => STATUS_BADGE[campaign.status] || STATUS_BADGE.DRAFT, [campaign.status]);
-  const statusLabel = useMemo(() => t(`${p}.status.${campaign.status}`), [campaign.status, t]);
+  // Mirrors the backend's expired computation (ACTIVE + deadline passed) so the
+  // badge matches what the metrics card and status filter treat as "expired".
+  const isDeadlinePassed = useMemo(
+    () => campaign.status === "ACTIVE" && !!campaign.deadline && new Date(campaign.deadline) < new Date(),
+    [campaign.status, campaign.deadline],
+  );
+  const displayStatus = isDeadlinePassed ? "EXPIRED" : campaign.status;
+  const statusBadge = useMemo(() => STATUS_BADGE[displayStatus] || STATUS_BADGE.DRAFT, [displayStatus]);
+  const statusLabel = useMemo(() => t(`${p}.status.${displayStatus}`), [displayStatus, t]);
 
   const participantStatus = campaign.participantStatus ?? "INVITED";
   const participantBadge  = useMemo(() => PARTICIPANT_STATUS_BADGE[participantStatus], [participantStatus]);

@@ -25,13 +25,15 @@ import { useTranslation } from "react-i18next";
 
 type StatusOpt = { value: string; label: string; color: string; bg: string };
 
+// Colors mirror STATUS_BADGE dot colors in CampaignCard/constants.ts so the
+// filter dropdown matches the status badges shown on the campaign cards.
 const STATUS_META: Omit<StatusOpt, "label">[] = [
   { value: "", color: "#6B7280", bg: "#F3F4F6" },
-  { value: "DRAFT", color: "#6B7280", bg: "#F3F4F6" },
-  { value: "ACTIVE", color: "#059669", bg: "#ECFDF5" },
-  { value: "PAUSED", color: "#D97706", bg: "#FFFBEB" },
-  { value: "CLOSED", color: "#DC2626", bg: "#FEF2F2" },
-  { value: "EXPIRED", color: "#7C3AED", bg: "#F5F3FF" },
+  { value: "DRAFT", color: "#94A3B8", bg: "#F1F5F9" },
+  { value: "ACTIVE", color: "#10B981", bg: "#ECFDF5" },
+  { value: "PAUSED", color: "#F59E0B", bg: "#FFFBEB" },
+  { value: "CLOSED", color: "#2563EB", bg: "#EFF6FF" },
+  { value: "EXPIRED", color: "#EF4444", bg: "#FEF2F2" },
 ];
 
 const PERIOD_VALUES = ["", "7d", "30d", "3m", "6m", "1y"] as const;
