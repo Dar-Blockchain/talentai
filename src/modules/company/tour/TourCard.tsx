@@ -1,9 +1,6 @@
 import React, { memo } from "react";
-import { Box, Typography, Button } from "@mui/material";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
-import ArrowForwardOutlined from "@mui/icons-material/ArrowForwardOutlined";
-import ArrowBackOutlined from "@mui/icons-material/ArrowBackOutlined";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { X as CloseOutlined, ArrowRight as ArrowForwardOutlined, ArrowLeft as ArrowBackOutlined, Check as CheckOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { STEPS, TOTAL, type Step } from "./tourSteps";
 import { W } from "./tourUtils";
@@ -26,72 +23,81 @@ const TourCard: React.FC<TourCardProps> = memo(({ step, current, onPrev, onNext,
   const isLast = step === TOTAL - 1;
 
   return (
-    <Box sx={{
-      bgcolor: "#fff",
-      borderRadius: "16px",
-      overflow: "hidden",
-      boxShadow: "0 20px 60px rgba(0,0,0,0.18)",
-      border: "1px solid #E5E7EB",
-      pointerEvents: "auto",
-      width: isCentered ? 440 : W,
-      maxWidth: "calc(100vw - 24px)",
-      display: "flex",
-      flexDirection: "column",
-      maxHeight: "calc(100vh - 80px)",
-    }}>
+    <div
+      className="flex flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_20px_60px_rgba(0,0,0,0.18)]"
+      style={{
+        pointerEvents: "auto",
+        width: isCentered ? 440 : W,
+        maxWidth: "calc(100vw - 24px)",
+        maxHeight: "calc(100vh - 80px)",
+      }}
+    >
 
       {/* Progress bar */}
-      <Box sx={{ height: 4, bgcolor: "#F3F4F6", position: "relative", flexShrink: 0 }}>
-        <Box sx={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${((step + 1) / TOTAL) * 100}%`, background: `linear-gradient(90deg, ${TEAL}, #34D399)`, transition: "width 0.3s ease" }} />
-      </Box>
+      <div className="relative h-1 shrink-0 bg-[#F3F4F6]">
+        <div
+          className="absolute left-0 top-0 h-full transition-[width] duration-300 ease-out"
+          style={{ width: `${((step + 1) / TOTAL) * 100}%`, background: `linear-gradient(90deg, ${TEAL}, #34D399)` }}
+        />
+      </div>
 
       {/* Title — fixed */}
-      <Box sx={{ px: 3, pt: 3, flexShrink: 0 }}>
-        <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", mb: 1.25 }}>
-          <Typography sx={{ fontWeight: 800, fontSize: "1rem", color: "#111827", lineHeight: 1.3, pr: 1 }}>
+      <div className="shrink-0 px-6 pt-6">
+        <div className="mb-[10px] flex items-start justify-between">
+          <p className="pr-2 text-[1rem] font-extrabold leading-[1.3] text-[#111827]">
             {t(current.titleKey)}
-          </Typography>
-          <Box onClick={onFinish} sx={{ cursor: "pointer", color: "#9CA3AF", "&:hover": { color: "#374151" }, flexShrink: 0, mt: 0.25 }}>
-            <CloseOutlined sx={{ fontSize: 16 }} />
-          </Box>
-        </Box>
-      </Box>
+          </p>
+          <button onClick={onFinish} className="mt-0.5 shrink-0 cursor-pointer text-[#9CA3AF] hover:text-[#374151]">
+            <CloseOutlined size={16} />
+          </button>
+        </div>
+      </div>
 
       {/* Description — scrollable */}
-      <Box sx={{ px: 3, overflowY: "auto", flex: 1, minHeight: 0 }}>
-        <Typography sx={{ fontSize: "0.83rem", color: "#6B7280", lineHeight: 1.7, whiteSpace: "pre-line", pb: 2 }}>
+      <div className="min-h-0 flex-1 overflow-y-auto px-6">
+        <p className="whitespace-pre-line pb-4 text-[0.83rem] leading-[1.7] text-[#6B7280]">
           {t(current.descKey)}
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Footer — always visible */}
-      <Box sx={{ px: 3, pb: 3, pt: 2, flexShrink: 0, borderTop: "1px solid #F3F4F6" }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+      <div className="shrink-0 border-t border-[#F3F4F6] px-6 pb-6 pt-4">
+        <div className="flex items-center justify-between">
           {/* Dots */}
-          <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap", maxWidth: 160 }}>
+          <div className="flex max-w-[160px] flex-wrap gap-1">
             {STEPS.map((_, i) => (
-              <Box key={i} onClick={() => onJump(i)} sx={{ width: i === step ? 14 : 5, height: 5, borderRadius: "4px", bgcolor: i === step ? TEAL : i < step ? `${TEAL}60` : "#E5E7EB", transition: "all 0.2s", cursor: "pointer" }} />
+              <button
+                key={i}
+                onClick={() => onJump(i)}
+                className="h-[5px] cursor-pointer rounded-[4px] transition-all"
+                style={{ width: i === step ? 14 : 5, backgroundColor: i === step ? TEAL : i < step ? `${TEAL}60` : "#E5E7EB" }}
+              />
             ))}
-          </Box>
+          </div>
 
           {/* Counter + nav buttons */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-            <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF", fontWeight: 500 }}>{step + 1} / {TOTAL}</Typography>
+          <div className="flex items-center gap-2">
+            <span className="text-[0.7rem] font-medium text-[#9CA3AF]">{step + 1} / {TOTAL}</span>
             {!isFirst && (
-              <Button size="small" onClick={onPrev} startIcon={<ArrowBackOutlined sx={{ fontSize: 13 }} />}
-                sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#6B7280", borderRadius: "8px", px: 1.5, minWidth: 0, "&:hover": { bgcolor: "#F3F4F6" } }}>
+              <Button size="sm" variant="ghost" onClick={onPrev} className="min-w-0 rounded-lg px-3 text-[0.78rem] font-semibold text-gray-500">
+                <ArrowBackOutlined size={13} />
                 {t("tour.nav.back")}
               </Button>
             )}
-            <Button size="small" variant="contained" onClick={onNext}
-              endIcon={isLast ? <CheckOutlined sx={{ fontSize: 13 }} /> : <ArrowForwardOutlined sx={{ fontSize: 13 }} />}
-              sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: TEAL, color: "#fff", borderRadius: "8px", px: 2, boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" } }}>
+            <Button
+              size="sm"
+              variant="default"
+              onClick={onNext}
+              className="rounded-lg px-4 text-[0.78rem] font-bold shadow-none"
+              style={{ backgroundColor: TEAL, color: "#fff" }}
+            >
               {isLast ? t("tour.nav.done") : t("tour.nav.next")}
+              {isLast ? <CheckOutlined size={13} /> : <ArrowForwardOutlined size={13} />}
             </Button>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 });
 

@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 
 export interface EmptyStateProps {
   /** Icon element rendered in the circle */
@@ -19,51 +18,26 @@ const EmptyState: React.FC<EmptyStateProps> = ({
   action,
   minHeight = 260,
 }) => (
-  <Box
-    sx={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      minHeight,
-      py: 6,
-      px: 3,
-      textAlign: "center",
-      gap: 2,
-    }}
+  <div
+    className="flex flex-col items-center justify-center py-12 px-6 text-center gap-4"
+    style={{ minHeight }}
   >
     {/* Icon circle */}
-    <Box
-      sx={{
-        width: 72,
-        height: 72,
-        borderRadius: "50%",
-        backgroundColor: "#f3f4f6",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        color: "#9ca3af",
-        "& svg": { fontSize: 36 },
-      }}
-    >
+    <div className="flex size-[72px] items-center justify-center rounded-full bg-gray-100 text-gray-400 [&_svg]:size-9">
       {icon}
-    </Box>
+    </div>
 
-    <Box>
-      <Typography
-        sx={{ fontWeight: 700, fontSize: "1.0625rem", color: "#374151", mb: 0.5 }}
-      >
+    <div>
+      <p className="mb-1 text-[1.0625rem] font-bold text-gray-700">
         {title}
-      </Typography>
+      </p>
       {description && (
-        <Typography sx={{ fontSize: "0.875rem", color: "#9ca3af", maxWidth: 340 }}>
-          {description}
-        </Typography>
+        <p className="max-w-[340px] text-sm text-gray-400">{description}</p>
       )}
-    </Box>
+    </div>
 
-    {action && <Box>{action}</Box>}
-  </Box>
+    {action && <div>{action}</div>}
+  </div>
 );
 
 export default EmptyState;

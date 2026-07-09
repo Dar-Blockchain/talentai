@@ -1,51 +1,9 @@
 import React, { memo } from "react";
-import { Box, Typography, Chip } from "@mui/material";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import { X as CloseOutlined } from "lucide-react";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { ROLES } from "@/modules/shared/constants/employee";
 
-const DELETE_ICON_STYLE = { fontSize: 11 } as const;
-
-const BASE_CHIP_SX = {
-  height: 24,
-  fontSize: "11px",
-  fontWeight: 600,
-  "& .MuiChip-label": { px: 1 },
-  "& .MuiChip-deleteIcon": { mr: 0.5 },
-} as const;
-
-const SEARCH_CHIP_SX = {
-  ...BASE_CHIP_SX,
-  bgcolor: "#F3F4F6",
-  color: "#374151",
-  border: "1px solid #E5E7EB",
-  "& .MuiChip-deleteIcon": { ...BASE_CHIP_SX["& .MuiChip-deleteIcon"], color: "#9CA3AF", "&:hover": { color: "#374151" } },
-} as const;
-
-const DEPT_CHIP_SX = {
-  ...BASE_CHIP_SX,
-  fontWeight: 700,
-  bgcolor: "#EFF6FF",
-  color: "#0891B2",
-  border: "1px solid #BAE6FD",
-  "& .MuiChip-deleteIcon": { ...BASE_CHIP_SX["& .MuiChip-deleteIcon"], color: "#0891B2", opacity: 0.6, "&:hover": { opacity: 1 } },
-} as const;
-
-const CONTAINER_SX = { display: "flex", alignItems: "center", gap: 0.75, mb: 2, flexWrap: "wrap" } as const;
-const LABEL_SX = { fontSize: "11px", fontWeight: 600, color: "#9CA3AF", mr: 0.25 } as const;
-const CLEAR_ALL_SX = { fontSize: "11px", fontWeight: 600, color: "#9CA3AF", cursor: "pointer", ml: 0.5, "&:hover": { color: "#374151" }, transition: "color 0.15s" } as const;
-
-const deleteIcon = <CloseOutlined style={DELETE_ICON_STYLE} />;
-
-function roleChipSx(color: string) {
-  return {
-    ...BASE_CHIP_SX,
-    fontWeight: 700,
-    bgcolor: `${color}12`,
-    color,
-    border: `1px solid ${color}30`,
-    "& .MuiChip-deleteIcon": { ...BASE_CHIP_SX["& .MuiChip-deleteIcon"], color, opacity: 0.6, "&:hover": { opacity: 1 } },
-  };
-}
+const DELETE_ICON_SIZE = 11;
 
 interface Props {
   search: string;
@@ -63,26 +21,66 @@ const FilterChips: React.FC<Props> = memo(({
   selectedDept, onClearDept,
   onClearAll,
 }) => (
-  <Box sx={CONTAINER_SX}>
-    <Typography sx={LABEL_SX}>Filters:</Typography>
+  <div className="mb-4 flex flex-wrap items-center gap-1.5">
+    <span className="mr-0.5 text-[11px] font-semibold text-[#9CA3AF]">Filters:</span>
 
     {search && (
-      <Chip size="small" label={`"${search}"`} onDelete={onClearSearch}
-        deleteIcon={deleteIcon} sx={SEARCH_CHIP_SX} />
+      <Badge
+        variant="outline"
+        className="h-6 gap-1 rounded-full border-[#E5E7EB] bg-[#F3F4F6] px-2 text-[11px] font-semibold text-[#374151]"
+      >
+        {`"${search}"`}
+        <button
+          type="button"
+          onClick={onClearSearch}
+          className="text-[#9CA3AF] transition-colors hover:text-[#374151]"
+        >
+          <CloseOutlined size={DELETE_ICON_SIZE} />
+        </button>
+      </Badge>
     )}
 
     {selectedRole && (
-      <Chip size="small" label={selectedRole.label} onDelete={onClearRole}
-        deleteIcon={deleteIcon} sx={roleChipSx(selectedRole.color)} />
+      <Badge
+        variant="outline"
+        className="h-6 gap-1 rounded-full px-2 text-[11px] font-bold"
+        style={{ backgroundColor: `${selectedRole.color}12`, borderColor: `${selectedRole.color}30`, color: selectedRole.color }}
+      >
+        {selectedRole.label}
+        <button
+          type="button"
+          onClick={onClearRole}
+          className="opacity-60 transition-opacity hover:opacity-100"
+          style={{ color: selectedRole.color }}
+        >
+          <CloseOutlined size={DELETE_ICON_SIZE} />
+        </button>
+      </Badge>
     )}
 
     {selectedDept && (
-      <Chip size="small" label={selectedDept.name} onDelete={onClearDept}
-        deleteIcon={deleteIcon} sx={DEPT_CHIP_SX} />
+      <Badge
+        variant="outline"
+        className="h-6 gap-1 rounded-full border-[#BAE6FD] bg-[#EFF6FF] px-2 text-[11px] font-bold text-[#0891B2]"
+      >
+        {selectedDept.name}
+        <button
+          type="button"
+          onClick={onClearDept}
+          className="text-[#0891B2] opacity-60 transition-opacity hover:opacity-100"
+        >
+          <CloseOutlined size={DELETE_ICON_SIZE} />
+        </button>
+      </Badge>
     )}
 
-    <Box onClick={onClearAll} sx={CLEAR_ALL_SX}>Clear all</Box>
-  </Box>
+    <div
+      onClick={onClearAll}
+      className="ml-1 cursor-pointer text-[11px] font-semibold text-[#9CA3AF] transition-colors duration-150 hover:text-[#374151]"
+    >
+      Clear all
+    </div>
+  </div>
 ));
 
 FilterChips.displayName = "FilterChips";

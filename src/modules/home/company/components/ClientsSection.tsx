@@ -2,11 +2,11 @@ import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
 const partners = [
-  { src: "/images/partners/darblockchain.png", alt: "Dar Blockchain", h: 26 },
-  { src: "/images/partners/lightency.png", alt: "Lightency", h: 26 },
-  { src: "/images/partners/nvidia.png",  alt: "NVIDIA Inception Program", h: 32 },
-  { src: "/images/partners/f6s.png",     alt: "F6S #22 Top AI Company", h: 32 },
-  { src: "/images/partners/hedera.png",  alt: "Built on Hedera Hashgraph", h: 32 },
+  { src: "/images/supporters/darblockchain.png", alt: "Dar Blockchain", h: 26 },
+  { src: "/images/supporters/lightency.png", alt: "Lightency", h: 26 },
+  { src: "/images/supporters/nivdia.png",  alt: "NVIDIA Inception Program", h: 32 },
+  { src: "/images/supporters/f6s.png",     alt: "F6S #22 Top AI Company", h: 32 },
+  { src: "/images/supporters/hedera.png",  alt: "Built on Hedera Hashgraph", h: 32 },
 ];
 
 /* Triple so the marquee has enough content to loop seamlessly */

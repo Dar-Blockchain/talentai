@@ -21,6 +21,8 @@ interface Props {
   search: string;
   onSearchChange: (value: string) => void;
   searchPlaceholder: string;
+  /** Hide the search input entirely (e.g. anonymous campaigns, where names can't be searched). */
+  showSearch?: boolean;
   period: string;
   onPeriodChange: (value: string) => void;
   periodOptions: PeriodOption[];
@@ -33,21 +35,23 @@ interface Props {
 }
 
 const CampaignsFilterBar: React.FC<Props> = ({
-  search, onSearchChange, searchPlaceholder,
+  search, onSearchChange, searchPlaceholder, showSearch = true,
   period, onPeriodChange, periodOptions, periodPlaceholder,
   hasActiveFilters, onClearFilters, clearLabel,
   extraFilters,
 }) => (
   <div className="flex gap-2 items-center flex-wrap">
-    <div className="relative flex-1 min-w-48">
-      <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
-      <Input
-        className="pl-8 bg-card text-sm h-9"
-        placeholder={searchPlaceholder}
-        value={search}
-        onChange={(e) => onSearchChange(e.target.value)}
-      />
-    </div>
+    {showSearch && (
+      <div className="relative flex-1 min-w-48">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
+        <Input
+          className="pl-8 bg-card text-sm h-9"
+          placeholder={searchPlaceholder}
+          value={search}
+          onChange={(e) => onSearchChange(e.target.value)}
+        />
+      </div>
+    )}
 
     {extraFilters}
 

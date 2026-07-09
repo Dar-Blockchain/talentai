@@ -2,8 +2,7 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import PeopleOutlined from "@mui/icons-material/PeopleOutlined";
-import StarOutlined   from "@mui/icons-material/StarOutlined";
+import { Users as PeopleOutlined, Star as StarOutlined } from "lucide-react";
 import { ZoneHeading, KpiCard } from "./KpiAtoms";
 import { T } from "../utils/kpiTokens";
 import type { KpiSourcingData, SourcingCandidate } from "../types";
@@ -27,7 +26,7 @@ const CandidateRow = memo<{ c: SourcingCandidate; shortlistedLabel: string; comp
         <td className="py-2.5 border-b border-slate-100 text-center">
           {c.score !== null ? (
             <span className="inline-flex items-center gap-1">
-              <StarOutlined style={{ fontSize: 13, color: "#F59E0B" }} />
+              <StarOutlined size={13} color="#F59E0B" />
               <span className="font-bold text-[0.82rem] text-teal-600">{c.score}</span>
             </span>
           ) : <span className="text-[0.82rem] text-slate-400">—</span>}

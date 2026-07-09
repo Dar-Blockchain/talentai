@@ -7,6 +7,7 @@ import { getRoleLabel } from "@/modules/company/employees/utils/employeeRoleI18n
 import { useTranslation } from "react-i18next";
 import { AMBER } from "./constants";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 
 const RESEND_COOLDOWN_MS = 48 * 60 * 60 * 1000;
@@ -140,17 +141,17 @@ const InvitationCard: React.FC<Props> = memo(({ invitation, onResend, onCancel }
 
       {/* Actions */}
       <div className="relative mt-3.5 flex gap-2 border-t border-[#F1F5F9] pt-3.5">
-        <button
+        <Button
+          variant="ghost"
           onClick={!busy && canResend ? handleResend : undefined}
           disabled={busy || !canResend}
           title={!canResend ? t("pages.employees.invitation.resend_available_in", { time: formatRemaining(cooldownRemainingMs) }) : undefined}
           className={cn(
-            "flex flex-1 items-center justify-center gap-1.5 rounded-xl border py-2 transition-all duration-150",
+            "flex-1 h-auto rounded-xl border py-2",
             busyAction === "resend"
-              ? "cursor-default border-[#C7D2FE] bg-[#EEF2FF]"
+              ? "border-[#C7D2FE] bg-[#EEF2FF]"
               : "border-[#E5E7EB] bg-[#F8FAFC]",
-            !busy && canResend && "cursor-pointer hover:border-[#D1D5DB] hover:bg-[#F1F5F9]",
-            (busy && busyAction !== "resend") || !canResend ? "cursor-default opacity-45" : "",
+            !busy && canResend && "hover:border-[#D1D5DB] hover:bg-[#F1F5F9]",
           )}
         >
           <Spinner
@@ -170,15 +171,15 @@ const InvitationCard: React.FC<Props> = memo(({ invitation, onResend, onCancel }
                 ? t("pages.employees.invitation.resend_available_in", { time: formatRemaining(cooldownRemainingMs) })
                 : t("pages.employees.invitation.resend")}
           </span>
-        </button>
+        </Button>
 
-        <button
+        <Button
+          variant="ghost"
           onClick={!busy ? handleCancel : undefined}
           disabled={busy && busyAction !== "cancel"}
           className={cn(
-            "flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border border-red-100 bg-red-50 py-2 transition-all duration-150",
+            "flex-1 h-auto rounded-xl border border-red-100 bg-red-50 py-2",
             !busy && "hover:border-red-200 hover:bg-red-100",
-            busy && busyAction !== "cancel" && "cursor-default opacity-45",
           )}
         >
           {busy && busyAction === "cancel"
@@ -188,7 +189,7 @@ const InvitationCard: React.FC<Props> = memo(({ invitation, onResend, onCancel }
           <span className="text-xs font-semibold text-red-600">
             {t("pages.employees.invitation.cancel")}
           </span>
-        </button>
+        </Button>
       </div>
     </div>
   );

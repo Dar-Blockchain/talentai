@@ -1,8 +1,5 @@
 import React from "react";
-import AccessTimeOutlined        from "@mui/icons-material/AccessTimeOutlined";
-import ChatBubbleOutlineOutlined from "@mui/icons-material/ChatBubbleOutlineOutlined";
-import TrendingUpOutlined        from "@mui/icons-material/TrendingUpOutlined";
-import VolumeOffOutlined         from "@mui/icons-material/VolumeOffOutlined";
+import { Clock as AccessTimeOutlined, MessageCircle as ChatBubbleOutlineOutlined, TrendingUp as TrendingUpOutlined, VolumeX as VolumeOffOutlined } from "lucide-react";
 import { fmtDuration } from "@/modules/company/assessment/constants";
 import { PostAssessmentData } from "../../types";
 
@@ -23,19 +20,19 @@ const AnalyticsStrip: React.FC<Props> = ({ analytics }) => {
   const stats: StatItem[] = [];
 
   if (analytics.duration !== undefined)
-    stats.push({ icon: <AccessTimeOutlined style={{ fontSize: 14 }} />, label: "Duration", value: fmtDuration(analytics.duration), iconClass: "text-slate-400" });
+    stats.push({ icon: <AccessTimeOutlined size={14} />, label: "Duration", value: fmtDuration(analytics.duration), iconClass: "text-slate-400" });
 
   if (analytics.messageCount !== undefined)
-    stats.push({ icon: <ChatBubbleOutlineOutlined style={{ fontSize: 14 }} />, label: "Exchanges", value: String(analytics.messageCount), iconClass: "text-slate-400" });
+    stats.push({ icon: <ChatBubbleOutlineOutlined size={14} />, label: "Exchanges", value: String(analytics.messageCount), iconClass: "text-slate-400" });
 
   if (analytics.completedAreas !== undefined && analytics.totalAreas !== undefined)
-    stats.push({ icon: <TrendingUpOutlined style={{ fontSize: 14 }} />, label: "Areas", value: `${analytics.completedAreas} / ${analytics.totalAreas}`, iconClass: "text-teal-500" });
+    stats.push({ icon: <TrendingUpOutlined size={14} />, label: "Areas", value: `${analytics.completedAreas} / ${analytics.totalAreas}`, iconClass: "text-teal-500" });
 
   if ((analytics.silenceEvents ?? 0) > 0)
-    stats.push({ icon: <VolumeOffOutlined style={{ fontSize: 14 }} />, label: "Silences", value: String(analytics.silenceEvents), iconClass: "text-amber-500" });
+    stats.push({ icon: <VolumeOffOutlined size={14} />, label: "Silences", value: String(analytics.silenceEvents), iconClass: "text-amber-500" });
 
   if (analytics.averageResponseLength !== undefined)
-    stats.push({ icon: <ChatBubbleOutlineOutlined style={{ fontSize: 14 }} />, label: "Avg words", value: `~${analytics.averageResponseLength}`, iconClass: "text-slate-400" });
+    stats.push({ icon: <ChatBubbleOutlineOutlined size={14} />, label: "Avg words", value: `~${analytics.averageResponseLength}`, iconClass: "text-slate-400" });
 
   if (stats.length === 0) return null;
 

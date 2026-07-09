@@ -1,20 +1,18 @@
 import React, { memo, useCallback, useMemo, useState } from "react";
 import {
-  Box, Typography, Switch,
-  Accordion, AccordionSummary, AccordionDetails,
-} from "@mui/material";
-import ExpandMoreOutlined from "@mui/icons-material/ExpandMoreOutlined";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
-import PeopleOutlineOutlined from "@mui/icons-material/PeopleOutlineOutlined";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesome";
-import PsychologyOutlined from "@mui/icons-material/PsychologyOutlined";
-import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
-import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
-import CampaignOutlined from "@mui/icons-material/CampaignOutlined";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
+  Briefcase as WorkOutlineOutlined,
+  Users as PeopleOutlineOutlined,
+  Users as GroupsOutlined,
+  Network as AccountTreeOutlined,
+  Megaphone as CampaignOutlined,
+  Settings as SettingsOutlined,
+} from "lucide-react";
+import { Switch } from "@/modules/shared/ui/shadcn/switch";
+import {
+  Accordion, AccordionContent, AccordionItem, AccordionTrigger,
+} from "@/modules/shared/ui/shadcn/accordion";
+import { cn } from "@/lib/utils";
 import { EmployeePermission, EmployeePermissionKey, EMPLOYEE_PERMISSION_GROUPS, EMPLOYEE_PERMISSION_CATEGORIES } from "@/modules/company/employees/types/permissions";
-
-const PURPLE = "#8310FF";
 
 const PACK_ROWS: Partial<Record<EmployeePermissionKey, {
   keys: EmployeePermissionKey[];
@@ -43,7 +41,7 @@ const PACK_ABSORBED = new Set<EmployeePermissionKey>(
 );
 
 interface CategoryMeta {
-  icon: React.ComponentType<{ sx?: object }>;
+  icon: React.ComponentType<{ size?: number; color?: string; className?: string }>;
   color: string;
   description: string;
 }
@@ -57,27 +55,7 @@ const CATEGORY_META: Record<string, CategoryMeta> = {
   [EMPLOYEE_PERMISSION_CATEGORIES.SETTINGS]:    { icon: SettingsOutlined,      color: "#64748B", description: "Control company profile and workspace settings" },
 };
 
-// ─── Static sx constants ──────────────────────────────────────────────────────
-
-const SWITCH_SX = {
-  flexShrink: 0,
-  "& .MuiSwitch-switchBase": { color: "#E2E8F0" },
-  "& .MuiSwitch-track": { bgcolor: "#CBD5E1", opacity: 1, borderRadius: 99 },
-  "& .MuiSwitch-thumb": { boxShadow: "0 1px 4px rgba(0,0,0,0.2)" },
-} as const;
-
-const PANEL_SX       = { display: "flex", flexDirection: "column", gap: 1 } as const;
-const ACCORD_BASE_SX = { "&:before": { display: "none" } } as const;
-const DETAILS_SX     = { p: 0, bgcolor: "#fff" } as const;
-const SUMMARY_CONTENT_SX = { "& .MuiAccordionSummary-content": { my: "14px", alignItems: "center", gap: 1.5 } } as const;
-const META_BOX_SX    = { flex: 1, minWidth: 0 } as const;
-const META_TITLE_SX  = { fontWeight: 700, fontSize: "0.875rem", color: "#0F172A", lineHeight: 1.3 } as const;
-const META_DESC_SX   = { fontSize: "0.7rem", color: "#94A3B8", mt: 0.1 } as const;
-const GRANT_TEXT_SX  = { fontSize: "0.68rem", fontWeight: 700, whiteSpace: "nowrap" } as const;
-const ROW_LABEL_SX   = { fontWeight: 600, fontSize: "0.8125rem", color: "#1E293B", lineHeight: 1.3 } as const;
-const ROW_DESC_SX    = { fontSize: "0.72rem", color: "#94A3B8", mt: 0.15 } as const;
-const ROW_BODY_SX    = { flex: 1, minWidth: 0 } as const;
-const STOP_PROP      = (e: React.MouseEvent) => e.stopPropagation();
+const STOP_PROP = (e: React.MouseEvent) => e.stopPropagation();
 
 // ─── PermRow ──────────────────────────────────────────────────────────────────
 
@@ -98,46 +76,31 @@ const PermRow: React.FC<PermRowProps> = memo(({ permKey, value, color, disabled,
 
   const handleToggle = useCallback(() => { if (!disabled) onToggle(permKey); }, [disabled, onToggle, permKey]);
 
-  const rowSx = useMemo(() => ({
-    px: 2.5, py: 1.5,
-    display: "flex", alignItems: "center", gap: 2,
-    borderBottom: isLast ? "none" : "1px solid #F8FAFC",
-    transition: "background 0.15s",
-    "&:hover": disabled ? {} : { bgcolor: "#FAFBFC" },
-    opacity: disabled ? 0.6 : 1,
-  }), [isLast, disabled]);
-
-  const dotSx = useMemo(() => ({
-    width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
-    bgcolor: enabled ? color : "#E2E8F0",
-    boxShadow: enabled ? `0 0 0 3px ${color}18` : "none",
-    transition: "all 0.2s",
-  }), [enabled, color]);
-
-  const switchSx = useMemo(() => ({
-    ...SWITCH_SX,
-    "& .MuiSwitch-switchBase.Mui-checked": {
-      color: "#fff",
-      "& + .MuiSwitch-track": { bgcolor: color, opacity: 1 },
-    },
-  }), [color]);
-
   return (
-    <Box sx={rowSx}>
-      <Box sx={dotSx} />
-      <Box sx={ROW_BODY_SX}>
-        <Typography sx={ROW_LABEL_SX}>{label}</Typography>
-        <Typography sx={ROW_DESC_SX}>{desc}</Typography>
-      </Box>
+    <div
+      className={cn(
+        "flex items-center gap-4 px-5 py-3 transition-colors",
+        !isLast && "border-b border-[#F8FAFC]",
+        disabled ? "opacity-60" : "hover:bg-[#FAFBFC]",
+      )}
+    >
+      <div
+        className="size-[7px] shrink-0 rounded-full transition-all duration-200"
+        style={{ backgroundColor: enabled ? color : "#E2E8F0", boxShadow: enabled ? `0 0 0 3px ${color}18` : "none" }}
+      />
+      <div className="min-w-0 flex-1">
+        <p className="text-[0.8125rem] font-semibold leading-tight text-[#1E293B]">{label}</p>
+        <p className="mt-0.5 text-[0.72rem] text-[#94A3B8]">{desc}</p>
+      </div>
       <Switch
         checked={enabled}
-        onChange={handleToggle}
+        onCheckedChange={handleToggle}
         onClick={STOP_PROP}
-        size="small"
         disabled={disabled}
-        sx={switchSx}
+        className="shrink-0"
+        style={enabled ? { backgroundColor: color } : undefined}
       />
-    </Box>
+    </div>
   );
 });
 PermRow.displayName = "PermRow";
@@ -154,11 +117,10 @@ interface AccordionGroupProps {
   isOpen: boolean;
   onToggle: (key: EmployeePermissionKey) => void;
   onToggleGroup: (keys: EmployeePermissionKey[], grant: boolean, e: React.MouseEvent) => void;
-  onExpandChange: (category: string, open: boolean) => void;
 }
 
 const AccordionGroup: React.FC<AccordionGroupProps> = memo(({
-  group, meta, keys, visiblePerms, value, disabled, isOpen, onToggle, onToggleGroup, onExpandChange,
+  group, meta, keys, visiblePerms, value, disabled, isOpen, onToggle, onToggleGroup,
 }) => {
   const Icon        = meta.icon;
   const allGranted  = keys.every((k) => !!value[k]);
@@ -168,80 +130,65 @@ const AccordionGroup: React.FC<AccordionGroupProps> = memo(({
     return pack ? pack.keys.every((k) => !!value[k]) : !!value[p.key];
   }).length;
 
-  const handleExpand  = useCallback((_: React.SyntheticEvent, open: boolean) => onExpandChange(group.category, open), [onExpandChange, group.category]);
-  const handleGrant   = useCallback((e: React.MouseEvent) => onToggleGroup(keys, !allGranted, e), [onToggleGroup, keys, allGranted]);
-
-  const accordSx = useMemo(() => ({
-    ...ACCORD_BASE_SX,
-    border: `1px solid ${isOpen ? `${meta.color}30` : "#E8EAED"}`,
-    borderRadius: "14px !important", overflow: "hidden",
-    boxShadow: isOpen ? `0 4px 16px ${meta.color}12` : "0 1px 4px rgba(0,0,0,0.04)",
-    transition: "box-shadow 0.22s, border-color 0.22s",
-  }), [isOpen, meta.color]);
-
-  const summarySx = useMemo(() => ({
-    ...SUMMARY_CONTENT_SX,
-    px: 2.5, py: 0, minHeight: "60px !important",
-    bgcolor: isOpen ? `${meta.color}06` : "#FAFBFC",
-    borderBottom: isOpen ? `1px solid ${meta.color}15` : "none",
-    transition: "background 0.2s",
-  }), [isOpen, meta.color]);
-
-  const expandIconSx = useMemo(() => ({
-    fontSize: 18, color: isOpen ? meta.color : "#94A3B8", transition: "color 0.2s",
-  }), [isOpen, meta.color]);
-
-  const iconBoxSx = useMemo(() => ({
-    width: 36, height: 36, borderRadius: "10px", flexShrink: 0,
-    bgcolor: `${meta.color}12`, border: `1px solid ${meta.color}22`,
-    display: "flex", alignItems: "center", justifyContent: "center", color: meta.color,
-  }), [meta.color]);
-
-  const countBadgeSx = useMemo(() => ({
-    px: 1, py: "2px", borderRadius: "999px", flexShrink: 0,
-    bgcolor: someGranted ? `${meta.color}12` : "#F1F5F9",
-    border: `1px solid ${someGranted ? `${meta.color}25` : "#E2E8F0"}`,
-  }), [someGranted, meta.color]);
-
-  const countTextSx = useMemo(() => ({
-    fontSize: "0.7rem", fontWeight: 700,
-    color: someGranted ? meta.color : "#94A3B8",
-  }), [someGranted, meta.color]);
-
-  const grantBoxSx = useMemo(() => ({
-    px: 1.125, py: "3px", borderRadius: "8px", cursor: "pointer", flexShrink: 0,
-    bgcolor: someGranted ? `${meta.color}08` : "transparent",
-    border: `1px solid ${someGranted ? `${meta.color}22` : "#E8EAED"}`,
-    transition: "all 0.15s",
-    "&:hover": { bgcolor: `${meta.color}14`, borderColor: `${meta.color}35` },
-  }), [someGranted, meta.color]);
-
-  const grantTextSx = useMemo(() => ({
-    ...GRANT_TEXT_SX, color: someGranted ? meta.color : "#94A3B8",
-  }), [someGranted, meta.color]);
+  const handleGrant = useCallback((e: React.MouseEvent) => onToggleGroup(keys, !allGranted, e), [onToggleGroup, keys, allGranted]);
 
   return (
-    <Accordion key={group.category} expanded={isOpen} onChange={handleExpand} disableGutters elevation={0} sx={accordSx}>
-      <AccordionSummary expandIcon={<ExpandMoreOutlined sx={expandIconSx} />} sx={summarySx}>
-        <Box sx={iconBoxSx}><Icon sx={{ fontSize: 18 }} /></Box>
+    <AccordionItem
+      value={group.category}
+      className="overflow-hidden rounded-2xl border transition-shadow duration-200"
+      style={{
+        borderColor: isOpen ? `${meta.color}30` : "#E8EAED",
+        boxShadow: isOpen ? `0 4px 16px ${meta.color}12` : "0 1px 4px rgba(0,0,0,0.04)",
+      }}
+    >
+      <AccordionTrigger
+        className={cn("min-h-[60px] items-center gap-3 rounded-none px-5 py-0 hover:no-underline", isOpen && "border-b")}
+        style={{
+          backgroundColor: isOpen ? `${meta.color}06` : "#FAFBFC",
+          borderColor: isOpen ? `${meta.color}15` : "transparent",
+        }}
+      >
+        <div
+          className="flex size-9 shrink-0 items-center justify-center rounded-[10px] border"
+          style={{ backgroundColor: `${meta.color}12`, borderColor: `${meta.color}22`, color: meta.color }}
+        >
+          <Icon size={18} />
+        </div>
 
-        <Box sx={META_BOX_SX}>
-          <Typography sx={META_TITLE_SX}>{group.category}</Typography>
-          <Typography sx={META_DESC_SX}>{meta.description}</Typography>
-        </Box>
+        <div className="min-w-0 flex-1">
+          <p className="text-[0.875rem] font-bold leading-tight text-[#0F172A]">{group.category}</p>
+          <p className="mt-px text-[0.7rem] text-[#94A3B8]">{meta.description}</p>
+        </div>
 
-        <Box sx={countBadgeSx}>
-          <Typography sx={countTextSx}>{enabledCount} / {visiblePerms.length}</Typography>
-        </Box>
+        <div
+          className="shrink-0 rounded-full border px-2.5 py-0.5"
+          style={{
+            backgroundColor: someGranted ? `${meta.color}12` : "#F1F5F9",
+            borderColor: someGranted ? `${meta.color}25` : "#E2E8F0",
+          }}
+        >
+          <span className="text-xs font-bold" style={{ color: someGranted ? meta.color : "#94A3B8" }}>
+            {enabledCount} / {visiblePerms.length}
+          </span>
+        </div>
 
         {!disabled && (
-          <Box onClick={handleGrant} sx={grantBoxSx}>
-            <Typography sx={grantTextSx}>{allGranted ? "Revoke all" : "Grant all"}</Typography>
-          </Box>
+          <div
+            onClick={handleGrant}
+            className="shrink-0 cursor-pointer rounded-lg border px-[9px] py-[3px] transition-all"
+            style={{
+              backgroundColor: someGranted ? `${meta.color}08` : "transparent",
+              borderColor: someGranted ? `${meta.color}22` : "#E8EAED",
+            }}
+          >
+            <span className="whitespace-nowrap text-[0.68rem] font-bold" style={{ color: someGranted ? meta.color : "#94A3B8" }}>
+              {allGranted ? "Revoke all" : "Grant all"}
+            </span>
+          </div>
         )}
-      </AccordionSummary>
+      </AccordionTrigger>
 
-      <AccordionDetails sx={DETAILS_SX}>
+      <AccordionContent className="bg-white p-0">
         {visiblePerms.map((perm, idx) => (
           <PermRow
             key={perm.key}
@@ -253,8 +200,8 @@ const AccordionGroup: React.FC<AccordionGroupProps> = memo(({
             onToggle={onToggle}
           />
         ))}
-      </AccordionDetails>
-    </Accordion>
+      </AccordionContent>
+    </AccordionItem>
   );
 });
 AccordionGroup.displayName = "AccordionGroup";
@@ -287,10 +234,6 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = memo(({ value, onChang
     onChange({ ...value, ...patch });
   }, [value, onChange]);
 
-  const handleExpandChange = useCallback((category: string, open: boolean) => {
-    setExpanded(open ? category : false);
-  }, []);
-
   const groups = useMemo(() =>
     EMPLOYEE_PERMISSION_GROUPS.map((group) => {
       const meta = CATEGORY_META[group.category] ?? { icon: WorkOutlineOutlined, color: "#6B7280", description: "" };
@@ -303,7 +246,13 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = memo(({ value, onChang
   [isOwner]);
 
   return (
-    <Box sx={PANEL_SX}>
+    <Accordion
+      type="single"
+      collapsible
+      value={expanded || ""}
+      onValueChange={(v) => setExpanded(v || false)}
+      className="flex flex-col gap-2"
+    >
       {groups.map(({ group, meta, keys, visiblePerms }) => (
         <AccordionGroup
           key={group.category}
@@ -316,10 +265,9 @@ const PermissionsPanel: React.FC<PermissionsPanelProps> = memo(({ value, onChang
           isOpen={expanded === group.category}
           onToggle={toggle}
           onToggleGroup={toggleGroup}
-          onExpandChange={handleExpandChange}
         />
       ))}
-    </Box>
+    </Accordion>
   );
 });
 

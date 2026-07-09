@@ -1,6 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { SelectChangeEvent } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/useToast';
@@ -187,7 +186,7 @@ export const useCompanyProfileManagement = () => {
     setProfile((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleSelectChange = useCallback((event: SelectChangeEvent<string>, field: keyof UserProfile) => {
+  const handleSelectChange = useCallback((event: { target: { value: string } }, field: keyof UserProfile) => {
     setProfile((prev) => ({ ...prev, [field]: event.target.value }));
   }, []);
 

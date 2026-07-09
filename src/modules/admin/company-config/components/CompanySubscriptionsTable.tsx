@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import {
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TablePagination,
-} from '@mui/material';
-import SearchIcon from '@mui/icons-material/Search';
+import { Search as SearchIcon } from 'lucide-react';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Button } from '@/modules/shared/ui/shadcn/button';
+import { Input } from '@/modules/shared/ui/shadcn/input';
+import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import { cn } from '@/lib/utils';
-import { ADMIN_TABLE_HEAD_CELL_SX, ADMIN_TABLE_ROW_SX, AdminTableErrorRow } from '@/modules/admin/shared';
+import { AdminTableErrorRow } from '@/modules/admin/shared';
 import { useCompanySubscriptionsQuery } from '../queries';
 
 const statusBadgeClass = (status: string, isActive: boolean) => {
@@ -27,6 +28,9 @@ const usageLabel = (used: number, limit: number | null) => {
   return `${used} / ${limit}`;
 };
 
+const TH = 'px-4 py-3 text-left text-[11px] font-bold text-teal-700 uppercase tracking-wider bg-teal-50 border-b border-teal-100 sticky top-0';
+const TD = 'px-4 py-3 text-[13px] text-slate-700 border-b border-slate-100';
+
 const CompanySubscriptionsTable: React.FC = () => {
   const [search, setSearch] = useState('');
   const [searchInput, setSearchInput] = useState('');
@@ -36,6 +40,7 @@ const CompanySubscriptionsTable: React.FC = () => {
   const { data, isLoading, isError, refetch } = useCompanySubscriptionsQuery({ search, page: page + 1, limit: rowsPerPage });
   const companies = data?.data ?? [];
   const total = data?.total ?? 0;
+  const totalPages = Math.max(Math.ceil(total / rowsPerPage), 1);
 
   const handleSearch = () => {
     setSearch(searchInput);
@@ -47,104 +52,101 @@ const CompanySubscriptionsTable: React.FC = () => {
       <Card className="mb-4 overflow-hidden py-0 gap-0">
         <div className="p-4 flex flex-wrap gap-3 items-center">
           <div className="flex-[1_1_240px] flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2">
-            <SearchIcon style={{ fontSize: 18 }} className="text-slate-400 shrink-0" />
-            <input
+            <SearchIcon size={18} className="text-slate-400 shrink-0" />
+            <Input
               placeholder="Search by company name or email..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              className="w-full text-[13px] outline-none placeholder:text-slate-400"
+              className="h-auto border-0 bg-transparent p-0 shadow-none text-[13px] focus-visible:ring-0"
             />
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={handleSearch}
-            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 transition-colors"
+            className="rounded-lg px-4 py-2 text-[13px] font-semibold text-white bg-indigo-600 hover:bg-indigo-700 hover:text-white"
           >
             Search
-          </button>
+          </Button>
           <div className="flex-1" />
           <span className="text-[13px] text-slate-500">{total.toLocaleString()} subscribed companies</span>
         </div>
       </Card>
 
       <Card className="overflow-hidden py-0 gap-0">
-        <TableContainer sx={{ maxHeight: 600 }}>
-          <Table stickyHeader>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Company</TableCell>
-                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Plan</TableCell>
-                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Status</TableCell>
-                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Posts</TableCell>
-                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Interviews</TableCell>
-                <TableCell sx={ADMIN_TABLE_HEAD_CELL_SX}>Renews / Ended</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
+        <div className="max-h-[600px] overflow-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr>
+                <th className={TH}>Company</th>
+                <th className={TH}>Plan</th>
+                <th className={TH}>Status</th>
+                <th className={TH}>Posts</th>
+                <th className={TH}>Interviews</th>
+                <th className={TH}>Renews / Ended</th>
+              </tr>
+            </thead>
+            <tbody>
               {isError ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <AdminTableErrorRow message="Failed to load companies." onRetry={() => refetch()} />
-                  </TableCell>
-                </TableRow>
+                <tr><td colSpan={6} className="py-4 text-center"><AdminTableErrorRow message="Failed to load companies." onRetry={() => refetch()} /></td></tr>
               ) : isLoading ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <span className="text-[13px] text-slate-500">Loading…</span>
-                  </TableCell>
-                </TableRow>
+                <tr><td colSpan={6} className="py-4 text-center"><span className="text-[13px] text-slate-500">Loading…</span></td></tr>
               ) : companies.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={6} align="center" sx={{ py: 4 }}>
-                    <span className="text-[13px] text-slate-500">No subscribed companies found</span>
-                  </TableCell>
-                </TableRow>
+                <tr><td colSpan={6} className="py-4 text-center"><span className="text-[13px] text-slate-500">No subscribed companies found</span></td></tr>
               ) : (
                 companies.map((c) => (
-                  <TableRow key={c.profileId} hover sx={ADMIN_TABLE_ROW_SX}>
-                    <TableCell>
+                  <tr key={c.profileId} className="hover:bg-teal-50/40 transition-colors">
+                    <td className={TD}>
                       <div className="text-[13px] font-semibold text-slate-900">{c.name}</div>
                       <div className="text-[11px] text-slate-400">{c.email}</div>
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className={TD}>
                       <span className="text-[13px] text-slate-700">{c.subscription.planName}</span>
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className={TD}>
                       <Badge
                         variant="outline"
                         className={cn("border-transparent font-semibold capitalize", statusBadgeClass(c.subscription.status, c.subscription.isActive))}
                       >
                         {c.subscription.isActive ? 'Active' : c.subscription.status}
                       </Badge>
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className={TD}>
                       <span className="text-[13px] text-slate-700">
                         {usageLabel(c.subscription.postsUsed, c.subscription.postsLimit)}
                       </span>
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className={TD}>
                       <span className="text-[13px] text-slate-700">
                         {usageLabel(c.subscription.monthlyInterviewsUsed, c.subscription.monthlyInterviewLimit)}
                       </span>
-                    </TableCell>
-                    <TableCell>
+                    </td>
+                    <td className={TD}>
                       <span className="text-[13px] text-slate-500">{fmtDate(c.subscription.endDate)}</span>
-                    </TableCell>
-                  </TableRow>
+                    </td>
+                  </tr>
                 ))
               )}
-            </TableBody>
-          </Table>
-          <TablePagination
-            rowsPerPageOptions={[10, 20, 50]}
-            component="div"
-            count={total}
-            rowsPerPage={rowsPerPage}
-            page={page}
-            onPageChange={(_, newPage) => setPage(newPage)}
-            onRowsPerPageChange={(e) => { setRowsPerPage(parseInt(e.target.value, 10)); setPage(0); }}
-          />
-        </TableContainer>
+            </tbody>
+          </table>
+        </div>
+        <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
+          <div className="flex items-center gap-2">
+            <span className="text-[12px] text-slate-500">Rows per page:</span>
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => { setRowsPerPage(parseInt(v, 10)); setPage(0); }}
+            >
+              <SelectTrigger size="sm" className="text-[12px] text-slate-600">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[10, 20, 50].map((n) => <SelectItem key={n} value={String(n)}>{n}</SelectItem>)}
+              </SelectContent>
+            </Select>
+          </div>
+          <Pagination page={page + 1} totalPages={totalPages} onPageChange={(p) => setPage(p - 1)} size="sm" />
+        </div>
       </Card>
     </div>
   );

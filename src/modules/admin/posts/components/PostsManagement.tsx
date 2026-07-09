@@ -1,23 +1,27 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  Menu, MenuItem, ListItemIcon, ListItemText,
-  IconButton, Dialog, DialogTitle, DialogContent, DialogActions, Button, Slider,
-} from '@mui/material';
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from '@/modules/shared/ui/shadcn/dropdown-menu';
+import { Dialog, DialogContent, DialogFooter } from '@/modules/shared/ui/shadcn/dialog';
+import { Slider } from '@/modules/shared/ui/shadcn/slider';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import {
-  MoreVert as MoreVertIcon,
+  MoreVertical as MoreVertIcon,
   Archive as ArchiveIcon,
-  Unarchive as UnarchiveIcon,
-  DeleteForever as DeleteForeverIcon,
-  WorkOutline as WorkOutlineIcon,
-  CheckCircleOutline as OpenIcon,
-  DraftsOutlined as DraftIcon,
-  HighlightOff as ClosedIcon,
-  TrackChangesOutlined as ThresholdIcon,
-} from '@mui/icons-material';
-import { Search, Loader2 } from 'lucide-react';
+  ArchiveRestore as UnarchiveIcon,
+  Trash2 as DeleteForeverIcon,
+  Briefcase as WorkOutlineIcon,
+  CheckCircle2 as OpenIcon,
+  FileText as DraftIcon,
+  XCircle as ClosedIcon,
+  Target as ThresholdIcon,
+  Search,
+  Loader2,
+} from 'lucide-react';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Pagination } from '@/modules/shared/ui/shadcn/pagination';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import {
   ADMIN_NEUTRAL, AdminPageHeading, AdminStatCard, AdminTableErrorRow, ConfirmDialog,
 } from '@/modules/admin/shared';
@@ -70,8 +74,6 @@ const PostsManagement: React.FC = () => {
   const stats      = data?.stats;
   const totalPages = Math.ceil(totalCount / rowsPerPage);
 
-  const [menuAnchor, setMenuAnchor]         = useState<HTMLElement | null>(null);
-  const [menuPost, setMenuPost]             = useState<AdminPost | null>(null);
   const [deleteTarget, setDeleteTarget]     = useState<AdminPost | null>(null);
   const [thresholdTarget, setThresholdTarget] = useState<AdminPost | null>(null);
   const [thresholdValue, setThresholdValue] = useState(60);
@@ -81,18 +83,13 @@ const PostsManagement: React.FC = () => {
   const deleteMutation           = useDeletePostMutation();
   const updateThresholdMutation  = useUpdatePostThresholdMutation();
 
-  const openMenu  = useCallback((e: React.MouseEvent<HTMLElement>, post: AdminPost) => { setMenuAnchor(e.currentTarget); setMenuPost(post); }, []);
-  const closeMenu = useCallback(() => { setMenuAnchor(null); setMenuPost(null); }, []);
+  const handleArchiveToggle = useCallback((post: AdminPost) => {
+    post.archived ? unarchiveMutation.mutate(post._id) : archiveMutation.mutate(post._id);
+  }, [archiveMutation, unarchiveMutation]);
 
-  const handleArchiveToggle = useCallback(() => {
-    if (!menuPost) return;
-    menuPost.archived ? unarchiveMutation.mutate(menuPost._id) : archiveMutation.mutate(menuPost._id);
-    closeMenu();
-  }, [menuPost, archiveMutation, unarchiveMutation, closeMenu]);
-
-  const handleDeleteRequest  = useCallback(() => { if (menuPost) { setDeleteTarget(menuPost); closeMenu(); } }, [menuPost, closeMenu]);
+  const handleDeleteRequest  = useCallback((post: AdminPost) => { setDeleteTarget(post); }, []);
   const handleConfirmDelete  = useCallback(() => { if (deleteTarget) deleteMutation.mutate(deleteTarget._id, { onSuccess: () => setDeleteTarget(null) }); }, [deleteTarget, deleteMutation]);
-  const handleEditThreshold  = useCallback(() => { if (menuPost) { setThresholdValue(menuPost.thresholdScore ?? 60); setThresholdTarget(menuPost); closeMenu(); } }, [menuPost, closeMenu]);
+  const handleEditThreshold  = useCallback((post: AdminPost) => { setThresholdValue(post.thresholdScore ?? 60); setThresholdTarget(post); }, []);
   const handleSaveThreshold  = useCallback(() => { if (thresholdTarget) updateThresholdMutation.mutate({ postId: thresholdTarget._id, thresholdScore: thresholdValue }, { onSuccess: () => setThresholdTarget(null) }); }, [thresholdTarget, thresholdValue, updateThresholdMutation]);
 
   return (
@@ -119,16 +116,20 @@ const PostsManagement: React.FC = () => {
               className="w-full text-[13px] outline-none placeholder:text-slate-400 bg-transparent"
             />
           </div>
-          <select
-            value={statusFilter}
-            onChange={(e) => { setStatusFilter(e.target.value); setPage(1); }}
-            className="text-[13px] border border-slate-200 rounded-lg px-3 py-2 outline-none focus:border-teal-400 text-slate-600 bg-white"
+          <Select
+            value={statusFilter || "all"}
+            onValueChange={(v) => { setStatusFilter(v === "all" ? "" : v); setPage(1); }}
           >
-            <option value="">All Statuses</option>
-            <option value="draft">Draft</option>
-            <option value="open">Open</option>
-            <option value="closed">Closed</option>
-          </select>
+            <SelectTrigger size="sm" className="text-[13px] text-slate-600 bg-white">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Statuses</SelectItem>
+              <SelectItem value="draft">Draft</SelectItem>
+              <SelectItem value="open">Open</SelectItem>
+              <SelectItem value="closed">Closed</SelectItem>
+            </SelectContent>
+          </Select>
           {loading && <Loader2 size={16} className="animate-spin text-teal-500" />}
           <div className="flex-1" />
           <span className="text-[12px] text-slate-400">{totalCount.toLocaleString()} total</span>
@@ -181,9 +182,25 @@ const PostsManagement: React.FC = () => {
                     </td>
                     <td className={TD}><span className="text-slate-500">{formatDate(post.createdAt)}</span></td>
                     <td className={TD}>
-                      <IconButton size="small" onClick={(e) => openMenu(e, post)} sx={{ color: ADMIN_NEUTRAL }}>
-                        <MoreVertIcon fontSize="small" />
-                      </IconButton>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <button className="rounded-md p-1.5 hover:bg-slate-100" style={{ color: ADMIN_NEUTRAL }}>
+                            <MoreVertIcon size={18} />
+                          </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleEditThreshold(post)} className="gap-2">
+                            <ThresholdIcon size={18} /> Edit threshold
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleArchiveToggle(post)} className="gap-2">
+                            {post.archived ? <UnarchiveIcon size={18} /> : <ArchiveIcon size={18} />}
+                            {post.archived ? 'Unarchive' : 'Archive'}
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => handleDeleteRequest(post)} variant="destructive" className="gap-2">
+                            <DeleteForeverIcon size={18} /> Delete permanently
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </td>
                   </tr>
                 );
@@ -194,32 +211,21 @@ const PostsManagement: React.FC = () => {
         <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100">
           <span className="text-[12px] text-slate-400">{totalCount.toLocaleString()} posts</span>
           <div className="flex items-center gap-3">
-            <select
-              value={rowsPerPage}
-              onChange={(e) => { setRowsPerPage(Number(e.target.value)); setPage(1); }}
-              className="text-[12px] text-slate-600 border border-slate-200 rounded-md px-2 py-1 outline-none focus:border-teal-400"
+            <Select
+              value={String(rowsPerPage)}
+              onValueChange={(v) => { setRowsPerPage(Number(v)); setPage(1); }}
             >
-              {[5, 10, 25].map((n) => <option key={n} value={n}>{n} / page</option>)}
-            </select>
+              <SelectTrigger size="sm" className="text-[12px] text-slate-600">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 25].map((n) => <SelectItem key={n} value={String(n)}>{n} / page</SelectItem>)}
+              </SelectContent>
+            </Select>
             <Pagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
           </div>
         </div>
       </Card>
-
-      <Menu anchorEl={menuAnchor} open={Boolean(menuAnchor)} onClose={closeMenu}>
-        <MenuItem onClick={handleEditThreshold}>
-          <ListItemIcon><ThresholdIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>Edit threshold</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleArchiveToggle}>
-          <ListItemIcon>{menuPost?.archived ? <UnarchiveIcon fontSize="small" /> : <ArchiveIcon fontSize="small" />}</ListItemIcon>
-          <ListItemText>{menuPost?.archived ? 'Unarchive' : 'Archive'}</ListItemText>
-        </MenuItem>
-        <MenuItem onClick={handleDeleteRequest} sx={{ color: '#DC2626' }}>
-          <ListItemIcon sx={{ color: '#DC2626' }}><DeleteForeverIcon fontSize="small" /></ListItemIcon>
-          <ListItemText>Delete permanently</ListItemText>
-        </MenuItem>
-      </Menu>
 
       <ConfirmDialog
         open={Boolean(deleteTarget)}
@@ -232,37 +238,36 @@ const PostsManagement: React.FC = () => {
         onCancel={() => setDeleteTarget(null)}
       />
 
-      <Dialog open={Boolean(thresholdTarget)} onClose={() => setThresholdTarget(null)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontSize: '16px', fontWeight: 600 }}>Edit CV match threshold</DialogTitle>
-        <DialogContent>
-          <p className="text-[12px] text-slate-500 mb-4">
+      <Dialog open={Boolean(thresholdTarget)} onOpenChange={(next) => { if (!next) setThresholdTarget(null); }}>
+        <DialogContent className="sm:max-w-sm">
+          <h2 className="text-[16px] font-semibold text-slate-900">Edit CV match threshold</h2>
+          <p className="text-[12px] text-slate-500">
             Candidates scoring below this threshold on &quot;{thresholdTarget?.jobDetails?.title || 'this post'}&quot; are automatically flagged for review.
           </p>
           <div className="flex items-center gap-3">
             <div className="flex-1">
               <Slider
-                value={thresholdValue}
-                onChange={(_, v) => setThresholdValue(v as number)}
+                value={[thresholdValue]}
+                onValueChange={(v) => setThresholdValue(v[0])}
                 min={0} max={100} step={5}
-                marks={THRESHOLD_MARKS}
-                sx={{
-                  color: thresholdColor(thresholdValue),
-                  '& .MuiSlider-thumb': { width: 18, height: 18 },
-                  '& .MuiSlider-markLabel': { fontSize: '11px', color: '#9CA3AF' },
-                }}
+                className="[&_[data-slot=slider-range]]:bg-[var(--threshold-color)] [&_[data-slot=slider-thumb]]:border-[var(--threshold-color)]"
+                style={{ ['--threshold-color' as string]: thresholdColor(thresholdValue) }}
               />
+              <div className="flex justify-between mt-1.5 text-[11px] text-slate-400">
+                {THRESHOLD_MARKS.map((m) => <span key={m.value}>{m.label}</span>)}
+              </div>
             </div>
             <div className="min-w-[52px] text-center rounded-lg px-3 py-1.5" style={{ background: `${thresholdColor(thresholdValue)}15`, border: `1px solid ${thresholdColor(thresholdValue)}40` }}>
               <span className="text-[16px] font-extrabold" style={{ color: thresholdColor(thresholdValue) }}>{thresholdValue}%</span>
             </div>
           </div>
+          <DialogFooter>
+            <Button onClick={() => setThresholdTarget(null)} variant="ghost" style={{ color: ADMIN_NEUTRAL }}>Cancel</Button>
+            <Button onClick={handleSaveThreshold} disabled={updateThresholdMutation.isPending} variant="default" className="shadow-none">
+              {updateThresholdMutation.isPending ? 'Saving...' : 'Save'}
+            </Button>
+          </DialogFooter>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
-          <Button onClick={() => setThresholdTarget(null)} sx={{ color: ADMIN_NEUTRAL }}>Cancel</Button>
-          <Button onClick={handleSaveThreshold} disabled={updateThresholdMutation.isPending} variant="contained" sx={{ boxShadow: 'none' }}>
-            {updateThresholdMutation.isPending ? 'Saving...' : 'Save'}
-          </Button>
-        </DialogActions>
       </Dialog>
     </div>
   );

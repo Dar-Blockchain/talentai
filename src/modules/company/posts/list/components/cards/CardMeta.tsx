@@ -1,6 +1,5 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
+import { MapPin as LocationOnOutlined } from "lucide-react";
 
 interface Props {
   location?: string;
@@ -11,25 +10,28 @@ interface Props {
 
 const CardMeta: React.FC<Props> = ({ location, employmentType, workMode, description }) => (
   <>
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+    <div className="flex flex-wrap items-center gap-2">
       {location && (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-          <LocationOnOutlined sx={{ fontSize: 12, color: "#9CA3AF" }} />
-          <Typography noWrap sx={{ fontSize: "12px", color: "#6B7280", maxWidth: 120 }}>{location}</Typography>
-        </Box>
+        <div className="flex items-center gap-1">
+          <LocationOnOutlined size={12} color="#9CA3AF" />
+          <span className="truncate max-w-[120px] text-xs text-[#6B7280]">{location}</span>
+        </div>
       )}
       {employmentType && (
-        <Typography sx={{ fontSize: "11px", color: "#6B7280", bgcolor: "#F3F4F6", px: 1, py: 0.3, borderRadius: "5px" }}>{employmentType}</Typography>
+        <span className="rounded-[5px] bg-[#F3F4F6] px-2 py-[3px] text-[11px] text-[#6B7280]">{employmentType}</span>
       )}
       {workMode && (
-        <Typography sx={{ fontSize: "11px", color: "#6B7280", bgcolor: "#F3F4F6", px: 1, py: 0.3, borderRadius: "5px" }}>{workMode}</Typography>
+        <span className="rounded-[5px] bg-[#F3F4F6] px-2 py-[3px] text-[11px] text-[#6B7280]">{workMode}</span>
       )}
-    </Box>
+    </div>
 
     {description && (
-      <Typography sx={{ fontSize: "12.5px", color: "#6B7280", lineHeight: 1.65, display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
+      <p
+        className="overflow-hidden text-[12.5px] leading-[1.65] text-[#6B7280]"
+        style={{ display: "-webkit-box", WebkitLineClamp: 3, WebkitBoxOrient: "vertical" }}
+      >
         {description}
-      </Typography>
+      </p>
     )}
   </>
 );

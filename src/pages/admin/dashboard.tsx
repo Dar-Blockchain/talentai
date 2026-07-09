@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useLogout } from '@/modules/auth/shared/hooks';
-import { Menu as MenuIcon } from '@mui/icons-material';
+import { Menu as MenuIcon } from 'lucide-react';
 import { AdminSidebar } from '@/modules/admin/shared';
 import { UserDetailsDialog, type User } from '@/modules/admin/users';
 import dynamic from 'next/dynamic';

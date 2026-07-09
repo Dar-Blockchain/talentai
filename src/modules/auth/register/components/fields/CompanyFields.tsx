@@ -31,7 +31,7 @@ const CompanyFields: React.FC<Props> = ({ control, errors, loading }) => {
         disabled={loading} error={errors.email?.message}
         rules={{
           required: v("email_required"),
-          pattern: { value: /^\S+@\S+\.\S+$/, message: v("email_invalid") },
+          validate: validators.email,
         }}
       />
       <FormField

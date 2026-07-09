@@ -4,7 +4,8 @@ import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useQuery } from "@tanstack/react-query";
 import { apiFetchEmployeeCampaigns, apiFetchEmployeeCampaignMetrics } from "@/modules/company/campaigns/api";
-import { Box, Skeleton, Alert } from "@mui/material";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Alert, AlertDescription } from "@/modules/shared/ui/shadcn/alert";
 import { Filter, Circle, Play, CircleCheck } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Campaign, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
@@ -130,7 +131,7 @@ const EmployeeMyCampaigns: React.FC = () => {
   ];
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className="flex flex-col gap-6">
 
       <PageHeader
         title={t(`${p}.my_campaigns.title`)}
@@ -154,16 +155,16 @@ const EmployeeMyCampaigns: React.FC = () => {
 
       {/* ── Loading skeletons ─────────────────────────────────────────────────── */}
       {loading && (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "repeat(3, 1fr)" }, gap: 3 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
           {[1, 2, 3].map((i) => (
-            <Skeleton key={i} variant="rounded" height={260} sx={{ borderRadius: 3 }} />
+            <Skeleton key={i} className="h-[260px] rounded-xl" />
           ))}
-        </Box>
+        </div>
       )}
 
       {/* ── Error state ───────────────────────────────────────────────────────── */}
       {!loading && error && (
-        <Alert severity="error" sx={{ borderRadius: 3 }}>{error}</Alert>
+        <Alert variant="destructive" className="rounded-xl"><AlertDescription>{error}</AlertDescription></Alert>
       )}
 
       {/* ── Campaign Grid ─────────────────────────────────────────────────────── */}
@@ -174,7 +175,7 @@ const EmployeeMyCampaigns: React.FC = () => {
           <p className="text-[13px] text-muted-foreground mt-1">{emptyHint}</p>
         </div>
       ) : !loading && !error ? (
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr", xl: "repeat(3, 1fr)" }, gap: 3 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-6">
           <AnimatePresence mode="popLayout">
             {campaigns.map((campaign, i) => (
               <motion.div
@@ -195,7 +196,7 @@ const EmployeeMyCampaigns: React.FC = () => {
               </motion.div>
             ))}
           </AnimatePresence>
-        </Box>
+        </div>
       ) : null}
 
       <ParticipantResultsDialog
@@ -206,7 +207,7 @@ const EmployeeMyCampaigns: React.FC = () => {
         participantName={myName}
         onClose={() => setResultsFor(null)}
       />
-    </Box>
+    </div>
   );
 };
 

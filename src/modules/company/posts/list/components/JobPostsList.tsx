@@ -1,13 +1,11 @@
 import { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Skeleton, Pagination } from "@mui/material";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import AddOutlined from "@mui/icons-material/AddOutlined";
-import AppButton from "@/components/ui/AppButton";
+import { Briefcase as WorkOutlined, Plus as AddOutlined } from "lucide-react";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import JobPostCard from "./JobPostCard";
 import type { StatusFilter, SortOption, PaginationInfo } from "../types";
-
-import { TEAL } from "@/modules/company/posts/shared/constants";
 
 interface JobPostsListProps {
   jobs: any[];
@@ -26,33 +24,33 @@ interface JobPostsListProps {
 }
 
 const JobPostSkeletonCard: React.FC = () => (
-  <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "14px", overflow: "hidden", display: "flex", flexDirection: "column", height: "100%", boxShadow: "0 1px 4px rgba(0,0,0,0.05)" }}>
-    <Skeleton variant="rectangular" height={3} sx={{ bgcolor: "#F3F4F6" }} />
-    <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 2 }}>
-      <Box sx={{ display: "flex", alignItems: "flex-start", gap: 1.5 }}>
-        <Skeleton variant="rounded" width={42} height={42} sx={{ borderRadius: "10px", flexShrink: 0 }} />
-        <Box sx={{ flex: 1 }}>
-          <Skeleton variant="text" width="60%" height={20} sx={{ mb: 0.5 }} />
-          <Box sx={{ display: "flex", gap: 0.75 }}>
-            <Skeleton variant="rounded" width={76} height={18} sx={{ borderRadius: "4px" }} />
-            <Skeleton variant="rounded" width={52} height={18} sx={{ borderRadius: "4px" }} />
-          </Box>
-        </Box>
-      </Box>
-      <Box sx={{ display: "flex", gap: 1 }}>
-        <Skeleton variant="rounded" width={90} height={14} sx={{ borderRadius: "4px" }} />
-        <Skeleton variant="rounded" width={70} height={14} sx={{ borderRadius: "4px" }} />
-      </Box>
-      <Box>
-        <Skeleton variant="text" width="100%" />
-        <Skeleton variant="text" width="75%" />
-      </Box>
-      <Box sx={{ display: "flex", justifyContent: "space-between", pt: 1.5, borderTop: "1px solid #F3F4F6" }}>
-        <Skeleton variant="rounded" width={80} height={14} sx={{ borderRadius: "4px" }} />
-        <Skeleton variant="rounded" width={70} height={14} sx={{ borderRadius: "4px" }} />
-      </Box>
-    </Box>
-  </Box>
+  <div className="flex h-full flex-col overflow-hidden rounded-[14px] border border-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
+    <Skeleton className="h-[3px] rounded-none bg-[#F3F4F6]" />
+    <div className="flex flex-col gap-4 p-5">
+      <div className="flex items-start gap-3">
+        <Skeleton className="h-[42px] w-[42px] shrink-0 rounded-[10px]" />
+        <div className="flex-1">
+          <Skeleton className="mb-1 h-5 w-3/5" />
+          <div className="flex gap-1.5">
+            <Skeleton className="h-[18px] w-[76px] rounded" />
+            <Skeleton className="h-[18px] w-[52px] rounded" />
+          </div>
+        </div>
+      </div>
+      <div className="flex gap-2">
+        <Skeleton className="h-3.5 w-[90px] rounded" />
+        <Skeleton className="h-3.5 w-[70px] rounded" />
+      </div>
+      <div>
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="mt-1 h-4 w-3/4" />
+      </div>
+      <div className="flex justify-between border-t border-[#F3F4F6] pt-3">
+        <Skeleton className="h-3.5 w-20 rounded" />
+        <Skeleton className="h-3.5 w-[70px] rounded" />
+      </div>
+    </div>
+  </div>
 );
 
 const JobPostsList = memo<JobPostsListProps>(({
@@ -63,68 +61,52 @@ const JobPostsList = memo<JobPostsListProps>(({
 
   if (loading) {
     return (
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(3, minmax(0,1fr))" }, gap: { xs: 1.5, md: 2 } }}>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:gap-4 lg:grid-cols-3">
         {Array.from({ length: 9 }).map((_, i) => <JobPostSkeletonCard key={i} />)}
-      </Box>
+      </div>
     );
   }
 
   if (error) {
     return (
-      <Box sx={{ p: 3, borderRadius: "10px", bgcolor: "#FEF2F2", border: "1px solid #FECACA", color: "#DC2626", fontSize: "13px" }}>
+      <div className="rounded-[10px] border border-[#FECACA] bg-[#FEF2F2] p-6 text-[13px] text-[#DC2626]">
         {error}
-      </Box>
+      </div>
     );
   }
 
   if (jobs.length === 0) {
     return (
-      <Box sx={{ py: 12, textAlign: "center", border: "1.5px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" }}>
-        <WorkOutlined sx={{ fontSize: 44, color: "#D1D5DB", mb: 1.5 }} />
-        <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>
+      <div className="rounded-xl border-[1.5px] border-dashed border-[#E5E7EB] bg-[#FAFAFA] py-24 text-center">
+        <WorkOutlined size={44} color="#D1D5DB" className="mb-3" />
+        <p className="mb-1 text-sm font-semibold text-[#374151]">
           {hasFilters ? t("empty.no_match") : t("empty.no_posts")}
-        </Typography>
-        <Typography sx={{ fontSize: "13px", color: "#9CA3AF", mb: hasFilters ? 0 : 2 }}>
+        </p>
+        <p className={`text-[13px] text-[#9CA3AF] ${hasFilters ? "" : "mb-4"}`}>
           {hasFilters ? t("empty.no_match_hint") : t("empty.no_posts_hint")}
-        </Typography>
+        </p>
         {!hasFilters && (
-          <AppButton
-            label={t("empty.create_btn")}
-            variant="contained"
-            startIcon={<AddOutlined sx={{ fontSize: 16 }} />}
-            onClick={onCreateClick}
-            sx={{ borderRadius: "10px" }}
-          />
+          <Button variant="default" onClick={onCreateClick}>
+            <AddOutlined size={16} />
+            {t("empty.create_btn")}
+          </Button>
         )}
-      </Box>
+      </div>
     );
   }
 
   return (
-    <Box>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "minmax(0,1fr)", sm: "repeat(2, minmax(0,1fr))", lg: "repeat(3, minmax(0,1fr))" }, gap: { xs: 2, md: 2.5 }, mb: pagination.totalPages > 1 ? 3 : 0 }}>
+    <div>
+      <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3 ${pagination.totalPages > 1 ? "mb-6" : "mb-0"}`}>
         {jobs.map((job: any, i: number) => (
           <JobPostCard key={job._id} job={job} index={i} onDelete={onDelete} onViewDetails={onViewDetails} onPublish={onPublish} />
         ))}
-      </Box>
+      </div>
 
       {pagination.totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center" }}>
-          <Pagination
-            count={pagination.totalPages}
-            page={page}
-            onChange={(_, v) => onPageChange(v)}
-            shape="rounded"
-            size="small"
-            sx={{
-              "& .MuiPaginationItem-root": { fontWeight: 500 },
-              "& .Mui-selected": { bgcolor: `${TEAL}18`, color: TEAL, fontWeight: 700 },
-              "& .MuiPaginationItem-root:hover": { bgcolor: "#F3F4F6" },
-            }}
-          />
-        </Box>
+        <Pagination page={page} totalPages={pagination.totalPages} onPageChange={onPageChange} size="sm" />
       )}
-    </Box>
+    </div>
   );
 });
 

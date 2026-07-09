@@ -1,8 +1,7 @@
-import { Box, Typography, TextField, MenuItem, InputAdornment } from "@mui/material";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
+import { TrendingUp as TrendingUpIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { hardSkillLevels, softSkillLevels } from "@/modules/shared/constants/skills";
-import { inputStyle, labelSx } from "./styles";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 
 interface Props {
   skillType: "hard" | "soft";
@@ -20,33 +19,27 @@ const LevelField = ({ skillType, value, onChange }: Props) => {
       : t(`create.post_form.soft_skill_levels.${v}`);
 
   return (
-    <Box sx={{ flex: 1 }}>
-      <Typography sx={labelSx}>{t("create.post_form.skill_modal.experience_level")}</Typography>
-      <TextField
-        select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        fullWidth
-        sx={inputStyle}
-        inputProps={{ "aria-label": t("create.post_form.skill_modal.experience_level") }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <TrendingUpIcon sx={{ color: "rgba(98, 111, 134, 1)", width: "16px", height: "14px" }} />
-            </InputAdornment>
-          ),
-        }}
-      >
-        <MenuItem disabled value="" sx={{ fontSize: "12px", fontWeight: 500 }}>
-          {t("create.post_form.placeholders.select_skill_level")}
-        </MenuItem>
-        {levels.map((item) => (
-          <MenuItem key={item.value} value={item.value} sx={{ fontSize: "12px", fontWeight: 500 }}>
-            {levelMenuLabel(item.value)}
-          </MenuItem>
-        ))}
-      </TextField>
-    </Box>
+    <div className="flex-1">
+      <label className="block leading-[42px] text-[12px] font-medium text-[rgba(84,98,116,0.53)]">
+        {t("create.post_form.skill_modal.experience_level")}
+      </label>
+      <Select value={value != null && value !== "" ? String(value) : undefined} onValueChange={onChange}>
+        <SelectTrigger
+          aria-label={t("create.post_form.skill_modal.experience_level")}
+          className="w-full text-[12px] font-medium"
+        >
+          <TrendingUpIcon size={16} color="rgba(98, 111, 134, 1)" />
+          <SelectValue placeholder={t("create.post_form.placeholders.select_skill_level")} />
+        </SelectTrigger>
+        <SelectContent>
+          {levels.map((item) => (
+            <SelectItem key={item.value} value={String(item.value)}>
+              {levelMenuLabel(item.value)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 };
 

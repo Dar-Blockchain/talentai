@@ -1,6 +1,7 @@
 import React from 'react';
 import { Shield, User, AlertCircle } from 'lucide-react';
 import { Card } from '@/modules/shared/ui/shadcn/card';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import { Alert, AlertTitle, AlertDescription } from '@/modules/shared/ui/shadcn/alert';
 import type { Campaign } from '@/modules/company/campaigns/types/campaign';
 import type { EligibilityStatus, ModuleMeta, DeadlineBadge } from './types';
@@ -67,12 +68,13 @@ export const CampaignOverviewCard: React.FC<Props> = ({
               <p className="text-[12px] text-muted-foreground mt-0.5">{email}</p>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={onEditIdentity}
-            className="text-[12px] font-semibold text-primary hover:text-primary/80 transition-colors"
+            className="p-0 h-auto text-[12px] font-semibold text-primary hover:bg-transparent hover:text-primary/80"
           >
             Edit
-          </button>
+          </Button>
         </div>
       )}
 

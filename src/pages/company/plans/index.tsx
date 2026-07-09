@@ -2,8 +2,7 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { Receipt } from "lucide-react";
-import AppButton from "@/components/ui/AppButton";
-import MuiToast from "@/components/ui/Toast";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import LoadingState from "@/modules/shared/ui/LoadingState";
 import { usePlans } from "@/modules/company/plans/hooks";
 import {
@@ -18,7 +17,6 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
   const {
     sortedPlans, plansLoading, combinedLoading, cancelling,
     activeSubByPlanName, currentPlanName, cancellingPlanName, checkingOut, checkingOutPlanId,
-    snackbar, setSnackbar,
     confirmOpen, openCancelDialog, closeCancelDialog,
     contactOpen, setContactOpen,
     downgradePlan, openDowngradeDialog, closeDowngradeDialog,
@@ -43,13 +41,6 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
         onConfirm={handleConfirmCancel}
       />
 
-      <MuiToast
-        open={snackbar.open}
-        message={snackbar.message}
-        severity={snackbar.severity}
-        onClose={() => setSnackbar((s) => ({ ...s, open: false }))}
-      />
-
       <PageHeader
         title={t("pages.subscription.title")}
         subtitle={t("pages.subscription.subtitle")}
@@ -60,11 +51,10 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
         ]}
         actions={
           <Link href="/company/billing">
-            <AppButton
-              label={t("pages.subscription.payment_history")}
-              variant="outlined"
-              startIcon={<Receipt size={18} />}
-            />
+            <Button variant="outline">
+              <Receipt size={18} />
+              {t("pages.subscription.payment_history")}
+            </Button>
           </Link>
         }
       />
@@ -74,7 +64,7 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
       {plansLoading || combinedLoading ? (
         <LoadingState message={t("pages.subscription.loading", "Loading plans…")} color="#0D9488" />
       ) : (
-        <div className="mt-1 grid grid-cols-1 gap-5 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+        <div className="mt-1 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {sortedPlans.map((plan: any) => (
             <PlanCard
               key={plan._id}

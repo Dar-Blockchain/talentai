@@ -1,6 +1,6 @@
 import React from 'react';
-import PersonAddIcon from '@mui/icons-material/PersonAdd';
-import { Avatar } from '@mui/material';
+import { UserPlus } from 'lucide-react';
+import { Avatar, AvatarFallback } from '@/modules/shared/ui/shadcn/avatar';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { cn } from '@/lib/utils';
 import { AdminChartCard, ADMIN_ACCENT } from '@/modules/admin/shared';
@@ -32,7 +32,7 @@ const timeAgo = (iso: string) => {
 };
 
 const AdminRecentSignups: React.FC<AdminRecentSignupsProps> = ({ signups, loading }) => (
-  <AdminChartCard icon={PersonAddIcon} title="Recent Signups" className="mb-4">
+  <AdminChartCard icon={UserPlus} title="Recent Signups" className="mb-4">
     {loading ? (
       <p className="text-[13px] text-slate-400">Loading…</p>
     ) : signups.length === 0 ? (
@@ -48,8 +48,10 @@ const AdminRecentSignups: React.FC<AdminRecentSignupsProps> = ({ signups, loadin
               key={user._id}
               className={cn("flex items-center gap-3 py-2.5", i < signups.length - 1 && "border-b border-slate-100")}
             >
-              <Avatar sx={{ width: 32, height: 32, bgcolor: ADMIN_ACCENT, fontSize: '0.8rem' }}>
-                {user.username.charAt(0).toUpperCase()}
+              <Avatar className="size-8" style={{ backgroundColor: ADMIN_ACCENT }}>
+                <AvatarFallback className="bg-transparent text-[0.8rem] text-white">
+                  {user.username.charAt(0).toUpperCase()}
+                </AvatarFallback>
               </Avatar>
               <div className="min-w-0 flex-1">
                 <div className="text-[13px] font-semibold text-slate-900 truncate">{displayName}</div>

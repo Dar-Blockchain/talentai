@@ -6,6 +6,7 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import { CampaignModule, ModuleType } from "@/modules/company/campaigns/types/campaign";
 import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
+import { MODULE_CONFIG_SCHEMAS } from "@/modules/company/campaigns/schemas/moduleConfigSchema";
 import QuestionnaireForm, { QuestionnaireConfig } from "./QuestionnaireForm";
 import AIInterviewForm, { AIInterviewConfig } from "./AIInterviewForm";
 import SkillTestForm, { SkillTestConfig } from "./SkillTestForm";
@@ -58,18 +59,7 @@ const ConfigureModuleModal = memo<Props>(({
 
   const isValid = useMemo(() => {
     if (!moduleType || !config) return false;
-    switch (moduleType) {
-      case "QUESTIONNAIRE":
-        return (config as QuestionnaireConfig).questions?.length > 0;
-      case "AI_INTERVIEW":
-        return (config as AIInterviewConfig).agentPrompt?.trim().length > 0;
-      case "SKILL_TEST":
-        return (config as SkillTestConfig).skill?.trim().length > 0;
-      case "TRAINING_PATH":
-        return (config as TrainingPathConfig).resources?.length > 0;
-      default:
-        return false;
-    }
+    return MODULE_CONFIG_SCHEMAS[moduleType].safeParse(config).success;
   }, [moduleType, config]);
 
   const handleSave = useCallback(() => {

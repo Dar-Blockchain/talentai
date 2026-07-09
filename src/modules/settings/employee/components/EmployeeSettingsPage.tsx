@@ -1,7 +1,6 @@
 import React from "react";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import { User, Mail, Building2, Briefcase, GitBranch, Camera, Check } from "lucide-react";
+import { User, Mail, Building2, Briefcase, GitBranch, Camera, Check, Settings as SettingsOutlined } from "lucide-react";
 import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
 import { Spinner } from "@/modules/settings/shared/components";
 import { Section, InfoRow, TEAL, useEmployeeSettings } from "@/modules/settings/employee";

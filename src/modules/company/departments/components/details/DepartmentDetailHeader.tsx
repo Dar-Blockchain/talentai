@@ -52,13 +52,14 @@ const DepartmentDetailHeader: React.FC<DepartmentDetailHeaderProps> = ({
       <div className="px-6 sm:px-8 pt-5 pb-6">
 
         <div className="flex items-center justify-between mb-5">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => router.push("/company/departments")}
-            className="inline-flex items-center gap-1.5 text-sm font-semibold text-slate-400 hover:text-slate-600 transition-colors"
+            className="p-0 h-auto text-sm font-semibold text-slate-400 hover:bg-transparent hover:text-slate-600"
           >
             <ArrowLeft className="size-3.5" />
             {t("pages.departments.detail.back")}
-          </button>
+          </Button>
 
           {department && (canEdit || canDelete) && (
             <div className="flex gap-2">

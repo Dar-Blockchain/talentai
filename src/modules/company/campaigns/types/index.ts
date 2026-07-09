@@ -78,7 +78,7 @@ export interface SessionsParams {
   campaignId: string;
   search?:    string;
   period?:    string;
-  sortBy?:    "date" | "score";
+  sortBy?:    "date" | "score" | "completedAt";
   order?:     "asc" | "desc";
   page?:      number;
   limit?:     number;

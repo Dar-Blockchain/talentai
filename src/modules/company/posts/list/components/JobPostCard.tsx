@@ -1,5 +1,4 @@
 import { memo, useState } from "react";
-import { Box } from "@mui/material";
 import { motion } from "framer-motion";
 import CardHeader from "./cards/CardHeader";
 import CardMeta from "./cards/CardMeta";
@@ -46,18 +45,13 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
       transition={{ duration: 0.18, delay: index * 0.04 }}
       style={{ height: "100%", minWidth: 0 }}
     >
-      <Box
+      <div
         onClick={() => onViewDetails(job._id)}
-        sx={{
-          bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px",
-          display: "flex", flexDirection: "column", height: "100%",
-          overflow: "hidden", cursor: "pointer", transition: "all 0.15s",
-          "&:hover": { borderColor: "#D1D5DB", boxShadow: "0 4px 16px rgba(0,0,0,0.07)", transform: "translateY(-1px)" },
-        }}
+        className="flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-all hover:-translate-y-px hover:border-[#D1D5DB] hover:shadow-[0_4px_16px_rgba(0,0,0,0.07)]"
       >
-        <Box sx={{ height: 3, bgcolor: isDraft ? "#F59E0B" : "#E5E7EB", flexShrink: 0 }} />
+        <div className="h-[3px] shrink-0" style={{ backgroundColor: isDraft ? "#F59E0B" : "#E5E7EB" }} />
 
-        <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1.75, flex: 1 }}>
+        <div className="flex flex-1 flex-col gap-3.5 p-5">
           <CardHeader
             jobId={job._id}
             title={jd.title}
@@ -90,12 +84,12 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             onOpenQr={(e) => { e.stopPropagation(); setQrOpen(true); }}
             onCopyLink={handleCopyLink}
           />
-        </Box>
+        </div>
 
         {isDraft && onPublish && (
           <CardDraftBanner onPublish={(e) => { e.stopPropagation(); onPublish(job._id); }} />
         )}
-      </Box>
+      </div>
 
       {!isDraft && (
         <CardQrDialog

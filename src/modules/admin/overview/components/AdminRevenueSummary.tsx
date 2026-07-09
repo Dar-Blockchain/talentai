@@ -1,6 +1,5 @@
 import React from 'react';
-import AttachMoneyIcon from '@mui/icons-material/AttachMoney';
-import GroupsIcon from '@mui/icons-material/Groups';
+import { DollarSign as AttachMoneyIcon, Users as GroupsIcon } from 'lucide-react';
 import { AdminChartCard } from '@/modules/admin/shared';
 import { RevenueByPlan } from '../types';
 
@@ -28,7 +27,7 @@ const AdminRevenueSummary: React.FC<AdminRevenueSummaryProps> = ({ mrr, totalAct
         <div className="self-center h-10 w-px bg-slate-200" />
         <div className="self-center">
           <div className="flex items-center gap-1.5">
-            <GroupsIcon style={{ fontSize: 18 }} className="text-slate-400" />
+            <GroupsIcon size={18} className="text-slate-400" />
             <span className="text-[1.1rem] font-bold text-slate-900 tabular-nums">
               {loading ? '—' : totalActiveSubscriptions.toLocaleString()}
             </span>

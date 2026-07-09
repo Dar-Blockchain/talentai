@@ -1,8 +1,9 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { CheckCircle } from "lucide-react";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useContactForm } from "../hooks/useContactForm";
+import { emailKeyDownGuard } from "@/lib/validation/email";
 
 interface Props {
   open: boolean;
@@ -57,7 +58,7 @@ const ContactUsModal: React.FC<Props> = ({ open, onClose }) => {
                   <span className="mb-1 block text-xs font-medium text-gray-600">
                     {t("pages.subscription.enterprise_modal.email")}
                   </span>
-                  <input className={inputCls} value={form.email} onChange={setField("email")} />
+                  <input className={inputCls} type="email" value={form.email} onChange={setField("email")} onKeyDown={emailKeyDownGuard} />
                 </label>
               </div>
               <label>
@@ -84,19 +85,12 @@ const ContactUsModal: React.FC<Props> = ({ open, onClose }) => {
 
         {!sent && (
           <div className="flex justify-end gap-2 px-6 pb-5 pt-1">
-            <AppButton
-              label={t("pages.subscription.enterprise_modal.cancel")}
-              variant="outlined"
-              onClick={handleClose}
-            />
-            <AppButton
-              label={t("pages.subscription.enterprise_modal.send")}
-              variant="contained"
-              loading={sending}
-              disabled={!canSubmit}
-              onClick={handleSend}
-              sx={{ bgcolor: "#D97706", "&:hover": { bgcolor: "#B45309" } }}
-            />
+            <Button variant="outline" onClick={handleClose}>
+              {t("pages.subscription.enterprise_modal.cancel")}
+            </Button>
+            <Button variant="warning" loading={sending} disabled={!canSubmit} onClick={handleSend}>
+              {t("pages.subscription.enterprise_modal.send")}
+            </Button>
           </div>
         )}
       </div>

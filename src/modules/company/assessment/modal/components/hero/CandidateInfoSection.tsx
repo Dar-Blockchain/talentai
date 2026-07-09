@@ -1,6 +1,5 @@
 import React from "react";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import WorkOutlined          from "@mui/icons-material/WorkOutlined";
+import { Calendar as CalendarTodayOutlined, Briefcase as WorkOutlined } from "lucide-react";
 import { fmtDate } from "@/modules/company/assessment/constants";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 
@@ -38,7 +37,7 @@ const CandidateInfoSection: React.FC<Props> = ({ letter, name, email, avatarUrl,
       <div className="flex flex-wrap gap-1.5">
         {jobTitle && (
           <span className="flex items-center gap-1 text-[0.68rem] font-semibold h-5 px-2 rounded-full border bg-teal-50 text-teal-700 border-teal-200">
-            <WorkOutlined style={{ fontSize: 10 }} />
+            <WorkOutlined size={10} />
             {jobTitle}
           </span>
         )}
@@ -49,7 +48,7 @@ const CandidateInfoSection: React.FC<Props> = ({ letter, name, email, avatarUrl,
         )}
         {createdAt && (
           <span className="flex items-center gap-1 text-[0.68rem] font-medium h-5 px-2 rounded-full border bg-slate-50 text-slate-500 border-slate-200">
-            <CalendarTodayOutlined style={{ fontSize: 9 }} />
+            <CalendarTodayOutlined size={9} />
             {fmtDate(createdAt)}
           </span>
         )}

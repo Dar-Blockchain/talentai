@@ -11,6 +11,7 @@ import {
 import { useMembersQuery, useUpdateRoleMutation } from "@/modules/company/employees/queries";
 import type { ExtendedMember } from "@/modules/company/employees/types";
 import { useToast } from "@/hooks/useToast";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 
 interface AddExistingMemberModalProps {
@@ -77,12 +78,13 @@ const AddExistingMemberModal: React.FC<AddExistingMemberModalProps> = React.memo
               </DialogDescription>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+            className="size-8 p-0 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <X className="size-4" />
-          </button>
+          </Button>
         </DialogHeader>
 
         <div className="px-6 pt-4">

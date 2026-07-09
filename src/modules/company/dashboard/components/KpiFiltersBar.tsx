@@ -4,9 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/modules/shared/ui/shadcn/select";
 import { cn } from "@/lib/utils";
-import FilterListOutlined  from "@mui/icons-material/FilterListOutlined";
-import WorkOutlined        from "@mui/icons-material/WorkOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import { ListFilter as FilterListOutlined, Briefcase as WorkOutlined, Calendar as CalendarTodayOutlined } from "lucide-react";
 import type { KpiPostOption } from "../types";
 
 const PERIODS = [
@@ -41,7 +39,7 @@ const KpiFiltersBar = memo<Props>(({ postId, activeDays, availablePosts, onPostC
       {/* header strip */}
       <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-slate-50/60">
         <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
-          <FilterListOutlined style={{ fontSize: 15, color: "#0D9488" }} />
+          <FilterListOutlined size={15} color="#0D9488" />
         </div>
         <span className="font-bold text-[13px] text-slate-700 tracking-wide uppercase">
           {t("pages.kpi.filters", "Dashboard Filters")}
@@ -59,7 +57,7 @@ const KpiFiltersBar = memo<Props>(({ postId, activeDays, availablePosts, onPostC
         {/* period label + buttons */}
         <div className="flex items-center gap-3 flex-wrap">
           <div className="flex items-center gap-1.5 shrink-0">
-            <CalendarTodayOutlined style={{ fontSize: 14, color: "#94A3B8" }} />
+            <CalendarTodayOutlined size={14} color="#94A3B8" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Time Period</span>
           </div>
           <div className="flex items-center gap-1">
@@ -89,7 +87,7 @@ const KpiFiltersBar = memo<Props>(({ postId, activeDays, availablePosts, onPostC
         {/* job post selector */}
         <div className="flex items-center gap-3 sm:ml-auto w-full sm:w-auto">
           <div className="flex items-center gap-1.5 shrink-0">
-            <WorkOutlined style={{ fontSize: 14, color: "#94A3B8" }} />
+            <WorkOutlined size={14} color="#94A3B8" />
             <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Job Post</span>
           </div>
           <Select value={postId || "__all__"} onValueChange={handlePost}>

@@ -2,25 +2,25 @@
 
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
   CheckCircle2, Clock, Users,
   Eye, EyeOff, Link2, Lock, ArrowRight, ArrowLeft,
-  Sparkles, Type, ClipboardList, CalendarIcon,
+  Sparkles, Type, ClipboardList,
 } from "lucide-react";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
-import { ModuleType, CreateCampaignPayload, CreateCampaignForm } from "@/modules/company/campaigns/types/campaign";
+import { ModuleType, CreateCampaignPayload } from "@/modules/company/campaigns/types/campaign";
 import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
+import { createCampaignFormSchema, CreateCampaignFormValues } from "@/modules/company/campaigns/schemas/createCampaignSchema";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
-import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
-import { Calendar } from "@/modules/shared/ui/shadcn/calendar";
+import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import { cn } from "@/lib/utils";
-import dayjs from "dayjs";
 import { useRouter } from "next/navigation";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { useCreateCampaignMutation } from "@/modules/company/campaigns/queries";
@@ -40,7 +40,7 @@ const ACCESS_OPTIONS = [
   },
   {
     value: "ACCOUNTS",
-    label: "Platform Accounts",
+    label: "Employees Only",
     desc: "Employees log in and see campaigns in their dashboard",
     Icon: Lock,
     color: "#4F46E5",
@@ -67,13 +67,13 @@ const ANONYMITY_OPTIONS = [
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted-foreground mb-2">
+  <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted-foreground mb-2.5">
     {children}
   </p>
 );
 
 const FieldError: React.FC<{ message?: string }> = ({ message }) =>
-  message ? <p className="text-xs text-destructive mt-1">{message}</p> : null;
+  message ? <p className="text-[12.5px] text-destructive mt-1">{message}</p> : null;
 
 const OptionCard: React.FC<{
   isSelected: boolean;
@@ -85,23 +85,23 @@ const OptionCard: React.FC<{
 }> = ({ isSelected, onClick, color, Icon, label, desc }) => (
   <div
     onClick={onClick}
-    className="flex items-center gap-2.5 p-2.5 rounded-xl cursor-pointer border-[1.5px] transition-all duration-150 select-none"
+    className="flex items-center gap-3 p-3 rounded-xl cursor-pointer border-[1.5px] transition-all duration-150 select-none"
     style={{
       borderColor:     isSelected ? color : undefined,
       backgroundColor: isSelected ? `${color}08` : undefined,
     }}
   >
     <div
-      className="size-7 rounded-lg flex items-center justify-center shrink-0"
+      className="size-8 rounded-lg flex items-center justify-center shrink-0"
       style={{ backgroundColor: `${color}${isSelected ? "18" : "12"}` }}
     >
-      <Icon className="size-3.5" style={{ color }} />
+      <Icon className="size-4" style={{ color }} />
     </div>
     <div className="flex-1 min-w-0">
-      <p className="text-[12px] font-bold text-card-foreground leading-snug">{label}</p>
-      <p className="text-[10.5px] text-muted-foreground leading-snug">{desc}</p>
+      <p className="text-[13.5px] font-bold text-card-foreground leading-snug">{label}</p>
+      <p className="text-[12px] text-muted-foreground leading-snug mt-0.5">{desc}</p>
     </div>
-    {isSelected && <CheckCircle2 className="size-3.5 shrink-0" style={{ color }} />}
+    {isSelected && <CheckCircle2 className="size-4 shrink-0" style={{ color }} />}
   </div>
 );
 
@@ -114,63 +114,18 @@ const CardSection: React.FC<{
   className?: string;
 }> = ({ icon, title, subtitle, iconBg, children, className }) => (
   <Card className={cn("gap-0 py-0 overflow-hidden", className)}>
-    <div className="flex items-center gap-2.5 px-4 py-3 border-b border-border/60">
-      <div className="size-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: iconBg }}>
+    <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border/60">
+      <div className="size-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: iconBg }}>
         {icon}
       </div>
       <div>
-        <p className="text-[13px] font-bold text-card-foreground">{title}</p>
-        <p className="text-[11px] text-muted-foreground">{subtitle}</p>
+        <p className="text-[14.5px] font-bold text-card-foreground">{title}</p>
+        <p className="text-[12.5px] text-muted-foreground">{subtitle}</p>
       </div>
     </div>
-    <div className="p-4">{children}</div>
+    <div className="p-5">{children}</div>
   </Card>
 );
-
-const DatePickerField: React.FC<{
-  value: string;
-  onChange: (v: string) => void;
-  error?: string;
-}> = ({ value, onChange, error }) => {
-  const [open, setOpen] = useState(false);
-  return (
-    <div>
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
-          <Button
-            type="button"
-            variant="outline"
-            className={cn(
-              "w-full justify-start gap-2 h-10 text-sm font-normal",
-              !value && "text-muted-foreground",
-            )}
-          >
-            <CalendarIcon className="size-4 shrink-0 text-muted-foreground" />
-            {value ? dayjs(value).format("MMM D, YYYY") : "Pick a deadline date"}
-          </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-auto p-0" align="start">
-          <Calendar
-            mode="single"
-            selected={value ? new Date(value) : undefined}
-            onSelect={(date) => { onChange(date ? date.toISOString() : ""); setOpen(false); }}
-            disabled={{ before: new Date() }}
-          />
-        </PopoverContent>
-      </Popover>
-      {value && (
-        <button
-          type="button"
-          onClick={() => onChange("")}
-          className="mt-1 text-[11px] text-muted-foreground hover:text-destructive transition-colors"
-        >
-          Clear date
-        </button>
-      )}
-      <FieldError message={error} />
-    </div>
-  );
-};
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
@@ -190,7 +145,8 @@ const NewCampaignPage: NextPageWithLayout = () => {
     trigger,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<CreateCampaignForm>({
+  } = useForm<CreateCampaignFormValues>({
+    resolver: zodResolver(createCampaignFormSchema),
     mode: "onChange",
     defaultValues: {
       title:         "",
@@ -210,12 +166,16 @@ const NewCampaignPage: NextPageWithLayout = () => {
     if (valid) setActiveStep(1);
   };
 
-  const onSubmit = async (data: CreateCampaignForm) => {
+  const onSubmit = async (data: CreateCampaignFormValues) => {
     try {
       const payload: CreateCampaignPayload = {
-        ...data,
+        title: data.title,
+        description: data.description,
+        anonymityMode: data.anonymityMode,
+        accessMethod: data.accessMethod,
+        deadline: data.deadline,
         module: { type: data.module, config: null },
-        ...(selectedParticipants.length > 0 && { participants: selectedParticipants }),
+        ...(selectedParticipants.length > 0 ? { participants: selectedParticipants } : {}),
       };
       const campaign = await createMutation.mutateAsync(payload);
       showToast({ message: "Campaign created successfully", severity: "success" });
@@ -262,10 +222,9 @@ const NewCampaignPage: NextPageWithLayout = () => {
                     <Controller
                       name="title"
                       control={control}
-                      rules={{ required: "Title is required" }}
                       render={({ field, fieldState }) => (
                         <div className="flex flex-col gap-1.5">
-                          <Label htmlFor="title" className="text-xs font-semibold text-muted-foreground">
+                          <Label htmlFor="title" className="text-[12.5px] font-semibold text-muted-foreground">
                             Campaign Title <span className="text-destructive">*</span>
                           </Label>
                           <Input
@@ -282,10 +241,9 @@ const NewCampaignPage: NextPageWithLayout = () => {
                     <Controller
                       name="description"
                       control={control}
-                      rules={{ required: "Description is required" }}
                       render={({ field, fieldState }) => (
                         <div className="flex flex-col gap-1.5">
-                          <Label htmlFor="description" className="text-xs font-semibold text-muted-foreground">
+                          <Label htmlFor="description" className="text-[12.5px] font-semibold text-muted-foreground">
                             Description <span className="text-destructive">*</span>
                           </Label>
                           <Textarea
@@ -312,10 +270,9 @@ const NewCampaignPage: NextPageWithLayout = () => {
                   <Controller
                     name="module"
                     control={control}
-                    rules={{ validate: (v) => !!v || "Select a module" }}
                     render={({ field }) => (
                       <div>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
                           {(Object.keys(MODULE_CONFIG) as ModuleType[]).map((mod) => {
                             const m          = MODULE_CONFIG[mod];
                             const Icon       = m.icon;
@@ -326,7 +283,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
                                 key={mod}
                                 onClick={() => { if (!isSoon) field.onChange(isSelected ? "" : mod); }}
                                 className={cn(
-                                  "flex items-center gap-2.5 p-2.5 rounded-xl border-[1.5px] transition-all duration-150 select-none",
+                                  "flex items-center gap-3 p-3 rounded-xl border-[1.5px] transition-all duration-150 select-none",
                                   isSoon ? "cursor-not-allowed opacity-55" : "cursor-pointer",
                                 )}
                                 style={{
@@ -335,13 +292,13 @@ const NewCampaignPage: NextPageWithLayout = () => {
                                 }}
                               >
                                 <div
-                                  className="size-7 rounded-lg flex items-center justify-center shrink-0"
+                                  className="size-8 rounded-lg flex items-center justify-center shrink-0"
                                   style={{ backgroundColor: `${m.color}${isSelected ? "18" : "12"}` }}
                                 >
-                                  <Icon style={{ fontSize: 14, color: m.color }} />
+                                  <Icon size={16} color={m.color} />
                                 </div>
                                 <div className="flex items-center gap-1.5 flex-1 min-w-0">
-                                  <p className="text-[12px] font-bold text-card-foreground truncate">{m.label}</p>
+                                  <p className="text-[13.5px] font-bold text-card-foreground truncate">{m.label}</p>
                                   {isSoon && (
                                     <span className="inline-flex items-center px-1.5 py-px rounded-full text-[9px] font-extrabold uppercase tracking-wide bg-violet-50 text-violet-600 border border-violet-200 shrink-0">
                                       Soon
@@ -349,7 +306,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
                                   )}
                                 </div>
                                 {isSelected && (
-                                  <CheckCircle2 className="size-3.5 shrink-0" style={{ color: m.color }} />
+                                  <CheckCircle2 className="size-4 shrink-0" style={{ color: m.color }} />
                                 )}
                               </div>
                             );
@@ -378,16 +335,13 @@ const NewCampaignPage: NextPageWithLayout = () => {
                       <Controller
                         name="deadline"
                         control={control}
-                        rules={{
-                          validate: (v) =>
-                            v && dayjs(v).isBefore(dayjs(), "day")
-                              ? "Deadline cannot be in the past"
-                              : true,
-                        }}
                         render={({ field }) => (
-                          <DatePickerField
+                          <DatePicker
                             value={field.value}
                             onChange={field.onChange}
+                            placeholder="Pick a deadline date"
+                            minDate={new Date()}
+                            clearable
                             error={errors.deadline?.message}
                           />
                         )}
@@ -402,7 +356,6 @@ const NewCampaignPage: NextPageWithLayout = () => {
                       <Controller
                         name="anonymityMode"
                         control={control}
-                        rules={{ required: "Please select an anonymity mode" }}
                         render={({ field }) => (
                           <div>
                             <div className="flex flex-col gap-2">
@@ -429,7 +382,6 @@ const NewCampaignPage: NextPageWithLayout = () => {
                       <Controller
                         name="accessMethod"
                         control={control}
-                        rules={{ required: "Please select an access method" }}
                         render={({ field }) => (
                           <div>
                             <div className="flex flex-col gap-2">
@@ -453,16 +405,16 @@ const NewCampaignPage: NextPageWithLayout = () => {
             </div>
 
             {/* Action bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-muted/30">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-muted/40">
               <div className="flex items-center gap-3">
-                <div className="size-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                  <Sparkles className="size-4 text-primary" />
+                <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="size-[18px] text-primary" />
                 </div>
                 <div>
-                  <p className="text-[13px] font-semibold text-foreground">
+                  <p className="text-[14px] font-semibold text-foreground">
                     {isAccounts ? "Almost there!" : "Ready to launch?"}
                   </p>
-                  <p className="text-[11.5px] text-muted-foreground">
+                  <p className="text-[12.5px] text-muted-foreground">
                     {isAccounts
                       ? "Next you'll select who can participate."
                       : "Review your settings above before creating."}
@@ -493,8 +445,8 @@ const NewCampaignPage: NextPageWithLayout = () => {
                 <Users className="size-4 text-white" />
               </div>
               <div>
-                <p className="text-sm font-bold text-card-foreground">Who Can Participate</p>
-                <p className="text-[11.5px] text-muted-foreground">Leave empty to allow all employees</p>
+                <p className="text-[15px] font-bold text-card-foreground">Who Can Participate</p>
+                <p className="text-[12.5px] text-muted-foreground">Leave empty to allow all employees</p>
               </div>
             </div>
 
@@ -502,7 +454,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
               <ParticipantsStep selected={selectedParticipants} onChange={setSelectedParticipants} />
             </div>
 
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-t border-border/60 bg-muted/20">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-t border-border/60 bg-muted">
               <Button
                 type="button"
                 variant="outline"
@@ -515,7 +467,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
               </Button>
               <div className="flex flex-col sm:flex-row sm:items-center gap-3">
                 {selectedParticipants.length > 0 && (
-                  <span className="text-[12px] text-muted-foreground text-center sm:text-left">
+                  <span className="text-[13px] text-muted-foreground text-center sm:text-left">
                     <span className="font-semibold text-foreground">{selectedParticipants.length}</span> participant{selectedParticipants.length !== 1 ? "s" : ""} selected
                   </span>
                 )}

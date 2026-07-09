@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Button, Typography } from "@mui/material";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   children: React.ReactNode;
@@ -27,21 +27,17 @@ class ErrorBoundary extends React.Component<Props, State> {
     if (this.props.fallback) return this.props.fallback;
 
     return (
-      <Box sx={{ minHeight: "100dvh", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2, px: 3, textAlign: "center" }}>
-        <Typography sx={{ fontSize: "1.1rem", fontWeight: 700, fontFamily: "Poppins", color: "#0F172A" }}>
+      <div className="min-h-[100dvh] flex flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-[1.1rem] font-bold text-slate-900">
           Something went wrong
-        </Typography>
-        <Typography sx={{ fontSize: "0.875rem", color: "#6B7280", fontFamily: "Poppins" }}>
+        </p>
+        <p className="text-sm text-gray-500">
           An unexpected error occurred. Please reload the page.
-        </Typography>
-        <Button
-          variant="outlined"
-          onClick={() => window.location.reload()}
-          sx={{ textTransform: "none", fontFamily: "Poppins", borderRadius: "10px", mt: 1 }}
-        >
+        </p>
+        <Button variant="outline" onClick={() => window.location.reload()} className="mt-1 rounded-[10px]">
           Reload page
         </Button>
-      </Box>
+      </div>
     );
   }
 }

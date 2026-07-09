@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
@@ -66,7 +65,7 @@ const PostsPageContent: React.FC = () => {
   const totalCount = (pagination as any)?.total ?? posts.length;
 
   return (
-    <Box>
+    <div>
       <PostsToolbar
         totalCount={totalCount} loading={loading}
         search={search} statusFilter={statusFilter} typeFilter={typeFilter} sortBy={sortBy}
@@ -106,7 +105,7 @@ const PostsPageContent: React.FC = () => {
         postsLimit={postsLimit !== Infinity ? postsLimit : undefined}
         onClose={() => setPlanModalOpen(false)}
       />
-    </Box>
+    </div>
   );
 };
 

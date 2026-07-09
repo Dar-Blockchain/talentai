@@ -12,11 +12,13 @@ import {
   ParticipantStatus,
 } from "@/modules/company/campaigns/types/campaign";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 import CampaignHeader from "./CampaignHeader";
 import CampaignOverviewCharts from "./CampaignOverviewCharts";
 import CampaignParticipantsTab from "./CampaignParticipantsTab";
 import CampaignSessionsTab from "./CampaignSessionsTab";
+import CampaignModuleConfigTab from "./CampaignModuleConfigTab";
 import DeleteCampaignDialog from "./DeleteCampaignDialog";
 import ConfirmStatusChangeDialog from "./ConfirmStatusChangeDialog";
 import ConfigureModuleModal from "./configure/ConfigureModuleModal";
@@ -40,7 +42,7 @@ const PARTICIPANT_STATUS_STYLE: Record<
 
 // ─── CampaignDetail ───────────────────────────────────────────────────────────
 
-type TabKey = "overview" | "participants" | "sessions";
+type TabKey = "overview" | "participants" | "sessions" | "configuration";
 
 interface Props {
   campaign: Campaign;
@@ -197,8 +199,18 @@ const CampaignDetail: React.FC<Props> = memo(
               },
             ]
           : []),
+        ...(!isEmployee && moduleConfigured
+          ? [
+              {
+                key: "configuration" as TabKey,
+                label: t(`${tp}.tab_configuration`),
+                icon: SlidersHorizontal,
+                count: undefined as number | string | undefined,
+              },
+            ]
+          : []),
       ],
-      [t, tp, isLinkBased, isEmployee, participantsTotal, sessionsTotal],
+      [t, tp, isLinkBased, isEmployee, moduleConfigured, participantsTotal, sessionsTotal],
     );
 
     // ─── Employee-mode actions node ───────────────────────────────────────────
@@ -232,10 +244,10 @@ const CampaignDetail: React.FC<Props> = memo(
             )}
 
             {supportsAction && canStart && (
-              <button
-                type="button"
+              <Button
+                variant="ghost"
                 onClick={handleAssessmentAction}
-                className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-[10px] cursor-pointer border transition-opacity hover:opacity-85"
+                className="px-2.5 py-1.5 h-auto rounded-[10px] border hover:opacity-85"
                 style={{
                   background: pStatus === "IN_PROGRESS" ? "#FFFBEB" : "#8310FF10",
                   borderColor: pStatus === "IN_PROGRESS" ? "#FDE68A" : "#8310FF30",
@@ -256,7 +268,7 @@ const CampaignDetail: React.FC<Props> = memo(
                       ? t(`${tp}.start_questionnaire`)
                       : t(`${tp}.start_assessment`)}
                 </span>
-              </button>
+              </Button>
             )}
           </div>
         ),
@@ -282,138 +294,138 @@ const CampaignDetail: React.FC<Props> = memo(
 
         {/* Setup checklist banner */}
         {showSetupBanner && (
-          <div className="relative overflow-hidden bg-background border border-border rounded-[18px] p-5 shadow-sm">
+          <div className="relative overflow-hidden bg-background border border-border rounded-2xl p-4 shadow-sm">
             <div
               className="absolute inset-0 opacity-[0.035] pointer-events-none"
               style={{ background: "linear-gradient(135deg, #F59E0B 0%, #8310FF 100%)" }}
             />
-            <div className="relative flex items-center gap-2.5 mb-4">
-              <div className="flex items-center justify-center size-8 rounded-[9px] bg-amber-50 border border-amber-200 shrink-0">
-                <EyeOff className="size-4 text-amber-600" />
+            <div className="relative flex items-center gap-2 mb-3">
+              <div className="flex items-center justify-center size-7 rounded-lg bg-amber-50 border border-amber-200 shrink-0">
+                <EyeOff className="size-3.5 text-amber-600" />
               </div>
-              <div>
-                <p className="text-[13.5px] font-bold text-foreground">{t(`${tp}.setup_banner.title`)}</p>
-                <p className="text-[11.5px] text-muted-foreground mt-0.5">{t(`${tp}.setup_banner.subtitle`)}</p>
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold text-foreground leading-tight">{t(`${tp}.setup_banner.title`)}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t(`${tp}.setup_banner.subtitle`)}</p>
               </div>
             </div>
 
-            <div className="relative flex flex-col sm:flex-row gap-3">
+            <div className="relative flex flex-col sm:flex-row gap-2.5">
               {/* Step 1 */}
               <div
-                className="flex-1 rounded-2xl p-4 flex flex-col gap-2 border-[1.5px]"
+                className="flex-1 rounded-xl p-3 flex flex-col gap-1.5 border-[1.5px]"
                 style={{
                   borderColor: moduleConfigured ? "#86EFAC" : "#FDE68A",
                   background: moduleConfigured ? "#F0FDF4" : "#FFFBEB",
                 }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <div
-                      className="flex items-center justify-center size-7 rounded-lg shrink-0 border"
+                      className="flex items-center justify-center size-6 rounded-md shrink-0 border"
                       style={{
                         background: moduleConfigured ? "#DCFCE7" : "#FEF3C7",
                         borderColor: moduleConfigured ? "#86EFAC" : "#FDE68A",
                       }}
                     >
                       {moduleConfigured
-                        ? <CircleCheck className="size-[15px] text-green-600" />
-                        : <SlidersHorizontal className="size-[15px] text-amber-600" />}
+                        ? <CircleCheck className="size-3.5 text-green-600" />
+                        : <SlidersHorizontal className="size-3.5 text-amber-600" />}
                     </div>
-                    <p className="text-[12.5px] font-bold" style={{ color: moduleConfigured ? "#15803D" : "#92400E" }}>
+                    <p className="text-[12px] font-bold truncate" style={{ color: moduleConfigured ? "#15803D" : "#92400E" }}>
                       {t(`${tp}.setup_step1_title`)}
                     </p>
                   </div>
                   <span
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full shrink-0"
                     style={{ background: moduleConfigured ? "#DCFCE7" : "#FEF3C7" }}
                   >
                     {moduleConfigured
-                      ? <CircleCheck className="size-[11px] text-green-600" />
-                      : <Circle className="size-[11px] text-amber-600" />}
+                      ? <CircleCheck className="size-[10px] text-green-600" />
+                      : <Circle className="size-[10px] text-amber-600" />}
                     <span className="text-[10px] font-bold" style={{ color: moduleConfigured ? "#16A34A" : "#D97706" }}>
                       {moduleConfigured ? t(`${tp}.setup_step_done`) : t(`${tp}.setup_step_pending`)}
                     </span>
                   </span>
                 </div>
-                <p className="text-[11.5px] leading-relaxed" style={{ color: moduleConfigured ? "#166534" : "#78350F" }}>
-                  {moduleConfigured ? t(`${tp}.setup_step1_desc_done`) : t(`${tp}.setup_step1_desc_pending`)}
-                </p>
-                {campaign.module?.type && canEdit && (
-                  <button
-                    type="button"
-                    onClick={() => openConfigureModule(campaign.module!.type)}
-                    className={cn(
-                      "self-start mt-0.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer border transition-colors",
-                      moduleConfigured
-                        ? "bg-green-100/70 border-green-300 hover:bg-green-200/70"
-                        : "bg-amber-200/70 border-amber-300 hover:bg-amber-300/70",
-                    )}
-                  >
-                    <SlidersHorizontal className={cn("size-3", moduleConfigured ? "text-green-700" : "text-amber-700")} />
-                    <span className={cn("text-xs font-bold", moduleConfigured ? "text-green-700" : "text-amber-700")}>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] leading-snug flex-1" style={{ color: moduleConfigured ? "#166534" : "#78350F" }}>
+                    {moduleConfigured ? t(`${tp}.setup_step1_desc_done`) : t(`${tp}.setup_step1_desc_pending`)}
+                  </p>
+                  {campaign.module?.type && canEdit && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => openConfigureModule(campaign.module!.type)}
+                      className={cn(
+                        "shrink-0 px-2 py-1 h-auto rounded-md border text-[11px] font-bold",
+                        moduleConfigured
+                          ? "bg-green-100/70 border-green-300 text-green-700 hover:bg-green-200/70"
+                          : "bg-amber-200/70 border-amber-300 text-amber-700 hover:bg-amber-300/70",
+                      )}
+                    >
                       {moduleConfigured ? t(`${tp}.setup_edit_configuration`) : t(`${tp}.setup_configure_now`)}
-                    </span>
-                  </button>
-                )}
+                    </Button>
+                  )}
+                </div>
               </div>
 
-              <div className="hidden sm:flex items-center text-slate-300 text-xl font-light">→</div>
+              <div className="hidden sm:flex items-center text-slate-300 text-base font-light">→</div>
 
               {/* Step 2 */}
               <div
-                className="flex-1 rounded-2xl p-4 flex flex-col gap-2 border-[1.5px]"
+                className="flex-1 rounded-xl p-3 flex flex-col gap-1.5 border-[1.5px]"
                 style={{
                   borderColor: moduleConfigured ? "#BFDBFE" : "#E5E7EB",
                   background: moduleConfigured ? "#EFF6FF" : "#F9FAFB",
                   opacity: moduleConfigured ? 1 : 0.6,
                 }}
               >
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
                     <div
-                      className="flex items-center justify-center size-7 rounded-lg shrink-0 border"
+                      className="flex items-center justify-center size-6 rounded-md shrink-0 border"
                       style={{
                         background: moduleConfigured ? "#DBEAFE" : "#F3F4F6",
                         borderColor: moduleConfigured ? "#BFDBFE" : "#E5E7EB",
                       }}
                     >
-                      <Rocket className="size-[15px]" style={{ color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
+                      <Rocket className="size-3.5" style={{ color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
                     </div>
-                    <p className="text-[12.5px] font-bold" style={{ color: moduleConfigured ? "#1E40AF" : "#6B7280" }}>
+                    <p className="text-[12px] font-bold truncate" style={{ color: moduleConfigured ? "#1E40AF" : "#6B7280" }}>
                       {t(`${tp}.setup_step2_title`)}
                     </p>
                   </div>
                   <span
-                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full"
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full shrink-0"
                     style={{ background: moduleConfigured ? "#DBEAFE" : "#F3F4F6" }}
                   >
-                    <Circle className="size-[11px]" style={{ color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
+                    <Circle className="size-[10px]" style={{ color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
                     <span className="text-[10px] font-bold" style={{ color: moduleConfigured ? "#2563EB" : "#9CA3AF" }}>
                       {t(`${tp}.setup_step_pending`)}
                     </span>
                   </span>
                 </div>
-                <p className="text-[11.5px] leading-relaxed" style={{ color: moduleConfigured ? "#1E40AF" : "#9CA3AF" }}>
-                  {moduleConfigured ? t(`${tp}.setup_step2_desc_ready`) : t(`${tp}.setup_step2_desc_wait`)}
-                </p>
-                {moduleConfigured && canPublish && (
-                  <button
-                    type="button"
-                    onClick={openPending}
-                    className="self-start mt-0.5 flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg cursor-pointer bg-blue-600 border border-blue-700 hover:bg-blue-700 transition-colors"
-                  >
-                    <Rocket className="size-3 text-white" />
-                    <span className="text-xs font-bold text-white">{t(`${tp}.setup_activate_now`)}</span>
-                  </button>
-                )}
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] leading-snug flex-1" style={{ color: moduleConfigured ? "#1E40AF" : "#9CA3AF" }}>
+                    {moduleConfigured ? t(`${tp}.setup_step2_desc_ready`) : t(`${tp}.setup_step2_desc_wait`)}
+                  </p>
+                  {moduleConfigured && canPublish && (
+                    <Button
+                      variant="ghost"
+                      onClick={openPending}
+                      className="shrink-0 px-2 py-1 h-auto rounded-md bg-blue-600 border border-blue-700 text-[11px] font-bold text-white hover:bg-blue-700 hover:text-white"
+                    >
+                      {t(`${tp}.setup_activate_now`)}
+                    </Button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
         )}
 
         {/* Tabs */}
-        <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)}>
-          <div className="flex items-center px-2 py-2.5">
+        <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="gap-4">
+          <div className="flex items-center px-2">
             <TabsList className="h-auto bg-muted p-1 gap-1">
               {TABS.map(({ key, label, icon: Icon, count }) => (
                 <TabsTrigger key={key} value={key} className="gap-1.5 px-3 py-1.5 rounded-lg data-[state=active]:shadow-sm">
@@ -429,7 +441,7 @@ const CampaignDetail: React.FC<Props> = memo(
             </TabsList>
           </div>
 
-          <div className="p-3">
+          <div className="px-3 pb-3">
             <TabsContent value="overview" className="flex flex-col gap-1.5 mt-0">
               <CampaignOverviewCharts
                 campaign={campaign}
@@ -449,6 +461,14 @@ const CampaignDetail: React.FC<Props> = memo(
                 anonymityMode={campaign.anonymityMode}
               />
             </TabsContent>
+            {moduleConfigured && (
+              <TabsContent value="configuration" className="mt-0">
+                <CampaignModuleConfigTab
+                  campaign={campaign}
+                  moduleColor={modCfg?.color ?? "#8310FF"}
+                />
+              </TabsContent>
+            )}
           </div>
         </Tabs>
 

@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useCallback, useMemo } from "react";
-import { Box, Backdrop } from "@mui/material";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import type { RootState } from "@/store/store";
@@ -44,10 +43,16 @@ const OnboardingTour: React.FC = () => {
 
   return (
     <>
-      <Backdrop open sx={{ zIndex: 9990, bgcolor: "rgba(0,0,0,0.5)" }} onClick={finish} />
+      <div className="fixed inset-0 bg-black/50" style={{ zIndex: 9990 }} onClick={finish} />
 
       {!isCentered && rect && (
-        <Box sx={{ position: "fixed", top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12, borderRadius: "12px", border: `2px solid ${TEAL}`, boxShadow: `0 0 0 4px ${TEAL}30`, pointerEvents: "none", zIndex: 9995, transition: "all 0.25s ease" }} />
+        <div
+          className="fixed rounded-xl pointer-events-none transition-all duration-[250ms] ease-out"
+          style={{
+            top: rect.top - 6, left: rect.left - 6, width: rect.width + 12, height: rect.height + 12,
+            border: `2px solid ${TEAL}`, boxShadow: `0 0 0 4px ${TEAL}30`, zIndex: 9995,
+          }}
+        />
       )}
 
       <AnimatePresence mode="wait">

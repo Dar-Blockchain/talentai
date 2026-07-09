@@ -20,6 +20,7 @@ function CampaignSessionPage() {
       <QuestionnaireAssessment
         campaign={s.campaign}
         participantId={s.participantId}
+        isLoggedIn={s.isLoggedIn}
         onBack={() => s.setView('overview')}
         onComplete={() => s.router.push('/employee/dashboard')}
       />

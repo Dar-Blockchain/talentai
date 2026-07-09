@@ -6,13 +6,15 @@ import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axiosInstance";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { cn } from "@/lib/utils";
-import PsychologyOutlined  from "@mui/icons-material/PsychologyOutlined";
-import WorkOutlined        from "@mui/icons-material/WorkOutlined";
-import PeopleOutlined      from "@mui/icons-material/PeopleOutlined";
-import CampaignOutlined    from "@mui/icons-material/CampaignOutlined";
-import AccountTreeOutlined from "@mui/icons-material/AccountTreeOutlined";
-import GroupsOutlined      from "@mui/icons-material/GroupsOutlined";
-import ArrowForwardIosRounded from "@mui/icons-material/ArrowForwardIosRounded";
+import {
+  Brain as PsychologyOutlined,
+  Briefcase as WorkOutlined,
+  Users as PeopleOutlined,
+  Megaphone as CampaignOutlined,
+  Network as AccountTreeOutlined,
+  Users as GroupsOutlined,
+  ChevronRight as ArrowForwardIosRounded,
+} from "lucide-react";
 
 const STALE = 60_000;
 const sel   = (r: any) => r.data?.data ?? r.data;
@@ -68,7 +70,7 @@ const StatCard = memo<StatCardProps>(({ icon: Icon, color, bg, value, label, loa
           className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
           style={{ background: bg }}
         >
-          <Icon style={{ fontSize: 22, color }} />
+          <Icon size={22} color={color} />
         </div>
 
         {/* text */}
@@ -84,8 +86,8 @@ const StatCard = memo<StatCardProps>(({ icon: Icon, color, bg, value, label, loa
         {/* arrow for clickable cards */}
         {clickable && (
           <ArrowForwardIosRounded
+            size={13}
             className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-300 shrink-0 mt-0.5"
-            style={{ fontSize: 13 }}
           />
         )}
       </div>

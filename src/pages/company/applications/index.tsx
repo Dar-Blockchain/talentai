@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import PeopleAltOutlined   from "@mui/icons-material/PeopleAltOutlined";
-import WorkOutlineOutlined  from "@mui/icons-material/WorkOutline";
+import { Users as PeopleAltOutlined, Briefcase as WorkOutlineOutlined } from "lucide-react";
 import EmptyState   from "@/modules/shared/ui/EmptyState";
 import LoadingState from "@/modules/shared/ui/LoadingState";
 import ApplicationMetrics  from "@/modules/company/applications/components/ApplicationMetrics";

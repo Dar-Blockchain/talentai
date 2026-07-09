@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect, useMemo } from "react";
 import { createPortal } from "react-dom";
-import { Box, Typography } from "@mui/material";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { ChevronDown as KeyboardArrowDownIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 import CurrencySearchInput from "./CurrencySearchInput";
 import CurrencyList from "./CurrencyList";
 
@@ -74,16 +74,10 @@ const CurrencyDropdown: React.FC<Props> = ({ currencies, value, onChange, placeh
   }, []);
 
   const panel = open && (
-    <Box
+    <div
       id="currency-portal"
-      sx={{
-        ...panelStyle,
-        bgcolor: "#fff",
-        border: "1px solid #E5E7EB",
-        borderRadius: "10px",
-        boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-        overflow: "hidden",
-      }}
+      style={panelStyle}
+      className="overflow-hidden rounded-[10px] border border-[#E5E7EB] bg-white shadow-[0_8px_32px_rgba(0,0,0,0.14)]"
     >
       <CurrencySearchInput value={search} onChange={setSearch} inputRef={searchRef} />
       <CurrencyList
@@ -91,13 +85,13 @@ const CurrencyDropdown: React.FC<Props> = ({ currencies, value, onChange, placeh
         selected={value}
         onSelect={(code) => { onChange(code); setOpen(false); }}
       />
-    </Box>
+    </div>
   );
 
   return (
     <>
-      <Box ref={triggerRef} sx={{ position: "relative", width: "100%" }}>
-        <Box
+      <div ref={triggerRef} className="relative w-full">
+        <div
           role="combobox"
           tabIndex={0}
           aria-expanded={open}
@@ -105,71 +99,38 @@ const CurrencyDropdown: React.FC<Props> = ({ currencies, value, onChange, placeh
           aria-label={placeholder}
           onClick={() => (open ? setOpen(false) : openDropdown())}
           onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open ? setOpen(false) : openDropdown(); } else if (e.key === "Escape") { setOpen(false); } }}
-          sx={{
-            height: 40,
-            px: 1.5,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            border: error ? "1px solid #EF4444" : open ? "1.5px solid #0891B2" : "1px solid #D1D5DB",
-            borderRadius: "8px",
-            cursor: "pointer",
-            bgcolor: "#fff",
-            userSelect: "none",
-            transition: "border 0.15s",
-            "&:hover": { borderColor: open ? "#0891B2" : "#9CA3AF" },
-            "&:focus-visible": { outline: "2px solid #0891B2", outlineOffset: 2 },
-          }}
+          className={cn(
+            "flex h-10 cursor-pointer select-none items-center justify-between rounded-lg bg-white px-3 transition-colors",
+            "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0891B2] focus-visible:outline-offset-2",
+            error ? "border border-[#EF4444]" : open ? "border-[1.5px] border-[#0891B2]" : "border border-[#D1D5DB]",
+            open ? "hover:border-[#0891B2]" : "hover:border-[#9CA3AF]"
+          )}
         >
           {selected ? (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1, overflow: "hidden", flex: 1, minWidth: 0 }}>
-              <Box
-                sx={{
-                  px: 1,
-                  py: 0.1,
-                  bgcolor: "#EFF6FF",
-                  borderRadius: "5px",
-                  fontSize: "11px",
-                  fontWeight: 700,
-                  color: "#1D4ED8",
-                  whiteSpace: "nowrap",
-                  flexShrink: 0,
-                }}
-              >
+            <div className="flex min-w-0 flex-1 items-center gap-2 overflow-hidden">
+              <div className="shrink-0 whitespace-nowrap rounded-[5px] bg-[#EFF6FF] px-2 py-px text-[11px] font-bold text-[#1D4ED8]">
                 {selected.value}
-              </Box>
-              <Typography
-                sx={{
-                  fontSize: "12px",
-                  color: "#374151",
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
-              >
+              </div>
+              <p className="overflow-hidden text-ellipsis whitespace-nowrap text-xs text-[#374151]">
                 {currencyName(selected.label)}
-              </Typography>
-            </Box>
+              </p>
+            </div>
           ) : (
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF", flex: 1 }}>{placeholder}</Typography>
+            <p className="flex-1 text-xs text-[#9CA3AF]">{placeholder}</p>
           )}
           <KeyboardArrowDownIcon
-            sx={{
-              fontSize: 18,
-              color: "#9CA3AF",
-              flexShrink: 0,
-              ml: 0.5,
-              transform: open ? "rotate(180deg)" : "rotate(0deg)",
-              transition: "transform 0.2s",
-            }}
+            size={18}
+            color="#9CA3AF"
+            className="ml-1 shrink-0 transition-transform duration-200"
+            style={{ transform: open ? "rotate(180deg)" : "rotate(0deg)" }}
           />
-        </Box>
+        </div>
         {error && (
-          <Typography sx={{ fontSize: "10px", color: "#EF4444", mt: 0.4, ml: 0.5 }}>
+          <p className="ml-1 mt-1 text-[10px] text-[#EF4444]">
             {error}
-          </Typography>
+          </p>
         )}
-      </Box>
+      </div>
       {typeof window !== "undefined" && createPortal(panel, document.body)}
     </>
   );

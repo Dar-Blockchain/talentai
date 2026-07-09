@@ -85,13 +85,13 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
         {error && (
           <div className="flex items-center justify-between rounded-xl bg-danger-light border border-danger-border px-3 py-2 text-sm text-danger">
             <span>{error}</span>
-            <button type="button" onClick={() => setError(null)} className="ml-2 text-danger/60 hover:text-danger">×</button>
+            <Button variant="ghost" onClick={() => setError(null)} className="ml-2 p-0 h-auto text-danger/60 hover:bg-transparent hover:text-danger">×</Button>
           </div>
         )}
         {success && (
           <div className="flex items-center justify-between rounded-xl bg-primary-light border border-primary-border px-3 py-2 text-sm text-primary-dark">
             <span>{success}</span>
-            <button type="button" onClick={() => setSuccess(null)} className="ml-2 text-primary-dark/60 hover:text-primary-dark">×</button>
+            <Button variant="ghost" onClick={() => setSuccess(null)} className="ml-2 p-0 h-auto text-primary-dark/60 hover:bg-transparent hover:text-primary-dark">×</Button>
           </div>
         )}
 

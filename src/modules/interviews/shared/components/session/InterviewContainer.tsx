@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Play, Mic, RefreshCw, Video, ArrowLeft, CheckCircle, Circle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type InterviewStatus, type ConnectionStatus, type CameraStatus, type AgentState } from '../../types/interview';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 
 interface InterviewContainerProps {
   interviewStatus: InterviewStatus;
@@ -200,10 +201,11 @@ const ReadinessChecklist: React.FC<{
           </div>
         )}
 
-        <button
+        <Button
+          variant="ghost"
           onClick={onStartInterview}
           disabled={!allReady}
-          className="w-full flex items-center justify-center gap-2 font-sans font-bold text-[0.88rem] py-3 rounded-[14px] transition-all cursor-pointer disabled:cursor-not-allowed"
+          className="w-full h-auto font-sans font-bold text-[0.88rem] py-3 rounded-[14px]"
           style={{
             background: allReady ? 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)' : '#f3f4f6',
             color:      allReady ? '#fff' : '#9ca3af',
@@ -212,16 +214,17 @@ const ReadinessChecklist: React.FC<{
         >
           <Play size={16} />
           {t('start.btn_start')}
-        </button>
+        </Button>
 
         {onBack && (
-          <button
+          <Button
+            variant="ghost"
             onClick={onBack}
-            className="w-full flex items-center justify-center gap-1.5 font-sans font-semibold text-[0.78rem] text-[#9ca3af] py-2 rounded-[12px] hover:text-[#6b7280] hover:bg-[#f9fafb] transition-colors cursor-pointer"
+            className="w-full h-auto font-sans font-semibold text-[0.78rem] text-[#9ca3af] py-2 rounded-[12px] hover:text-[#6b7280] hover:bg-[#f9fafb]"
           >
             <ArrowLeft size={15} />
             {backLabel ?? t('container.back_to_post')}
-          </button>
+          </Button>
         )}
       </div>
     </div>

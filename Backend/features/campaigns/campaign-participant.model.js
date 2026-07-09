@@ -72,4 +72,9 @@ campaignParticipantSchema.index(
   { unique: true, partialFilterExpression: { employee: { $ne: null } } }
 );
 
+campaignParticipantSchema.index(
+  { campaign: 1, email: 1 },
+  { unique: true, partialFilterExpression: { email: { $ne: null } } }
+);
+
 module.exports = mongoose.model("CampaignParticipant", campaignParticipantSchema);

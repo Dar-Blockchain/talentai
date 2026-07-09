@@ -8,16 +8,13 @@ import dynamic from "next/dynamic";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline } from "@mui/material";
-import { useEffect, useMemo, useRef } from "react";
-import { useTheme } from "next-themes";
+import { useEffect, useRef } from "react";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useRouter } from "next/router";
 import Head from "next/head";
 import ScrollToTop from "@/modules/shared/ui/ScrollToTop";
 import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { Poppins } from "next/font/google";
-import MuiToast from "@/components/ui/Toast";
 import { Toaster } from "@/modules/shared/ui/shadcn/sonner";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/modules/notifications/shared/context";
@@ -53,30 +50,6 @@ const poppins = Poppins({
   weight: ["400", "500", "600", "700"],
   variable: "--font-poppins",
 });
-
-// ─── MUI theme bridge ─────────────────────────────────────────────────────────
-// next-themes injects a blocking inline script that applies the correct class to
-// <html> before React hydrates, so resolvedTheme is accurate on the first browser
-// render. No "mounted" guard needed — that pattern added an extra paint cycle.
-function MuiThemeSync({ children }: { children: React.ReactNode }) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-
-  const muiTheme = useMemo(() => createTheme({
-    palette: {
-      mode: isDark ? "dark" : "light",
-      primary:    { main: "#6AD39C" },
-      secondary:  { main: "#BD85FF" },
-      background: {
-        default: isDark ? "#0B1120" : "#FDFEFE",
-        paper:   isDark ? "#0F1829" : "#FFFFFF",
-      },
-    },
-    typography: { fontFamily: "Poppins, sans-serif" },
-  }), [isDark]);
-
-  return <MuiThemeProvider theme={muiTheme}><CssBaseline />{children}</MuiThemeProvider>;
-}
 
 // ─── Language sync ────────────────────────────────────────────────────────────
 // Uses useAuthState() — re-renders when isAuthenticated changes (correct), but
@@ -262,7 +235,6 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         <ThemeProvider>
         <ReactQueryProvider>
         <AuthProvider>
-        <MuiThemeSync>
           <Head>
             <title>TalentAI | AI Recruitment Platform — Hire 75% Faster with Conversational AI Agents</title>
             <meta name="viewport" content="initial-scale=1, width=device-width" />
@@ -275,14 +247,13 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
           <main className={poppins.variable}>
             <Toaster richColors />
             <ToastProvider>
-              <MuiToastWrapper />
+              <ToastAndSessionBridge />
               <AuthWrapper>
                 {getLayout(<Component {...pageProps} />)}
                 <ScrollToTop />
               </AuthWrapper>
             </ToastProvider>
           </main>
-        </MuiThemeSync>
         </AuthProvider>
         </ReactQueryProvider>
         </ThemeProvider>
@@ -291,10 +262,11 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   );
 }
 
-// MuiToastWrapper only calls logout — it never needs to know about
+// ToastAndSessionBridge only calls logout — it never needs to know about
 // isAuthenticated. Using useAuthActions() means it won't re-render on login.
-function MuiToastWrapper() {
-  const { open, toastOptions, closeToast, showToast } = useToast();
+// Renders nothing: toast UI is handled globally by the <Toaster /> above.
+function ToastAndSessionBridge() {
+  const { showToast } = useToast();
   const { logout } = useAuthActions();
 
   useEffect(() => {
@@ -311,12 +283,5 @@ function MuiToastWrapper() {
     });
   }, [logout]);
 
-  return (
-    <MuiToast
-      open={open}
-      message={toastOptions.message}
-      severity={toastOptions.severity}
-      onClose={closeToast}
-    />
-  );
+  return null;
 }

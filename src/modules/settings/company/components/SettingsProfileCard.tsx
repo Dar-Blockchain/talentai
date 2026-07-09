@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect } from "react";
 import { MapPin, Users, UploadCloud } from "lucide-react";
-import SectionCard from "@/components/ui/SectionCard";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Spinner } from "@/modules/settings/shared/components";
 import { TEAL, TEAL_BORDER } from "@/modules/settings/shared/constants";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
@@ -32,7 +32,7 @@ const SettingsProfileCard: React.FC<SettingsProfileCardProps> = ({ profile, uplo
   };
 
   return (
-    <SectionCard>
+    <Card className="p-6 gap-0">
       <div className="flex flex-col items-center text-center py-2 gap-3">
         <div
           onDragOver={readOnly ? undefined : (e) => { e.preventDefault(); setDragOver(true); }}
@@ -86,7 +86,7 @@ const SettingsProfileCard: React.FC<SettingsProfileCardProps> = ({ profile, uplo
           )}
         </div>
       </div>
-    </SectionCard>
+    </Card>
   );
 };
 
