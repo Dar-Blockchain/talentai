@@ -1,11 +1,7 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Divider, Typography } from "@mui/material";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import MicOutlined from "@mui/icons-material/MicOutlined";
-import SectionCard from "@/components/ui/SectionCard";
+import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined, Mic as MicOutlined } from "lucide-react";
+import { Card } from "@/modules/shared/ui/shadcn/card";
 import { LANG_META } from "@/modules/shared/constants/languages";
 import { formatSalary } from '@/modules/company/posts/utils/postHelpers';
 import { formatDate } from "@/utils/functions";
@@ -21,68 +17,68 @@ const OverviewCard: React.FC<Props> = ({ jd, createdAt, interviewLanguages }) =>
   const { t } = useTranslation("posts");
 
   return (
-    <SectionCard>
-      <SectionTitle icon={<WorkOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.overview")} />
+    <Card className="p-6 gap-0">
+      <SectionTitle icon={<WorkOutlined size={15} />} title={t("detail.details.overview")} />
 
       {/* Meta chips */}
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5 }}>
+      <div className="flex flex-wrap gap-3">
         {jd.workMode && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#EFF6FF", border: "1px solid #BFDBFE", borderRadius: 2, px: 1.5, py: 0.75 }}>
-            <LocationOnOutlined sx={{ fontSize: 14, color: "#2563EB" }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#2563EB" }}>{jd.workMode}</Typography>
-          </Box>
+          <div className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5" style={{ backgroundColor: "#EFF6FF", borderColor: "#BFDBFE" }}>
+            <LocationOnOutlined size={14} color="#2563EB" />
+            <span className="text-[12px] font-semibold" style={{ color: "#2563EB" }}>{jd.workMode}</span>
+          </div>
         )}
         {jd.employmentType && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#F5F3FF", border: "1px solid #DDD6FE", borderRadius: 2, px: 1.5, py: 0.75 }}>
-            <WorkOutlined sx={{ fontSize: 14, color: "#7C3AED" }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#7C3AED" }}>{jd.employmentType}</Typography>
-          </Box>
+          <div className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5" style={{ backgroundColor: "#F5F3FF", borderColor: "#DDD6FE" }}>
+            <WorkOutlined size={14} color="#7C3AED" />
+            <span className="text-[12px] font-semibold" style={{ color: "#7C3AED" }}>{jd.employmentType}</span>
+          </div>
         )}
         {jd.salary && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#F0FDF4", border: "1px solid #BBF7D0", borderRadius: 2, px: 1.5, py: 0.75 }}>
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#16A34A" }}>{formatSalary(jd.salary)}</Typography>
-          </Box>
+          <div className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5" style={{ backgroundColor: "#F0FDF4", borderColor: "#BBF7D0" }}>
+            <span className="text-[12px] font-semibold" style={{ color: "#16A34A" }}>{formatSalary(jd.salary)}</span>
+          </div>
         )}
         {createdAt && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: 2, px: 1.5, py: 0.75 }}>
-            <CalendarTodayOutlined sx={{ fontSize: 14, color: "#6B7280" }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>{formatDate(createdAt)}</Typography>
-          </Box>
+          <div className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5" style={{ backgroundColor: "#F9FAFB", borderColor: "#E5E7EB" }}>
+            <CalendarTodayOutlined size={14} color="#6B7280" />
+            <span className="text-[12px] font-semibold" style={{ color: "#6B7280" }}>{formatDate(createdAt)}</span>
+          </div>
         )}
-      </Box>
+      </div>
 
       {/* Interview languages */}
-      <Divider sx={{ my: 2 }} />
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flexWrap: "wrap" }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-          <MicOutlined sx={{ fontSize: 15, color: "#6B7280" }} />
-          <Typography sx={{ fontSize: "12px", fontWeight: 600, color: "#6B7280" }}>
+      <div className="my-4 h-px bg-gray-200" />
+      <div className="flex flex-wrap items-center gap-3">
+        <div className="flex items-center gap-1.5">
+          <MicOutlined size={15} color="#6B7280" />
+          <span className="text-[12px] font-semibold" style={{ color: "#6B7280" }}>
             {t("detail.details.interview_languages")}
-          </Typography>
-        </Box>
-        <Box sx={{ display: "flex", gap: 0.75 }}>
+          </span>
+        </div>
+        <div className="flex gap-1.5">
           {interviewLanguages.map((code) => {
             const meta = LANG_META[code];
             if (!meta) return null;
             return (
-              <Box key={code} sx={{ display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.4, borderRadius: "8px", bgcolor: "#F0FDFA", border: "1px solid #99F6E4" }}>
+              <div key={code} className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1" style={{ backgroundColor: "#F0FDFA", borderColor: "#99F6E4" }}>
                 <img src={`https://flagcdn.com/w40/${meta.flag}.png`} srcSet={`https://flagcdn.com/w80/${meta.flag}.png 2x`} width={20} height={14} alt={meta.label} style={{ borderRadius: 2, display: "block" }} />
-                <Typography sx={{ fontSize: "11.5px", fontWeight: 600, color: "#0D9488" }}>{meta.label}</Typography>
-              </Box>
+                <span className="text-[11.5px] font-semibold" style={{ color: "#0D9488" }}>{meta.label}</span>
+              </div>
             );
           })}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Description */}
       {jd.description && (
         <>
-          <Divider sx={{ my: 2.5 }} />
-          <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", mb: 1 }}>{t("detail.details.description")}</Typography>
-          <Typography sx={{ fontSize: "13px", color: "#6B7280", lineHeight: 1.8 }}>{jd.description}</Typography>
+          <div className="my-5 h-px bg-gray-200" />
+          <p className="mb-2 text-[13px] font-bold text-gray-700">{t("detail.details.description")}</p>
+          <p className="text-[13px] leading-[1.8] text-gray-500">{jd.description}</p>
         </>
       )}
-    </SectionCard>
+    </Card>
   );
 };
 

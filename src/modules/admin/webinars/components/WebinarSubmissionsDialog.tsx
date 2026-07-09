@@ -1,16 +1,19 @@
 import React, { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, Chip, CircularProgress } from "@mui/material";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
-  Close as CloseIcon,
-  CheckCircle as DoneIcon,
-  HourglassEmpty as PendingIcon,
-  Person as PersonIcon,
-  BarChart as ScoreIcon,
+  X as CloseIcon,
+  CheckCircle2 as DoneIcon,
+  Hourglass as PendingIcon,
+  User as PersonIcon,
+  BarChart3 as ScoreIcon,
   Lightbulb as InsightIcon,
   TrendingUp as ReadinessIcon,
-  Warning as BlockerIcon,
+  AlertTriangle as BlockerIcon,
   Star as StrengthIcon,
-} from "@mui/icons-material";
+} from "lucide-react";
 import { useWebinarSubmissionsQuery } from "../queries";
 import type { WebinarSubmission, Webinar } from "../types";
 import { ADMIN_ACCENT } from "@/modules/admin/shared";
@@ -67,12 +70,16 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
   const nom    = sub.contact?.nom   || "—";
   const email  = sub.contact?.email || "—";
   const co     = sub.contact?.entreprise;
-  const date   = new Date(sub.createdAt).toLocaleDateString("fr-FR", { day: "numeric", month: "short", year: "numeric" });
-  const time   = new Date(sub.createdAt).toLocaleTimeString("fr-FR", { hour: "2-digit", minute: "2-digit" });
+  const d      = new Date(sub.createdAt);
+  const date   = d.toLocaleDateString("fr-FR",  { day: "numeric", month: "short", year: "numeric" });
+  const time   = d.toLocaleTimeString("fr-FR",  { hour: "2-digit", minute: "2-digit" });
   const mia    = sub.scoring?.maturite_ia;
   const pain   = sub.scoring?.intensite_pain;
   const ready  = sub.scoring?.readiness_score;
   const mColor = mia == null ? "#94A3B8" : mia < 35 ? "#F59E0B" : mia < 65 ? "#6366F1" : "#10B981";
+  const icpM         = sub.scoring?.icp_fit ? ICP_META[sub.scoring.icp_fit] : null;
+  const hasStrengths = (sub.scoring?.strengths?.length ?? 0) > 0;
+  const hasBlockers  = (sub.scoring?.blockers?.length  ?? 0) > 0;
 
   return (
     <>
@@ -84,7 +91,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
         <div className="min-w-0">
           <div className="flex items-center gap-2">
             <div className="w-7 h-7 rounded-full bg-teal-100 flex items-center justify-center shrink-0">
-              <PersonIcon sx={{ fontSize: 14, color: ADMIN_ACCENT }} />
+              <PersonIcon size={14} color={ADMIN_ACCENT} />
             </div>
             <div className="min-w-0">
               <p className="text-[13px] font-semibold text-slate-800 truncate">{nom}</p>
@@ -127,32 +134,33 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
         <div className="flex items-center gap-1.5 justify-end">
           <TierBadge tier={sub.scoring?.tier} />
           {sub.completed
-            ? <DoneIcon sx={{ fontSize: 15, color: "#10B981" }} />
-            : <PendingIcon sx={{ fontSize: 15, color: "#94A3B8" }} />}
+            ? <DoneIcon size={15} color="#10B981" />
+            : <PendingIcon size={15} color="#94A3B8" />}
         </div>
       </div>
 
       {/* Detail dialog */}
-      <Dialog open={open} onClose={() => setOpen(false)} maxWidth="md" fullWidth
-        PaperProps={{ sx: { borderRadius: "16px", maxHeight: "90vh" } }}>
-        <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 700, fontSize: "0.95rem", pb: 1, borderBottom: "1px solid #F1F5F9" }}>
+      <Dialog open={open} onOpenChange={(next) => { if (!next) setOpen(false); }}>
+      <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden" style={{ borderRadius: "16px" }}>
+        <div className="flex items-center justify-between px-5 pb-2.5 pt-4 border-b border-slate-100 font-bold text-[0.95rem]">
           <span className="flex items-center gap-2 flex-wrap">
             <span>{nom}</span>
             {sub.scoring?.tier && <TierBadge tier={sub.scoring.tier} />}
-            {sub.scoring?.icp_fit && (() => {
-              const m = ICP_META[sub.scoring.icp_fit];
-              return m ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ color: m.color, borderColor: m.color + "40", background: m.color + "10" }}>{m.label}</span> : null;
-            })()}
+            {icpM && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ color: icpM.color, borderColor: icpM.color + "40", background: icpM.color + "10" }}>
+                {icpM.label}
+              </span>
+            )}
             {sub.completed
-              ? <Chip label="Completed" size="small" color="success" sx={{ height: 18, fontSize: 10, fontWeight: 700 }} />
-              : <Chip label="In progress" size="small" sx={{ height: 18, fontSize: 10, bgcolor: "#F1F5F9", color: "#64748B" }} />}
+              ? <Badge className="h-[18px] rounded-full border-transparent bg-emerald-50 px-2 text-[10px] font-bold text-emerald-700">Completed</Badge>
+              : <Badge variant="outline" className="h-[18px] rounded-full border-transparent bg-slate-100 px-2 text-[10px] font-bold text-slate-500">In progress</Badge>}
           </span>
-          <button onClick={() => setOpen(false)} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
-            <CloseIcon sx={{ fontSize: 18 }} />
-          </button>
-        </DialogTitle>
+          <Button variant="ghost" onClick={() => setOpen(false)} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
+            <CloseIcon size={18} />
+          </Button>
+        </div>
 
-        <DialogContent dividers sx={{ p: 0 }}>
+        <div className="overflow-y-auto">
           {/* Contact */}
           <div className="px-5 py-4 space-y-1 border-b border-slate-100">
             <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-2">Contact</p>
@@ -172,11 +180,11 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
 
               {/* Tags row */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {sub.scoring.tier && (() => { const m = TIER_META[sub.scoring.tier!]; return (
-                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border" style={{ background: m.bg, color: m.text, borderColor: m.border }}>
-                    {m.label}
+                {sub.scoring.tier && TIER_META[sub.scoring.tier] && (
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border" style={{ background: TIER_META[sub.scoring.tier].bg, color: TIER_META[sub.scoring.tier].text, borderColor: TIER_META[sub.scoring.tier].border }}>
+                    {TIER_META[sub.scoring.tier].label}
                   </span>
-                ); })()}
+                )}
                 {sub.scoring.these && sub.scoring.these !== "indetermine" && (
                   <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
                     {THESE_META[sub.scoring.these]}
@@ -199,7 +207,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
 
               {sub.scoring?.key_insight && (
                 <div className="flex gap-2.5">
-                  <InsightIcon sx={{ fontSize: 16, color: ADMIN_ACCENT, mt: "2px", shrink: 0 }} />
+                  <InsightIcon size={16} color={ADMIN_ACCENT} className="mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Insight clé</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed">{sub.scoring.key_insight}</p>
@@ -209,7 +217,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
 
               {sub.scoring?.main_pain && (
                 <div className="flex gap-2.5">
-                  <BlockerIcon sx={{ fontSize: 16, color: "#EF4444", mt: "2px", shrink: 0 }} />
+                  <BlockerIcon size={16} color="#EF4444" className="mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Douleur principale</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed">{sub.scoring.main_pain}</p>
@@ -219,7 +227,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
 
               {sub.scoring?.recommended_action && (
                 <div className="flex gap-2.5">
-                  <ReadinessIcon sx={{ fontSize: 16, color: "#0D9488", mt: "2px", shrink: 0 }} />
+                  <ReadinessIcon size={16} color="#0D9488" className="mt-0.5 shrink-0" />
                   <div>
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Action recommandée</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed font-medium">{sub.scoring.recommended_action}</p>
@@ -230,13 +238,13 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
           )}
 
           {/* Strengths & Blockers */}
-          {((sub.scoring?.strengths?.length ?? 0) > 0 || (sub.scoring?.blockers?.length ?? 0) > 0) && (
+          {(hasStrengths || hasBlockers) && (
             <div className="px-5 py-4 border-b border-slate-100">
               <div className="grid grid-cols-2 gap-4">
-                {(sub.scoring?.strengths?.length ?? 0) > 0 && (
+                {hasStrengths && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
-                      <StrengthIcon sx={{ fontSize: 13, color: "#10B981" }} />
+                      <StrengthIcon size={13} color="#10B981" />
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Points forts</p>
                     </div>
                     <ul className="space-y-1.5">
@@ -249,10 +257,10 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                     </ul>
                   </div>
                 )}
-                {(sub.scoring?.blockers?.length ?? 0) > 0 && (
+                {hasBlockers && (
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
-                      <BlockerIcon sx={{ fontSize: 13, color: "#F59E0B" }} />
+                      <BlockerIcon size={13} color="#F59E0B" />
                       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Freins</p>
                     </div>
                     <ul className="space-y-1.5">
@@ -301,7 +309,8 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
               </div>
             </div>
           )}
-        </DialogContent>
+        </div>
+      </DialogContent>
       </Dialog>
     </>
   );
@@ -325,19 +334,19 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
   if (!webinar) return null;
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth
-      PaperProps={{ sx: { borderRadius: "16px", maxHeight: "90vh" } }}>
-      <DialogTitle sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontWeight: 700, fontSize: "1rem", borderBottom: "1px solid #F1F5F9", pb: 1.5 }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+    <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden" style={{ borderRadius: "16px" }}>
+      <div className="flex items-center justify-between px-5 pb-1.5 pt-4 border-b border-slate-100 font-bold text-base">
         <div className="flex items-center gap-3">
           <span>Registrants — {webinar.title}</span>
           <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[12px] font-bold border border-teal-100">
             {total}
           </span>
         </div>
-        <button onClick={onClose} className="p-1 rounded-lg hover:bg-slate-100 text-slate-400 transition-colors">
-          <CloseIcon sx={{ fontSize: 18 }} />
-        </button>
-      </DialogTitle>
+        <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
+          <CloseIcon size={18} />
+        </Button>
+      </div>
 
       {/* Filter tabs */}
       <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-slate-50/50">
@@ -359,18 +368,18 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">Maîtrise</span>
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">Pain</span>
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 text-right">
-          <ScoreIcon sx={{ fontSize: 13 }} />
+          <ScoreIcon size={13} />
         </span>
       </div>
 
-      <DialogContent sx={{ p: 0, overflowY: "auto" }}>
+      <div className="overflow-y-auto flex-1">
         {isLoading ? (
           <div className="flex justify-center py-16">
-            <CircularProgress size={28} sx={{ color: ADMIN_ACCENT }} />
+            <Spinner className="size-7" style={{ color: ADMIN_ACCENT }} />
           </div>
         ) : submissions.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <PersonIcon sx={{ fontSize: 40, mb: 1, opacity: 0.3 }} />
+            <PersonIcon size={40} className="mb-2 opacity-30" />
             <p className="text-[14px]">No registrants yet</p>
           </div>
         ) : (
@@ -378,7 +387,8 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
             <SubmissionRow key={sub._id} sub={sub} webinar={webinar} />
           ))
         )}
-      </DialogContent>
+      </div>
+    </DialogContent>
     </Dialog>
   );
 };

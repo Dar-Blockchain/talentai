@@ -144,7 +144,15 @@ exports.getCompanyCampaigns = async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
 
     const filters = {};
-    if (status) filters.status = status;
+    if (status === "EXPIRED") {
+      filters.status = "ACTIVE";
+      filters.deadline = { $ne: null, $lt: new Date() };
+    } else if (status === "ACTIVE") {
+      filters.status = "ACTIVE";
+      filters.$or = [{ deadline: null }, { deadline: { $gte: new Date() } }];
+    } else if (status) {
+      filters.status = status;
+    }
     if (type) filters.type = type;
     if (targetDepartment) filters.targetDepartment = targetDepartment;
     const searchTerm = (search || title || "").trim();
@@ -482,9 +490,41 @@ exports.saveQuestionnaireProgress = async (req, res) => {
   }
 };
 
+function computeDeterministicScores(questions, answers) {
+  return questions.map((q, i) => {
+    const raw = answers[i]?.answer;
+    const selected = Array.isArray(raw) ? raw : raw !== undefined && raw !== "" ? [String(raw)] : [];
+
+    if (q.type === "RATING") {
+      const stars = Math.max(0, Math.min(5, Number(raw) || 0));
+      return Math.round((stars / 5) * 100);
+    }
+
+    if (q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") {
+      if (!Array.isArray(q.correctOptionIndexes) || q.correctOptionIndexes.length === 0 || !Array.isArray(q.options)) {
+        return null;
+      }
+      const correctTexts = q.correctOptionIndexes.map((idx) => q.options[idx]).filter((v) => v !== undefined);
+      if (correctTexts.length === 0) return null;
+
+      if (q.type === "SINGLE_CHOICE") {
+        return selected[0] !== undefined && correctTexts.includes(selected[0]) ? 100 : 0;
+      }
+      const correctSelected = selected.filter((s) => correctTexts.includes(s)).length;
+      const wrongSelected = selected.filter((s) => !correctTexts.includes(s)).length;
+      return Math.round(Math.max(0, (correctSelected - wrongSelected) / correctTexts.length) * 100);
+    }
+
+    return null; // TEXT always needs LLM judgment
+  });
+}
+
 async function scoreQuestionnaireAsync(responseId, campaign, answers) {
+  const questions = campaign.module?.config?.questions ?? [];
+  const deterministicScores = computeDeterministicScores(questions, answers);
+
+  let parsed = { scores: [], aiScore: null, aiSummary: null };
   try {
-    const questions = campaign.module?.config?.questions ?? [];
     const qaPairs = questions.map((q, i) => {
       const raw = answers[i]?.answer;
       const selected = Array.isArray(raw) ? raw : raw !== undefined && raw !== "" ? [String(raw)] : [];
@@ -509,24 +549,35 @@ Respond ONLY with valid JSON â€” no markdown, no extra text.`;
     const userMessage = `Campaign context: ${campaign.description ?? campaign.title}\n\nQuestionnaire responses:\n${qaPairs}\n\nReturn JSON exactly:\n{\n  "scores": [<score_q1>, ...],\n  "aiScore": <overall_0_to_100>,\n  "aiSummary": "<2-3 sentence summary>"\n}`;
 
     const { content: rawContent } = await bedrock.callLLM({
-      systemPrompt, messages: [{ role: "user", content: userMessage }], temperature: 0.3, maxTokens: 512, useFastModel: true,
+      systemPrompt, messages: [{ role: "user", content: userMessage }], temperature: 0.1, maxTokens: 512, useFastModel: true,
     });
 
     const jsonMatch = rawContent.replace(/```json|```/g, "").trim().match(/\{[\s\S]*\}/);
     if (!jsonMatch) throw new Error(`No JSON in LLM response: ${rawContent.substring(0, 100)}`);
-    const parsed = JSON.parse(jsonMatch[0]);
+    parsed = JSON.parse(jsonMatch[0]);
+  } catch (err) {
+    console.error(`âŒ scoreQuestionnaireAsync failed for response ${responseId}:`, err.message);
+  }
 
-    const scoredAnswers = answers.map((a, i) => ({
-      ...a, score: typeof parsed.scores?.[i] === "number" ? Math.round(parsed.scores[i]) : null,
-    }));
+  try {
+    const scoredAnswers = answers.map((a, i) => {
+      const det = deterministicScores[i];
+      const llm = typeof parsed.scores?.[i] === "number" ? Math.round(parsed.scores[i]) : null;
+      return { ...a, score: det !== null && det !== undefined ? det : llm };
+    });
+
+    const finalScores = scoredAnswers.map((a) => a.score).filter((s) => typeof s === "number");
+    const aiScore = finalScores.length > 0
+      ? Math.round(finalScores.reduce((sum, s) => sum + s, 0) / finalScores.length)
+      : (typeof parsed.aiScore === "number" ? Math.round(parsed.aiScore) : null);
 
     await CampaignResponse.findByIdAndUpdate(responseId, { $set: {
       answers: scoredAnswers,
-      aiScore: typeof parsed.aiScore === "number" ? Math.round(parsed.aiScore) : null,
+      aiScore,
       aiSummary: parsed.aiSummary ?? null,
     }});
   } catch (err) {
-    console.error(`âŒ scoreQuestionnaireAsync failed for response ${responseId}:`, err.message);
+    console.error(`scoreQuestionnaireAsync persist step failed for response ${responseId}:`, err.message);
   }
 }
 
@@ -804,7 +855,9 @@ exports.getSessions = async (req, res) => {
       : {};
 
     const sortDir = order === "asc" ? 1 : -1;
-    const sortStage = sortBy === "score" ? { score: sortDir, createdAt: -1 } : { createdAt: sortDir };
+    const sortStage = sortBy === "score" ? { score: sortDir, createdAt: -1 }
+      : sortBy === "completedAt" ? { completedAt: sortDir }
+      : { createdAt: sortDir };
 
     let anonIndexMap = {};
     if (campaign.anonymityMode === "ANONYMOUS") {
@@ -910,9 +963,35 @@ exports.joinCampaignByLink = async (req, res) => {
 
     const { name, email } = req.body;
     if (!name?.trim()) return res.status(400).json({ success: false, error: "name is required to join this campaign" });
+    if (!email?.trim()) return res.status(400).json({ success: false, error: "email is required to join this campaign" });
+    const normalizedEmail = email.trim().toLowerCase();
+
+    const existing = await CampaignParticipant.findOne({ campaign: campaign._id, email: normalizedEmail });
+    if (existing) {
+      if (existing.status === "COMPLETED") {
+        return res.status(409).json({ success: false, error: "This email has already completed this campaign" });
+      }
+      // Resume the existing (not-yet-completed) participant instead of creating a duplicate.
+      return res.status(200).json({ success: true, data: { campaignId: campaign._id, linkAccessToken: existing.linkAccessToken, participantId: existing._id } });
+    }
+
     const linkAccessToken = randomUUID();
-    const participant = await CampaignParticipant.create({ campaign: campaign._id, providerName: name.trim(), email: email?.trim() || null, linkAccessToken, status: "INVITED" });
-    return res.status(200).json({ success: true, data: { campaignId: campaign._id, linkAccessToken, participantId: participant._id } });
+    try {
+      const participant = await CampaignParticipant.create({ campaign: campaign._id, providerName: name.trim(), email: normalizedEmail, linkAccessToken, status: "INVITED" });
+      return res.status(200).json({ success: true, data: { campaignId: campaign._id, linkAccessToken, participantId: participant._id } });
+    } catch (createError) {
+      if (createError.code === 11000) {
+        // Lost the race to a concurrent join with the same email — resume the winner's participant.
+        const winner = await CampaignParticipant.findOne({ campaign: campaign._id, email: normalizedEmail });
+        if (winner) {
+          if (winner.status === "COMPLETED") {
+            return res.status(409).json({ success: false, error: "This email has already completed this campaign" });
+          }
+          return res.status(200).json({ success: true, data: { campaignId: campaign._id, linkAccessToken: winner.linkAccessToken, participantId: winner._id } });
+        }
+      }
+      throw createError;
+    }
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

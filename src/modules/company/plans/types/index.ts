@@ -12,12 +12,6 @@ export interface DowngradePlan {
   currentSubId: string;
 }
 
-export interface SnackbarState {
-  open: boolean;
-  message: string;
-  severity: "success" | "error";
-}
-
 export type Snack = (message: string, severity: "success" | "error") => void;
 
 // ─── API response shapes ──────────────────────────────────

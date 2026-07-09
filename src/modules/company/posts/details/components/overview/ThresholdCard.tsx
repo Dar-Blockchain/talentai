@@ -1,10 +1,8 @@
 import React, { useState } from "react";
-import { Box, Slider, Typography } from "@mui/material";
-import TrackChangesOutlined from "@mui/icons-material/TrackChangesOutlined";
-import SaveOutlined from "@mui/icons-material/SaveOutlined";
-import CheckOutlined from "@mui/icons-material/Check";
-import SectionCard from "@/components/ui/SectionCard";
-import AppButton from "@/components/ui/AppButton";
+import { Target as TrackChangesOutlined, Save as SaveOutlined, Check as CheckOutlined } from "lucide-react";
+import { Card } from "@/modules/shared/ui/shadcn/card";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Slider } from "@/modules/shared/ui/shadcn/slider";
 import { useUpdatePostMutation } from "@/modules/company/posts/details/queries";
 
 import { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/company/posts/shared/constants";
@@ -15,6 +13,12 @@ interface Props {
   canEdit: boolean;
   isDraft: boolean;
 }
+
+const ZONE_LABELS: [string, string, string][] = [
+  ["Low", "#DC2626", "0–39%"],
+  ["Medium", "#D97706", "40–69%"],
+  ["High", "#16A34A", "70–100%"],
+];
 
 const ThresholdCard: React.FC<Props> = ({ jobId, initial, canEdit, isDraft }) => {
   const updateMut = useUpdatePostMutation(jobId);
@@ -40,88 +44,82 @@ const ThresholdCard: React.FC<Props> = ({ jobId, initial, canEdit, isDraft }) =>
     : "linear-gradient(135deg, #FFF1F2 0%, #FFE4E6 100%)";
 
   return (
-    <SectionCard>
+    <Card className="p-6 gap-0">
       {/* Header */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mb: 1.5 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={{ width: 32, height: 32, borderRadius: 2, bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: TEAL }}>
-            <TrackChangesOutlined sx={{ fontSize: 17 }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: 0.5 }}>
+      <div className="mb-3 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg border" style={{ backgroundColor: TEAL_BG, borderColor: TEAL_BORDER, color: TEAL }}>
+            <TrackChangesOutlined size={17} />
+          </div>
+          <div>
+            <p className="text-[13px] font-bold uppercase tracking-wide text-gray-700">
               Threshold Score
-            </Typography>
-            <Typography sx={{ fontSize: "11px", color: "#9CA3AF", mt: 0.1 }}>
+            </p>
+            <p className="mt-[1px] text-[11px] text-gray-400">
               Minimum interview score required to pass screening
-            </Typography>
-          </Box>
-        </Box>
-        <Box sx={{ background: bgGrad, border: `1.5px solid ${color}30`, borderRadius: 3, px: 2, py: 0.75, textAlign: "center", minWidth: 72 }}>
-          <Typography sx={{ fontSize: "22px", fontWeight: 900, color, lineHeight: 1 }}>{value}%</Typography>
-          <Typography sx={{ fontSize: "10px", fontWeight: 700, color, textTransform: "uppercase", letterSpacing: 0.5 }}>{label}</Typography>
-        </Box>
-      </Box>
+            </p>
+          </div>
+        </div>
+        <div className="min-w-[72px] rounded-xl px-4 py-1.5 text-center" style={{ background: bgGrad, border: `1.5px solid ${color}30` }}>
+          <p className="text-[22px] font-black leading-none" style={{ color }}>{value}%</p>
+          <p className="text-[10px] font-bold uppercase tracking-wide" style={{ color }}>{label}</p>
+        </div>
+      </div>
 
       {/* Explanation */}
-      <Box sx={{ bgcolor: "#F8FAFC", border: "1px solid #E2E8F0", borderRadius: 2, px: 2, py: 1.25, mb: 2 }}>
-        <Typography sx={{ fontSize: "12px", color: "#475569", lineHeight: 1.7 }}>
+      <div className="mb-4 rounded-lg border px-4 py-2.5" style={{ backgroundColor: "#F8FAFC", borderColor: "#E2E8F0" }}>
+        <p className="text-[12px] leading-[1.7]" style={{ color: "#475569" }}>
           Candidates who score <strong>below {value}%</strong> will be flagged as{" "}
-          <Box component="span" sx={{ color: "#DC2626", fontWeight: 700 }}>Under Threshold</Box>.
+          <span style={{ color: "#DC2626", fontWeight: 700 }}>Under Threshold</span>.
           {!isDraft && (
-            <Box component="span" sx={{ display: "block", mt: 0.75, color: "#D97706", fontWeight: 600 }}>
+            <span className="mt-1.5 block" style={{ color: "#D97706", fontWeight: 600 }}>
               ⚠ Locked — threshold cannot be changed once candidates have applied.
-            </Box>
+            </span>
           )}
-        </Typography>
-      </Box>
+        </p>
+      </div>
 
       {/* Zone labels */}
-      <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.5, px: 0.5 }}>
-        {[["Low", "#DC2626", "0–39%"], ["Medium", "#D97706", "40–69%"], ["High", "#16A34A", "70–100%"]].map(([z, c, range]) => (
-          <Box key={z} sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-            <Box sx={{ width: 8, height: 8, borderRadius: "50%", bgcolor: c }} />
-            <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#6B7280" }}>
+      <div className="mb-1 flex justify-between px-1">
+        {ZONE_LABELS.map(([z, c, range]) => (
+          <div key={z} className="flex items-center gap-1">
+            <div className="h-2 w-2 rounded-full" style={{ backgroundColor: c }} />
+            <span className="text-[10px] font-semibold text-gray-500">
               {z} <span style={{ color: "#9CA3AF", fontWeight: 400 }}>{range}</span>
-            </Typography>
-          </Box>
+            </span>
+          </div>
         ))}
-      </Box>
+      </div>
 
       {/* Slider */}
       <Slider
-        value={value}
-        onChange={(_, v) => { setValue(v as number); setSaved(false); }}
+        value={[value]}
+        onValueChange={(v) => { setValue(v[0]); setSaved(false); }}
         min={0} max={100} step={5}
         disabled={!editable || saving}
-        sx={{
-          color, height: 6,
-          "& .MuiSlider-thumb": { width: 20, height: 20, boxShadow: `0 0 0 4px ${color}20`, "&:hover": { boxShadow: `0 0 0 6px ${color}30` } },
-          "& .MuiSlider-track": { transition: "background-color 0.3s" },
-          "& .MuiSlider-rail": { bgcolor: "#E5E7EB" },
-        }}
+        className="[&_[data-slot=slider-track]]:h-1.5 [&_[data-slot=slider-track]]:bg-gray-200 [&_[data-slot=slider-range]]:bg-[var(--threshold-color)] [&_[data-slot=slider-thumb]]:size-5 [&_[data-slot=slider-thumb]]:border-[var(--threshold-color)]"
+        style={{ ["--threshold-color" as string]: color }}
       />
 
       {/* Footer */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", mt: 0.5 }}>
-        <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>0%</Typography>
+      <div className="mt-1 flex items-center justify-between">
+        <span className="text-[11px] text-gray-400">0%</span>
         {canEdit && (
-          <AppButton
-            label={saved ? "Saved" : "Save"}
-            size="small"
-            variant="outlined"
+          <Button
+            size="sm"
+            variant="outline"
             loading={saving}
             disabled={!dirty || !isDraft}
             onClick={handleSave}
-            startIcon={saved ? <CheckOutlined sx={{ fontSize: 13 }} /> : <SaveOutlined sx={{ fontSize: 13 }} />}
-            sx={saved ? {
-              borderColor: "#16A34A", color: "#16A34A",
-              "&:hover": { bgcolor: "#F0FDF4", borderColor: "#16A34A" },
-            } : undefined}
-          />
+            className={saved ? "border-green-600 text-green-600 hover:border-green-600 hover:bg-green-50" : undefined}
+          >
+            {saved ? <CheckOutlined size={13} /> : <SaveOutlined size={13} />}
+            {saved ? "Saved" : "Save"}
+          </Button>
         )}
-        <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>100%</Typography>
-      </Box>
-    </SectionCard>
+        <span className="text-[11px] text-gray-400">100%</span>
+      </div>
+    </Card>
   );
 };
 

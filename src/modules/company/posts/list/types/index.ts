@@ -22,4 +22,5 @@ export interface JobPost {
     workMode?: string;
   };
   user?: { _id: string };
+  applicationsCount?: number;
 }

@@ -1,12 +1,12 @@
 ﻿import React, { useMemo } from "react";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
-import { Box } from "@mui/material";
+import { cn } from "@/lib/utils";
 import TeamChatPageContent from "@/modules/chat/team-chat/components/TeamChatPageContent";
 import CandidateChatPageContent from "@/modules/chat/candidate-chat/components/CandidateChatPageContent";
 import CompanyChatLayout from "@/modules/chat/shared/components/CompanyChatLayout";
 import MessagesRouteGuard from "@/modules/chat/shared/components/MessagesRouteGuard";
-import { chatDashboardShellFlexSx } from "@/modules/chat/shared/styles/modulePage";
+import { chatDashboardShellFlexCn } from "@/modules/chat/shared/styles/modulePage";
 import { selectCandidateConversations } from "@/modules/chat/candidate-chat/store/candidateChatSlice";
 import { RootState } from "@/store/store";
 import type { CompanyChatChannel } from "@/modules/chat/shared/constants/companyChannels";
@@ -32,15 +32,15 @@ const MessagesShell: React.FC<MessagesShellProps> = ({ conversationId }) => {
   return (
     <MessagesRouteGuard surface="team">
       {role === "Candidate" ? (
-        <Box sx={{ ...chatDashboardShellFlexSx, height: "100%" }}>
+        <div className={cn(chatDashboardShellFlexCn, "h-full")}>
           <CandidateChatPageContent initialConversationId={conversationId} isCompany={false} fillHeight />
-        </Box>
+        </div>
       ) : role === "Employee" ? (
-        <Box sx={chatDashboardShellFlexSx}>
+        <div className={chatDashboardShellFlexCn}>
           <TeamChatPageContent initialConversationId={conversationId} fillHeight />
-        </Box>
+        </div>
       ) : (
-        <Box sx={chatDashboardShellFlexSx}>
+        <div className={chatDashboardShellFlexCn}>
           <CompanyChatLayout activeChannel={companyActiveChannel}>
             {companyActiveChannel === "candidate" ? (
               <CandidateChatPageContent initialConversationId={conversationId} isCompany fillHeight embeddedInCompanyHub />
@@ -48,7 +48,7 @@ const MessagesShell: React.FC<MessagesShellProps> = ({ conversationId }) => {
               <TeamChatPageContent initialConversationId={conversationId} fillHeight embeddedInCompanyHub />
             )}
           </CompanyChatLayout>
-        </Box>
+        </div>
       )}
     </MessagesRouteGuard>
   );

@@ -4,6 +4,8 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import { Switch } from "@/modules/shared/ui/shadcn/switch";
+import { Checkbox } from "@/modules/shared/ui/shadcn/checkbox";
+import { RadioGroup, RadioGroupItem } from "@/modules/shared/ui/shadcn/radio-group";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/modules/shared/ui/shadcn/select";
@@ -62,8 +64,25 @@ const QuestionnaireForm = memo<Props>(({ config, onChange }) => {
   }, [config.questions, updateQuestion]);
 
   const removeOption = useCallback((qi: number, oi: number) => {
+    const q = config.questions[qi];
     updateQuestion(qi, {
-      options: (config.questions[qi].options ?? []).filter((_, idx) => idx !== oi),
+      options: (q.options ?? []).filter((_, idx) => idx !== oi),
+      correctOptionIndexes: (q.correctOptionIndexes ?? [])
+        .filter((idx) => idx !== oi)
+        .map((idx) => (idx > oi ? idx - 1 : idx)),
+    });
+  }, [config.questions, updateQuestion]);
+
+  const setSingleCorrectOption = useCallback((qi: number, oi: number) => {
+    updateQuestion(qi, { correctOptionIndexes: [oi] });
+  }, [updateQuestion]);
+
+  const toggleMultiCorrectOption = useCallback((qi: number, oi: number, checked: boolean) => {
+    const current = config.questions[qi].correctOptionIndexes ?? [];
+    updateQuestion(qi, {
+      correctOptionIndexes: checked
+        ? [...current, oi].sort((a, b) => a - b)
+        : current.filter((idx) => idx !== oi),
     });
   }, [config.questions, updateQuestion]);
 
@@ -138,12 +157,15 @@ const QuestionnaireForm = memo<Props>(({ config, onChange }) => {
                   </Label>
                   <Select
                     value={q.type}
-                    onValueChange={(val) =>
+                    onValueChange={(val) => {
+                      const nextType = val as QuestionType;
+                      const isChoice = nextType === "SINGLE_CHOICE" || nextType === "MULTIPLE_CHOICE";
                       updateQuestion(i, {
-                        type: val as QuestionType,
-                        options: val === "SINGLE_CHOICE" || val === "MULTIPLE_CHOICE" ? [""] : undefined,
-                      })
-                    }
+                        type: nextType,
+                        options: isChoice ? [""] : undefined,
+                        correctOptionIndexes: isChoice ? q.correctOptionIndexes?.slice(0, 1) : undefined,
+                      });
+                    }}
                   >
                     <SelectTrigger size="sm" className="bg-background">
                       <SelectValue />
@@ -159,25 +181,67 @@ const QuestionnaireForm = memo<Props>(({ config, onChange }) => {
                 {/* Options (single choice or multiple choice) */}
                 {(q.type === "SINGLE_CHOICE" || q.type === "MULTIPLE_CHOICE") && (
                   <div className="flex flex-col gap-2 mt-0.5">
-                    {(q.options ?? []).map((opt, oi) => (
-                      <div key={oi} className="flex items-center gap-2">
-                        <Input
-                          placeholder={t(`${cf}.option_placeholder`, { n: oi + 1 })}
-                          value={opt}
-                          onChange={(e) => updateOption(i, oi, e.target.value)}
-                          className="bg-background"
-                        />
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => removeOption(i, oi)}
-                          className="shrink-0 text-muted-foreground hover:text-destructive"
-                        >
-                          <X className="size-3.5" />
-                        </Button>
-                      </div>
-                    ))}
+                    <Label className="text-[11px] font-normal text-muted-foreground">
+                      {t(`${cf}.correct_answer_hint`)}
+                    </Label>
+                    {q.type === "SINGLE_CHOICE" ? (
+                      <RadioGroup
+                        value={q.correctOptionIndexes?.[0] !== undefined ? String(q.correctOptionIndexes[0]) : ""}
+                        onValueChange={(val) => setSingleCorrectOption(i, Number(val))}
+                        className="gap-2"
+                      >
+                        {(q.options ?? []).map((opt, oi) => (
+                          <div key={oi} className="flex items-center gap-2">
+                            <RadioGroupItem
+                              value={String(oi)}
+                              aria-label={t(`${cf}.mark_correct_single_aria`, { n: oi + 1 })}
+                              className="shrink-0"
+                            />
+                            <Input
+                              placeholder={t(`${cf}.option_placeholder`, { n: oi + 1 })}
+                              value={opt}
+                              onChange={(e) => updateOption(i, oi, e.target.value)}
+                              className="bg-background"
+                            />
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => removeOption(i, oi)}
+                              className="shrink-0 text-muted-foreground hover:text-destructive"
+                            >
+                              <X className="size-3.5" />
+                            </Button>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    ) : (
+                      (q.options ?? []).map((opt, oi) => (
+                        <div key={oi} className="flex items-center gap-2">
+                          <Checkbox
+                            checked={(q.correctOptionIndexes ?? []).includes(oi)}
+                            onCheckedChange={(checked) => toggleMultiCorrectOption(i, oi, checked === true)}
+                            aria-label={t(`${cf}.mark_correct_multi_aria`, { n: oi + 1 })}
+                            className="shrink-0"
+                          />
+                          <Input
+                            placeholder={t(`${cf}.option_placeholder`, { n: oi + 1 })}
+                            value={opt}
+                            onChange={(e) => updateOption(i, oi, e.target.value)}
+                            className="bg-background"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => removeOption(i, oi)}
+                            className="shrink-0 text-muted-foreground hover:text-destructive"
+                          >
+                            <X className="size-3.5" />
+                          </Button>
+                        </div>
+                      ))
+                    )}
                     <Button
                       type="button"
                       variant="ghost"

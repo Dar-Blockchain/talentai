@@ -15,8 +15,15 @@ export function useCampaignCard(
   const p = "pages.campaigns";
   const isEmployee = variant === "employee";
 
-  const statusBadge = useMemo(() => STATUS_BADGE[campaign.status] || STATUS_BADGE.DRAFT, [campaign.status]);
-  const statusLabel = useMemo(() => t(`${p}.status.${campaign.status}`), [campaign.status, t]);
+  // Mirrors the backend's expired computation (ACTIVE + deadline passed) so the
+  // badge matches what the metrics card and status filter treat as "expired".
+  const isDeadlinePassed = useMemo(
+    () => campaign.status === "ACTIVE" && !!campaign.deadline && new Date(campaign.deadline) < new Date(),
+    [campaign.status, campaign.deadline],
+  );
+  const displayStatus = isDeadlinePassed ? "EXPIRED" : campaign.status;
+  const statusBadge = useMemo(() => STATUS_BADGE[displayStatus] || STATUS_BADGE.DRAFT, [displayStatus]);
+  const statusLabel = useMemo(() => t(`${p}.status.${displayStatus}`), [displayStatus, t]);
 
   const participantStatus = campaign.participantStatus ?? "INVITED";
   const participantBadge  = useMemo(() => PARTICIPANT_STATUS_BADGE[participantStatus], [participantStatus]);
@@ -50,10 +57,14 @@ export function useCampaignCard(
   const transitions = useMemo(() => STATUS_TRANSITIONS[campaign.status] ?? [], [campaign.status]);
   const showMenu     = !isEmployee && (canPublish || canDelete);
 
-  const total        = campaign.targetEmployeeCount ?? 0;
-  const completed    = campaign.completedCount ?? 0;
-  const pct          = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const showProgress = campaign.targetEmployeeCount != null && campaign.completedCount != null && total > 0;
+  const total          = campaign.targetEmployeeCount ?? 0;
+  const completed      = campaign.completedCount ?? 0;
+  const pct            = total > 0 ? Math.round((completed / total) * 100) : 0;
+  // Percentage only makes sense for a fixed employee roster (ACCOUNTS access) —
+  // LINK campaigns have no target to be "a percentage of".
+  const showPercentage =
+    campaign.accessMethod !== "LINK" &&
+    campaign.targetEmployeeCount != null && campaign.completedCount != null && total > 0;
 
   return {
     isEmployee,
@@ -63,7 +74,7 @@ export function useCampaignCard(
     isPaused, isClosed, isExpired, canParticipantStart,
     moduleConf, moduleLabel,
     transitions, showMenu,
-    total, completed, pct, showProgress,
+    total, completed, pct, showPercentage,
   };
 }
 

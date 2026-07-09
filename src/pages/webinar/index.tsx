@@ -8,9 +8,9 @@ import WebinarSection from "@/modules/home/company/components/WebinarSection";
 import { SITE_URL, OG_IMAGE } from "@/modules/shared/constants";
 
 const CANONICAL = `${SITE_URL}/webinar`;
-const VP = { once: true, margin: "-40px" };
-const ease = [0.22, 1, 0.36, 1] as const;
-
+const BACKEND   = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
+const VP   = { once: true, margin: "-40px" };
+const EASE = [0.22, 1, 0.36, 1] as const;
 
 const STEPS_FR = [
   { n: "1", title: "Accédez au webinar", desc: "Cliquez sur le bouton d'inscription ci-contre. Aucun compte requis." },
@@ -26,24 +26,26 @@ const STEPS_EN = [
   { n: "4", title: "Receive your report", desc: "A personalised report delivered directly to your email inbox." },
 ];
 
+interface WebinarMeta {
+  about_fr: string;
+  about_en: string;
+  title: string;
+  description: string;
+}
+
 const WebinarPage: React.FC = () => {
   const router = useRouter();
   const { i18n } = useTranslation();
   const previewId = router.isReady ? (router.query.id as string | undefined) : undefined;
-  const routerReady = router.isReady;
   const lang: "fr" | "en" =
     (router.query.lang as string) === "en" || i18n.language?.startsWith("en") ? "en" : "fr";
 
   const steps = lang === "en" ? STEPS_EN : STEPS_FR;
 
-  const [aboutFr, setAboutFr]         = useState<string>("");
-  const [aboutEn, setAboutEn]         = useState<string>("");
-  const [webinarTitle, setWebinarTitle] = useState<string>("");
-  const [webinarDesc, setWebinarDesc]   = useState<string>("");
+  const [meta, setMeta] = useState<WebinarMeta | null>(null);
 
   useEffect(() => {
-    if (!routerReady) return;
-    const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    if (!router.isReady) return;
     const url = previewId
       ? `${BACKEND}/webinars/public/${previewId}`
       : `${BACKEND}/webinars/public/active`;
@@ -51,16 +53,20 @@ const WebinarPage: React.FC = () => {
       .then(r => r.ok ? r.json() : null)
       .then(d => {
         if (d?.data) {
-          setAboutFr(d.data.about_fr || "");
-          setAboutEn(d.data.about_en || "");
-          setWebinarTitle(d.data.title || "");
-          setWebinarDesc(d.data.description || "");
+          setMeta({
+            about_fr:    d.data.about_fr    || "",
+            about_en:    d.data.about_en    || "",
+            title:       d.data.title       || "",
+            description: d.data.description || "",
+          });
         }
       })
       .catch(() => {});
-  }, [previewId, routerReady]);
+  }, [previewId, router.isReady]);
 
-  const aboutText = lang === "en" ? aboutEn : aboutFr;
+  const aboutText    = lang === "en" ? meta?.about_en : meta?.about_fr;
+  const webinarTitle = meta?.title       ?? "";
+  const webinarDesc  = meta?.description ?? "";
 
   return (
     <>
@@ -85,7 +91,7 @@ const WebinarPage: React.FC = () => {
           <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-16 md:py-24">
             <motion.div
               initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease }}
+              transition={{ duration: 0.6, ease: EASE }}
               className="max-w-[640px]"
             >
               <span className="inline-block px-3 py-1 rounded-full bg-white/15 text-[11px] font-bold uppercase tracking-widest mb-5 border border-white/20">
@@ -117,7 +123,7 @@ const WebinarPage: React.FC = () => {
                 {aboutText && (
                   <motion.section
                     initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                    viewport={VP} transition={{ duration: 0.5, ease }}
+                    viewport={VP} transition={{ duration: 0.5, ease: EASE }}
                     className="mb-14"
                   >
                     <h2 className="text-[1.5rem] font-black text-slate-900 tracking-tight mb-4">
@@ -132,7 +138,7 @@ const WebinarPage: React.FC = () => {
                 {/* How it works */}
                 <motion.section
                   initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={VP} transition={{ duration: 0.5, ease }}
+                  viewport={VP} transition={{ duration: 0.5, ease: EASE }}
                   className="mb-14"
                 >
                   <h2 className="text-[1.5rem] font-black text-slate-900 tracking-tight mb-6">
@@ -143,14 +149,12 @@ const WebinarPage: React.FC = () => {
                       <motion.div
                         key={i}
                         initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }}
-                        viewport={VP} transition={{ duration: 0.4, ease, delay: i * 0.07 }}
+                        viewport={VP} transition={{ duration: 0.4, ease: EASE, delay: i * 0.07 }}
                         className="flex gap-5 pb-7 relative"
                       >
-                        {/* Line */}
                         {i < steps.length - 1 && (
                           <div className="absolute left-[18px] top-10 bottom-0 w-px bg-teal-100" />
                         )}
-                        {/* Number */}
                         <div className="shrink-0 w-9 h-9 rounded-full bg-teal-600 text-white text-[13px] font-black flex items-center justify-center z-10">
                           {s.n}
                         </div>
@@ -163,12 +167,11 @@ const WebinarPage: React.FC = () => {
                   </div>
                 </motion.section>
 
-
               </div>
 
               {/* RIGHT — sticky registration card */}
               <div className="md:sticky md:top-8">
-                <WebinarSection previewId={previewId} routerReady={routerReady} />
+                <WebinarSection previewId={previewId} routerReady={router.isReady} />
               </div>
 
             </div>

@@ -657,18 +657,19 @@ module.exports.getApplicationMetrics = async (companyId) => {
     }
 
     const ObjectId = require("mongoose").Types.ObjectId;
+    const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
 
     // Get total number of applicants (all applications for this company)
     const totalApplicants = await JobApplication.countDocuments({ company: new ObjectId(companyId) });
 
-    // Get count of unique job posts that have received applications
+    // Get unique job posts that have received applications
     const postsWithApplications = await JobApplication.aggregate([
       { $match: { company: new ObjectId(companyId) } },
       { $group: { _id: "$post" } },
-      { $count: "totalPosts" },
     ]);
+    const postIds = postsWithApplications.map((p) => p._id);
 
-    // Get avg/top CV scores across all applications
+    // Get avg/top match scores across all applications
     const applicationsMetrics = await JobApplication.aggregate([
       { $match: { company: new ObjectId(companyId) } },
       {
@@ -680,14 +681,21 @@ module.exports.getApplicationMetrics = async (companyId) => {
       },
     ]);
 
-    const totalPostsWithApplications = postsWithApplications.length > 0 ? postsWithApplications[0].totalPosts : 0;
+    // Get top interview score across this company's post interviews
+    const interviewMetrics = await PostInterviewAssessment.aggregate([
+      { $match: { post: { $in: postIds } } },
+      { $group: { _id: null, topInterviewScore: { $max: "$interviewData.finalReport.scores.overall" } } },
+    ]);
+
     const appMetrics = applicationsMetrics[0] || {};
+    const intMetrics = interviewMetrics[0] || {};
 
     return {
       totalApplicants,
-      totalJobPosts: totalPostsWithApplications,
+      totalJobPosts: postIds.length,
       avgCVScore: appMetrics.avgCVScore ? Math.round(appMetrics.avgCVScore) : 0,
       topCVScore: appMetrics.topCVScore ? Math.round(appMetrics.topCVScore) : 0,
+      topInterviewScore: intMetrics.topInterviewScore ? Math.round(intMetrics.topInterviewScore) : 0,
     };
   } catch (error) {
     error.status = error.status || 500;

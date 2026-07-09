@@ -53,6 +53,8 @@
   "card": {
     "untitled": "Poste sans titre",
     "copied": "Copié !",
+    "applications_one": "{{count}} candidature",
+    "applications_other": "{{count}} candidatures",
     "days_left": "{{count}}j restants",
     "expired_badge": "Expirée",
     "status": {

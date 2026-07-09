@@ -102,17 +102,17 @@ const CampaignHeader: React.FC<Props> = memo(({
         {/* Type accent bar */}
         <div className="h-[3px] w-full shrink-0" style={{ background: typeColor }} />
 
-        <div className="p-5 sm:p-6">
+        <div className="px-[18px] py-4">
           {/* Nav row */}
-          <div className="flex items-center justify-between mb-5">
-            <button
-              type="button"
+          <div className="flex items-center justify-between mb-3">
+            <Button
+              variant="ghost"
               onClick={handleBack}
-              className="inline-flex items-center gap-1.5 cursor-pointer text-muted-foreground hover:text-foreground/70 transition-colors"
+              className="p-0 h-auto text-muted-foreground hover:bg-transparent hover:text-foreground/70"
             >
-              <ArrowLeft className="size-[15px]" />
-              <span className="text-[0.8rem] font-semibold">{resolvedBackLabel}</span>
-            </button>
+              <ArrowLeft className="size-[14px]" />
+              <span className="text-[12.5px] font-semibold">{resolvedBackLabel}</span>
+            </Button>
 
             {actionsNode ?? (
               (onEditClick || onChangeStatus || onDeleteClick) && (
@@ -120,9 +120,9 @@ const CampaignHeader: React.FC<Props> = memo(({
                   <DropdownMenuTrigger asChild>
                     <button
                       type="button"
-                      className="size-8 rounded-[10px] flex items-center justify-center border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer outline-none"
+                      className="size-[26px] rounded-lg flex items-center justify-center border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer outline-none"
                     >
-                      <MoreVertical className="size-4" />
+                      <MoreVertical className="size-[14px]" />
                     </button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg">
@@ -183,109 +183,125 @@ const CampaignHeader: React.FC<Props> = memo(({
           </div>
 
           {/* Identity row */}
-          <div className="flex items-center gap-5 flex-wrap">
+          <div className="flex items-start gap-3">
             <div
-              className="flex items-center justify-center size-[72px] rounded-[18px] shrink-0 border"
-              style={{ background: `${typeColor}10`, borderColor: `${typeColor}22`, boxShadow: `0 4px 18px ${typeColor}20` }}
+              className="flex items-center justify-center size-[42px] rounded-xl shrink-0 border"
+              style={{ background: `${typeColor}10`, borderColor: `${typeColor}22` }}
             >
               {TypeIcon
-                ? <TypeIcon className="!size-8" style={{ color: typeColor }} />
-                : <Megaphone className="size-8" style={{ color: typeColor }} />}
+                ? <TypeIcon className="!size-5" style={{ color: typeColor }} />
+                : <Megaphone className="size-5" style={{ color: typeColor }} />}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="font-bold text-[1.125rem] text-foreground leading-tight">{campaign.title}</p>
-              {campaign.description && (
-                <p className="text-[0.8125rem] text-muted-foreground mt-1 max-w-[520px] leading-relaxed">{campaign.description}</p>
-              )}
-              <div className="flex items-center gap-2 mt-3 flex-wrap">
-                <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full" style={{ background: sc.bg }}>
+              <div className="flex items-center gap-2 flex-wrap">
+                <p className="font-bold text-[15.5px] text-foreground leading-tight">{campaign.title}</p>
+                <span className="inline-flex items-center gap-1.5 h-5 px-2 rounded-full shrink-0" style={{ background: sc.bg }}>
                   <span className="size-1.5 rounded-full" style={{ background: sc.fg }} />
                   <span className="text-[11px] font-bold" style={{ color: sc.fg }}>{t(`pages.campaigns.status.${campaign.status}`)}</span>
                 </span>
                 {modLabel && (
-                  <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-slate-100 border border-slate-200">
-                    <span className="text-[11.5px] font-semibold text-slate-600">{modLabel}</span>
+                  <span className="inline-flex items-center h-5 px-2 rounded-full bg-slate-100 border border-slate-200 shrink-0">
+                    <span className="text-[11px] font-semibold text-slate-600">{modLabel}</span>
                   </span>
                 )}
                 {campaign.status === "DRAFT" && !moduleConfigured && (
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-50 border border-amber-200 cursor-default">
-                        <TriangleAlert className="size-[11px] text-amber-600" />
-                        <span className="text-[11px] font-bold text-amber-600">{t(`${tp}.module_not_configured_badge`)}</span>
+                      <span className="inline-flex items-center gap-1 h-5 px-2 rounded-full bg-amber-50 border border-amber-200 cursor-default shrink-0">
+                        <TriangleAlert className="size-[10px] text-amber-600" />
+                        <span className="text-[10.5px] font-bold text-amber-600">{t(`${tp}.module_not_configured_badge`)}</span>
                       </span>
                     </TooltipTrigger>
                     <TooltipContent>{t(`${tp}.module_not_configured_tooltip`)}</TooltipContent>
                   </Tooltip>
                 )}
                 {remaining !== null && (
-                  <span className="inline-flex items-center gap-1">
+                  <span className="inline-flex items-center gap-1 shrink-0">
                     <Calendar className="size-[11px] text-slate-300" />
-                    <span className="text-[11.5px] text-muted-foreground font-medium">
+                    <span className="text-[11px] text-muted-foreground font-medium">
                       {remaining === 0 ? t(`${tp}.deadline_passed`) : t(`${tp}.days_left_short`, { count: remaining })}
                     </span>
                   </span>
                 )}
               </div>
-
-              {/* Details row */}
-              <div className="flex items-center gap-x-4 gap-y-1.5 mt-2.5 flex-wrap">
-                {campaign.accessMethod && (
-                  <span className="inline-flex items-center gap-1.5">
-                    {campaign.accessMethod === "LINK"
-                      ? <Link2 className="size-[11px] text-slate-300" />
-                      : <Lock className="size-[11px] text-slate-300" />}
-                    <span className="text-[11.5px] text-muted-foreground font-medium">
-                      {campaign.accessMethod === "LINK" ? t(`${cp}.access_public_link`) : t(`${cp}.access_accounts_only`)}
-                    </span>
-                  </span>
-                )}
-                {campaign.anonymityMode && (
-                  <span className="inline-flex items-center gap-1.5">
-                    {campaign.anonymityMode === "ANONYMOUS"
-                      ? <EyeOff className="size-[11px] text-slate-300" />
-                      : <Eye className="size-[11px] text-slate-300" />}
-                    <span className="text-[11.5px] text-muted-foreground font-medium">
-                      {campaign.anonymityMode === "ANONYMOUS" ? t(`${cp}.privacy_anonymous`) : t(`${cp}.privacy_nominative`)}
-                    </span>
-                  </span>
-                )}
-                {campaign.participantCount != null && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <Users className="size-[11px] text-slate-300" />
-                    <span className="text-[11.5px] text-muted-foreground font-medium">
-                      {t(`${tp}.participants_count`, { count: campaign.participantCount })}
-                    </span>
-                  </span>
-                )}
-                {createdDate && (
-                  <span className="inline-flex items-center gap-1.5">
-                    <CalendarPlus className="size-[11px] text-slate-300" />
-                    <span className="text-[11.5px] text-muted-foreground font-medium">
-                      {t(`${tp}.created_on`, { date: createdDate })}
-                    </span>
-                  </span>
-                )}
-              </div>
+              {campaign.description && (
+                <p className="text-[12px] text-muted-foreground mt-0.5 max-w-[520px] leading-relaxed">{campaign.description}</p>
+              )}
             </div>
           </div>
 
-          {campaign.accessMethod === "LINK" && campaign.linkToken && (
-            <div className="flex justify-end mt-4">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    type="button"
-                    variant={linkCopied ? "default" : "outline"}
-                    size="sm"
-                    onClick={handleCopyLink}
-                  >
-                    {linkCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
-                    {linkCopied ? t(`${tp}.link_copied`) : t(`${tp}.copy_link_button`)}
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>{t(`${tp}.copy_link_tooltip`)}</TooltipContent>
-              </Tooltip>
+          {/* Fact strip */}
+          {(campaign.accessMethod || campaign.anonymityMode || campaign.participantCount != null || createdDate) && (
+            <div className="flex rounded-xl border border-border overflow-hidden bg-muted mt-3">
+              {campaign.accessMethod && (
+                <div className="flex-1 min-w-0 px-[11px] py-2.5 border-r border-border/60 last:border-r-0">
+                  <div className="flex items-center gap-1.5">
+                    {campaign.accessMethod === "LINK"
+                      ? <Link2 className="size-3 text-muted-foreground shrink-0" />
+                      : <Lock className="size-3 text-muted-foreground shrink-0" />}
+                    <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-muted-foreground/70 truncate">
+                      {t(`${tp}.access_method_label`)}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-1.5 mt-0.5">
+                    <span className="text-[12.5px] font-bold text-foreground truncate">
+                      {campaign.accessMethod === "LINK" ? t(`${cp}.access_public_link`) : t(`${cp}.access_accounts_only`)}
+                    </span>
+                    {campaign.accessMethod === "LINK" && campaign.linkToken && (
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button
+                            type="button"
+                            onClick={handleCopyLink}
+                            className="inline-flex items-center gap-1 h-[19px] px-1.5 rounded-full text-[10px] font-bold shrink-0 bg-primary/10 text-primary hover:bg-primary/15 transition-colors cursor-pointer outline-none"
+                          >
+                            {linkCopied ? <Check className="size-[9px]" /> : <Copy className="size-[9px]" />}
+                            {linkCopied ? t(`${tp}.link_copied`) : t(`${tp}.copy_link_button`)}
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent>{t(`${tp}.copy_link_tooltip`)}</TooltipContent>
+                      </Tooltip>
+                    )}
+                  </div>
+                </div>
+              )}
+              {campaign.anonymityMode && (
+                <div className="flex-1 min-w-0 px-[11px] py-2.5 border-r border-border/60 last:border-r-0">
+                  <div className="flex items-center gap-1.5">
+                    {campaign.anonymityMode === "ANONYMOUS"
+                      ? <EyeOff className="size-3 text-muted-foreground shrink-0" />
+                      : <Eye className="size-3 text-muted-foreground shrink-0" />}
+                    <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-muted-foreground/70 truncate">
+                      {t(`${tp}.anonymity_label`)}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] font-bold text-foreground truncate mt-0.5">
+                    {campaign.anonymityMode === "ANONYMOUS" ? t(`${cp}.privacy_anonymous`) : t(`${cp}.privacy_nominative`)}
+                  </p>
+                </div>
+              )}
+              {campaign.participantCount != null && (
+                <div className="flex-1 min-w-0 px-[11px] py-2.5 border-r border-border/60 last:border-r-0">
+                  <div className="flex items-center gap-1.5">
+                    <Users className="size-3 text-muted-foreground shrink-0" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-muted-foreground/70 truncate">
+                      {t(`${tp}.stats_participants`)}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] font-bold text-foreground truncate mt-0.5 tabular-nums">{campaign.participantCount}</p>
+                </div>
+              )}
+              {createdDate && (
+                <div className="flex-1 min-w-0 px-[11px] py-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <CalendarPlus className="size-3 text-muted-foreground shrink-0" />
+                    <span className="text-[10px] font-bold uppercase tracking-[0.04em] text-muted-foreground/70 truncate">
+                      {t(`${tp}.fact_created`)}
+                    </span>
+                  </div>
+                  <p className="text-[12.5px] font-bold text-foreground truncate mt-0.5">{createdDate}</p>
+                </div>
+              )}
             </div>
           )}
         </div>

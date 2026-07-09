@@ -1,29 +1,45 @@
-import axiosInstance from "@/utils/axiosInstance";
-import type { WebinarAnswers, WebinarContact, WebinarSubmission } from "./types";
+import type { WebinarContact, WebinarSubmission } from "./types";
 
-const BASE = "/webinar-agent";
+const BACKEND = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
+const BASE    = `${BACKEND}/webinar-agent`;
+
+async function post<T>(url: string, body: unknown): Promise<T> {
+  const res = await fetch(url, {
+    method:  "POST",
+    headers: { "Content-Type": "application/json" },
+    body:    JSON.stringify(body),
+  });
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.error || `Request failed: ${res.status}`);
+  return json as T;
+}
+
+async function get<T>(url: string): Promise<T> {
+  const res = await fetch(url);
+  const json = await res.json();
+  if (!res.ok) throw new Error(json?.error || `Request failed: ${res.status}`);
+  return json as T;
+}
 
 export const webinarApi = {
-  saveProgress: async (params: {
+  saveProgress: (params: {
     submissionId?: string;
     webinarId: string;
     contact?: WebinarContact;
     lang?: string;
     consent?: boolean;
-    answers?: Partial<WebinarAnswers> | Record<string, any>;
+    answers?: Record<string, unknown>;
     source?: Record<string, string>;
-  }) => {
-    const { data } = await axiosInstance.post(`${BASE}/progress`, params);
-    return data as { success: boolean; submissionId: string };
-  },
+  }) =>
+    post<{ success: boolean; submissionId: string }>(`${BASE}/progress`, params),
 
-  getProgress: async (submissionId: string) => {
-    const { data } = await axiosInstance.get(`${BASE}/progress/${submissionId}`);
-    return data.submission as WebinarSubmission;
-  },
+  getProgress: (submissionId: string) =>
+    get<{ success: boolean; submission: WebinarSubmission }>(`${BASE}/progress/${submissionId}`)
+      .then(d => d.submission),
 
-  complete: async (submissionId: string, answers: Partial<WebinarAnswers> | Record<string, any>) => {
-    const { data } = await axiosInstance.post(`${BASE}/complete/${submissionId}`, { answers });
-    return data.submission as WebinarSubmission;
-  },
+  complete: (submissionId: string, answers: Record<string, unknown>) =>
+    post<{ success: boolean; submission: WebinarSubmission }>(
+      `${BASE}/complete/${submissionId}`,
+      { answers },
+    ).then(d => d.submission),
 };

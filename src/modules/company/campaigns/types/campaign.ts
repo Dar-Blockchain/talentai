@@ -102,16 +102,14 @@ export interface Question {
   question: string;
   type: QuestionType;
   options?: string[];
+  /** Indexes into `options` that are correct. SINGLE_CHOICE: 0-1 entries, MULTIPLE_CHOICE: 0-N entries. Absent/empty falls back to AI grading. */
+  correctOptionIndexes?: number[];
 }
 
 export interface QuestionnaireModule {
   type: "QUESTIONNAIRE";
   config: {
-    questions: {
-      question: string;
-      type: QuestionType;
-      options?: string[];
-    }[];
+    questions: Question[];
     aiScoringEnabled?: boolean;
     showResultsToParticipants?: boolean;
   } | null;

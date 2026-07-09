@@ -6,6 +6,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import Header from "@/modules/shared/layouts/home/HomeHeader";
 import { webinarApi } from "@/modules/webinar/api";
 import type { WebinarScoring } from "@/modules/webinar/types";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
+import { validateEmail, emailKeyDownGuard } from "@/lib/validation/email";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 interface QuestionOption { key: string; label_fr: string; label_en: string; }
@@ -17,8 +19,9 @@ interface WebinarData { _id: string; title: string; questions: DBQuestion[]; lan
 
 const EASE    = [0.32, 0.72, 0, 1] as [number, number, number, number];
 const ALPHA   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const BACKEND = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
+const TEAL    = "#0D9488";
+const BRAND   = "#6AD39C";
 
 const COUNTRIES = [
   "Tunisie","France","Belgique","Luxembourg","Suisse","Monaco",
@@ -32,7 +35,7 @@ const COUNTRIES = [
   "Australia","Other",
 ].sort();
 
-// ── Shared primitives ─────────────────────────────────────────────────────────
+// ── Shared SVG primitives ─────────────────────────────────────────────────────
 function CheckIcon({ color = "currentColor" }: { color?: string }) {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
@@ -45,6 +48,15 @@ function ErrorIcon() {
   return (
     <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
       <circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/>
+    </svg>
+  );
+}
+
+function ChevronIcon({ dir }: { dir: "up" | "down" | "right" | "left" }) {
+  const pts = { up: "18 15 12 9 6 15", down: "6 9 12 15 18 9", right: "9 18 15 12 9 6", left: "15 18 9 12 15 6" };
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points={pts[dir]}/>
     </svg>
   );
 }
@@ -116,31 +128,30 @@ function ArcRing({ value, size = 120, stroke = 10, color }: { value: number; siz
   );
 }
 
-// ── Snapshot — congratulations screen shown to the user ──────────────────────
-const C = { brand: "#6AD39C", teal: "#0D9488", amber: "#F59E0B", muted: "#94A3B8" };
-
+// ── Snapshot — congratulations screen ────────────────────────────────────────
 const SNAP_GRID = {
-  backgroundImage: "linear-gradient(rgba(106,211,156,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(106,211,156,0.06) 1px,transparent 1px)",
+  backgroundImage: `linear-gradient(rgba(106,211,156,0.06) 1px,transparent 1px),linear-gradient(90deg,rgba(106,211,156,0.06) 1px,transparent 1px)`,
   backgroundSize: "32px 32px",
 };
 
 function Snapshot({ scoring, lang }: { scoring: WebinarScoring; lang: string }) {
   const isEn       = lang === "en";
   const score      = scoring.readiness_score ?? Math.round((scoring.maturite_ia + scoring.intensite_pain) / 2);
-  const scoreColor = score >= 65 ? C.brand : score >= 35 ? C.teal : C.amber;
+  const scoreColor = score >= 65 ? BRAND : score >= 35 ? TEAL : "#F59E0B";
   const scoreLabel = score >= 65
-    ? (isEn ? "Strong profile" : "Profil solide")
+    ? (isEn ? "Strong profile"  : "Profil solide")
     : score >= 35
       ? (isEn ? "Good potential" : "Bon potentiel")
-      : (isEn ? "Keep growing" : "En progression");
+      : (isEn ? "Keep growing"   : "En progression");
+
+  const bars = [
+    { label: isEn ? "Knowledge"  : "Maîtrise",   value: scoring.maturite_ia,   color: BRAND },
+    { label: isEn ? "Engagement" : "Engagement",  value: scoring.intensite_pain, color: TEAL  },
+  ];
 
   return (
     <div className="min-h-screen flex flex-col bg-white">
-
-      {/* Grid texture */}
       <div className="pointer-events-none fixed inset-0" style={SNAP_GRID} />
-
-      {/* Glow blobs */}
       <div className="pointer-events-none fixed top-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] opacity-20"
         style={{ background: "radial-gradient(ellipse,rgba(13,148,136,0.25) 0%,transparent 70%)" }} />
       <div className="pointer-events-none fixed bottom-0 right-0 w-80 h-80 opacity-10"
@@ -156,7 +167,7 @@ function Snapshot({ scoring, lang }: { scoring: WebinarScoring; lang: string }) 
             <motion.div initial={{ scale: 0, rotate: -15 }} animate={{ scale: 1, rotate: 0 }}
               transition={{ delay: 0.1, type: "spring", stiffness: 280, damping: 18 }}
               className="w-[72px] h-[72px] rounded-2xl flex items-center justify-center"
-              style={{ background: "linear-gradient(135deg,#0D9488 0%,#6AD39C 100%)", boxShadow: "0 8px 32px rgba(106,211,156,0.40)" }}>
+              style={{ background: `linear-gradient(135deg,${TEAL} 0%,${BRAND} 100%)`, boxShadow: `0 8px 32px rgba(106,211,156,0.40)` }}>
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.8" strokeLinecap="round" strokeLinejoin="round">
                 <polyline points="20 6 9 17 4 12"/>
               </svg>
@@ -166,7 +177,7 @@ function Snapshot({ scoring, lang }: { scoring: WebinarScoring; lang: string }) 
           {/* Headline */}
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="text-center mb-8">
-            <p className="text-[11px] font-bold uppercase tracking-[2.5px] mb-3" style={{ color: C.teal }}>
+            <p className="text-[11px] font-bold uppercase tracking-[2.5px] mb-3" style={{ color: TEAL }}>
               Talent AI · {isEn ? "AI Report" : "Rapport IA"}
             </p>
             <h1 className="text-[2.2rem] font-black text-slate-900 leading-[1.1] tracking-tight mb-3">
@@ -189,29 +200,23 @@ function Snapshot({ scoring, lang }: { scoring: WebinarScoring; lang: string }) 
             </p>
 
             <div className="flex items-center justify-center gap-6">
-              {/* Ring */}
               <div className="relative shrink-0">
                 <ArcRing value={score} size={100} stroke={9} color={scoreColor} />
                 <div className="absolute inset-0 flex flex-col items-center justify-center">
                   <span className="text-[1.7rem] font-black leading-none tabular-nums" style={{ color: scoreColor }}>{score}</span>
-                  <span className="text-[9px] font-bold" style={{ color: "rgba(255,255,255,0.35)" }}>/100</span>
+                  <span className="text-[9px] font-bold text-slate-400">/100</span>
                 </div>
               </div>
 
-              {/* Score breakdown bars */}
               <div className="flex-1 space-y-2.5 text-left min-w-0">
-                {[
-                  { label: isEn ? "Knowledge" : "Maîtrise",   value: scoring.maturite_ia,  color: C.brand },
-                  { label: isEn ? "Engagement" : "Engagement", value: scoring.intensite_pain, color: C.teal  },
-                ].map(({ label, value, color }) => (
+                {bars.map(({ label, value, color }) => (
                   <div key={label}>
                     <div className="flex justify-between text-[10.5px] mb-1 text-slate-400">
                       <span>{label}</span>
                       <span className="font-bold tabular-nums" style={{ color }}>{value}</span>
                     </div>
-                    <div className="h-1.5 rounded-full" style={{ background: "#E2E8F0" }}>
-                      <motion.div className="h-full rounded-full"
-                        style={{ background: color }}
+                    <div className="h-1.5 rounded-full bg-slate-200">
+                      <motion.div className="h-full rounded-full" style={{ background: color }}
                         initial={{ width: 0 }} animate={{ width: `${value}%` }}
                         transition={{ delay: 0.55, duration: 1, ease: [0.22, 1, 0.36, 1] }} />
                     </div>
@@ -232,7 +237,7 @@ function Snapshot({ scoring, lang }: { scoring: WebinarScoring; lang: string }) 
             className="flex items-center gap-3 px-5 py-4 rounded-2xl border border-slate-100 bg-slate-50">
             <div className="w-9 h-9 rounded-xl flex items-center justify-center shrink-0"
               style={{ background: "rgba(13,148,136,0.08)", border: "1px solid rgba(13,148,136,0.15)" }}>
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={C.teal} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke={TEAL} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
               </svg>
             </div>
@@ -276,9 +281,7 @@ function QuestionSlide({ q, idx, total, lang, value, onChange, onNext, onBack, s
         transition={{ duration: 0.35, delay: 0.05 }}
         className="flex items-center gap-2 mb-5">
         <span className="text-[13px] font-black text-teal-600 tabular-nums">{idx + 1}</span>
-        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <polyline points="9 18 15 12 9 6"/>
-        </svg>
+        <ChevronIcon dir="right" />
         <span className="text-[13px] text-slate-400">{isEn ? `of ${total}` : `sur ${total}`}</span>
       </motion.div>
 
@@ -315,19 +318,17 @@ function QuestionSlide({ q, idx, total, lang, value, onChange, onNext, onBack, s
         )}
 
         {q.type === "select" && (
-          <div className="relative">
-            <select value={(value as string) || ""} onChange={e => onChange(e.target.value)}
-              className="w-full rounded-2xl border-2 border-slate-200 focus:border-teal-500 outline-none px-5 py-4 text-[15px] text-slate-700 bg-white/80 appearance-none pr-12 transition-colors">
-              <option value="">{isEn ? "Select…" : "Sélectionner…"}</option>
+          <Select value={(value as string) || undefined} onValueChange={onChange}>
+            <SelectTrigger className="w-full h-auto rounded-2xl border-2 border-slate-200 px-5 py-4 text-[15px] text-slate-700 bg-white/80 data-[state=open]:border-teal-500 data-[state=open]:ring-teal-500/20">
+              <SelectValue placeholder={isEn ? "Select…" : "Sélectionner…"} />
+            </SelectTrigger>
+            <SelectContent>
               {q.options.length > 0
-                ? q.options.map(o => <option key={o.key} value={o.key}>{isEn ? o.label_en : o.label_fr}</option>)
-                : COUNTRIES.map(c => <option key={c} value={c}>{c}</option>)
+                ? q.options.map(o => <SelectItem key={o.key} value={o.key}>{isEn ? o.label_en : o.label_fr}</SelectItem>)
+                : COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)
               }
-            </select>
-            <svg className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-slate-400" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="6 9 12 15 18 9"/>
-            </svg>
-          </div>
+            </SelectContent>
+          </Select>
         )}
       </motion.div>
 
@@ -338,9 +339,7 @@ function QuestionSlide({ q, idx, total, lang, value, onChange, onNext, onBack, s
           {idx > 0 && (
             <button onClick={onBack}
               className="w-12 h-12 rounded-2xl border-2 border-slate-200 text-slate-400 hover:border-slate-300 hover:text-slate-600 transition-all flex items-center justify-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
-                <polyline points="15 18 9 12 15 6"/>
-              </svg>
+              <ChevronIcon dir="left" />
             </button>
           )}
           <motion.button onClick={onNext} disabled={saving}
@@ -419,7 +418,7 @@ export default function WebinarAgentPage() {
   const containerRef = useRef<HTMLDivElement>(null);
 
   const emailVal       = contact.email.trim();
-  const validEmail     = EMAIL_RE.test(emailVal);
+  const validEmail     = validateEmail(emailVal) === true;
   const showEmailError = emailVal.length > 0 && !validEmail;
   const canStart       = consent && contact.nom.trim() !== "" && validEmail;
 
@@ -442,8 +441,8 @@ export default function WebinarAgentPage() {
     localStorage.setItem("webinar_submission_id", id);
   };
 
-  const saveStep = useCallback(async (patch: Record<string, unknown> = {}) => {
-    if (!webinarId) return;
+  const saveStep = useCallback(async (patch: Record<string, unknown> = {}): Promise<string | null> => {
+    if (!webinarId) return null;
     setSaving(true);
     try {
       const merged = { ...answers, ...patch };
@@ -459,16 +458,20 @@ export default function WebinarAgentPage() {
       });
       persistSubId(res.submissionId);
       setAnswers(merged);
+      return res.submissionId;
     } finally {
       setSaving(false);
     }
   }, [webinarId, submissionId, lang, consent, contact, answers, router.query]);
 
-  const handleComplete = useCallback(async () => {
-    if (!submissionId) return;
+  // subId param lets callers pass the fresh ID returned by saveStep directly,
+  // bypassing the stale React state closure (which still holds the pre-save value).
+  const handleComplete = useCallback(async (subId?: string) => {
+    const id = subId ?? submissionId;
+    if (!id) return;
     setSaving(true);
     try {
-      const sub = await webinarApi.complete(submissionId, answers as Record<string, string | number>);
+      const sub = await webinarApi.complete(id, answers as Record<string, string | number>);
       setScoring(sub.scoring ?? null);
       localStorage.removeItem("webinar_submission_id");
       setStepIdx(total + 1);
@@ -496,8 +499,8 @@ export default function WebinarAgentPage() {
   }, [saveStep, goNext]);
 
   const handleLastQuestion = useCallback(async () => {
-    if (currentQ) await saveStep({ [currentQ.key]: answers[currentQ.key] });
-    await handleComplete();
+    const freshId = currentQ ? await saveStep({ [currentQ.key]: answers[currentQ.key] }) : null;
+    await handleComplete(freshId ?? undefined);
   }, [currentQ, saveStep, answers, handleComplete]);
 
   const handleNavNext = useCallback(() => {
@@ -555,7 +558,7 @@ export default function WebinarAgentPage() {
                     const current = i === qIdx;
                     return (
                       <motion.div key={i}
-                        animate={{ width: current ? 20 : 6, background: done ? "#6AD39C" : current ? "#0D9488" : "#E2E8F0" }}
+                        animate={{ width: current ? 20 : 6, background: done ? BRAND : current ? TEAL : "#E2E8F0" }}
                         transition={{ duration: 0.35, ease: EASE }}
                         className="h-1.5 rounded-full cursor-pointer"
                         onClick={() => done && goTo(i + 1)}
@@ -621,14 +624,13 @@ export default function WebinarAgentPage() {
                     <div className="relative">
                       <input type="email" value={contact.email}
                         onChange={e => setContact(c => ({ ...c, email: e.target.value }))}
+                        onKeyDown={emailKeyDownGuard}
                         placeholder={isEn ? "you@company.com" : "vous@entreprise.com"}
                         className={`w-full rounded-2xl border-2 outline-none px-5 py-4 text-[15px] text-slate-800 placeholder:text-slate-300 transition-all bg-white
                           ${showEmailError ? "border-red-400 bg-red-50/20" : validEmail ? "border-teal-400 bg-teal-50/20" : "border-slate-200 focus:border-teal-400 focus:bg-teal-50/10"}`}
                       />
                       {validEmail && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-teal-500"><CheckIcon /></span>}
-                      {showEmailError && (
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400"><ErrorIcon /></span>
-                      )}
+                      {showEmailError && <span className="absolute right-4 top-1/2 -translate-y-1/2 text-red-400"><ErrorIcon /></span>}
                     </div>
                   </ContactField>
 
@@ -701,9 +703,17 @@ export default function WebinarAgentPage() {
           ))}
 
           {/* Snapshot */}
-          {isSnapshot && scoring && (
+          {isSnapshot && (
             <div style={{ paddingTop: "80px" }}>
-              <Snapshot scoring={scoring} lang={lang} />
+              {scoring
+                ? <Snapshot scoring={scoring} lang={lang} />
+                : (
+                  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-slate-400">
+                    <div className="w-10 h-10 border-2 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
+                    <p className="text-[14px]">{isEn ? "Analysing your profile…" : "Analyse de votre profil…"}</p>
+                  </div>
+                )
+              }
             </div>
           )}
         </div>
@@ -713,12 +723,12 @@ export default function WebinarAgentPage() {
           <div className="fixed right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-40 hidden md:flex">
             <button onClick={goBack} disabled={stepIdx <= 1}
               className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-30 transition-all flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+              <ChevronIcon dir="up" />
             </button>
             <button onClick={handleNavNext}
               disabled={!!(currentQ?.required && !answers[currentQ?.key])}
               className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-30 transition-all flex items-center justify-center">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+              <ChevronIcon dir="down" />
             </button>
           </div>
         )}

@@ -11,6 +11,7 @@ import InviteToInterviewModal from "./InviteToInterviewModal";
 import ApplicationCardActions from "./ApplicationCardActions";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -157,14 +158,15 @@ const ApplicationCard = memo<ApplicationCardProps>(({
             )}
 
             {showPostTitle && app.postTitle && (
-              <button
+              <Button
+                variant="ghost"
                 onClick={handlePostClick}
-                className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded cursor-pointer"
+                className="h-auto gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded"
                 style={{ backgroundColor: "#F0FDFA", color: "#0D9488" }}
               >
                 <Briefcase size={10} />
                 {app.postTitle}
-              </button>
+              </Button>
             )}
           </div>
 

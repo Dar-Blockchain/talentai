@@ -2,6 +2,7 @@ import React from "react";
 import { ArrowLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { AuthPageHeader } from "@/modules/auth/shared/ui/AuthPageHeader";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   hasReturnUrl: boolean;
@@ -18,14 +19,14 @@ const FormHeader: React.FC<Props> = ({ hasReturnUrl, title, subtitle, onBack }) 
       title={title}
       subtitle={subtitle}
       above={!hasReturnUrl ? (
-        <button
-          type="button"
+        <Button
+          variant="ghost"
           onClick={onBack}
-          className="inline-flex items-center gap-1 mb-2 cursor-pointer text-muted-foreground font-sans text-xs sm:text-sm font-medium hover:text-primary transition-colors duration-200"
+          className="p-0 h-auto mb-2 text-muted-foreground font-sans text-xs sm:text-sm font-medium hover:bg-transparent hover:text-primary"
         >
           <ArrowLeft className="size-3.5 shrink-0" />
           {t("register.change_role")}
-        </button>
+        </Button>
       ) : undefined}
     />
   );

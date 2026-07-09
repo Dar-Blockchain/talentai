@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { RootState } from '@/store/store';
+import { validateEmail } from '@/lib/validation/email';
 import type { Campaign, ModuleType } from '@/modules/company/campaigns/types/campaign';
 import {
   apiFetchByLinkToken, apiJoinByLink,
@@ -90,8 +91,8 @@ export function useCampaignSession() {
   const validateIdentity = useCallback(() => {
     let ok = true;
     if (!name.trim()) { setNameErr('Your name is required'); ok = false; } else setNameErr('');
-    if (!email.trim()) { setEmailErr('Your email is required'); ok = false; }
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) { setEmailErr('Enter a valid email address'); ok = false; }
+    const emailResult = validateEmail(email.trim());
+    if (emailResult !== true) { setEmailErr(emailResult); ok = false; }
     else setEmailErr('');
     return ok;
   }, [name, email]);
@@ -148,7 +149,7 @@ export function useCampaignSession() {
         router.push(`/employee/campaigns/${resolvedId}`);
       }
     } catch (err: any) {
-      setJoinError(err?.response?.data?.message ?? err?.message ?? 'Failed to join campaign');
+      setJoinError(err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? 'Failed to join campaign');
       setJoining(false);
     }
   }, [campaign, campaignId, token, isLoggedIn, profile, user, name, email, router]);

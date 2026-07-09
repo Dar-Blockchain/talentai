@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { applicationsApi } from "@/modules/company/applications/api";
 import { ScoreCircle, DecisionButton } from "@/modules/shared/ui/shadcn/score-circle";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
   DropdownMenu,
   DropdownMenuTrigger,
@@ -14,7 +15,6 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
-import { cn } from "@/lib/utils";
 
 const TEAL   = "#0D9488";
 const PURPLE = "#7C3AED";
@@ -30,7 +30,7 @@ interface ActionButtonProps {
 const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, onInvite, onContact, sendInviteLabel, contactLabel }) => {
   if (isInvited) {
     return (
-      <div className="flex items-center justify-center gap-1 h-[30px] w-[108px] shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600">
+      <div className="flex items-center justify-center gap-1 h-[30px] w-29.5 shrink-0 rounded-lg border border-emerald-200 bg-emerald-50 text-emerald-600">
         <Check size={14} />
         <span className="text-[12px] font-semibold whitespace-nowrap">Invited</span>
       </div>
@@ -39,30 +39,18 @@ const ActionButton = memo<ActionButtonProps>(({ isInvited, isVisited, hasEmail, 
 
   if (isVisited) {
     return (
-      <button
-        onClick={onInvite}
-        className="flex items-center justify-center gap-1 h-[30px] w-[108px] shrink-0 rounded-lg border border-violet-200 bg-violet-50 text-violet-700 hover:bg-violet-100 hover:border-violet-300 transition-all duration-150 outline-none"
-      >
+      <Button variant="secondary" size="sm" className="w-29.5 shrink-0" onClick={onInvite}>
         <Video size={14} />
-        <span className="text-[12px] font-semibold whitespace-nowrap">{sendInviteLabel}</span>
-      </button>
+        {sendInviteLabel}
+      </Button>
     );
   }
 
   return (
-    <button
-      disabled={!hasEmail}
-      onClick={onContact}
-      className={cn(
-        "flex items-center justify-center gap-1 h-[30px] w-[108px] shrink-0 rounded-lg border transition-all duration-150 outline-none",
-        hasEmail
-          ? "border-blue-200 bg-blue-50 text-blue-600 hover:bg-blue-100 hover:border-blue-300 cursor-pointer"
-          : "border-slate-200 bg-slate-50 text-slate-400 opacity-55 cursor-not-allowed",
-      )}
-    >
+    <Button variant="outline" size="sm" className="w-29.5 shrink-0" disabled={!hasEmail} onClick={onContact}>
       <Mail size={14} />
-      <span className="text-[12px] font-semibold whitespace-nowrap">{contactLabel}</span>
-    </button>
+      {contactLabel}
+    </Button>
   );
 });
 ActionButton.displayName = "ActionButton";
@@ -133,6 +121,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
 
   const [decidingShortlist, setDecidingShortlist] = useState(false);
   const [decidingReject,    setDecidingReject]    = useState(false);
+  const requestInFlight = useRef(false);
 
   const patchSummary = useCallback((decision: "shortlisted" | "rejected" | null) => {
     qc.setQueriesData<SummaryPage>(
@@ -144,6 +133,8 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
   }, [qc, appId]);
 
   const handleDecision = useCallback(async (decision: "shortlisted" | "rejected") => {
+    if (requestInFlight.current) return;
+    requestInFlight.current = true;
     onMenuClose();
     const prev = app.recruiterDecision as "shortlisted" | "rejected" | null | undefined;
     decision === "shortlisted" ? setDecidingShortlist(true) : setDecidingReject(true);
@@ -153,6 +144,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
     } catch {
       patchSummary(prev ?? null);
     } finally {
+      requestInFlight.current = false;
       setDecidingShortlist(false);
       setDecidingReject(false);
     }
@@ -190,14 +182,14 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
       {/* Shortlist / Reject */}
       <div className="flex gap-1.5 shrink-0" onClick={stopProp}>
         <DecisionButton
-          active={isShortlisted} loading={decidingShortlist} disabled={busy}
+          active={isShortlisted} loading={decidingShortlist} disabled={busy || isShortlisted}
           activeColor="#059669" activeBg="#ECFDF5"
           icon={<Star size={13} />}
           label={isShortlisted ? "Shortlisted" : "Shortlist"}
           onClick={handleShortlist}
         />
         <DecisionButton
-          active={isRejected} loading={decidingReject} disabled={busy}
+          active={isRejected} loading={decidingReject} disabled={busy || isRejected}
           activeColor="#DC2626" activeBg="#FEF2F2"
           icon={<XCircle size={13} />}
           label={isRejected ? "Rejected" : "Reject"}

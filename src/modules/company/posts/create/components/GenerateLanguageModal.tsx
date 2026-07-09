@@ -1,10 +1,9 @@
 import React, { useEffect, useState } from "react";
-import { Box, Button, Dialog, Typography } from "@mui/material";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import CheckBoxOutlined from "@mui/icons-material/CheckBoxOutlined";
-import CheckBoxOutlineBlankOutlined from "@mui/icons-material/CheckBoxOutlineBlank";
-import CircularProgress from "@mui/material/CircularProgress";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Sparkles as AutoAwesomeOutlined, CheckSquare as CheckBoxOutlined, Square as CheckBoxOutlineBlankOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 
 export const GENERATE_LANG_KEY = "talentai_generate_lang";
@@ -36,153 +35,108 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={loading ? undefined : onClose}
-      PaperProps={{
-        sx: {
-          borderRadius: "18px",
-          width: 360,
-          maxWidth: "95vw",
-          p: 3,
-          boxShadow: "0 24px 64px rgba(0,0,0,0.12)",
-        },
-      }}
-    >
-      {/* Title */}
-      <Box sx={{ textAlign: "center", mb: 2.5 }}>
-        <Box
-          sx={{
-            width: 44, height: 44, borderRadius: "12px",
-            bgcolor: TEAL_BG, mx: "auto", mb: 1.5,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          <AutoAwesomeOutlined sx={{ fontSize: 22, color: TEAL }} />
-        </Box>
-        <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-          {t("create.lang_modal.title")}
-        </Typography>
-        <Typography sx={{ fontSize: "12.5px", color: "#6B7280", mt: 0.5 }}>
-          {t("create.lang_modal.subtitle")}
-        </Typography>
-      </Box>
-
-      {/* Language toggle */}
-      <Box
-        sx={{
-          display: "flex",
-          bgcolor: "#F3F4F6",
-          borderRadius: "12px",
-          p: "4px",
-          mb: 2.5,
-        }}
+    <Dialog open={open} onOpenChange={(next) => { if (!next && !loading) onClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="w-[360px] max-w-[95vw] gap-0 rounded-[18px] p-0 shadow-[0_24px_64px_rgba(0,0,0,0.12)]"
       >
-        {SUPPORTED_LANGS.map((lang) => {
-          const active = selected === lang.code;
-          return (
-            <Box
-              key={lang.code}
-              role="button"
-              tabIndex={loading ? -1 : 0}
-              aria-pressed={active}
-              aria-label={lang.label}
-              onClick={() => !loading && setSelected(lang.code)}
-              onKeyDown={(e) => { if (!loading && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSelected(lang.code); } }}
-              sx={{
-                flex: 1,
-                display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75,
-                py: 1, borderRadius: "9px",
-                cursor: loading ? "default" : "pointer",
-                bgcolor: active ? "#fff" : "transparent",
-                boxShadow: active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-                transition: "all 0.18s",
-                "&:focus-visible": { outline: "2px solid #0D9488", outlineOffset: 2 },
-              }}
+        <div className="p-6">
+          {/* Title */}
+          <div className="mb-5 text-center">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[#F0FDFA]">
+              <AutoAwesomeOutlined size={22} color={TEAL} />
+            </div>
+            <p className="text-[15px] font-bold text-[#111827]">
+              {t("create.lang_modal.title")}
+            </p>
+            <p className="mt-1 text-[12.5px] text-[#6B7280]">
+              {t("create.lang_modal.subtitle")}
+            </p>
+          </div>
+
+          {/* Language toggle */}
+          <div className="mb-5 flex rounded-xl bg-[#F3F4F6] p-1">
+            {SUPPORTED_LANGS.map((lang) => {
+              const active = selected === lang.code;
+              return (
+                <div
+                  key={lang.code}
+                  role="button"
+                  tabIndex={loading ? -1 : 0}
+                  aria-pressed={active}
+                  aria-label={lang.label}
+                  onClick={() => !loading && setSelected(lang.code)}
+                  onKeyDown={(e) => { if (!loading && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSelected(lang.code); } }}
+                  className={cn(
+                    "flex flex-1 items-center justify-center gap-1.5 rounded-[9px] py-2 transition-all duration-[180ms] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D9488]",
+                    loading ? "cursor-default" : "cursor-pointer",
+                    active ? "bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)]" : "bg-transparent",
+                  )}
+                >
+                  <img
+                    src={`https://flagcdn.com/w40/${lang.flag}.png`}
+                    srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`}
+                    width={24} height={16} alt={lang.label}
+                    className="block rounded-[2px]"
+                  />
+                  <span className={cn("text-[13px]", active ? "font-bold text-[#111827]" : "font-medium text-[#6B7280]")}>
+                    {lang.label}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Save as default checkbox */}
+          <div
+            role="checkbox"
+            tabIndex={loading ? -1 : 0}
+            aria-checked={saveAsDefault}
+            onClick={() => !loading && setSaveAsDefault((v) => !v)}
+            onKeyDown={(e) => { if (!loading && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSaveAsDefault((v) => !v); } }}
+            className={cn(
+              "mb-5 flex items-center gap-2 rounded-[10px] border px-2 py-1.5 transition-all duration-150 select-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#0D9488]",
+              loading ? "cursor-default" : "cursor-pointer",
+              saveAsDefault ? "border-[#0D9488] bg-[#F0FDFA]" : "border-[#E5E7EB] bg-[#FAFAFA]",
+            )}
+          >
+            {saveAsDefault
+              ? <CheckBoxOutlined size={18} color={TEAL} className="shrink-0" />
+              : <CheckBoxOutlineBlankOutlined size={18} color="#9CA3AF" className="shrink-0" />}
+            <div>
+              <p className={cn("text-[12.5px] leading-[1.3] font-semibold", saveAsDefault ? "text-[#0D9488]" : "text-[#374151]")}>
+                Always use this language
+              </p>
+              <p className="text-[11px] leading-[1.3] text-[#9CA3AF]">
+                Skip this dialog next time — change anytime in Settings
+              </p>
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2">
+            <Button
+              onClick={onClose}
+              disabled={loading}
+              variant="outline"
+              className="flex-1"
             >
-              <img
-                src={`https://flagcdn.com/w40/${lang.flag}.png`}
-                srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`}
-                width={24} height={16} alt={lang.label}
-                style={{ borderRadius: 2, display: "block" }}
-              />
-              <Typography sx={{ fontSize: "13px", fontWeight: active ? 700 : 500, color: active ? "#111827" : "#6B7280" }}>
-                {lang.label}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
+              {t("create.lang_modal.btn_cancel")}
+            </Button>
 
-      {/* Save as default checkbox */}
-      <Box
-        role="checkbox"
-        tabIndex={loading ? -1 : 0}
-        aria-checked={saveAsDefault}
-        onClick={() => !loading && setSaveAsDefault((v) => !v)}
-        onKeyDown={(e) => { if (!loading && (e.key === "Enter" || e.key === " ")) { e.preventDefault(); setSaveAsDefault((v) => !v); } }}
-        sx={{
-          display: "flex", alignItems: "center", gap: 1,
-          cursor: loading ? "default" : "pointer",
-          px: 1, py: 0.75, mb: 2.5,
-          borderRadius: "10px",
-          border: `1px solid ${saveAsDefault ? TEAL : "#E5E7EB"}`,
-          bgcolor: saveAsDefault ? TEAL_BG : "#FAFAFA",
-          transition: "all 0.15s",
-          userSelect: "none",
-          "&:focus-visible": { outline: "2px solid #0D9488", outlineOffset: 2 },
-        }}
-      >
-        {saveAsDefault
-          ? <CheckBoxOutlined sx={{ fontSize: 18, color: TEAL, flexShrink: 0 }} />
-          : <CheckBoxOutlineBlankOutlined sx={{ fontSize: 18, color: "#9CA3AF", flexShrink: 0 }} />}
-        <Box>
-          <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: saveAsDefault ? TEAL : "#374151", lineHeight: 1.3 }}>
-            Always use this language
-          </Typography>
-          <Typography sx={{ fontSize: "11px", color: "#9CA3AF", lineHeight: 1.3 }}>
-            Skip this dialog next time — change anytime in Settings
-          </Typography>
-        </Box>
-      </Box>
-
-      {/* Actions */}
-      <Box sx={{ display: "flex", gap: 1.25 }}>
-        <Button
-          fullWidth
-          onClick={onClose}
-          disabled={loading}
-          sx={{
-            textTransform: "none", fontWeight: 600, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            color: "#6B7280", border: "1px solid #E5E7EB",
-            "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
-          }}
-        >
-          {t("create.lang_modal.btn_cancel")}
-        </Button>
-
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={handleConfirm}
-          disabled={loading}
-          startIcon={
-            loading
-              ? <CircularProgress size={14} sx={{ color: "#fff" }} />
-              : <AutoAwesomeOutlined sx={{ fontSize: 15 }} />
-          }
-          sx={{
-            textTransform: "none", fontWeight: 700, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            bgcolor: TEAL, color: "#fff", boxShadow: "none",
-            "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" },
-            "&.Mui-disabled": { bgcolor: TEAL, opacity: 0.65, color: "#fff" },
-          }}
-        >
-          {loading ? t("create.lang_modal.btn_generating") : t("create.lang_modal.btn_generate")}
-        </Button>
-      </Box>
+            <Button
+              variant="default"
+              onClick={handleConfirm}
+              disabled={loading}
+              loading={loading}
+              className="flex-1"
+            >
+              {!loading && <AutoAwesomeOutlined size={15} />}
+              {loading ? t("create.lang_modal.btn_generating") : t("create.lang_modal.btn_generate")}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
     </Dialog>
   );
 };

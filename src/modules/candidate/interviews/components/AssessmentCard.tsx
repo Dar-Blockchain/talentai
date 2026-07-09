@@ -1,13 +1,18 @@
 import React from "react";
-import { Box, Button, Typography, LinearProgress, Tooltip, Avatar } from "@mui/material";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import dayjs from "@/lib/dayjs";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import AccessTimeOutlined from "@mui/icons-material/AccessTimeOutlined";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import HourglassEmptyOutlined from "@mui/icons-material/HourglassEmptyOutlined";
-import PlayArrowOutlined from "@mui/icons-material/PlayArrowOutlined";
-import OpenInNewOutlined from "@mui/icons-material/OpenInNew";
+import {
+  Building2 as BusinessOutlined,
+  Clock as AccessTimeOutlined,
+  CheckCircle2 as CheckCircleOutlined,
+  Hourglass as HourglassEmptyOutlined,
+  Play as PlayArrowOutlined,
+  ExternalLink as OpenInNewOutlined,
+} from "lucide-react";
 
 export interface PostAssessment {
   _id: string;
@@ -86,113 +91,121 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
 
   const scoreColor  = score > 0 ? getScoreColor(score) : "#E5E7EB";
   const statusColor = completed ? "#059669" : "#D97706";
+  const progressPct = Math.min(Math.max(score, 0), 100);
 
   return (
-    <Box sx={{
-      borderRadius: "16px",
-      border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}`,
-      bgcolor: "#fff",
-      overflow: "hidden",
-      transition: "all 0.2s ease",
-      "&:hover": {
-        boxShadow: `0 8px 24px ${completed ? "#05966918" : "#D9770618"}`,
-        transform: "translateY(-1px)",
-      },
-    }}>
-      <Box sx={{ height: 4, background: `linear-gradient(90deg, ${statusColor}, ${statusColor}70)` }} />
+    <TooltipProvider>
+      <div
+        className={cn(
+          "rounded-2xl bg-white overflow-hidden transition-all duration-200 border hover:-translate-y-px",
+          completed
+            ? "border-[#A7F3D0] hover:shadow-[0_8px_24px_#05966918]"
+            : "border-[#FDE68A] hover:shadow-[0_8px_24px_#D9770618]",
+        )}
+      >
+        <div className="h-1" style={{ background: `linear-gradient(90deg, ${statusColor}, ${statusColor}70)` }} />
 
-      <Box sx={{ p: 2, display: "flex", alignItems: "center", gap: 2 }}>
-        <Avatar
-          src={logoUrl}
-          variant="rounded"
-          sx={{ width: 48, height: 48, borderRadius: "12px", flexShrink: 0, bgcolor: completed ? "#ECFDF5" : "#FFFBEB", border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}`, "& img": { objectFit: "contain", p: "4px" } }}
-        >
-          <BusinessOutlined sx={{ fontSize: 22, color: statusColor }} />
-        </Avatar>
+        <div className="p-4 flex items-center gap-4">
+          <Avatar
+            className="w-12 h-12 rounded-xl shrink-0"
+            style={{ backgroundColor: completed ? "#ECFDF5" : "#FFFBEB", border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}` }}
+          >
+            <AvatarImage src={logoUrl} className="object-contain p-1" />
+            <AvatarFallback className="rounded-xl bg-transparent">
+              <BusinessOutlined size={22} color={statusColor} />
+            </AvatarFallback>
+          </Avatar>
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.4, flexWrap: "wrap" }}>
-            <Typography sx={{ fontWeight: 800, fontSize: "0.9rem", color: "#111827", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap", maxWidth: 280 }}>
-              {jobTitle}
-            </Typography>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, px: 1, py: 0.25, borderRadius: "20px", bgcolor: completed ? "#ECFDF5" : "#FFFBEB", border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}`, flexShrink: 0 }}>
-              {completed
-                ? <CheckCircleOutlined sx={{ fontSize: 11, color: "#059669" }} />
-                : <HourglassEmptyOutlined sx={{ fontSize: 11, color: "#D97706" }} />}
-              <Typography sx={{ fontSize: "0.62rem", fontWeight: 700, color: statusColor }}>
-                {completed ? s("completed") : s("ongoing")}
-              </Typography>
-            </Box>
-          </Box>
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <p className="font-extrabold text-[0.9rem] text-[#111827] overflow-hidden text-ellipsis whitespace-nowrap max-w-[280px]">
+                {jobTitle}
+              </p>
+              <div
+                className="flex items-center gap-1 px-2 py-0.5 rounded-full shrink-0"
+                style={{ backgroundColor: completed ? "#ECFDF5" : "#FFFBEB", border: `1px solid ${completed ? "#A7F3D0" : "#FDE68A"}` }}
+              >
+                {completed
+                  ? <CheckCircleOutlined size={11} color="#059669" />
+                  : <HourglassEmptyOutlined size={11} color="#D97706" />}
+                <span className="text-[0.62rem] font-bold" style={{ color: statusColor }}>
+                  {completed ? s("completed") : s("ongoing")}
+                </span>
+              </div>
+            </div>
 
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1 }}>
-            {companyName && (
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-                <BusinessOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
-                <Typography sx={{ fontSize: "0.7rem", color: "#6B7280", fontWeight: 500 }}>{companyName}</Typography>
-              </Box>
-            )}
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.4 }}>
-              <AccessTimeOutlined sx={{ fontSize: 11, color: "#9CA3AF" }} />
-              <Typography sx={{ fontSize: "0.7rem", color: "#9CA3AF" }}>{timeAgo}</Typography>
-            </Box>
-          </Box>
+            <div className="flex items-center gap-3 mb-2">
+              {companyName && (
+                <div className="flex items-center gap-1">
+                  <BusinessOutlined size={11} color="#9CA3AF" />
+                  <span className="text-[0.7rem] text-[#6B7280] font-medium">{companyName}</span>
+                </div>
+              )}
+              <div className="flex items-center gap-1">
+                <AccessTimeOutlined size={11} color="#9CA3AF" />
+                <span className="text-[0.7rem] text-[#9CA3AF]">{timeAgo}</span>
+              </div>
+            </div>
 
-          <Box>
-            <Box sx={{ display: "flex", justifyContent: "space-between", mb: 0.4 }}>
-              <Typography sx={{ fontSize: "0.62rem", color: "#9CA3AF" }}>{s("progress")}</Typography>
-              {score > 0 && <Typography sx={{ fontSize: "0.68rem", fontWeight: 800, color: scoreColor }}>{score}%</Typography>}
-            </Box>
-            <LinearProgress
-              variant="determinate"
-              value={Math.min(Math.max(score, 0), 100)}
-              sx={{
-                height: 5, borderRadius: "99px", bgcolor: "#F3F4F6",
-                "& .MuiLinearProgress-bar": { borderRadius: "99px", bgcolor: score > 0 ? scoreColor : "#E5E7EB" },
-              }}
-            />
-          </Box>
-        </Box>
+            <div>
+              <div className="flex justify-between mb-1">
+                <span className="text-[0.62rem] text-[#9CA3AF]">{s("progress")}</span>
+                {score > 0 && <span className="text-[0.68rem] font-extrabold" style={{ color: scoreColor }}>{score}%</span>}
+              </div>
+              <div className="h-[5px] rounded-full bg-[#F3F4F6] overflow-hidden">
+                <div className="h-full rounded-full transition-all" style={{ width: `${progressPct}%`, backgroundColor: score > 0 ? scoreColor : "#E5E7EB" }} />
+              </div>
+            </div>
+          </div>
 
-        <Box sx={{ flexShrink: 0 }}>
-          {pending ? (
-            <Tooltip title={quotaFull ? s("limit_tooltip_long") : ""} arrow>
-              <span>
+          <div className="shrink-0">
+            {pending ? (
+              quotaFull ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span>
+                      <Button
+                        onClick={() => onContinueTest(assessment)}
+                        disabled
+                        className="whitespace-nowrap rounded-[10px] px-4 py-2 text-[0.78rem] font-bold shadow-none"
+                        style={{ color: "#fff", backgroundColor: "#7C3AED" }}
+                      >
+                        <PlayArrowOutlined size={15} />
+                        {s("continue")}
+                      </Button>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{s("limit_tooltip_long")}</TooltipContent>
+                </Tooltip>
+              ) : (
                 <Button
                   onClick={() => onContinueTest(assessment)}
-                  disabled={quotaFull}
-                  startIcon={<PlayArrowOutlined sx={{ fontSize: "15px !important" }} />}
-                  sx={{
-                    textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
-                    color: "#fff", bgcolor: "#7C3AED",
-                    borderRadius: "10px", px: 2, py: 0.8, boxShadow: "none", whiteSpace: "nowrap",
-                    "&:hover": { bgcolor: "#6D28D9", boxShadow: "0 4px 12px #7C3AED30" },
-                    "&.Mui-disabled": { bgcolor: "#E5E7EB", color: "#9CA3AF" },
-                  }}
+                  className="whitespace-nowrap rounded-[10px] px-4 py-2 text-[0.78rem] font-bold shadow-none"
+                  style={{ color: "#fff", backgroundColor: "#7C3AED" }}
                 >
+                  <PlayArrowOutlined size={15} />
                   {s("continue")}
                 </Button>
-              </span>
-            </Tooltip>
-          ) : (
-            <Button
-              onClick={() => onViewDetails(assessment._id)}
-              endIcon={<OpenInNewOutlined sx={{ fontSize: "13px !important" }} />}
-              sx={{
-                textTransform: "none", fontWeight: 700, fontSize: "0.78rem",
-                color: completed ? "#059669" : "#6B7280",
-                bgcolor: completed ? "#ECFDF5" : "#F9FAFB",
-                border: `1px solid ${completed ? "#A7F3D0" : "#E5E7EB"}`,
-                borderRadius: "10px", px: 2, py: 0.8, boxShadow: "none", whiteSpace: "nowrap",
-                "&:hover": { bgcolor: completed ? "#D1FAE5" : "#F3F4F6" },
-              }}
-            >
-              {s("view_report")}
-            </Button>
-          )}
-        </Box>
-      </Box>
-    </Box>
+              )
+            ) : (
+              <Button
+                onClick={() => onViewDetails(assessment._id)}
+                variant="outline"
+                className="whitespace-nowrap rounded-[10px] px-4 py-2 text-[0.78rem] font-bold shadow-none"
+                style={{
+                  color: completed ? "#059669" : "#6B7280",
+                  backgroundColor: completed ? "#ECFDF5" : "#F9FAFB",
+                  borderColor: completed ? "#A7F3D0" : "#E5E7EB",
+                }}
+              >
+                {s("view_report")}
+                <OpenInNewOutlined size={13} />
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 };
 

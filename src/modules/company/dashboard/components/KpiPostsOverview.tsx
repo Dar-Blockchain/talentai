@@ -5,11 +5,13 @@ import { useRouter } from "next/router";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { cn } from "@/lib/utils";
-import WorkOutlineOutlined  from "@mui/icons-material/WorkOutlineOutlined";
-import GroupsOutlined       from "@mui/icons-material/GroupsOutlined";
-import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
-import ChevronLeftOutlined  from "@mui/icons-material/ChevronLeftOutlined";
-import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
+import {
+  Briefcase as WorkOutlineOutlined,
+  Users as GroupsOutlined,
+  AlertTriangle as WarningAmberOutlined,
+  ChevronLeft as ChevronLeftOutlined,
+  ChevronRight as ChevronRightOutlined,
+} from "lucide-react";
 import { ZoneHeading } from "./KpiAtoms";
 import { coverageColor, coverageLabel } from "../utils/kpiTokens";
 import type { PostsStatusResult } from "../types";
@@ -139,7 +141,7 @@ const KpiPostsOverview = memo<KpiPostsOverviewProps>(({ data, loading, page, onP
                       </td>
                       <td className="py-3 px-3 border-b border-slate-100 text-center">
                         <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full" style={{ background: "#0D948812" }}>
-                          <GroupsOutlined style={{ fontSize: 12, color: "#0D9488" }} />
+                          <GroupsOutlined size={12} color="#0D9488" />
                           <span className="font-bold text-[12px] text-teal-600">{p.shortlisted}</span>
                         </span>
                       </td>
@@ -166,7 +168,7 @@ const KpiPostsOverview = memo<KpiPostsOverviewProps>(({ data, loading, page, onP
                       </td>
                       <td className="py-3 px-3 border-b border-slate-100 text-center">
                         <div className="inline-flex items-center gap-1">
-                          {isAlert && <WarningAmberOutlined style={{ fontSize: 13, color: "#EF4444" }} />}
+                          {isAlert && <WarningAmberOutlined size={13} color="#EF4444" />}
                           <span className="font-semibold text-[13px]" style={{ color: isAlert ? "#EF4444" : "#1E293B" }}>
                             {p.deadline !== null ? `${p.deadline}j` : "—"}
                           </span>
@@ -192,7 +194,7 @@ const KpiPostsOverview = memo<KpiPostsOverviewProps>(({ data, loading, page, onP
                 onClick={goPrev}
                 className="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center disabled:opacity-35 hover:bg-slate-50 shrink-0 transition-colors"
               >
-                <ChevronLeftOutlined style={{ fontSize: 16 }} />
+                <ChevronLeftOutlined size={16} />
               </button>
               {pageNumbers.map((n) => (
                 <PageButton key={n} page={n} active={page === n} onGoTo={onPageChange} />
@@ -202,7 +204,7 @@ const KpiPostsOverview = memo<KpiPostsOverviewProps>(({ data, loading, page, onP
                 onClick={goNext}
                 className="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center disabled:opacity-35 hover:bg-slate-50 shrink-0 transition-colors"
               >
-                <ChevronRightOutlined style={{ fontSize: 16 }} />
+                <ChevronRightOutlined size={16} />
               </button>
             </div>
           </div>

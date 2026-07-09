@@ -1,8 +1,6 @@
 "use client";
 import React, { memo } from "react";
-import ArrowUpwardOutlined   from "@mui/icons-material/ArrowUpwardOutlined";
-import ArrowDownwardOutlined from "@mui/icons-material/ArrowDownwardOutlined";
-import RemoveOutlined        from "@mui/icons-material/RemoveOutlined";
+import { ArrowUp as ArrowUpwardOutlined, ArrowDown as ArrowDownwardOutlined, Minus as RemoveOutlined } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { cn } from "@/lib/utils";
@@ -11,13 +9,13 @@ export const Delta = memo<{ cur: number; prev: number }>(({ cur, prev }) => {
   const d = cur - prev;
   if (d === 0) return (
     <Badge variant="outline" className="gap-0.5 text-[11px] font-semibold text-slate-400 border-slate-200 bg-slate-100">
-      <RemoveOutlined style={{ fontSize: 11 }} />stable
+      <RemoveOutlined size={11} />stable
     </Badge>
   );
   const up = d > 0;
   return (
     <Badge variant="outline" className={cn("gap-0.5 text-[11px] font-bold border-transparent", up ? "bg-emerald-50 text-emerald-500" : "bg-red-50 text-red-500")}>
-      {up ? <ArrowUpwardOutlined style={{ fontSize: 11 }} /> : <ArrowDownwardOutlined style={{ fontSize: 11 }} />}
+      {up ? <ArrowUpwardOutlined size={11} /> : <ArrowDownwardOutlined size={11} />}
       {up ? "+" : ""}{d}
     </Badge>
   );
@@ -28,7 +26,7 @@ export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?
   ({ icon: Icon, label, color = "#0D9488" }) => (
     <div className="flex items-center gap-3 mb-5 mt-1">
       <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: `${color}18` }}>
-        <Icon style={{ fontSize: 17, color }} />
+        <Icon size={17} color={color} />
       </div>
       <span className="font-semibold text-[15px] text-slate-900 tracking-tight">{label}</span>
       <div className="flex-1 h-px bg-slate-200" />
@@ -60,7 +58,7 @@ export const ActionCard = memo<{
     <CardContent>
       <div className="flex items-start justify-between mb-3">
         <div className="w-11 h-11 rounded-[13px] flex items-center justify-center" style={{ background: bg }}>
-          <Icon style={{ fontSize: 22, color }} />
+          <Icon size={22} color={color} />
         </div>
         <Delta cur={value} prev={value - trend} />
       </div>

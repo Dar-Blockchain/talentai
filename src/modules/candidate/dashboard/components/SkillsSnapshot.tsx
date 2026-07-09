@@ -165,13 +165,14 @@ const SkillsSnapshot: React.FC<Props> = ({ onStartInterview }) => {
             </div>
           )}
 
-          <button
+          <Button
+            variant="outline"
             onClick={onStartInterview}
-            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-xl border border-dashed border-warning/40 text-[0.72rem] font-bold text-warning hover:bg-warning/5 hover:border-warning/60 transition-all duration-150"
+            className="w-full py-2.5 h-auto rounded-xl border-dashed border-warning/40 text-[0.72rem] font-bold text-warning hover:bg-warning/5 hover:border-warning/60"
           >
             <Plus className="size-3.5" />
             Take a new test
-          </button>
+          </Button>
 
         </div>
       )}

@@ -1,22 +1,23 @@
 "use client";
 import React, { memo } from "react";
-import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
-import RefreshIcon from "@mui/icons-material/Refresh";
+import { AlertCircle, RefreshCw } from "lucide-react";
 import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 import { ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from "../theme";
 
 /** Inline retry button shared by the card and table-row error states. */
 const AdminRetryButton = memo<{ onRetry: () => void }>(({ onRetry }) => (
-  <button
+  <Button
+    variant="ghost"
     onClick={onRetry}
-    className="inline-flex items-center gap-1.5 rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 transition-colors hover:bg-slate-50"
+    className="rounded-lg border border-slate-200 bg-white px-3 py-1.5 text-[12px] font-semibold text-slate-700 hover:bg-slate-50"
   >
-    <RefreshIcon style={{ fontSize: 14 }} />
+    <RefreshCw size={14} />
     Retry
-  </button>
+  </Button>
 ));
 AdminRetryButton.displayName = "AdminRetryButton";
 
@@ -25,7 +26,7 @@ export const AdminQueryError = memo<{ message?: string; onRetry: () => void; cla
   ({ message = "Failed to load data.", onRetry, className }) => (
     <Card className={cn("border-none shadow-[0_1px_2px_rgba(15,23,42,0.04)]", className)}>
       <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-        <ErrorOutlineIcon sx={{ fontSize: 28 }} className="text-red-400" />
+        <AlertCircle size={28} className="text-red-400" />
         <p className="text-[13px] text-slate-500">{message}</p>
         <AdminRetryButton onRetry={onRetry} />
       </CardContent>
@@ -39,7 +40,7 @@ export const AdminTableErrorRow = memo<{ message?: string; onRetry: () => void }
   ({ message = "Failed to load data.", onRetry }) => (
     <div className="flex flex-col items-center justify-center gap-2 py-6">
       <div className="flex items-center gap-2">
-        <ErrorOutlineIcon sx={{ fontSize: 16 }} className="text-red-400" />
+        <AlertCircle size={16} className="text-red-400" />
         <span className="text-[13px] text-slate-500">{message}</span>
       </div>
       <AdminRetryButton onRetry={onRetry} />
@@ -47,24 +48,6 @@ export const AdminTableErrorRow = memo<{ message?: string; onRetry: () => void }
   ),
 );
 AdminTableErrorRow.displayName = "AdminTableErrorRow";
-
-/** MUI TableCell sx — teal-tinted sticky header (used by CompanySubscriptionsTable). */
-export const ADMIN_TABLE_HEAD_CELL_SX = {
-  fontWeight: 700,
-  backgroundColor: "#F0FDFA",
-  color: "#0D9488",
-  borderBottom: "1px solid #CCFBF1",
-  fontSize: "0.75rem",
-  textTransform: "uppercase",
-  letterSpacing: "0.05em",
-} as const;
-
-/** MUI TableRow sx — teal hover highlight (used by CompanySubscriptionsTable). */
-export const ADMIN_TABLE_ROW_SX = {
-  "& td": { borderBottom: "1px solid #F1F4F8" },
-  "&:hover": { backgroundColor: "#F0FDFA !important" },
-  "&:last-of-type td": { borderBottom: "none" },
-} as const;
 
 /** Tab-level page heading — bold title, light subtitle. */
 export const AdminPageHeading = memo<{ title: string; subtitle?: string }>(
@@ -82,7 +65,7 @@ export const ZoneHeading = memo<{ icon: React.ElementType; label: string }>(
   ({ icon: Icon, label }) => (
     <div className="flex items-center gap-3 mb-5 mt-1">
       <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-        <Icon style={{ fontSize: 17, color: ADMIN_NEUTRAL }} />
+        <Icon size={17} color={ADMIN_NEUTRAL} />
       </div>
       <span className="font-semibold text-[15px] text-slate-900 tracking-tight">{label}</span>
       <div className="flex-1 h-px bg-slate-200" />
@@ -116,7 +99,7 @@ export const AdminStatCard = memo<AdminStatCardProps>(({ icon: Icon, value, labe
     <Card className="group overflow-hidden border-none transition-all duration-200 hover:-translate-y-0.5 hover:shadow-[0_8px_24px_-4px_rgba(15,23,42,0.08),0_2px_6px_rgba(15,23,42,0.04)]">
       <CardContent className="flex items-center gap-3 py-4">
         <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-          <Icon style={{ fontSize: 18, color: ADMIN_NEUTRAL }} />
+          <Icon size={18} color={ADMIN_NEUTRAL} />
         </div>
         <div className="min-w-0">
           <div className="text-[1.4rem] font-bold text-slate-900 leading-none tabular-nums tracking-tight">{value}</div>
@@ -137,7 +120,7 @@ export const AdminChartCard = memo<{ icon?: React.ElementType; title?: string; c
           <div className="flex items-center gap-2.5 mb-5">
             {Icon && (
               <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-                <Icon style={{ fontSize: 16, color: ADMIN_NEUTRAL }} />
+                <Icon size={16} color={ADMIN_NEUTRAL} />
               </div>
             )}
             <span className="font-semibold text-[14.5px] text-slate-900">{title}</span>

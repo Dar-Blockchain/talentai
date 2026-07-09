@@ -1,6 +1,6 @@
 import React from "react";
 import { useRouter } from "next/router";
-import { Box, CircularProgress } from "@mui/material";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 
 export default function withConversationRoute(
   Shell: React.ComponentType<{ conversationId: string | null }>
@@ -12,9 +12,9 @@ export default function withConversationRoute(
 
     if (!router.isReady) {
       return (
-        <Box sx={{ display: "flex", flex: 1, justifyContent: "center", alignItems: "center", minHeight: 280 }}>
-          <CircularProgress sx={{ color: "#0D9488" }} />
-        </Box>
+        <div className="flex flex-1 items-center justify-center min-h-[280px]">
+          <Spinner style={{ color: "#0D9488" }} />
+        </div>
       );
     }
 

@@ -1,9 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { Search as SearchIcon, Check as CheckIcon, AddBusiness as AddBusinessIcon } from '@mui/icons-material';
+import { Search as SearchIcon, Check as CheckIcon, Building2 as AddBusinessIcon } from 'lucide-react';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
-import { cn } from '@/lib/utils';
+import { Button } from '@/modules/shared/ui/shadcn/button';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/modules/shared/ui/shadcn/select';
 import { adminSubscriptionApi } from '../api';
 import { useCompanySearchQuery } from '../queries';
 import { CompanyOption, PlanLimit } from '../types';
@@ -55,7 +56,7 @@ const SubscribeCompanyCard: React.FC<SubscribeCompanyCardProps> = ({ plans, onSu
           className="w-9 h-9 rounded-lg flex items-center justify-center shrink-0"
           style={{ background: ADMIN_NEUTRAL_BG }}
         >
-          <AddBusinessIcon style={{ fontSize: 18, color: ADMIN_NEUTRAL }} />
+          <AddBusinessIcon size={18} color={ADMIN_NEUTRAL} />
         </div>
         <h2 className="text-[15px] font-semibold text-slate-900">Subscribe a Company</h2>
         <Badge variant="outline" className="border-transparent font-semibold bg-slate-100 text-slate-600">
@@ -88,7 +89,7 @@ const SubscribeCompanyCard: React.FC<SubscribeCompanyCardProps> = ({ plans, onSu
           ) : (
             <>
               <div className="flex items-center gap-2 rounded-lg border border-slate-200 px-3 py-2.5">
-                <SearchIcon style={{ fontSize: 18 }} className="text-slate-400 shrink-0" />
+                <SearchIcon size={18} className="text-slate-400 shrink-0" />
                 <input
                   value={searchInput}
                   onChange={(e) => { setSearchInput(e.target.value); setDropdownOpen(true); }}
@@ -129,32 +130,30 @@ const SubscribeCompanyCard: React.FC<SubscribeCompanyCardProps> = ({ plans, onSu
         {/* Plan select */}
         <div className="flex-[1_1_180px]">
           <label className="text-[12px] font-semibold text-slate-600 mb-1.5 block">Plan</label>
-          <select
-            value={selectedPlanId}
-            onChange={(e) => setSelectedPlanId(e.target.value)}
-            className="w-full rounded-lg border border-slate-200 px-3 py-2.5 text-[13px] outline-none bg-white"
-          >
-            <option value="">Select a plan…</option>
-            {plans.map((p) => (
-              <option key={p._id} value={p._id}>{p.name} ({p.postsLimit} posts / {p.monthlyInterviewLimit} interviews)</option>
-            ))}
-          </select>
+          <Select value={selectedPlanId || undefined} onValueChange={setSelectedPlanId}>
+            <SelectTrigger className="w-full text-[13px] bg-white">
+              <SelectValue placeholder="Select a plan…" />
+            </SelectTrigger>
+            <SelectContent>
+              {plans.map((p) => (
+                <SelectItem key={p._id} value={p._id}>{p.name} ({p.postsLimit} posts / {p.monthlyInterviewLimit} interviews)</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         {/* Submit */}
         <div className="flex items-end">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => subscribe()}
             disabled={!canSubmit}
-            className={cn(
-              "flex items-center gap-2 rounded-lg px-4 py-2.5 text-[13px] font-semibold text-white transition-colors",
-              canSubmit ? "hover:bg-indigo-700" : "opacity-40 cursor-not-allowed",
-            )}
+            className="rounded-lg px-4 py-2.5 text-[13px] font-semibold text-white hover:text-white"
             style={{ backgroundColor: ADMIN_ACCENT }}
           >
-            <CheckIcon style={{ fontSize: 16 }} />
+            <CheckIcon size={16} />
             {subscribing ? 'Subscribing…' : 'Subscribe Company'}
-          </button>
+          </Button>
         </div>
       </div>
     </Card>

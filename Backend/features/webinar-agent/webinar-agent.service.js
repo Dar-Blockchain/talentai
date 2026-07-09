@@ -10,19 +10,22 @@ const { refreshStats } = require("./webinar.service");
 exports.saveProgress = async ({ submissionId, webinarId, contact, source, lang, consent, answers }) => {
   const hasEmail = contact?.email && contact.email.trim() !== "";
 
-  // Build the update payload — only include contact if there's something useful to set
+  // Dot-notation answer keys so partial saves merge rather than overwrite
+  const answerPatch = answers
+    ? Object.fromEntries(Object.entries(answers).map(([k, v]) => [`answers.${k}`, v]))
+    : {};
+
   const $set = {
     webinar_id: webinarId,
     lang:       lang || "fr",
     consent:    consent ?? false,
-    ...(hasEmail && contact  ? { contact } : {}),
-    ...(source               ? { source }  : {}),
-    ...(answers              ? { answers } : {}),
+    ...(hasEmail ? { contact } : {}),
+    ...(source   ? { source }  : {}),
+    ...answerPatch,
   };
 
   let doc;
   if (submissionId) {
-    // Existing submission — just update it
     doc = await WebinarSubmission.findByIdAndUpdate(
       submissionId,
       { $set },
@@ -30,21 +33,14 @@ exports.saveProgress = async ({ submissionId, webinarId, contact, source, lang, 
     );
     if (!doc) throw new Error("Submission not found");
   } else if (hasEmail) {
-    // No id yet but we have an email — upsert by email + webinarId
+    // Upsert by email + webinarId to deduplicate returning visitors
     doc = await WebinarSubmission.findOneAndUpdate(
       { "contact.email": contact.email.trim(), webinar_id: webinarId },
       { $set },
       { upsert: true, new: true, setDefaultsOnInsert: true },
     );
   } else {
-    // First anonymous step-save — create a fresh document
-    doc = await WebinarSubmission.create({
-      webinar_id: webinarId,
-      lang:       lang || "fr",
-      consent:    consent ?? false,
-      ...(source  ? { source }  : {}),
-      ...(answers ? { answers } : {}),
-    });
+    doc = await WebinarSubmission.create({ ...$set });
   }
 
   return { submissionId: doc._id.toString() };
@@ -72,7 +68,7 @@ exports.complete = async (submissionId, finalAnswers) => {
     { new: true },
   );
 
-  // Fan-out and stats refresh are async and non-blocking for the HTTP response
+  // Fire-and-forget — do not block the HTTP response
   fanOut(completed).catch(() => {});
   refreshStats(doc.webinar_id).catch(() => {});
 
@@ -90,7 +86,6 @@ exports.getProgress = async (submissionId) => {
 
 /**
  * Replay fan-out for submissions where one or more integrations failed.
- * Can be triggered by a cron job or admin endpoint.
  */
 exports.replayFailed = async () => {
   const failed = await WebinarSubmission.find({

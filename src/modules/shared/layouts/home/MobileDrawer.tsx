@@ -8,6 +8,7 @@ import { useLogout } from "@/modules/auth/shared/hooks";
 import { useRouter } from "next/router";
 import HeaderLogo from "./HeaderLogo";
 import HeaderNavMenu from "./HeaderNavMenu";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 import { getCandidateChatBasePath } from "@/modules/chat/candidate-chat/utils/routes";
 import {
@@ -304,20 +305,20 @@ const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unre
               <hr className="my-2 border-primary/10" />
 
               <div className="flex flex-col gap-2 px-0.5 mt-1">
-                <button
-                  type="button"
+                <Button
+                  variant="outline"
                   onClick={() => go("/signin")}
-                  className="py-[9px] rounded-[10px] text-center cursor-pointer border border-primary/25 bg-primary/5 font-sans text-sm font-medium text-gray-700 hover:bg-primary/10 transition-colors w-full"
+                  className="py-[9px] h-auto rounded-[10px] border-primary/25 bg-primary/5 font-sans text-sm font-medium text-gray-700 hover:bg-primary/10 w-full"
                 >
                   {t("header.login")}
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
+                  variant="default"
                   onClick={() => go("/signin")}
-                  className="py-[9px] rounded-[10px] text-center cursor-pointer bg-primary font-sans text-sm font-bold text-primary-foreground shadow-brand hover:brightness-105 transition-all w-full"
+                  className="py-[9px] h-auto rounded-[10px] font-sans text-sm font-bold shadow-brand hover:brightness-105 w-full"
                 >
                   {t("header.signup")}
-                </button>
+                </Button>
               </div>
             </>
           )}

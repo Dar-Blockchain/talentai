@@ -10,7 +10,7 @@ import {
   NavigationMenuItem,
   NavigationMenuLink,
 } from "@/modules/shared/ui/shadcn/navigation-menu";
-import { Sparkles, ListChecks, Briefcase, Mail, ChevronRight, Video } from "lucide-react";
+import { Sparkles, ListChecks, Briefcase, Mail, ChevronRight } from "lucide-react";
 
 type NavItem = { label: string; id?: string; href?: string };
 
@@ -19,7 +19,7 @@ const NAV_ICON_MAP: Record<string, React.ElementType> = {
   howitworks: ListChecks,
   contact:    Mail,
   "/posts/":  Briefcase,
-  "/webinar": Video,
+
 };
 
 interface HeaderNavMenuProps {
@@ -36,17 +36,14 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
     if (userType === "company") return [
       { label: t("nav.features"),     id: "features"   },
       { label: t("nav.how_it_works"), id: "howitworks" },
-      { label: t("nav.webinar"),      href: "/webinar"  },
     ];
     if (userType === "candidate") return [
-      { label: t("nav.find_jobs"),    href: "/posts/"   },
-      { label: t("nav.how_it_works"), id: "howitworks"  },
-      { label: t("nav.webinar"),      href: "/webinar"  },
+      { label: t("nav.find_jobs"),    href: "/posts/"  },
+      { label: t("nav.how_it_works"), id: "howitworks" },
     ];
     return [
-      { label: t("nav.features"), id: "features"  },
-      { label: t("nav.webinar"),  href: "/webinar" },
-      { label: t("nav.contact"),  id: "contact"   },
+      { label: t("nav.features"), id: "features" },
+      { label: t("nav.contact"),  id: "contact"  },
     ];
   };
 

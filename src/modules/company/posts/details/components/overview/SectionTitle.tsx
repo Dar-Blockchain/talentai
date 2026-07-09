@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 
 const TEAL        = "#0D9488";
 const TEAL_BG     = "#F0FDFA";
@@ -11,14 +10,17 @@ interface Props {
 }
 
 const SectionTitle: React.FC<Props> = ({ icon, title }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-    <Box sx={{ width: 28, height: 28, borderRadius: 1.5, bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center", color: TEAL }}>
+  <div className="flex items-center gap-2 mb-4">
+    <div
+      className="flex h-7 w-7 items-center justify-center rounded-[6px] border"
+      style={{ backgroundColor: TEAL_BG, borderColor: TEAL_BORDER, color: TEAL }}
+    >
       {icon}
-    </Box>
-    <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151", textTransform: "uppercase", letterSpacing: 0.5 }}>
+    </div>
+    <span className="text-[13px] font-bold uppercase tracking-wide text-gray-700">
       {title}
-    </Typography>
-  </Box>
+    </span>
+  </div>
 );
 
 export default SectionTitle;

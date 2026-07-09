@@ -1,6 +1,5 @@
 import React from "react";
 import { useRouter } from "next/router";
-import { Box } from "@mui/material";
 import { useChatSession } from "@/hooks/useChatSession";
 import ChatShell from "./ChatShell";
 
@@ -23,7 +22,7 @@ const SharedChatConversationPage: React.FC<Props> = ({ basePath, isCompany, layo
   });
   return (
     <Layout>
-      <Box sx={{ flex: 1, display: "flex", minHeight: 0, p: { xs: 1, sm: 2 } }}>
+      <div className="flex flex-1 min-h-0 p-2 sm:p-4">
         <ChatShell
           conversations={session.conversations}
           conversation={session.conversation}
@@ -39,7 +38,7 @@ const SharedChatConversationPage: React.FC<Props> = ({ basePath, isCompany, layo
           onDeleteConversation={session.executeDeleteConversation}
           onSelectConversation={session.handleSelectConversation}
         />
-      </Box>
+      </div>
     </Layout>
   );
 };

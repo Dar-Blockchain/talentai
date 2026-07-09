@@ -1,5 +1,4 @@
-import React from "react";
-import { Box } from "@mui/material";
+import React, { useState } from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
@@ -12,6 +11,7 @@ import PostsStats        from "./PostsStats";
 import DeletePostModal   from "./DeletePostModal";
 import PublishConfirmModal from "./PublishConfirmModal";
 import PostsToolbar      from "./PostsToolbar";
+import NoPlanModal       from "./NoPlanModal";
 import { useDeletePost }  from "../hooks/useDeletePost";
 import { useMyPosts }     from "../hooks/useMyPosts";
 import { usePublishPost } from "../hooks/usePublishPost";
@@ -36,6 +36,9 @@ const PostsPageContent: React.FC = () => {
   const postsUsed    = combined?.combined?.usage?.posts?.used  ?? 0;
   const postsLimit   = combined?.combined?.usage?.posts?.limit ?? Infinity;
   const postsAtLimit = !!combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit;
+  const hasNoPlan    = !combined;
+
+  const [planModalOpen, setPlanModalOpen] = useState(false);
 
   const {
     posts, loading, error, pagination,
@@ -55,11 +58,14 @@ const PostsPageContent: React.FC = () => {
     onError:   () => showToast({ message: t("publish_error"),     severity: "error"   }),
   });
 
-  const handleCreateClick = () => { if (!postsAtLimit) router.push("/company/posts/create"); };
+  const handleCreateClick = () => {
+    if (hasNoPlan || postsAtLimit) { setPlanModalOpen(true); return; }
+    router.push("/company/posts/create");
+  };
   const totalCount = (pagination as any)?.total ?? posts.length;
 
   return (
-    <Box>
+    <div>
       <PostsToolbar
         totalCount={totalCount} loading={loading}
         search={search} statusFilter={statusFilter} typeFilter={typeFilter} sortBy={sortBy}
@@ -91,7 +97,15 @@ const PostsPageContent: React.FC = () => {
         onClose={publishHook.handleClose} onConfirm={publishHook.handleConfirm}
         onEdit={() => { publishHook.handleClose(); router.push(`/company/posts/${publishHook.confirmId}`); }}
       />
-    </Box>
+
+      <NoPlanModal
+        open={planModalOpen}
+        isAtLimit={postsAtLimit}
+        postsUsed={postsUsed}
+        postsLimit={postsLimit !== Infinity ? postsLimit : undefined}
+        onClose={() => setPlanModalOpen(false)}
+      />
+    </div>
   );
 };
 

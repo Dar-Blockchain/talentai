@@ -1,13 +1,13 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Controller, useWatch, type Control, type FieldErrors } from "react-hook-form";
-import AppInput  from "@/modules/shared/ui/AppInput";
-import AppSelect from "@/modules/shared/ui/AppSelect";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { FieldLabel } from "@/modules/settings/shared/components";
 import { AVAILABLE_SCOPES } from "@/modules/settings/shared/constants";
 
 import { type KeyFormState } from "../../schemas/apiKeySchema";
-import { datePickerInputClass } from "./styles";
 
 // ─── Scope chips (read-only) ──────────────────────────────────────────────────
 
@@ -62,22 +62,28 @@ export const KeyFormFields = ({
   return (
     <>
       <Controller name="name" control={control} render={({ field }) => (
-        <AppInput
-          label={t("pages.settings.api_keys.fields.key_name")}
-          {...field}
-          placeholder={t("pages.settings.api_keys.fields.key_name_placeholder")}
-          error={errors.name?.message}
-          required
-        />
+        <div className="flex flex-col gap-1">
+          <FieldLabel text={t("pages.settings.api_keys.fields.key_name")} />
+          <Input
+            {...field}
+            placeholder={t("pages.settings.api_keys.fields.key_name_placeholder")}
+            aria-invalid={!!errors.name}
+          />
+          {errors.name?.message && (
+            <span className="text-[11px] text-red-500">{errors.name.message}</span>
+          )}
+        </div>
       )} />
 
       <Controller name="serviceName" control={control} render={({ field }) => (
-        <AppInput
-          label={t("pages.settings.api_keys.fields.service_name")}
-          {...field}
-          value={field.value ?? ""}
-          placeholder={t("pages.settings.api_keys.fields.service_placeholder")}
-        />
+        <div className="flex flex-col gap-1">
+          <FieldLabel text={t("pages.settings.api_keys.fields.service_name")} />
+          <Input
+            {...field}
+            value={field.value ?? ""}
+            placeholder={t("pages.settings.api_keys.fields.service_placeholder")}
+          />
+        </div>
       )} />
 
       <div>
@@ -87,17 +93,21 @@ export const KeyFormFields = ({
 
       <div className="grid grid-cols-2 gap-4">
         <Controller name="rateLimit" control={control} render={({ field }) => (
-          <AppInput
-            label={t("pages.settings.api_keys.fields.rate_limit")}
-            value={field.value > 0 ? String(field.value) : ""}
-            placeholder="e.g. 100"
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, "");
-              field.onChange(digits ? Number(digits) : 0);
-            }}
-            error={errors.rateLimit?.message}
-            required
-          />
+          <div className="flex flex-col gap-1">
+            <FieldLabel text={t("pages.settings.api_keys.fields.rate_limit")} />
+            <Input
+              value={field.value > 0 ? String(field.value) : ""}
+              placeholder="e.g. 100"
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "");
+                field.onChange(digits ? Number(digits) : 0);
+              }}
+              aria-invalid={!!errors.rateLimit}
+            />
+            {errors.rateLimit?.message && (
+              <span className="text-[11px] text-red-500">{errors.rateLimit.message}</span>
+            )}
+          </div>
         )} />
 
         <div className="flex flex-col gap-1">
@@ -106,12 +116,11 @@ export const KeyFormFields = ({
             <span className="text-red-500 ml-0.5">*</span>
           </span>
           <Controller name="expiresAt" control={control} render={({ field }) => (
-            <input
+            <Input
               type="date"
               value={field.value || ""}
               min={new Date().toISOString().slice(0, 10)}
               onChange={(e) => field.onChange(e.target.value)}
-              className={datePickerInputClass}
             />
           )} />
           {errors.expiresAt && (
@@ -121,20 +130,25 @@ export const KeyFormFields = ({
       </div>
 
       <Controller name="ipMode" control={control} render={({ field }) => (
-        <AppSelect
-          label={t("pages.settings.api_keys.fields.ip_whitelist")}
-          value={field.value}
-          onChange={(v) => field.onChange(v)}
-          options={ipModeOptions}
-        />
+        <div className="flex flex-col gap-1">
+          <FieldLabel text={t("pages.settings.api_keys.fields.ip_whitelist")} />
+          <Select value={field.value} onValueChange={field.onChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ipModeOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )} />
 
       {ipMode === "custom" && (
         <Controller name="ipList" control={control} render={({ field }) => (
-          <AppInput
-            label=""
+          <Textarea
             {...field}
-            multiline
             rows={2}
             placeholder={t("pages.settings.api_keys.fields.ip_placeholder")}
           />

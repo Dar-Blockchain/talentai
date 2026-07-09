@@ -1,23 +1,22 @@
 import React, { useState } from "react";
-import { Box, Button, Dialog, Typography } from "@mui/material";
-import MicOutlined from "@mui/icons-material/MicOutlined";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Mic as MicOutlined, Check as CheckOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 
 const TEAL    = "#0D9488";
-const TEAL_BG = "#F0FDFA";
-
 
 interface Props {
   open: boolean;
   onConfirm: (languages: string[]) => void;
   onClose: () => void;
   initialLanguages?: string[];
-  confirmLabel?: string;
+  isLoading?: boolean;
 }
 
-const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, initialLanguages, confirmLabel }) => {
+const InterviewLanguagesModal: React.FC<Props> = ({ open, isLoading, onConfirm, onClose, initialLanguages }) => {
   const [selected, setSelected] = useState<string[]>(initialLanguages ?? ["en"]);
   const { t } = useTranslation("posts");
 
@@ -37,132 +36,99 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, onConfirm, onClose, in
   const handleClose  = () => onClose();
 
   return (
-    <Dialog
-      open={open}
-      onClose={handleClose}
-      PaperProps={{
-        sx: {
-          borderRadius: "18px",
-          width: 400,
-          maxWidth: "95vw",
-          p: 3,
-          boxShadow: "0 24px 64px rgba(0,0,0,0.12)",
-        },
-      }}
-    >
-      {/* Title */}
-      <Box sx={{ textAlign: "center", mb: 2.5 }}>
-        <Box
-          sx={{
-            width: 44, height: 44, borderRadius: "12px",
-            bgcolor: TEAL_BG, mx: "auto", mb: 1.5,
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}
-        >
-          <MicOutlined sx={{ fontSize: 22, color: TEAL }} />
-        </Box>
-        <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>
-          {t("create.interview_lang_modal.title")}
-        </Typography>
-        <Typography sx={{ fontSize: "12.5px", color: "#6B7280", mt: 0.5 }}>
-          {t("create.interview_lang_modal.subtitle")}
-        </Typography>
-      </Box>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose(); }}>
+      <DialogContent
+        showCloseButton={false}
+        className="w-[400px] max-w-[95vw] gap-0 rounded-[18px] p-0 shadow-[0_24px_64px_rgba(0,0,0,0.12)]"
+      >
+        <div className="p-6">
+          {/* Title */}
+          <div className="mb-5 text-center">
+            <div className="mx-auto mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-[#F0FDFA]">
+              <MicOutlined size={22} color={TEAL} />
+            </div>
+            <p className="text-[15px] font-bold text-[#111827]">
+              {t("create.interview_lang_modal.title")}
+            </p>
+            <p className="mt-1 text-[12.5px] text-[#6B7280]">
+              {t("create.interview_lang_modal.subtitle")}
+            </p>
+          </div>
 
-      {/* Language grid — multi-select */}
-      <Typography sx={{ fontSize: "10.5px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.07em", mb: 1 }}>
-        {t("create.interview_lang_modal.select_label")}
-      </Typography>
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 1.5, mb: 2 }}>
-        {SUPPORTED_LANGS.map((lang) => {
-          const active = selected.includes(lang.code);
-          return (
-            <Box
-              key={lang.code}
-              onClick={() => toggle(lang.code)}
-              sx={{
-                cursor: "pointer",
-                border: `1.5px solid ${active ? TEAL : "#E5E7EB"}`,
-                borderRadius: "12px",
-                bgcolor: active ? TEAL_BG : "#FAFAFA",
-                p: 1.5,
-                display: "flex",
-                flexDirection: "column",
-                alignItems: "center",
-                gap: 0.5,
-                position: "relative",
-                transition: "all 0.15s",
-                "&:hover": { borderColor: TEAL, bgcolor: TEAL_BG },
-              }}
-            >
-              {active && (
-                <Box
-                  sx={{
-                    position: "absolute", top: 6, right: 6,
-                    width: 16, height: 16, borderRadius: "50%",
-                    bgcolor: TEAL,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                  }}
+          {/* Language grid — multi-select */}
+          <p className="mb-2 text-[10.5px] font-bold uppercase tracking-[0.07em] text-[#9CA3AF]">
+            {t("create.interview_lang_modal.select_label")}
+          </p>
+          <div className="mb-4 grid grid-cols-2 gap-3">
+            {SUPPORTED_LANGS.map((lang) => {
+              const active = selected.includes(lang.code);
+              return (
+                <div
+                  key={lang.code}
+                  onClick={() => toggle(lang.code)}
+                  className={cn(
+                    "relative flex cursor-pointer flex-col items-center gap-1 rounded-xl border-[1.5px] p-3 transition-all duration-150",
+                    active
+                      ? "border-[#0D9488] bg-[#F0FDFA]"
+                      : "border-[#E5E7EB] bg-[#FAFAFA] hover:border-[#0D9488] hover:bg-[#F0FDFA]",
+                  )}
                 >
-                  <CheckOutlined sx={{ fontSize: 10, color: "#fff" }} />
-                </Box>
-              )}
-              <img src={`https://flagcdn.com/w40/${lang.flag}.png`} srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`} width={28} height={20} alt={lang.label} style={{ borderRadius: 2, display: "block" }} />
-              <Typography
-                sx={{
-                  fontSize: "11.5px", fontWeight: active ? 700 : 500,
-                  color: active ? TEAL : "#374151",
-                  textAlign: "center", lineHeight: 1.2,
-                }}
-              >
-                {lang.label}
-              </Typography>
-            </Box>
-          );
-        })}
-      </Box>
+                  {active && (
+                    <div className="absolute top-1.5 right-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-[#0D9488]">
+                      <CheckOutlined size={10} color="#fff" />
+                    </div>
+                  )}
+                  <img
+                    src={`https://flagcdn.com/w40/${lang.flag}.png`}
+                    srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`}
+                    width={28} height={20} alt={lang.label}
+                    className="block rounded-[2px]"
+                  />
+                  <p
+                    className={cn(
+                      "text-center text-[11.5px] leading-[1.2]",
+                      active ? "font-bold text-[#0D9488]" : "font-medium text-[#374151]",
+                    )}
+                  >
+                    {lang.label}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
 
-      {/* Hint */}
-      <Typography sx={{
-        fontSize: "11px", textAlign: "center", mb: 2, lineHeight: 1.5,
-        color: selected.length === 1 ? "#D97706" : "#059669",
-        fontWeight: selected.length === 1 ? 500 : 400,
-      }}>
-        {selected.length === 1
-          ? t("create.interview_lang_modal.hint_one")
-          : t("create.interview_lang_modal.hint_other", { count: selected.length })}
-      </Typography>
+          {/* Hint */}
+          <p
+            className={cn(
+              "mb-4 text-center text-[11px] leading-[1.5]",
+              selected.length === 1 ? "font-medium text-[#D97706]" : "font-normal text-[#059669]",
+            )}
+          >
+            {selected.length === 1
+              ? t("create.interview_lang_modal.hint_one")
+              : t("create.interview_lang_modal.hint_other", { count: selected.length })}
+          </p>
 
-      {/* Actions */}
-      <Box sx={{ display: "flex", gap: 1.25 }}>
-        <Button
-          fullWidth
-          onClick={handleClose}
-          sx={{
-            textTransform: "none", fontWeight: 600, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            color: "#6B7280", border: "1px solid #E5E7EB",
-            "&:hover": { bgcolor: "#F9FAFB", borderColor: "#D1D5DB" },
-          }}
-        >
-          {t("create.interview_lang_modal.btn_cancel")}
-        </Button>
+          {/* Actions */}
+          <div className="flex gap-2.5">
+            <Button
+              onClick={handleClose}
+              variant="outline"
+              className="flex-1"
+            >
+              {t("create.interview_lang_modal.btn_cancel")}
+            </Button>
 
-        <Button
-          fullWidth
-          variant="contained"
-          onClick={handleConfirm}
-          sx={{
-            textTransform: "none", fontWeight: 700, fontSize: "13px",
-            borderRadius: "10px", height: 42,
-            bgcolor: TEAL, color: "#fff", boxShadow: "none",
-            whiteSpace: "nowrap",
-            "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 12px rgba(13,148,136,0.25)" },
-          }}
-        >
-          {confirmLabel ?? t("create.interview_lang_modal.btn_save")}
-        </Button>
-      </Box>
+            <Button
+              onClick={handleConfirm}
+              className="flex-1"
+              loading={isLoading}
+            >
+              {t("create.interview_lang_modal.btn_save")}
+            </Button>
+          </div>
+        </div>
+      </DialogContent>
     </Dialog>
   );
 };

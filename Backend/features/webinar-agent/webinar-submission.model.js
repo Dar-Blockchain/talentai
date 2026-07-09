@@ -2,8 +2,8 @@ const mongoose = require("mongoose");
 
 const WebinarSubmissionSchema = new mongoose.Schema({
   webinar_id: { type: String, required: true, index: true },
-  lang:       { type: String, enum: ["fr", "en", "ar"], default: "fr" },
-  consent:    { type: Boolean, required: true },
+  lang:       { type: String, enum: ["fr", "en", "both", "ar"], default: "fr" },
+  consent:    { type: Boolean, default: false },
 
   contact: {
     nom:        { type: String, default: null },

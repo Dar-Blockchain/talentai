@@ -8,6 +8,9 @@ export interface WebinarQuestion {
   order: number;
 }
 
+/** Draft is structurally identical to a saved question; alias avoids duplication. */
+export type WebinarQuestionDraft = WebinarQuestion;
+
 export interface WebinarStats {
   total_registrations: number;
   total_completions: number;
@@ -40,6 +43,20 @@ export interface WebinarListResponse {
   totalPages: number;
 }
 
+export interface WebinarScoringResult {
+  maturite_ia: number;
+  intensite_pain: number;
+  readiness_score?: number;
+  tier: "A" | "B" | "C" | "D";
+  icp_fit: "ok" | "faible" | "hors";
+  these?: "v1" | "v2" | "v3" | "indetermine";
+  key_insight?: string | null;
+  main_pain?: string | null;
+  recommended_action?: string | null;
+  strengths?: string[];
+  blockers?: string[];
+}
+
 export interface WebinarSubmission {
   _id: string;
   webinar_id: string;
@@ -47,20 +64,8 @@ export interface WebinarSubmission {
   consent: boolean;
   completed: boolean;
   contact: { nom: string | null; email: string | null; entreprise: string | null };
-  answers: Record<string, any>;
-  scoring?: {
-    maturite_ia: number;
-    intensite_pain: number;
-    readiness_score?: number;
-    tier: "A" | "B" | "C" | "D";
-    icp_fit: "ok" | "faible" | "hors";
-    these?: "v1" | "v2" | "v3" | "indetermine";
-    key_insight?: string | null;
-    main_pain?: string | null;
-    recommended_action?: string | null;
-    strengths?: string[];
-    blockers?: string[];
-  };
+  answers: Record<string, unknown>;
+  scoring?: WebinarScoringResult;
   source?: { utm_source: string | null; utm_campaign: string | null };
   createdAt: string;
 }
@@ -70,16 +75,6 @@ export interface WebinarSubmissionsResponse {
   total: number;
   page: number;
   totalPages: number;
-}
-
-export interface WebinarQuestionDraft {
-  key: string;
-  label_fr: string;
-  label_en: string;
-  type: "choice" | "scale" | "text" | "select";
-  options: { key: string; label_fr: string; label_en: string }[];
-  required: boolean;
-  order: number;
 }
 
 export interface WebinarFormValues {

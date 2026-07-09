@@ -1,5 +1,5 @@
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Cell } from 'recharts';
-import BarChartIcon from '@mui/icons-material/BarChart';
+import { BarChart3 as BarChartIcon } from 'lucide-react';
 import { AdminChartCard, ADMIN_CHART_COLORS } from '@/modules/admin/shared';
 
 const AdminSkillsBarChart = ({ skillsData }: { skillsData: Array<{ skill: string; count: number }> }) => (

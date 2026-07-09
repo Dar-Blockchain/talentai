@@ -11,13 +11,12 @@ import ProfileBanner from "./ProfileBanner";
 import CompanyInfoTab from "./CompanyInfoTab";
 import ApiKeysTab from "./ApiKeysTab";
 import { LanguageTab } from "@/modules/settings/shared";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import AppUserInfo from "@/modules/shared/ui/AppUserInfo";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
 import {
-  Building2, MapPin, Key, CreditCard, Globe, Users, Tag,
+  Building2, MapPin, Key, CreditCard, Globe, Users, Tag, Settings as SettingsOutlined,
 } from "lucide-react";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 
 const TEAL = "#0D9488";
 
@@ -58,12 +57,10 @@ const CompanySettingsPage: React.FC = () => {
         icon={SettingsOutlined}
         actions={[
           <Link key="plans" href="/company/plans">
-            <AppButton
-              label={t("pages.settings.view_plans")}
-              variant="outlined"
-              startIcon={<CreditCard size={18} />}
-              size="medium"
-            />
+            <Button variant="outline">
+              <CreditCard size={18} />
+              {t("pages.settings.view_plans")}
+            </Button>
           </Link>,
         ]}
       />

@@ -1,5 +1,4 @@
 import { useState } from "react";
-import { Box } from "@mui/material";
 import PostDescription from "./PostDescription";
 import PostPreview from "./PostPreview";
 
@@ -7,17 +6,10 @@ const PostDetailsStep = () => {
   const [generating, setGenerating] = useState(false);
 
   return (
-    <Box
-      sx={{
-        display: "grid",
-        gridTemplateColumns: { xs: "1fr", lg: "1fr 1fr" },
-        gap: 3,
-        alignItems: "stretch",
-      }}
-    >
+    <div className="grid grid-cols-1 items-stretch gap-6 lg:grid-cols-2">
       <PostDescription onGeneratingChange={setGenerating} />
       <PostPreview generating={generating} />
-    </Box>
+    </div>
   );
 };
 

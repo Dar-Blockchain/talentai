@@ -1,30 +1,33 @@
-import { Box, CircularProgress, Typography } from "@mui/material";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
+import { Sparkles as AutoAwesomeOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import SectionCard from "@/components/ui/SectionCard";
+import { Card } from "@/modules/shared/ui/shadcn/card";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { TEAL, TEAL_BG, TEAL_BORDER } from "./styles";
 
 export const LoadingState = () => {
   const { t } = useTranslation("posts");
   return (
-    <SectionCard sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
-      <CircularProgress sx={{ color: TEAL }} size={40} />
-      <Typography sx={{ fontSize: "14px", color: "#6B7280" }}>{t("create.preview.loading")}</Typography>
-    </SectionCard>
+    <Card className="p-6 h-full items-center justify-center gap-4">
+      <Spinner className="size-10" style={{ color: TEAL }} />
+      <p className="text-sm text-[#6B7280]">{t("create.preview.loading")}</p>
+    </Card>
   );
 };
 
 export const EmptyState = () => {
   const { t } = useTranslation("posts");
   return (
-    <SectionCard sx={{ height: "100%", display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", gap: 2 }}>
-      <Box sx={{ width: 72, height: 72, borderRadius: "50%", bgcolor: TEAL_BG, border: `1px solid ${TEAL_BORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <AutoAwesomeOutlined sx={{ fontSize: 32, color: TEAL }} />
-      </Box>
-      <Box sx={{ textAlign: "center" }}>
-        <Typography sx={{ fontSize: "15px", fontWeight: 600, color: "#111827" }}>{t("create.preview.empty_title")}</Typography>
-        <Typography sx={{ fontSize: "13px", color: "#6B7280", mt: 0.5 }}>{t("create.preview.empty_subtitle")}</Typography>
-      </Box>
-    </SectionCard>
+    <Card className="p-6 h-full items-center justify-center gap-4">
+      <div
+        className="flex h-[72px] w-[72px] items-center justify-center rounded-full border"
+        style={{ backgroundColor: TEAL_BG, borderColor: TEAL_BORDER }}
+      >
+        <AutoAwesomeOutlined size={32} color={TEAL} />
+      </div>
+      <div className="text-center">
+        <p className="text-[15px] font-semibold text-[#111827]">{t("create.preview.empty_title")}</p>
+        <p className="mt-1 text-[13px] text-[#6B7280]">{t("create.preview.empty_subtitle")}</p>
+      </div>
+    </Card>
   );
 };

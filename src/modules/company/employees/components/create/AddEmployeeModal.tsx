@@ -23,8 +23,8 @@ import {
 } from "@/modules/shared/ui/shadcn/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
 import { cn } from "@/lib/utils";
+import { emailSchema, emailKeyDownGuard } from "@/lib/validation/email";
 
-const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 type RoleOption = typeof ROLES[number];
 
 interface AddEmployeeModalProps {
@@ -74,7 +74,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
   }, [roleOpen]);
 
   const isFormValid = useMemo(
-    () => email.trim() && EMAIL_REGEX.test(email) && !!role,
+    () => emailSchema.safeParse(email).success && !!role,
     [email, role],
   );
 
@@ -126,33 +126,37 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
               <DialogDescription className="text-xs">{m("subtitle")}</DialogDescription>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             disabled={loading}
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:pointer-events-none"
+            className="size-8 p-0 rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground"
           >
             <X className="size-4" />
-          </button>
+          </Button>
         </DialogHeader>
 
         {/* Body */}
         <div className="flex flex-col gap-5 px-6 py-6">
 
           {/* Email */}
-          <div className="flex flex-col gap-1.5">
+          <form autoComplete="off" onSubmit={e => e.preventDefault()} className="flex flex-col gap-1.5">
             <Label htmlFor="inv-email" className="text-xs font-semibold text-foreground/80 uppercase tracking-wide">
               {m("email_label")}
             </Label>
             <Input
               id="inv-email"
+              name="email"
               type="email"
+              autoComplete="email"
               placeholder={m("email_placeholder")}
               value={email}
               onChange={e => setEmail(e.target.value)}
+              onKeyDown={emailKeyDownGuard}
               disabled={loading}
             />
             <p className="text-[11px] text-muted-foreground">{m("email_helper")}</p>
-          </div>
+          </form>
 
           {/* Department */}
           <div className="flex flex-col gap-1.5">
