@@ -19,7 +19,7 @@ interface WebinarData { _id: string; title: string; questions: DBQuestion[]; lan
 
 const EASE    = [0.32, 0.72, 0, 1] as [number, number, number, number];
 const ALPHA   = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BACKEND = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
 const TEAL    = "#0D9488";
 const BRAND   = "#6AD39C";
 
@@ -441,8 +441,8 @@ export default function WebinarAgentPage() {
     localStorage.setItem("webinar_submission_id", id);
   };
 
-  const saveStep = useCallback(async (patch: Record<string, unknown> = {}) => {
-    if (!webinarId) return;
+  const saveStep = useCallback(async (patch: Record<string, unknown> = {}): Promise<string | null> => {
+    if (!webinarId) return null;
     setSaving(true);
     try {
       const merged = { ...answers, ...patch };
@@ -458,16 +458,20 @@ export default function WebinarAgentPage() {
       });
       persistSubId(res.submissionId);
       setAnswers(merged);
+      return res.submissionId;
     } finally {
       setSaving(false);
     }
   }, [webinarId, submissionId, lang, consent, contact, answers, router.query]);
 
-  const handleComplete = useCallback(async () => {
-    if (!submissionId) return;
+  // subId param lets callers pass the fresh ID returned by saveStep directly,
+  // bypassing the stale React state closure (which still holds the pre-save value).
+  const handleComplete = useCallback(async (subId?: string) => {
+    const id = subId ?? submissionId;
+    if (!id) return;
     setSaving(true);
     try {
-      const sub = await webinarApi.complete(submissionId, answers as Record<string, string | number>);
+      const sub = await webinarApi.complete(id, answers as Record<string, string | number>);
       setScoring(sub.scoring ?? null);
       localStorage.removeItem("webinar_submission_id");
       setStepIdx(total + 1);
@@ -495,8 +499,8 @@ export default function WebinarAgentPage() {
   }, [saveStep, goNext]);
 
   const handleLastQuestion = useCallback(async () => {
-    if (currentQ) await saveStep({ [currentQ.key]: answers[currentQ.key] });
-    await handleComplete();
+    const freshId = currentQ ? await saveStep({ [currentQ.key]: answers[currentQ.key] }) : null;
+    await handleComplete(freshId ?? undefined);
   }, [currentQ, saveStep, answers, handleComplete]);
 
   const handleNavNext = useCallback(() => {
@@ -699,9 +703,17 @@ export default function WebinarAgentPage() {
           ))}
 
           {/* Snapshot */}
-          {isSnapshot && scoring && (
+          {isSnapshot && (
             <div style={{ paddingTop: "80px" }}>
-              <Snapshot scoring={scoring} lang={lang} />
+              {scoring
+                ? <Snapshot scoring={scoring} lang={lang} />
+                : (
+                  <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-slate-400">
+                    <div className="w-10 h-10 border-2 border-teal-200 border-t-teal-600 rounded-full animate-spin" />
+                    <p className="text-[14px]">{isEn ? "Analysing your profile…" : "Analyse de votre profil…"}</p>
+                  </div>
+                )
+              }
             </div>
           )}
         </div>

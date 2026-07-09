@@ -8,7 +8,7 @@ import WebinarSection from "@/modules/home/company/components/WebinarSection";
 import { SITE_URL, OG_IMAGE } from "@/modules/shared/constants";
 
 const CANONICAL = `${SITE_URL}/webinar`;
-const BACKEND   = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+const BACKEND   = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
 const VP   = { once: true, margin: "-40px" };
 const EASE = [0.22, 1, 0.36, 1] as const;
 

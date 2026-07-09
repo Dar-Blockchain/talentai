@@ -33,7 +33,7 @@ const WebinarSection: React.FC<WebinarSectionProps> = ({ previewId, routerReady 
 
   useEffect(() => {
     if (!routerReady) return;
-    const BACKEND = process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000";
+    const BACKEND = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
     const url = previewId
       ? `${BACKEND}/webinars/public/${previewId}`
       : `${BACKEND}/webinars/public/active`;

@@ -36,6 +36,7 @@
     "total": "Total",
     "active": "Active",
     "drafts": "Drafts",
+    "paused": "Paused",
     "closed_expired": "Closed/Expired",
     "completed_participants": "Completed Participants"
   },

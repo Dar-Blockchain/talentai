@@ -144,7 +144,15 @@ exports.getCompanyCampaigns = async (req, res) => {
     const limitNum = Math.min(100, Math.max(1, parseInt(limit) || 10));
 
     const filters = {};
-    if (status) filters.status = status;
+    if (status === "EXPIRED") {
+      filters.status = "ACTIVE";
+      filters.deadline = { $ne: null, $lt: new Date() };
+    } else if (status === "ACTIVE") {
+      filters.status = "ACTIVE";
+      filters.$or = [{ deadline: null }, { deadline: { $gte: new Date() } }];
+    } else if (status) {
+      filters.status = status;
+    }
     if (type) filters.type = type;
     if (targetDepartment) filters.targetDepartment = targetDepartment;
     const searchTerm = (search || title || "").trim();
