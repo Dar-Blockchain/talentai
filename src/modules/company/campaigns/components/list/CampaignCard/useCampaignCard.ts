@@ -50,10 +50,14 @@ export function useCampaignCard(
   const transitions = useMemo(() => STATUS_TRANSITIONS[campaign.status] ?? [], [campaign.status]);
   const showMenu     = !isEmployee && (canPublish || canDelete);
 
-  const total        = campaign.targetEmployeeCount ?? 0;
-  const completed    = campaign.completedCount ?? 0;
-  const pct          = total > 0 ? Math.round((completed / total) * 100) : 0;
-  const showProgress = campaign.targetEmployeeCount != null && campaign.completedCount != null && total > 0;
+  const total          = campaign.targetEmployeeCount ?? 0;
+  const completed      = campaign.completedCount ?? 0;
+  const pct            = total > 0 ? Math.round((completed / total) * 100) : 0;
+  // Percentage only makes sense for a fixed employee roster (ACCOUNTS access) —
+  // LINK campaigns have no target to be "a percentage of".
+  const showPercentage =
+    campaign.accessMethod !== "LINK" &&
+    campaign.targetEmployeeCount != null && campaign.completedCount != null && total > 0;
 
   return {
     isEmployee,
@@ -63,7 +67,7 @@ export function useCampaignCard(
     isPaused, isClosed, isExpired, canParticipantStart,
     moduleConf, moduleLabel,
     transitions, showMenu,
-    total, completed, pct, showProgress,
+    total, completed, pct, showPercentage,
   };
 }
 

@@ -148,7 +148,7 @@ export function useCampaignSession() {
         router.push(`/employee/campaigns/${resolvedId}`);
       }
     } catch (err: any) {
-      setJoinError(err?.response?.data?.message ?? err?.message ?? 'Failed to join campaign');
+      setJoinError(err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? 'Failed to join campaign');
       setJoining(false);
     }
   }, [campaign, campaignId, token, isLoggedIn, profile, user, name, email, router]);

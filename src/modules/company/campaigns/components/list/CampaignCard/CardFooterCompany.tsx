@@ -21,7 +21,7 @@ const CardFooterCompany: React.FC<Props> = ({ campaign, data }) => {
 
   const deadlineNode = (() => {
     if (!campaign.deadline) {
-      return <span className="text-muted-foreground/60">{t(`${p}.card.no_deadline`)}</span>;
+      return <span className="text-muted-foreground">{t(`${p}.card.no_deadline`)}</span>;
     }
     const dateStr = fmtDate(campaign.deadline);
     if (remaining === 0 || isToday) {
@@ -30,7 +30,7 @@ const CardFooterCompany: React.FC<Props> = ({ campaign, data }) => {
     if (remaining === 1) {
       return (
         <span>
-          <span className="font-semibold text-amber-500">{t(`${p}.card.tomorrow_prefix`)}</span>
+          <span className="font-semibold text-destructive">{t(`${p}.card.tomorrow_prefix`)}</span>
           <span className="text-muted-foreground"> · {dateStr}</span>
         </span>
       );
@@ -38,7 +38,7 @@ const CardFooterCompany: React.FC<Props> = ({ campaign, data }) => {
     if (remaining !== null && remaining <= 3) {
       return (
         <span>
-          <span className="font-semibold text-amber-500">{t(`${p}.card.days_left`, { count: remaining })}</span>
+          <span className="font-semibold text-destructive">{t(`${p}.card.days_left`, { count: remaining })}</span>
           <span className="text-muted-foreground"> · {dateStr}</span>
         </span>
       );
@@ -52,10 +52,10 @@ const CardFooterCompany: React.FC<Props> = ({ campaign, data }) => {
   })();
 
   return (
-    <div className="flex items-center justify-between px-5 py-3 border-t border-border/50 bg-muted/20">
-      <div className="flex items-center gap-1.5 text-[12px]">
+    <div className="flex items-center justify-between px-[18px] py-[11px] border-t border-border/60 bg-muted">
+      <div className="flex items-center gap-1.5 text-[12.5px]">
         <Clock
-          className="size-3.5 shrink-0 text-muted-foreground/60"
+          className="size-[14px] shrink-0 text-muted-foreground"
           style={isUrgent ? { color: "#EF4444" } : undefined}
         />
         {campaign.deadline ? (

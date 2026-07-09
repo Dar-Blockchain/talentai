@@ -1,5 +1,4 @@
 import React from "react";
-import { Users, CheckCircle2 } from "lucide-react";
 import { Campaign } from "@/modules/company/campaigns/types/campaign";
 import type { CampaignCardData } from "./useCampaignCard";
 
@@ -8,43 +7,34 @@ interface Props {
   data: CampaignCardData;
 }
 
+const segClass = "flex-1 flex flex-col items-center gap-1 pt-2.5 pr-1 pb-2.5 pl-1 text-center border-r border-border last:border-r-0";
+const numClass = "text-[18px] font-bold leading-none tracking-[-0.01em] tabular-nums text-foreground";
+const labelClass = "text-[10px] font-bold uppercase tracking-[0.05em] text-muted-foreground";
+
 const CardProgress: React.FC<Props> = ({ campaign, data }) => {
-  const { moduleConf, total, completed, pct, showProgress } = data;
+  const { total, completed, pct, showPercentage } = data;
+  const isLinkAccess = campaign.accessMethod === "LINK";
 
   if (campaign.targetEmployeeCount == null && campaign.completedCount == null) return null;
 
   return (
-    <div className="space-y-2">
-      <div className="flex items-center gap-4">
-        {campaign.targetEmployeeCount != null && (
-          <span className="flex items-center gap-1.5 text-[12px] text-foreground/60">
-            <Users className="size-3.5 shrink-0" />
-            <strong className="text-foreground font-bold">{total}</strong>
-            {" participants"}
-          </span>
-        )}
-        {campaign.completedCount != null && (
-          <span className="flex items-center gap-1.5 text-[12px]">
-            <CheckCircle2 className="size-3.5 shrink-0 text-emerald-500" />
-            <strong className="text-emerald-600 font-bold">{completed}</strong>
-            <span className="text-foreground/60">{"passed"}</span>
-          </span>
-        )}
-        {showProgress && (
-          <span className="ml-auto text-[11px] font-bold tabular-nums" style={{ color: moduleConf?.color ?? "#6B7280" }}>
-            {pct}%
-          </span>
-        )}
-      </div>
-      {showProgress && (
-        <div className="h-1.5 rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full rounded-full transition-all duration-500"
-            style={{
-              width: `${Math.min(100, pct)}%`,
-              backgroundColor: pct === 100 ? "#22c55e" : (moduleConf?.color ?? "#6B7280"),
-            }}
-          />
+    <div className="flex rounded-[11px] border-2 border-border overflow-hidden bg-muted">
+      {campaign.targetEmployeeCount != null && (
+        <div className={segClass}>
+          <span className={numClass}>{total}</span>
+          <span className={labelClass}>{isLinkAccess ? "Joined" : "Employees"}</span>
+        </div>
+      )}
+      {campaign.completedCount != null && (
+        <div className={segClass}>
+          <span className={numClass}>{completed}</span>
+          <span className={labelClass}>{isLinkAccess ? "Responses" : "Completed"}</span>
+        </div>
+      )}
+      {showPercentage && (
+        <div className={segClass}>
+          <span className={numClass}>{pct}%</span>
+          <span className={labelClass}>Completion</span>
         </div>
       )}
     </div>

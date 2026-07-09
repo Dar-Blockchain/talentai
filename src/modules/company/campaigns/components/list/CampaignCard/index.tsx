@@ -2,7 +2,6 @@ import React, { memo } from "react";
 import Link from "next/link";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Campaign, CampaignStatus } from "@/modules/company/campaigns/types/campaign";
-import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
 import { useCampaignCard } from "./useCampaignCard";
 import CardTopRow from "./CardTopRow";
 import CardInfo from "./CardInfo";
@@ -33,16 +32,15 @@ const CampaignCard: React.FC<CampaignCardProps> = memo(({
   onDelete, onStatusChange, canDelete = true, canPublish = true, onStart, onShowResults,
 }) => {
   const data = useCampaignCard(campaign, variant, canPublish, canDelete);
-  const moduleColor = campaign.module ? MODULE_CONFIG[campaign.module.type]?.color : undefined;
 
   return (
     <Link href={href ?? `/company/campaigns/${campaign._id}`} className="h-full block">
-      <Card className="gap-0 py-0 overflow-hidden flex flex-col h-full group cursor-pointer transition-all duration-200 hover:shadow-[0_8px_32px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 border-border/60">
+      <Card
+        className="gap-0 py-0 rounded-2xl overflow-hidden flex flex-col h-full group cursor-pointer transition-all duration-200 hover:shadow-[0_8px_32px_rgba(0,0,0,0.10)] hover:-translate-y-0.5 border-border/60"
+        style={{ fontFamily: '-apple-system, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif' }}
+      >
 
-        {/* Module color accent bar */}
-        <div className="h-[3px] w-full shrink-0" style={{ backgroundColor: moduleColor ?? "#94a3b8" }} />
-
-        <div className="flex-1 flex flex-col gap-4 p-5">
+        <div className="flex-1 flex flex-col gap-3 pt-[18px] px-[18px] pb-4">
           <CardTopRow
             campaign={campaign}
             data={data}
@@ -51,9 +49,9 @@ const CampaignCard: React.FC<CampaignCardProps> = memo(({
             onDelete={onDelete}
             onStatusChange={onStatusChange}
           />
-          <CardInfo campaign={campaign} data={data} />
+          <CardInfo campaign={campaign} />
           <CardProgress campaign={campaign} data={data} />
-          <CardChips campaign={campaign} data={data} />
+          <CardChips campaign={campaign} />
         </div>
 
         {data.isEmployee
