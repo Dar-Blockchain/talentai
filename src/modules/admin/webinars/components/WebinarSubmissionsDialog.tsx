@@ -142,10 +142,11 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
           <span className="flex items-center gap-2 flex-wrap">
             <span>{nom}</span>
             {sub.scoring?.tier && <TierBadge tier={sub.scoring.tier} />}
-            {sub.scoring?.icp_fit && (() => {
-              const m = ICP_META[sub.scoring.icp_fit];
-              return m ? <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ color: m.color, borderColor: m.color + "40", background: m.color + "10" }}>{m.label}</span> : null;
-            })()}
+            {sub.scoring?.icp_fit && ICP_META[sub.scoring.icp_fit] && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full border" style={{ color: ICP_META[sub.scoring.icp_fit].color, borderColor: ICP_META[sub.scoring.icp_fit].color + "40", background: ICP_META[sub.scoring.icp_fit].color + "10" }}>
+                {ICP_META[sub.scoring.icp_fit].label}
+              </span>
+            )}
             {sub.completed
               ? <Badge className="h-[18px] rounded-full border-transparent bg-emerald-50 px-2 text-[10px] font-bold text-emerald-700">Completed</Badge>
               : <Badge variant="outline" className="h-[18px] rounded-full border-transparent bg-slate-100 px-2 text-[10px] font-bold text-slate-500">In progress</Badge>}
@@ -175,11 +176,11 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
 
               {/* Tags row */}
               <div className="flex flex-wrap gap-2 mb-4">
-                {sub.scoring.tier && (() => { const m = TIER_META[sub.scoring.tier!]; return (
-                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border" style={{ background: m.bg, color: m.text, borderColor: m.border }}>
-                    {m.label}
+                {sub.scoring.tier && TIER_META[sub.scoring.tier] && (
+                  <span className="text-[11px] font-bold px-2.5 py-1 rounded-full border" style={{ background: TIER_META[sub.scoring.tier].bg, color: TIER_META[sub.scoring.tier].text, borderColor: TIER_META[sub.scoring.tier].border }}>
+                    {TIER_META[sub.scoring.tier].label}
                   </span>
-                ); })()}
+                )}
                 {sub.scoring.these && sub.scoring.these !== "indetermine" && (
                   <span className="text-[11px] font-bold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 border border-indigo-100">
                     {THESE_META[sub.scoring.these]}
