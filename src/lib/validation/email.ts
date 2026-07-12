@@ -23,11 +23,16 @@ export const validateEmail = (value: string): true | string => {
 /**
  * Blocks keystrokes that can never be part of a valid email: a digit as the
  * very first character, or any character outside the email charset.
+ *
+ * Note: `type="email"` inputs don't support the selection API — reading
+ * `.selectionStart`/`.selectionEnd` on them throws an InvalidStateError in
+ * Chrome/Firefox. So we can't detect cursor position and instead only guard
+ * the case where the field is currently empty.
  */
 export function emailKeyDownGuard(e: KeyboardEvent<HTMLInputElement>) {
   if (e.ctrlKey || e.metaKey || e.altKey || e.key.length !== 1) return;
   const input = e.currentTarget;
-  if (input.selectionStart === 0 && /\d/.test(e.key)) {
+  if (input.value === "" && /\d/.test(e.key)) {
     e.preventDefault();
     return;
   }
