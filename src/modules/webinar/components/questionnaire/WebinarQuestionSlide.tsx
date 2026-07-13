@@ -37,11 +37,19 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
     (q.type !== "choice" && q.type !== "scale" && q.type !== "select") ||
     (q.type === "choice" && !hasChoiceOptions);
 
+  // onNext is captured by the deferred setTimeout below, but the onChange
+  // call right before it triggers a state update in the parent that hasn't
+  // landed yet — a plain closure would call a stale onNext still bound to
+  // the answers snapshot from before this selection. Route through a ref
+  // that's always kept current so the timer calls the latest one instead.
+  const onNextRef = useRef(onNext);
+  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
+
   const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const handleChoice = (key: string) => {
     onChange(key);
     if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(onNext, 400);
+    timerRef.current = setTimeout(() => onNextRef.current(), 400);
   };
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
 
@@ -106,35 +114,33 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
         )}
       </motion.div>
 
-      {!hasChoiceOptions && hasValue && (
-        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: active ? 1 : 0, y: 0 }}
-          transition={{ duration: 0.25 }}
-          className="flex items-center gap-3 mt-8">
-          {idx > 0 && (
-            <button onClick={onBack}
-              className="w-12 h-12 rounded-2xl border-2 border-[#E7E5DE] bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600 transition-all flex items-center justify-center">
-              <ChevronIcon dir="left" />
-            </button>
-          )}
-          <motion.button onClick={onNext} disabled={saving}
-            whileHover={!saving ? { y: -1 } : {}}
-            whileTap={!saving ? { scale: 0.98 } : {}}
-            className={`flex-1 h-12 rounded-2xl text-[15px] font-semibold transition-all
-              ${saving
-                ? "bg-slate-100 text-slate-300 cursor-not-allowed"
-                : "bg-[#6AD39C] text-[#0B2A22] hover:bg-[#52C88A] shadow-[0_2px_12px_rgba(106,211,156,0.35)]"}`}
-          >
-            {saving
-              ? <span className="flex items-center justify-center gap-2">
-                  <span className="w-4 h-4 border-2 border-[#0B2A22]/20 border-t-[#0B2A22] rounded-full animate-spin" />
-                  {isEn ? "Saving…" : "Enregistrement…"}
-                </span>
-              : isLast
-                ? (isEn ? "See my results →" : "Voir mes résultats →")
-                : (isEn ? "Next →" : "Suivant →")}
-          </motion.button>
-        </motion.div>
-      )}
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: active ? 1 : 0, y: 0 }}
+        transition={{ duration: 0.25 }}
+        className="flex items-center gap-3 mt-8">
+        {idx > 0 && (
+          <button onClick={onBack}
+            className="w-12 h-12 rounded-2xl border-2 border-[#E7E5DE] bg-white text-slate-400 hover:border-slate-300 hover:text-slate-600 transition-all flex items-center justify-center">
+            <ChevronIcon dir="left" />
+          </button>
+        )}
+        <motion.button onClick={onNext} disabled={saving || (q.required && !hasValue)}
+          whileHover={!saving ? { y: -1 } : {}}
+          whileTap={!saving ? { scale: 0.98 } : {}}
+          className={`flex-1 h-12 rounded-2xl text-[15px] font-semibold transition-all
+            ${saving || (q.required && !hasValue)
+              ? "bg-slate-100 text-slate-300 cursor-not-allowed"
+              : "bg-[#6AD39C] text-[#0B2A22] hover:bg-[#52C88A] shadow-[0_2px_12px_rgba(106,211,156,0.35)]"}`}
+        >
+          {saving
+            ? <span className="flex items-center justify-center gap-2">
+                <span className="w-4 h-4 border-2 border-[#0B2A22]/20 border-t-[#0B2A22] rounded-full animate-spin" />
+                {isEn ? "Saving…" : "Enregistrement…"}
+              </span>
+            : isLast
+              ? (isEn ? "Confirm" : "Confirmer")
+              : (isEn ? "Next →" : "Suivant →")}
+        </motion.button>
+      </motion.div>
 
       {!hasChoiceOptions && hasValue && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: active ? 0.5 : 0 }} transition={{ delay: 0.2 }}
