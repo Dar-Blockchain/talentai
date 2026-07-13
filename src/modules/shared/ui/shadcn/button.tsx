@@ -130,7 +130,7 @@ function Button({
       {...props}
     >
       {loading && <Spinner className="size-4" />}
-      {children}
+      {asChild ? <Slot.Slottable>{children}</Slot.Slottable> : children}
     </Comp>
   )
 }

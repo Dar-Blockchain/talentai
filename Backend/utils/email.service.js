@@ -362,7 +362,7 @@ const sendWebinarResultsEmail = async (submission, webinar) => {
   const nom         = submission.contact?.nom || "Participant";
   const scoring     = submission.scoring || {};
   const lang        = submission.lang || "fr";
-  const resultsUrl  = `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar/${webinar._id || webinar.id}?submission=${submission._id}&snapshot=1`;
+  const resultsUrl  = `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar?id=${webinar._id || webinar.id}&submission=${submission._id}&snapshot=1`;
 
   const webinarDate = webinar.date
     ? new Date(webinar.date).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR", {
@@ -421,7 +421,7 @@ const sendWebinarReminderEmail = async (submission, webinar) => {
     : null;
 
   const webinarUrl = webinar.webinar_link
-    || `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar/${webinar._id || webinar.id}`;
+    || `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar?id=${webinar._id || webinar.id}`;
 
   const mailOptions = {
     from: FROM_ADDRESS,

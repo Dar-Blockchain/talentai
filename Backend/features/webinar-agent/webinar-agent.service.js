@@ -25,6 +25,7 @@ exports.saveProgress = async ({ submissionId, webinarId, contact, source, lang, 
   };
 
   let doc;
+  let isReturning = false;
   if (submissionId) {
     doc = await WebinarSubmission.findByIdAndUpdate(
       submissionId,
@@ -33,17 +34,22 @@ exports.saveProgress = async ({ submissionId, webinarId, contact, source, lang, 
     );
     if (!doc) throw new Error("Submission not found");
   } else if (hasEmail) {
-    // Upsert by email + webinarId to deduplicate returning visitors
-    doc = await WebinarSubmission.findOneAndUpdate(
+    // Upsert by email + webinarId to deduplicate returning visitors.
+    // includeResultMetadata surfaces whether this matched an existing doc, so
+    // the frontend can tell a returning visitor apart from a brand-new
+    // registration (Mongoose 8 renamed the old `rawResult` option to this).
+    const result = await WebinarSubmission.findOneAndUpdate(
       { "contact.email": contact.email.trim(), webinar_id: webinarId },
       { $set },
-      { upsert: true, new: true, setDefaultsOnInsert: true },
+      { upsert: true, new: true, setDefaultsOnInsert: true, includeResultMetadata: true },
     );
+    doc = result.value;
+    isReturning = !!result.lastErrorObject?.updatedExisting;
   } else {
     doc = await WebinarSubmission.create({ ...$set });
   }
 
-  return { submissionId: doc._id.toString() };
+  return { submissionId: doc._id.toString(), completed: doc.completed === true, isReturning };
 };
 
 /**

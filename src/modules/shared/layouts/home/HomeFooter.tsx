@@ -53,7 +53,7 @@ const Footer: React.FC = () => {
               alt="TalentAI"
               width={130}
               height={36}
-              style={{ objectFit: "contain" }}
+              className="h-9 w-auto object-contain"
             />
           </div>
           <p className="text-[11px] text-gray-500 leading-[1.5] mb-1">

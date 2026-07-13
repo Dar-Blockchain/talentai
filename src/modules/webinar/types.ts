@@ -28,3 +28,35 @@ export interface WebinarSubmission {
   scoring?:    WebinarScoring;
   completed:   boolean;
 }
+
+export interface WebinarQuestionOption {
+  key:      string;
+  label_fr: string;
+  label_en: string;
+}
+
+export interface WebinarQuestion {
+  key:      string;
+  order:    number;
+  type:     "choice" | "scale" | "text" | "select";
+  label_fr: string;
+  label_en: string;
+  options:  WebinarQuestionOption[];
+  required: boolean;
+}
+
+export interface WebinarStats {
+  total_registrations?: number;
+}
+
+export interface WebinarData {
+  _id:          string;
+  title:        string;
+  description?: string;
+  about_fr?:    string;
+  about_en?:    string;
+  date?:        string;
+  questions:    WebinarQuestion[];
+  lang:         string;
+  stats?:       WebinarStats;
+}
