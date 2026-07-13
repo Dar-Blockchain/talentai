@@ -198,9 +198,9 @@ const STEPS = [
   { label: "Questions", desc: "Registration form"  },
 ];
 
-function WebinarFormDialog({ open, initial, onClose, onSave }: {
+function WebinarFormDialog({ open, initial, onClose, onSave, saving }: {
   open: boolean; initial: WebinarFormValues | null;
-  onClose: () => void; onSave: (v: WebinarFormValues) => void;
+  onClose: () => void; onSave: (v: WebinarFormValues) => void; saving: boolean;
 }) {
   const [form, setForm] = React.useState<WebinarFormValues>(initial ?? EMPTY_FORM);
   const [step, setStep] = React.useState(0);
@@ -386,7 +386,7 @@ function WebinarFormDialog({ open, initial, onClose, onSave }: {
                 Next →
               </Button>
             ) : (
-              <Button variant="ghost" onClick={() => onSave(form)} disabled={!canSave}
+              <Button variant="ghost" onClick={() => onSave(form)} disabled={!canSave} loading={saving}
                 title={!canSave ? "Add a title and at least one question" : undefined}
                 className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold">
                 Save webinar
@@ -624,6 +624,7 @@ const WebinarManagement: React.FC = () => {
   });
 
   const handleSave = (values: WebinarFormValues) => {
+    if (createMut.isPending || updateMut.isPending) return;
     if (editTarget) {
       updateMut.mutate({ id: editTarget._id, values }, {
         onSuccess: () => { ok("Webinar updated."); setFormOpen(false); setEditTarget(null); },
@@ -733,6 +734,7 @@ const WebinarManagement: React.FC = () => {
         initial={editTarget ? toFormValues(editTarget) : null}
         onClose={() => { setFormOpen(false); setEditTarget(null); }}
         onSave={handleSave}
+        saving={editTarget ? updateMut.isPending : createMut.isPending}
       />
 
       <QuestionsDialog webinar={qTarget} open={!!qTargetId} onClose={() => setQTargetId(null)} />

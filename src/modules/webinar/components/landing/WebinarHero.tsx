@@ -85,7 +85,7 @@ export function WebinarHero({ lang, title, desc, formattedDate, questionsCount, 
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6AD39C] opacity-60" />
               <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6AD39C]" />
             </span>
-            {registrations + 10}+ {isEn ? "professionals already registered" : "professionnels déjà inscrits"}
+            {registrations}+ {isEn ? "professionals already registered" : "professionnels déjà inscrits"}
           </div>
 
           <Button
