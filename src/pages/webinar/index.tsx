@@ -45,10 +45,19 @@ const WebinarPage: React.FC = () => {
   const { data: webinar, isLoading: queryLoading } = usePublicWebinarQuery(previewId, router.isReady);
   const loading = !router.isReady || queryLoading;
 
-  // Prefer an explicit ?lang=, then the webinar's own configured language,
-  // then the visitor's browser/app language.
+  // A single-language webinar (fr or en) always renders in that language —
+  // no switcher, no falling back to the visitor's browser language. Only a
+  // "both" webinar lets the visitor pick, via the header toggle or ?lang=.
   const lang: "fr" | "en" =
-    langParam === "en" ? "en" : langParam === "fr" ? "fr" : webinar?.lang === "en" ? "en" : i18nLang;
+    webinar?.lang === "en"
+      ? "en"
+      : webinar?.lang === "fr"
+        ? "fr"
+        : langParam === "en"
+          ? "en"
+          : langParam === "fr"
+            ? "fr"
+            : i18nLang;
   const isEn = lang === "en";
 
   const aboutText    = isEn ? webinar?.about_en : webinar?.about_fr;

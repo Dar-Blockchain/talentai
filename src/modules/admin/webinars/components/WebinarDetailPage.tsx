@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import { toast } from "sonner";
 import {
   ChevronRight as NavigateNextIcon,
   Video as WebinarIcon,
@@ -17,6 +16,7 @@ import {
   Users as PeopleIcon,
   Calendar as CalendarIcon,
   Link2 as LinkIcon,
+  BarChart3 as ScoreIcon,
 } from "lucide-react";
 import {
   Breadcrumb,
@@ -35,41 +35,34 @@ import {
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
-import { ConfirmDialog, ADMIN_ACCENT } from "@/modules/admin/shared";
-import { useAdminWebinarQuery, useVerifyWebinarMutation, useDeleteWebinarMutation } from "../queries";
-import { adminWebinarApi } from "../api";
-import { exportWebinarSubmissions } from "../utils/exportSubmissions";
+import { ConfirmDialog, ADMIN_ACCENT, AdminStatCard } from "@/modules/admin/shared";
+import { useAdminWebinarQuery } from "../queries";
+import { getWebinarStatusMeta } from "../constants";
+import { formatWebinarSchedule } from "../utils/formatSchedule";
+import { useWebinarActions } from "../hooks/useWebinarActions";
 import { WebinarQuestionsList } from "./WebinarQuestionsList";
 import { WebinarRegistrantsTab } from "./WebinarRegistrantsTab";
-
-const ok = (msg: string) => toast.success(msg);
-const err = (msg: string) => toast.error(msg);
-
-const STATUS_META: Record<string, { label: string; color: string; bg: string; dot: string }> = {
-  active: { label: "Published", color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
-  draft:  { label: "Draft",     color: "#D97706", bg: "#FFFBEB", dot: "#F59E0B" },
-};
-
-function StatCard({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="rounded-xl border border-slate-100 bg-white p-4">
-      <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-1">{label}</p>
-      <p className="text-[22px] font-black text-slate-900">{value}</p>
-    </div>
-  );
-}
 
 export function WebinarDetailPage({ id }: { id: string }) {
   const router = useRouter();
   const { data: webinar, isLoading } = useAdminWebinarQuery(id);
-  const verifyMut = useVerifyWebinarMutation();
-  const deleteMut = useDeleteWebinarMutation();
 
-  const [copied, setCopied] = useState(false);
-  const [exporting, setExporting] = useState(false);
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
-  const [sendingReminder, setSendingReminder] = useState(false);
+
+  const {
+    publicUrl,
+    copied,
+    handleCopyLink,
+    exporting,
+    handleExport,
+    verifyMut,
+    handleVerify,
+    deleteMut,
+    handleDelete,
+    sendingReminder,
+    handleSendReminder,
+  } = useWebinarActions(webinar);
 
   const activeTab = router.query.tab === "registrants" ? "registrants" : "details";
   const setActiveTab = (tab: "details" | "registrants") =>
@@ -86,62 +79,8 @@ export function WebinarDetailPage({ id }: { id: string }) {
     return <p className="py-24 text-center text-sm text-slate-400">Webinar not found.</p>;
   }
 
-  const statusMeta = STATUS_META[webinar.status] ?? STATUS_META.draft;
-  const publicUrl = `/webinar?id=${webinar._id}`;
-
-  const handleCopyLink = async () => {
-    try {
-      await navigator.clipboard.writeText(`${window.location.origin}${publicUrl}`);
-      setCopied(true);
-      ok("Link copied to clipboard.");
-      setTimeout(() => setCopied(false), 1500);
-    } catch {
-      err("Failed to copy link.");
-    }
-  };
-
-  const handleExport = async () => {
-    setExporting(true);
-    try {
-      await exportWebinarSubmissions(webinar);
-    } catch {
-      err("Export failed.");
-    } finally {
-      setExporting(false);
-    }
-  };
-
-  const handleVerify = () =>
-    verifyMut.mutate(webinar._id, {
-      onSuccess: () => ok(`"${webinar.title}" is now Published.`),
-      onError: () => err("Failed to publish webinar."),
-    });
-
-  const handleDelete = () =>
-    deleteMut.mutate(webinar._id, {
-      onSuccess: () => {
-        ok("Webinar deleted.");
-        router.push("/admin/dashboard?tab=webinars");
-      },
-      onError: () => {
-        err("Failed to delete.");
-        setDeleteOpen(false);
-      },
-    });
-
-  const handleSendReminder = async () => {
-    setSendingReminder(true);
-    setReminderOpen(false);
-    try {
-      const result = await adminWebinarApi.sendLinkReminder(webinar._id);
-      ok(`Reminder sent to ${result.sent} participant${result.sent !== 1 ? "s" : ""}${result.failed ? ` (${result.failed} failed)` : ""}.`);
-    } catch {
-      err("Failed to send reminder.");
-    } finally {
-      setSendingReminder(false);
-    }
-  };
-
+  const statusMeta = getWebinarStatusMeta(webinar.status);
+  const schedule = formatWebinarSchedule(webinar.date, webinar.end_date);
   const highlights = webinar.highlights.filter(Boolean);
 
   return (
@@ -191,20 +130,11 @@ export function WebinarDetailPage({ id }: { id: string }) {
                   </span>
                 </div>
                 <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#6B7280]">
-                  {webinar.date && (
+                  {schedule && (
                     <span className="flex items-center gap-1">
                       <CalendarIcon size={13} color="#9CA3AF" />
-                      {new Date(webinar.date).toLocaleString("en-GB", {
-                        day: "numeric", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit",
-                      })}
-                      {webinar.end_date && (
-                        <>
-                          {" – "}
-                          {new Date(webinar.end_date).toLocaleTimeString("en-GB", {
-                            hour: "2-digit", minute: "2-digit",
-                          })}
-                        </>
-                      )}
+                      {schedule.date}, {schedule.time}
+                      {schedule.endTime && ` – ${schedule.endTime}`}
                     </span>
                   )}
                   <span className="font-semibold uppercase">{webinar.lang}</span>
@@ -293,9 +223,13 @@ export function WebinarDetailPage({ id }: { id: string }) {
       {activeTab === "details" ? (
         <div className="space-y-5">
           <div className="grid grid-cols-3 gap-4">
-            <StatCard label="Registrations" value={webinar.stats.total_registrations} />
-            <StatCard label="Completions" value={webinar.stats.total_completions} />
-            <StatCard label="Avg score" value={webinar.stats.avg_maturite_ia != null ? `${webinar.stats.avg_maturite_ia}/100` : "—"} />
+            <AdminStatCard icon={PeopleIcon} label="Registrations" value={webinar.stats.total_registrations} />
+            <AdminStatCard icon={VerifyIcon} label="Completions" value={webinar.stats.total_completions} />
+            <AdminStatCard
+              icon={ScoreIcon}
+              label="Avg score"
+              value={webinar.stats.avg_maturite_ia != null ? `${webinar.stats.avg_maturite_ia}/100` : "—"}
+            />
           </div>
 
           {webinar.webinar_link && (
@@ -358,7 +292,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
         confirmLabel="Delete"
         destructive
         loading={deleteMut.isPending}
-        onConfirm={handleDelete}
+        onConfirm={() => handleDelete(() => router.push("/admin/dashboard?tab=webinars"))}
         onCancel={() => setDeleteOpen(false)}
       />
 
@@ -368,7 +302,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
         description={`This will send the webinar join link to all completed participants of "${webinar.title}". The reminder email will be sent immediately to everyone.`}
         confirmLabel="Send now"
         loading={sendingReminder}
-        onConfirm={handleSendReminder}
+        onConfirm={() => handleSendReminder(() => setReminderOpen(false))}
         onCancel={() => setReminderOpen(false)}
       />
     </div>

@@ -100,7 +100,9 @@ export interface WebinarFormValues {
   /** "HH:mm" — combined with `date` into the full end datetime on save. */
   end_time: string;
   status: "draft" | "active";
-  lang: "fr" | "en" | "both";
+  /** "" means not chosen yet — the New Webinar form has no preselected
+   * language until the admin picks one on the Basics step. */
+  lang: "" | "fr" | "en" | "both";
   highlights_fr: string[];
   highlights_en: string[];
   questions: WebinarQuestionDraft[];
