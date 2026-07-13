@@ -18,7 +18,7 @@ export const EMPTY_FORM: WebinarFormValues = {
   questions: [],
 };
 
-export const QUESTION_TYPES = ["choice", "scale", "text", "select"] as const;
+export const QUESTION_TYPES = ["choice", "scale", "text", "select", "multiselect"] as const;
 
 export const STEPS = [
   { label: "Basics", desc: "Language, date & link" },

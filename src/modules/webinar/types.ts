@@ -38,7 +38,7 @@ export interface WebinarQuestionOption {
 export interface WebinarQuestion {
   key: string;
   order: number;
-  type: "choice" | "scale" | "text" | "select";
+  type: "choice" | "scale" | "text" | "select" | "multiselect";
   label_fr: string;
   label_en: string;
   options: WebinarQuestionOption[];

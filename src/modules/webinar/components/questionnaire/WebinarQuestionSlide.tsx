@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
+import { Checkbox } from "@/modules/shared/ui/shadcn/checkbox";
 import type { WebinarQuestion } from "@/modules/webinar/types";
 import { ChevronIcon } from "../shared/icons";
 import { QuestionOption } from "./QuestionOption";
@@ -27,15 +28,19 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
 }) {
   const isEn    = lang === "en";
   const label   = (isEn ? q.label_en : q.label_fr) || q.label_fr || q.label_en;
-  const hasValue = value !== undefined && value !== "" && value !== null;
+  const hasValue = Array.isArray(value)
+    ? value.length > 0
+    : value !== undefined && value !== "" && value !== null;
 
   // A "choice" question with no options defined (e.g. left on the type
   // selector's default while the admin only ever intended free text) is
   // just as broken as an unrecognised type — treat both the same way.
   const hasChoiceOptions = q.type === "choice" && (q.options?.length ?? 0) > 0;
+  const hasMultiselectOptions = q.type === "multiselect" && (q.options?.length ?? 0) > 0;
   const isFreeInput =
-    (q.type !== "choice" && q.type !== "scale" && q.type !== "select") ||
-    (q.type === "choice" && !hasChoiceOptions);
+    (q.type !== "choice" && q.type !== "scale" && q.type !== "select" && q.type !== "multiselect") ||
+    (q.type === "choice" && !hasChoiceOptions) ||
+    (q.type === "multiselect" && !hasMultiselectOptions);
 
   // onNext is captured by the deferred setTimeout below, but the onChange
   // call right before it triggers a state update in the parent that hasn't
@@ -52,6 +57,18 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
     timerRef.current = setTimeout(() => onNextRef.current(), 400);
   };
   useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
+
+  // Multiselect never auto-advances (there's no single "final" pick that
+  // signals completion) — just toggle the key in/out of the answer array
+  // and let the visitor hit the Next button themselves.
+  const selectedKeys = Array.isArray(value) ? (value as string[]) : [];
+  const toggleMultiselect = (key: string) => {
+    onChange(
+      selectedKeys.includes(key)
+        ? selectedKeys.filter((k) => k !== key)
+        : [...selectedKeys, key],
+    );
+  };
 
   return (
     <div className="flex flex-col justify-center px-5 py-12 max-w-[620px] mx-auto w-full">
@@ -82,6 +99,39 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
                 onClick={() => handleChoice(opt.key)}
               />
             ))}
+          </div>
+        )}
+
+        {hasMultiselectOptions && (
+          <div className="space-y-2.5">
+            {q.options.map((opt) => {
+              const selected = selectedKeys.includes(opt.key);
+              return (
+                // A <label> here would double-fire: Radix's Checkbox renders a
+                // <button>, which is a "labelable" element, so the browser
+                // implicitly forwards a second synthetic click to it on every
+                // label click — toggling on then immediately back off. A
+                // plain <div> with its own click/keyboard handling avoids that.
+                <div key={opt.key} role="checkbox" aria-checked={selected} tabIndex={0}
+                  onClick={() => toggleMultiselect(opt.key)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleMultiselect(opt.key);
+                    }
+                  }}
+                  className={`group w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all duration-150 cursor-pointer outline-none
+                    ${selected
+                      ? "border-[#10453F] bg-[#10453F] text-white shadow-[0_4px_20px_rgba(16,69,63,0.30)]"
+                      : "border-[#E7E5DE] bg-white text-slate-700 shadow-[0_1px_3px_rgba(16,69,63,0.05)] hover:border-[#6AD39C]/70 hover:bg-[#EAF6F0] hover:shadow-[0_4px_14px_rgba(16,69,63,0.08)]"}`}
+                >
+                  <Checkbox checked={selected} className="shrink-0 size-5 pointer-events-none border-current data-[state=checked]:bg-white data-[state=checked]:text-[#10453F]" />
+                  <span className="text-[15px] font-medium leading-snug flex-1">
+                    {(isEn ? opt.label_en : opt.label_fr) || opt.label_fr || opt.label_en}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         )}
 

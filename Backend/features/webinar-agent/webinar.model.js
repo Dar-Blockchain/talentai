@@ -4,7 +4,7 @@ const QuestionSchema = new mongoose.Schema({
   key:       { type: String, required: true },   // e.g. "q1_role"
   label_fr:  { type: String, required: true },
   label_en:  { type: String, required: true },
-  type:      { type: String, enum: ["choice", "scale", "text", "select"], default: "choice" },
+  type:      { type: String, enum: ["choice", "scale", "text", "select", "multiselect"], default: "choice" },
   options:   [{ key: String, label_fr: String, label_en: String }],
   required:  { type: Boolean, default: true },
   order:     { type: Number, default: 0 },

@@ -66,6 +66,7 @@ const planUpgradeReminderTemplate      = compileTemplate("company/plan-upgrade-r
 const jobMatchTemplate                 = compileTemplate("job/job-match.hbs");
 const webinarResultsTemplate           = compileTemplate("webinar/webinar-results.hbs");
 const webinarReminderTemplate          = compileTemplate("webinar/webinar-reminder.hbs");
+const webinarInvitationTemplate        = compileTemplate("webinar/webinar-invitation.hbs");
 
 // Format role: "project_manager" → "Project Manager"
 const formatRole = (role) =>
@@ -450,6 +451,50 @@ const sendWebinarReminderEmail = async (submission, webinar) => {
   }
 };
 
+// Cold invite — sent to people who haven't registered yet, so the CTA links
+// to the public registration page rather than the (registrants-only) join link.
+const sendWebinarInvitationEmail = async (email, webinar) => {
+  if (!email) return false;
+
+  const isEn = webinar.lang === "en";
+  const locale = isEn ? "en-GB" : "fr-FR";
+  const title = (isEn ? webinar.title_en : webinar.title_fr) || webinar.title;
+
+  const webinarDate = webinar.date
+    ? new Date(webinar.date).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })
+    : null;
+  const webinarTime = webinar.date
+    ? new Date(webinar.date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : null;
+
+  const registerUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar?id=${webinar._id || webinar.id}`;
+
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: email,
+    subject: isEn
+      ? `You're invited — ${title}`
+      : `Vous êtes invité(e) — ${title}`,
+    html: webinarInvitationTemplate({
+      webinarTitle: title,
+      webinarDate,
+      webinarTime,
+      registerUrl,
+      isEn,
+      year: new Date().getFullYear(),
+    }),
+    attachments: [logoAttachment],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("❌ Webinar invitation email failed:", error.message);
+    return false;
+  }
+};
+
 module.exports = {
   sendOTP,
   sendCompanyInvitation,
@@ -465,5 +510,6 @@ module.exports = {
   sendJobMatchEmail,
   sendWebinarResultsEmail,
   sendWebinarReminderEmail,
+  sendWebinarInvitationEmail,
   transporter,
 };

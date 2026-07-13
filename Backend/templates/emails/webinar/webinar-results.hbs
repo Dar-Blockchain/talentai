@@ -20,7 +20,7 @@
 
           <!-- Green accent bar -->
           <tr>
-            <td style="height:4px;background:linear-gradient(90deg,#0D9488,#6AD39C);"></td>
+            <td height="4" bgcolor="#0D9488" style="height:4px;background-color:#0D9488;font-size:0;line-height:0;">&nbsp;</td>
           </tr>
 
           <!-- Hero -->
@@ -104,13 +104,21 @@
             </td>
           </tr>
 
-          <!-- CTA — only shown if admin set a webinar link -->
+          <!-- CTA — only shown if admin set a webinar link. Table + bgcolor
+               attribute (not just CSS) so the button survives email clients
+               that strip style attributes/gradients -->
           {{#if webinarLink}}
           <tr>
             <td style="padding:28px 36px 0 36px;text-align:center;">
-              <a href="{{webinarLink}}" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#6AD39C);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 32px;border-radius:12px;letter-spacing:0.3px;">
-                {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
-              </a>
+              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+                <tr>
+                  <td bgcolor="#0D9488" align="center" style="background-color:#0D9488;border-radius:12px;">
+                    <a href="{{webinarLink}}" style="display:inline-block;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 32px;letter-spacing:0.3px;font-family:'Segoe UI',Arial,sans-serif;">
+                      {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
           {{/if}}

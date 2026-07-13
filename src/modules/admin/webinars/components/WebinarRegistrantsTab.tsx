@@ -17,6 +17,7 @@ import {
 import { useWebinarSubmissionsQuery } from "../queries";
 import type { WebinarSubmission, Webinar } from "../types";
 import { ADMIN_ACCENT } from "@/modules/admin/shared";
+import { formatAnswerDisplay } from "../utils/formatAnswer";
 
 // The admin dashboard is English-only, independent of whatever language the
 // webinar itself was authored in — these labels are display-only chrome.
@@ -294,14 +295,8 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                   .filter(q => (sub.answers as Record<string, unknown>)[q.key] !== undefined)
                   .map((q, i) => {
                     const raw = (sub.answers as Record<string, unknown>)[q.key];
-                    const opt = q.options.find(o => o.key === raw);
-                    const optLabel = opt ? (opt.label_en || opt.label_fr) : null;
-                    const qLabel   = q.label_en || q.label_fr;
-                    const display = q.type === "scale"
-                      ? `${raw}/5`
-                      : optLabel
-                        ? optLabel
-                        : String(raw ?? "").slice(0, 120);
+                    const qLabel  = q.label_en || q.label_fr;
+                    const display = formatAnswerDisplay(q, raw).slice(0, 120);
                     return (
                       <div key={q.key} className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2 flex-1 min-w-0">

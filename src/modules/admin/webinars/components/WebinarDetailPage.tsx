@@ -9,6 +9,7 @@ import {
   MoreVertical as MoreIcon,
   CheckCircle2 as VerifyIcon,
   Send as SendIcon,
+  UserPlus as InviteIcon,
   Pencil as EditIcon,
   ExternalLink as OpenIcon,
   Download as DownloadIcon,
@@ -42,6 +43,7 @@ import { formatWebinarSchedule } from "../utils/formatSchedule";
 import { useWebinarActions } from "../hooks/useWebinarActions";
 import { WebinarQuestionsList } from "./WebinarQuestionsList";
 import { WebinarRegistrantsTab } from "./WebinarRegistrantsTab";
+import { WebinarInviteDialog } from "./WebinarInviteDialog";
 
 export function WebinarDetailPage({ id }: { id: string }) {
   const router = useRouter();
@@ -49,6 +51,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
 
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reminderOpen, setReminderOpen] = useState(false);
+  const [inviteOpen, setInviteOpen] = useState(false);
 
   const {
     publicUrl,
@@ -186,6 +189,9 @@ export function WebinarDetailPage({ id }: { id: string }) {
                       <EditIcon size={14} color="#6B7280" /> Edit
                     </DropdownMenuItem>
                   )}
+                  <DropdownMenuItem onClick={() => setInviteOpen(true)} className="gap-2.5 rounded-lg py-[9px] px-[10px]">
+                    <InviteIcon size={14} color="#6B7280" /> Invite people
+                  </DropdownMenuItem>
                   <DropdownMenuItem asChild className="gap-2.5 rounded-lg py-[9px] px-[10px]">
                     <a href={publicUrl} target="_blank" rel="noopener noreferrer">
                       <OpenIcon size={14} color="#6B7280" /> Preview page
@@ -304,6 +310,13 @@ export function WebinarDetailPage({ id }: { id: string }) {
         loading={sendingReminder}
         onConfirm={() => handleSendReminder(() => setReminderOpen(false))}
         onCancel={() => setReminderOpen(false)}
+      />
+
+      <WebinarInviteDialog
+        webinarId={webinar._id}
+        webinarTitle={webinar.title}
+        open={inviteOpen}
+        onClose={() => setInviteOpen(false)}
       />
     </div>
   );

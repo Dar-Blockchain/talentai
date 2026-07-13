@@ -1,5 +1,6 @@
 import * as XLSX from "xlsx";
 import { adminWebinarApi } from "../api";
+import { formatAnswerDisplay } from "./formatAnswer";
 import type { Webinar } from "../types";
 
 // The admin dashboard is English-only — export columns follow that,
@@ -26,10 +27,8 @@ export async function exportWebinarSubmissions(w: Webinar): Promise<void> {
     ...Object.fromEntries(
       sortedQs.map((q) => {
         const raw = (s.answers as Record<string, unknown>)?.[q.key];
-        const opt = q.options.find((o) => o.key === raw);
         const qLabel = q.label_en || q.label_fr;
-        const optLabel = opt ? opt.label_en || opt.label_fr : null;
-        return [qLabel.slice(0, 40), optLabel ?? (raw ?? "")];
+        return [qLabel.slice(0, 40), formatAnswerDisplay(q, raw)];
       }),
     ),
   }));

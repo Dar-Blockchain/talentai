@@ -220,7 +220,7 @@ export function QuestionEditor({
           </div>
         </div>
 
-        {(q.type === "choice" || q.type === "select") && (
+        {(q.type === "choice" || q.type === "select" || q.type === "multiselect") && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <p className="text-[10px] font-semibold text-slate-400">
@@ -286,6 +286,11 @@ export function QuestionEditor({
         {q.type === "text" && (
           <p className="text-[11px] text-slate-400 italic">
             Free text input (no options needed)
+          </p>
+        )}
+        {q.type === "multiselect" && (
+          <p className="text-[11px] text-slate-400 italic">
+            Registrant can pick more than one option
           </p>
         )}
       </div>

@@ -18,6 +18,7 @@ router.patch( "/:id",                requireAuth, adminOnly, controller.update);
 router.delete("/:id",                requireAuth, adminOnly, controller.remove);
 router.patch( "/:id/verify",         requireAuth, adminOnly, controller.verify);
 router.post(  "/:id/send-link",      requireAuth, adminOnly, controller.sendLinkReminder);
+router.post(  "/:id/invite",         requireAuth, adminOnly, controller.invite);
 router.get(   "/:id/submissions",    requireAuth, adminOnly, controller.listSubmissions);
 
 module.exports = router;

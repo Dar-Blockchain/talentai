@@ -28,6 +28,7 @@ import {
   Pencil as EditIcon,
   Copy as CopyIcon,
   Check as CheckIcon,
+  UserPlus as InviteIcon,
 } from "lucide-react";
 import { getWebinarStatusMeta } from "../constants";
 import { formatWebinarSchedule } from "../utils/formatSchedule";
@@ -42,6 +43,7 @@ export function WebinarCard({
   exportPending,
   onSendLink,
   sendLinkPending,
+  onInvite,
   onDelete,
 }: {
   w: Webinar;
@@ -52,6 +54,7 @@ export function WebinarCard({
   exportPending: boolean;
   onSendLink: () => void;
   sendLinkPending: boolean;
+  onInvite: () => void;
   onDelete: () => void;
 }) {
   const router = useRouter();
@@ -199,6 +202,23 @@ export function WebinarCard({
                   </div>
                 </DropdownMenuItem>
               )}
+
+              <DropdownMenuItem
+                onClick={onInvite}
+                className="gap-2.5 rounded-lg py-[9px] px-[10px]"
+              >
+                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#F3F4F6]">
+                  <InviteIcon size={13} color="#6B7280" />
+                </div>
+                <div>
+                  <p className="text-[12.5px] font-semibold leading-[1.2] text-[#111827]">
+                    Invite people
+                  </p>
+                  <p className="text-[10px] leading-[1.2] text-[#9CA3AF]">
+                    Send invitations by email
+                  </p>
+                </div>
+              </DropdownMenuItem>
 
               <DropdownMenuItem
                 asChild

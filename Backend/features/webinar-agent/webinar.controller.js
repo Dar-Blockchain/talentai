@@ -62,3 +62,8 @@ exports.sendLinkReminder = handle(async (req, res) => {
   const result = await service.sendLinkReminder(req.params.id);
   res.json({ success: true, data: result });
 }, 400);
+
+exports.invite = handle(async (req, res) => {
+  const result = await service.inviteToWebinar(req.params.id, req.body.emails);
+  res.json({ success: true, data: result });
+}, 400);

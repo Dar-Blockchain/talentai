@@ -1,6 +1,10 @@
 const Webinar           = require("./webinar.model");
 const WebinarSubmission = require("./webinar-submission.model");
-const { sendWebinarReminderEmail } = require("../../utils/email.service");
+const { sendWebinarReminderEmail, sendWebinarInvitationEmail } = require("../../utils/email.service");
+
+// A plain-enough check to filter out obviously-malformed rows from a pasted
+// list or an uploaded spreadsheet — real deliverability is the mail server's job.
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -174,6 +178,31 @@ exports.sendLinkReminder = async (id) => {
     )
   );
   return { sent, failed, total: submissions.length };
+};
+
+/** Cold invites to arbitrary email addresses (pasted or uploaded by the admin)
+ * — unlike sendLinkReminder, these people haven't registered yet, so the
+ * email links to the public registration page instead of a join link. */
+exports.inviteToWebinar = async (id, emails) => {
+  const webinar = await Webinar.findById(id).lean();
+  if (!webinar) throw new Error("Webinar not found");
+
+  const uniqueEmails = [...new Set(
+    (Array.isArray(emails) ? emails : [])
+      .map(e => String(e).trim().toLowerCase())
+      .filter(e => EMAIL_RE.test(e)),
+  )];
+  if (uniqueEmails.length === 0) throw new Error("No valid email addresses provided.");
+
+  let sent = 0, failed = 0;
+  await Promise.allSettled(
+    uniqueEmails.map(email =>
+      sendWebinarInvitationEmail(email, webinar)
+        .then(ok => { if (ok) sent++; else failed++; })
+        .catch(() => { failed++; })
+    )
+  );
+  return { sent, failed, total: uniqueEmails.length };
 };
 
 exports.refreshStats = async (id) => {

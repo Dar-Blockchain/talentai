@@ -2,7 +2,7 @@ export interface WebinarQuestion {
   key: string;
   label_fr: string;
   label_en: string;
-  type: "choice" | "scale" | "text" | "select";
+  type: "choice" | "scale" | "text" | "select" | "multiselect";
   options: { key: string; label_fr: string; label_en: string }[];
   required: boolean;
   order: number;

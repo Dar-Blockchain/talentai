@@ -23,6 +23,7 @@ import {
 } from "../queries";
 import { WebinarCard } from "./WebinarCard";
 import { WebinarFormDialog } from "./WebinarFormDialog";
+import { WebinarInviteDialog } from "./WebinarInviteDialog";
 import type { Webinar, WebinarFormValues } from "../types";
 
 const STATUS_FILTERS = ["", "draft", "active"] as const;
@@ -50,6 +51,7 @@ const WebinarManagement: React.FC = () => {
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [reminderTarget, setReminderTarget] = useState<Webinar | null>(null);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
+  const [inviteTarget, setInviteTarget] = useState<Webinar | null>(null);
 
   // Deep link from the webinar detail page's "Edit" action (?edit=<id>).
   React.useEffect(() => {
@@ -203,6 +205,7 @@ const WebinarManagement: React.FC = () => {
               exportPending={exportingId === w._id}
               onSendLink={() => setReminderTarget(w)}
               sendLinkPending={sendingReminderId === w._id}
+              onInvite={() => setInviteTarget(w)}
               onDelete={() => setDeleteTarget(w._id)}
             />
           ))}
@@ -228,6 +231,13 @@ const WebinarManagement: React.FC = () => {
         loading={!!sendingReminderId}
         onConfirm={handleSendReminder}
         onCancel={() => setReminderTarget(null)}
+      />
+
+      <WebinarInviteDialog
+        webinarId={inviteTarget?._id ?? null}
+        webinarTitle={inviteTarget?.title}
+        open={!!inviteTarget}
+        onClose={() => setInviteTarget(null)}
       />
 
       <ConfirmDialog

@@ -61,6 +61,12 @@ export const adminWebinarApi = {
       return data.data as { sent: number; failed: number; total: number };
     }, "Failed to send reminder."),
 
+  invite: (id: string, emails: string[]) =>
+    apiCall(async () => {
+      const { data } = await axiosInstance.post(`${BASE}/${id}/invite`, { emails });
+      return data.data as { sent: number; failed: number; total: number };
+    }, "Failed to send invitations."),
+
   listSubmissions: (id: string, params?: { page?: number; limit?: number; completed?: boolean }) =>
     apiCall(async () => {
       const { data } = await axiosInstance.get(`${BASE}/${id}/submissions`, { params });

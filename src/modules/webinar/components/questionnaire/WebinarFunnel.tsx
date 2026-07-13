@@ -9,6 +9,10 @@ import type { WebinarContact, WebinarData, WebinarScoring } from "@/modules/webi
 
 const EASE = [0.32, 0.72, 0, 1] as const;
 
+/** A multiselect answer is an array — "answered" means at least one pick,
+ * not just "the key exists", since an empty array is still truthy. */
+const hasAnswer = (v: unknown) => (Array.isArray(v) ? v.length > 0 : v !== undefined && v !== "");
+
 /**
  * The questionnaire itself — one question at a time, then the AI snapshot.
  * Registration (contact/consent/submissionId) already happened before this
@@ -110,7 +114,7 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
       // question with no options defined renders as free text (see
       // WebinarQuestionSlide's hasChoiceOptions) and does need it.
       if (currentQ.type === "choice" && (currentQ.options?.length ?? 0) > 0) return;
-      const hasVal = answers[currentQ.key] !== undefined && answers[currentQ.key] !== "";
+      const hasVal = hasAnswer(answers[currentQ.key]);
       if (currentQ.required && !hasVal) return;
       handleNavNext();
     };
@@ -190,7 +194,7 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
           <ChevronIcon dir="up" />
         </button>
         <button onClick={handleNavNext}
-          disabled={!!(currentQ?.required && !answers[currentQ?.key])}
+          disabled={!!(currentQ?.required && !hasAnswer(answers[currentQ?.key]))}
           className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-30 transition-all flex items-center justify-center">
           <ChevronIcon dir="down" />
         </button>
