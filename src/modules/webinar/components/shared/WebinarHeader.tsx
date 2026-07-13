@@ -1,7 +1,7 @@
 import React from "react";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Globe } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { scrollToRegister } from "@/modules/webinar/utils/scrollToRegister";
 
@@ -13,6 +13,9 @@ interface WebinarHeaderProps {
   backLabel?: string;
   /** Set false when an ancestor already provides fixed/sticky positioning (e.g. the funnel step's own fixed header wrapper). */
   sticky?: boolean;
+  /** Shows an FR/EN toggle — only relevant when the webinar's configured language is "both". */
+  lang?: "fr" | "en";
+  onToggleLang?: () => void;
 }
 
 /**
@@ -20,7 +23,7 @@ interface WebinarHeaderProps {
  * No nav menu, no login link, no hamburger drawer — every extra link is an exit
  * door away from registering.
  */
-const WebinarHeader: React.FC<WebinarHeaderProps> = ({ ctaTargetId, onBack, backLabel, sticky = true }) => {
+const WebinarHeader: React.FC<WebinarHeaderProps> = ({ ctaTargetId, onBack, backLabel, sticky = true, lang, onToggleLang }) => {
   const { t } = useTranslation("home");
 
   return (
@@ -28,23 +31,36 @@ const WebinarHeader: React.FC<WebinarHeaderProps> = ({ ctaTargetId, onBack, back
       <div className="max-w-[1200px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
         <Image src="/logo.svg" alt="TalentAI" width={130} height={36} className="h-8 w-auto object-contain" priority />
 
-        {ctaTargetId && (
-          <Button asChild className="rounded-xl bg-[#6AD39C] text-[#0B2A22] hover:bg-[#52C88A]">
-            <a href={`#${ctaTargetId}`} onClick={scrollToRegister}>
-              {t("webinar.cta")}
-            </a>
-          </Button>
-        )}
+        <div className="flex items-center gap-2.5">
+          {onToggleLang && (
+            <button
+              onClick={onToggleLang}
+              title={lang === "fr" ? "Switch to English" : "Passer en français"}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-2.5 py-1.5 text-[12px] font-bold text-[#10453F] hover:border-[#6AD39C] hover:bg-[#6AD39C]/10 transition-colors"
+            >
+              <Globe size={14} className="shrink-0" />
+              {lang === "fr" ? "EN" : "FR"}
+            </button>
+          )}
 
-        {onBack && (
-          <button
-            onClick={onBack}
-            className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#10453F] hover:text-[#6AD39C] transition-colors"
-          >
-            <ArrowLeft size={15} className="shrink-0" />
-            <span className="hidden sm:inline">{backLabel}</span>
-          </button>
-        )}
+          {ctaTargetId && (
+            <Button asChild className="rounded-xl bg-[#6AD39C] text-[#0B2A22] hover:bg-[#52C88A]">
+              <a href={`#${ctaTargetId}`} onClick={scrollToRegister}>
+                {t("webinar.cta")}
+              </a>
+            </Button>
+          )}
+
+          {onBack && (
+            <button
+              onClick={onBack}
+              className="inline-flex items-center gap-1.5 text-[13px] font-semibold text-[#10453F] hover:text-[#6AD39C] transition-colors"
+            >
+              <ArrowLeft size={15} className="shrink-0" />
+              <span className="hidden sm:inline">{backLabel}</span>
+            </button>
+          )}
+        </div>
       </div>
     </header>
   );
