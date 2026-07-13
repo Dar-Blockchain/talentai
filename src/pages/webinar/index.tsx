@@ -81,17 +81,40 @@ const WebinarPage: React.FC = () => {
 
   const backToLanding = useCallback(() => setFunnelSeed(null), []);
 
+  // Registration links are only meant to work once a webinar is published —
+  // a draft/archived one shouldn't be reachable even if someone has the URL.
+  // Admin's own "Preview page" action appends ?preview=1 to bypass this.
+  const isPreview = router.query.preview === "1";
+  const isBlocked = !loading && !!webinar && !!webinar.status && webinar.status !== "active" && !isPreview;
+
+  const showLangSwitch = webinar?.lang === "both";
+  const toggleLang = useCallback(() => {
+    const next = lang === "fr" ? "en" : "fr";
+    router.push({ query: { ...router.query, lang: next } }, undefined, { shallow: true });
+  }, [lang, router]);
+
   return (
     <>
       <div className={`${fraunces.variable} min-h-screen flex flex-col bg-white`}>
         <WebinarHeader
-          ctaTargetId={inFunnel ? undefined : "webinar-register"}
-          onBack={inFunnel ? backToLanding : undefined}
+          ctaTargetId={inFunnel || isBlocked ? undefined : "webinar-register"}
+          onBack={inFunnel && !isBlocked ? backToLanding : undefined}
           backLabel={isEn ? "Back to landing page" : "Retour à la page d'accueil"}
+          lang={showLangSwitch && !isBlocked ? lang : undefined}
+          onToggleLang={showLangSwitch && !isBlocked ? toggleLang : undefined}
         />
 
         <div className="flex-1 flex flex-col">
-          {inFunnel ? (
+          {isBlocked ? (
+            <div className="flex-1 flex flex-col items-center justify-center px-4 text-center">
+              <p className="text-[16px] font-semibold text-slate-700 mb-2">
+                {isEn ? "This webinar isn't available." : "Ce webinaire n'est pas disponible."}
+              </p>
+              <p className="text-[13px] text-slate-400">
+                {isEn ? "The registration link is no longer active." : "Le lien d'inscription n'est plus actif."}
+              </p>
+            </div>
+          ) : inFunnel ? (
             loading ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="w-10 h-10 border-2 border-[#6AD39C]/30 border-t-[#10453F] rounded-full animate-spin" />

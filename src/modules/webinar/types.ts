@@ -58,5 +58,6 @@ export interface WebinarData {
   date?:        string;
   questions:    WebinarQuestion[];
   lang:         string;
+  status?:      "draft" | "active" | "archived";
   stats?:       WebinarStats;
 }

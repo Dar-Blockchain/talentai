@@ -26,7 +26,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
   onNext: () => void; onBack: () => void; saving: boolean; isLast: boolean; active: boolean;
 }) {
   const isEn    = lang === "en";
-  const label   = isEn ? q.label_en : q.label_fr;
+  const label   = (isEn ? q.label_en : q.label_fr) || q.label_fr || q.label_en;
   const hasValue = value !== undefined && value !== "" && value !== null;
 
   // A "choice" question with no options defined (e.g. left on the type
@@ -69,7 +69,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
           <div className="space-y-2.5">
             {q.options.map((opt, i) => (
               <QuestionOption key={opt.key} letter={ALPHA[i]}
-                label={isEn ? opt.label_en : opt.label_fr}
+                label={(isEn ? opt.label_en : opt.label_fr) || opt.label_fr || opt.label_en}
                 selected={value === opt.key}
                 onClick={() => handleChoice(opt.key)}
               />
@@ -86,7 +86,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
             </SelectTrigger>
             <SelectContent>
               {(q.options?.length ?? 0) > 0
-                ? q.options.map(o => <SelectItem key={o.key} value={o.key}>{isEn ? o.label_en : o.label_fr}</SelectItem>)
+                ? q.options.map(o => <SelectItem key={o.key} value={o.key}>{(isEn ? o.label_en : o.label_fr) || o.label_fr || o.label_en}</SelectItem>)
                 : COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)
               }
             </SelectContent>
