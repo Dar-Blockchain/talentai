@@ -6,11 +6,10 @@ import {
 const VP   = { once: true, margin: "-40px" };
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-export function WebinarFAQ({ lang, aboutText }: { lang: "fr" | "en"; aboutText?: string }) {
+export function WebinarFAQ({ lang }: { lang: "fr" | "en" }) {
   const isEn = lang === "en";
 
   const faq = [
-    ...(aboutText ? [{ q: isEn ? "What is this webinar?" : "C'est quoi ce webinar ?", a: aboutText }] : []),
     { q: isEn ? "Is it really free?" : "Est-ce vraiment gratuit ?",
       a: isEn ? "Yes, 100% free — no credit card, no hidden fees." : "Oui, 100% gratuit — sans carte bancaire, sans frais cachés." },
     { q: isEn ? "Do I need to attend live?" : "Dois-je y assister en direct ?",

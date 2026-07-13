@@ -55,7 +55,9 @@ export interface WebinarData {
   description?: string;
   about_fr?:    string;
   about_en?:    string;
+  highlights?:  string[];
   date?:        string;
+  webinar_link?: string;
   questions:    WebinarQuestion[];
   lang:         string;
   stats?:       WebinarStats;
