@@ -84,13 +84,6 @@ import type {
 const ok = (msg: string) => toast.success(msg);
 const err = (msg: string) => toast.error(msg);
 
-const TIER_COLORS: Record<string, string> = {
-  A: "#059669",
-  B: "#4338CA",
-  C: "#B45309",
-  D: "#94A3B8",
-};
-
 const CARD_STATUS_STYLES: Record<
   string,
   { label: string; color: string; bg: string; dot: string }
@@ -1616,29 +1609,23 @@ function WebinarCard({
               </span>
             </div>
           )}
-          <span className="rounded-[5px] bg-[#F3F4F6] px-2 py-[3px] text-[11px] uppercase text-[#6B7280]">
-            {w.lang}
-          </span>
+          {w.lang === "both" ? (
+            <span className="flex items-center gap-1">
+              <span className="rounded-[5px] bg-[#F3F4F6] px-2 py-[3px] text-[11px] uppercase text-[#6B7280]">
+                FR
+              </span>
+              <span className="rounded-[5px] bg-[#F3F4F6] px-2 py-[3px] text-[11px] uppercase text-[#6B7280]">
+                EN
+              </span>
+            </span>
+          ) : (
+            <span className="rounded-[5px] bg-[#F3F4F6] px-2 py-[3px] text-[11px] uppercase text-[#6B7280]">
+              {w.lang}
+            </span>
+          )}
           <span className="rounded-[5px] bg-[#F3F4F6] px-2 py-[3px] text-[11px] text-[#6B7280]">
             {w.questions.length} questions
           </span>
-          {(["A", "B", "C", "D"] as const).map((tier) => {
-            const count =
-              (w.stats.tier_breakdown as Record<string, number>)?.[tier] ?? 0;
-            if (!count) return null;
-            return (
-              <span
-                key={tier}
-                className="rounded-[5px] px-2 py-[3px] text-[11px] font-bold"
-                style={{
-                  backgroundColor: `${TIER_COLORS[tier]}10`,
-                  color: TIER_COLORS[tier],
-                }}
-              >
-                {tier} · {count}
-              </span>
-            );
-          })}
         </div>
 
         {/* Footer */}
