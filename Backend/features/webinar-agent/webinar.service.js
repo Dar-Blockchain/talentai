@@ -42,7 +42,7 @@ exports.getWebinar = async (id) => {
   return doc;
 };
 
-const PUBLIC_FIELDS = "title title_fr title_en description description_fr description_en date lang questions highlights stats about_fr about_en webinar_link";
+const PUBLIC_FIELDS = "title title_fr title_en description description_fr description_en date end_date lang questions highlights stats about_fr about_en webinar_link";
 
 exports.getActiveWebinar = async () => {
   return Webinar.findOne({ status: "active" })
@@ -62,7 +62,7 @@ exports.getPublicWebinar = async (id) => {
 exports.createWebinar = async ({
   title, title_fr, title_en,
   description, description_fr, description_en,
-  date, status, lang, userId, questions: passedQuestions,
+  date, end_date, status, lang, userId, questions: passedQuestions,
   highlights, highlights_fr, highlights_en,
   about_fr, about_en, webinar_link, ai_context,
 }) => {
@@ -85,6 +85,7 @@ exports.createWebinar = async ({
     highlights_fr:   hFr,
     highlights_en:   hEn,
     date,
+    end_date:     end_date         || null,
     status:       status           || "draft",
     lang:         L,
     questions:    passedQuestions  || [],

@@ -27,6 +27,7 @@ export interface Webinar {
   description_fr: string;
   description_en: string;
   date: string | null;
+  end_date: string | null;
   status: "draft" | "active";
   lang: "fr" | "en" | "both";
   about_fr: string;
@@ -91,7 +92,13 @@ export interface WebinarFormValues {
   about_fr: string;
   about_en: string;
   webinar_link: string;
+  /** Just the calendar day, "YYYY-MM-DD" — the actual start/end clock times
+   * live in `start_time`/`end_time` below. */
   date: string;
+  /** "HH:mm" — combined with `date` into the full start datetime on save. */
+  start_time: string;
+  /** "HH:mm" — combined with `date` into the full end datetime on save. */
+  end_time: string;
   status: "draft" | "active";
   lang: "fr" | "en" | "both";
   highlights_fr: string[];

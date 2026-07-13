@@ -4,6 +4,21 @@ import type { Webinar, WebinarFormValues, WebinarListResponse, WebinarSubmission
 
 const BASE = "webinars";
 
+/** The form collects a plain calendar day plus separate "HH:mm" start/end
+ * times — compose them into the full `date`/`end_date` datetimes the backend
+ * actually stores before sending. */
+function toPayload(values: Partial<WebinarFormValues>): Record<string, unknown> {
+  const { start_time, end_time, date, ...rest } = values;
+  const payload: Record<string, unknown> = { ...rest };
+  if (date !== undefined) {
+    payload.date = date && start_time ? `${date}T${start_time}` : (date || null);
+  }
+  if (end_time !== undefined) {
+    payload.end_date = date && end_time ? `${date}T${end_time}` : null;
+  }
+  return payload;
+}
+
 export const adminWebinarApi = {
   list: (params: { page?: number; limit?: number; status?: string }) =>
     apiCall(async () => {
@@ -19,13 +34,13 @@ export const adminWebinarApi = {
 
   create: (values: WebinarFormValues) =>
     apiCall(async () => {
-      const { data } = await axiosInstance.post(BASE, values);
+      const { data } = await axiosInstance.post(BASE, toPayload(values));
       return data.data as Webinar;
     }, "Failed to create webinar."),
 
   update: (id: string, values: Partial<WebinarFormValues>) =>
     apiCall(async () => {
-      const { data } = await axiosInstance.patch(`${BASE}/${id}`, values);
+      const { data } = await axiosInstance.patch(`${BASE}/${id}`, toPayload(values));
       return data.data as Webinar;
     }, "Failed to update webinar."),
 
@@ -39,12 +54,6 @@ export const adminWebinarApi = {
       const { data } = await axiosInstance.patch(`${BASE}/${id}/verify`);
       return data.data as Webinar;
     }, "Failed to verify webinar."),
-
-  refreshStats: (id: string) =>
-    apiCall(async () => {
-      const { data } = await axiosInstance.post(`${BASE}/${id}/refresh-stats`);
-      return data.data as Webinar;
-    }, "Failed to refresh stats."),
 
   sendLinkReminder: (id: string) =>
     apiCall(async () => {

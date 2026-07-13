@@ -46,11 +46,6 @@ export const useVerifyWebinarMutation = () => {
   return useMutation({ mutationFn: adminWebinarApi.verify, onSuccess: () => invalidate(qc) });
 };
 
-export const useRefreshStatsMutation = () => {
-  const qc = useQueryClient();
-  return useMutation({ mutationFn: adminWebinarApi.refreshStats, onSuccess: () => invalidate(qc) });
-};
-
 export const useWebinarSubmissionsQuery = (id: string, params?: { page?: number; limit?: number; completed?: boolean }) =>
   useQuery({
     queryKey: [...KEY, id, "submissions", params],

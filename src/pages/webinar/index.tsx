@@ -57,6 +57,19 @@ const WebinarPage: React.FC = () => {
   const formattedDate = webinar?.date
     ? new Date(webinar.date).toLocaleString(isEn ? "en-GB" : "fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
     : null;
+  const formattedEndTime = webinar?.end_date
+    ? new Date(webinar.end_date).toLocaleTimeString(isEn ? "en-GB" : "fr-FR", { hour: "2-digit", minute: "2-digit" })
+    : null;
+  const durationLabel = (() => {
+    if (!webinar?.date || !webinar?.end_date) return null;
+    const minutes = Math.round((new Date(webinar.end_date).getTime() - new Date(webinar.date).getTime()) / 60000);
+    if (minutes <= 0) return null;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h${m}`;
+  })();
 
   // ── Questionnaire funnel — entered once the visitor registers below, or
   // resumed on reload if this device already has an in-progress submission ──
@@ -127,6 +140,8 @@ const WebinarPage: React.FC = () => {
                 title={webinarTitle}
                 desc={webinarDesc}
                 formattedDate={formattedDate}
+                formattedEndTime={formattedEndTime}
+                durationLabel={durationLabel}
                 questionsCount={webinar?.questions.length ?? 0}
                 registrations={webinar?.stats?.total_registrations ?? 0}
                 webinarLink={webinar?.webinar_link}

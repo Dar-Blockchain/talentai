@@ -17,7 +17,6 @@ router.get(   "/:id",                requireAuth, adminOnly, controller.get);
 router.patch( "/:id",                requireAuth, adminOnly, controller.update);
 router.delete("/:id",                requireAuth, adminOnly, controller.remove);
 router.patch( "/:id/verify",         requireAuth, adminOnly, controller.verify);
-router.post(  "/:id/refresh-stats",  requireAuth, adminOnly, controller.refreshStats);
 router.post(  "/:id/send-link",      requireAuth, adminOnly, controller.sendLinkReminder);
 router.get(   "/:id/submissions",    requireAuth, adminOnly, controller.listSubmissions);
 

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import * as XLSX from "xlsx";
+import { useRouter } from "next/router";
 import { toast } from "sonner";
 import { useForm, Controller } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -9,7 +9,6 @@ import {
 } from "../schemas/webinarBasicsSchema";
 import { Dialog, DialogContent, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
-import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import {
   Tooltip,
   TooltipTrigger,
@@ -34,9 +33,7 @@ import {
   Plus as AddIcon,
   Video as WebinarIcon,
   CheckCircle2 as VerifyIcon,
-  RefreshCw as RefreshIcon,
   Trash2 as DeleteIcon,
-  MessageSquare as QIcon,
   ExternalLink as OpenIcon,
   X as CloseIcon,
   Send as SendIcon,
@@ -57,8 +54,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/shared/ui/shadcn/select";
-import WebinarSubmissionsDialog from "./WebinarSubmissionsDialog";
 import { adminWebinarApi } from "../api";
+import { exportWebinarSubmissions } from "../utils/exportSubmissions";
 import {
   AdminPageHeading,
   AdminQueryError,
@@ -71,7 +68,6 @@ import {
   useUpdateWebinarMutation,
   useDeleteWebinarMutation,
   useVerifyWebinarMutation,
-  useRefreshStatsMutation,
 } from "../queries";
 import { ConfirmDialog } from "@/modules/admin/shared";
 import type {
@@ -104,7 +100,9 @@ function toFormValues(w: Webinar): WebinarFormValues {
     about_fr: w.about_fr ?? "",
     about_en: w.about_en ?? "",
     webinar_link: w.webinar_link ?? "",
-    date: w.date ? w.date.slice(0, 16) : "",
+    date: w.date ? w.date.slice(0, 10) : "",
+    start_time: w.date ? w.date.slice(11, 16) : "09:00",
+    end_time: w.end_date ? w.end_date.slice(11, 16) : "10:00",
     status: w.status,
     lang: w.lang,
     highlights_fr: [...(w.highlights_fr?.length ? w.highlights_fr : w.highlights ?? []), "", "", ""].slice(0, 3),
@@ -131,6 +129,8 @@ const EMPTY_FORM: WebinarFormValues = {
   about_en: "",
   webinar_link: "",
   date: "",
+  start_time: "09:00",
+  end_time: "10:00",
   status: "draft",
   lang: "fr",
   highlights_fr: ["", "", ""],
@@ -478,7 +478,9 @@ function to24h(hh: string, mm: string, period: "AM" | "PM") {
   return `${String(h).padStart(2, "0")}:${mm}`;
 }
 
-function WebinarDateTimePicker({
+/** Just the calendar day — start/end clock times are picked separately via
+ * WebinarTimePicker ("From" / "To"). */
+function WebinarDatePicker({
   value,
   onChange,
 }: {
@@ -486,22 +488,7 @@ function WebinarDateTimePicker({
   onChange: (v: string) => void;
 }) {
   const [open, setOpen] = React.useState(false);
-  const datePart = value.slice(0, 10);
-  const timePart = value.slice(11, 16) || "09:00";
-  const { hh, mm, period } = to12h(timePart);
-  const selectedDate = datePart
-    ? dayjs(`${datePart}T00:00:00`).toDate()
-    : undefined;
-
-  const setTime = (nextHh: string, nextMm: string, nextPeriod: "AM" | "PM") =>
-    onChange(
-      `${datePart || dayjs().format("YYYY-MM-DD")}T${to24h(nextHh, nextMm, nextPeriod)}`,
-    );
-
-  const timeSelectTrigger =
-    "h-9 w-[68px] px-2 gap-0.5 rounded-lg border-slate-200 text-[13px] font-semibold text-slate-700 focus:border-teal-400 focus:ring-teal-400/20";
-  const periodSelectTrigger =
-    "h-9 w-[76px] px-2 gap-0.5 rounded-lg border-slate-200 text-[13px] font-semibold text-slate-700 focus:border-teal-400 focus:ring-teal-400/20";
+  const selectedDate = value ? dayjs(`${value}T00:00:00`).toDate() : undefined;
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
@@ -513,13 +500,9 @@ function WebinarDateTimePicker({
         >
           <CalendarGlyph size={15} className="shrink-0 text-slate-400" />
           {value ? (
-            <span>
-              {dayjs(`${datePart}T${timePart}`).format("MMM D, YYYY")}{" "}
-              <span className="text-slate-400">·</span>{" "}
-              {dayjs(`${datePart}T${timePart}`).format("h:mm A")}
-            </span>
+            <span>{dayjs(`${value}T00:00:00`).format("MMM D, YYYY")}</span>
           ) : (
-            <span className="text-slate-400">Pick a date & time</span>
+            <span className="text-slate-400">Pick a date</span>
           )}
         </button>
       </PopoverTrigger>
@@ -527,55 +510,79 @@ function WebinarDateTimePicker({
         <Calendar
           mode="single"
           selected={selectedDate}
-          onSelect={(date) =>
-            date && onChange(`${dayjs(date).format("YYYY-MM-DD")}T${timePart}`)
-          }
+          disabled={(date) => date < dayjs().startOf("day").toDate()}
+          onSelect={(date) => {
+            if (date) {
+              onChange(dayjs(date).format("YYYY-MM-DD"));
+              setOpen(false);
+            }
+          }}
         />
-        <div className="flex items-center gap-2 border-t border-slate-100 px-3 py-3">
-          <ClockIcon size={14} className="shrink-0 text-slate-400" />
-          <Select value={hh} onValueChange={(v) => setTime(v, mm, period)}>
-            <SelectTrigger size="sm" className={timeSelectTrigger}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-56">
-              {HOURS_12.map((h) => (
-                <SelectItem key={h} value={h} className="text-[13px]">
-                  {h}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <span className="font-bold text-slate-300">:</span>
-          <Select value={mm} onValueChange={(v) => setTime(hh, v, period)}>
-            <SelectTrigger size="sm" className={timeSelectTrigger}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="max-h-56">
-              {MINUTES.map((m) => (
-                <SelectItem key={m} value={m} className="text-[13px]">
-                  {m}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-          <Select
-            value={period}
-            onValueChange={(v) => setTime(hh, mm, v as "AM" | "PM")}
-          >
-            <SelectTrigger size="sm" className={periodSelectTrigger}>
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PERIODS.map((p) => (
-                <SelectItem key={p} value={p} className="text-[13px]">
-                  {p}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
       </PopoverContent>
     </Popover>
+  );
+}
+
+/** Just an "HH:mm" time — no calendar, used for both the "From" and "To"
+ * clock times paired with the date picked in WebinarDatePicker. */
+function WebinarTimePicker({
+  value,
+  onChange,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+}) {
+  const { hh, mm, period } = to12h(value || "09:00");
+
+  const setTime = (nextHh: string, nextMm: string, nextPeriod: "AM" | "PM") =>
+    onChange(to24h(nextHh, nextMm, nextPeriod));
+
+  const timeSelectTrigger =
+    "h-9 w-[68px] px-2 gap-0.5 rounded-lg border-slate-200 text-[13px] font-semibold text-slate-700 focus:border-teal-400 focus:ring-teal-400/20";
+  const periodSelectTrigger =
+    "h-9 w-[76px] px-2 gap-0.5 rounded-lg border-slate-200 text-[13px] font-semibold text-slate-700 focus:border-teal-400 focus:ring-teal-400/20";
+
+  return (
+    <div className="flex h-[42px] items-center gap-2 rounded-xl border border-slate-200 bg-white px-3">
+      <ClockIcon size={15} className="shrink-0 text-slate-400" />
+      <Select value={hh} onValueChange={(v) => setTime(v, mm, period)}>
+        <SelectTrigger size="sm" className={timeSelectTrigger}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-56">
+          {HOURS_12.map((h) => (
+            <SelectItem key={h} value={h} className="text-[13px]">
+              {h}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <span className="font-bold text-slate-300">:</span>
+      <Select value={mm} onValueChange={(v) => setTime(hh, v, period)}>
+        <SelectTrigger size="sm" className={timeSelectTrigger}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent className="max-h-56">
+          {MINUTES.map((m) => (
+            <SelectItem key={m} value={m} className="text-[13px]">
+              {m}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      <Select value={period} onValueChange={(v) => setTime(hh, mm, v as "AM" | "PM")}>
+        <SelectTrigger size="sm" className={periodSelectTrigger}>
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {PERIODS.map((p) => (
+            <SelectItem key={p} value={p} className="text-[13px]">
+              {p}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+    </div>
   );
 }
 
@@ -609,6 +616,8 @@ function WebinarFormDialog({
       title_fr: (initial ?? EMPTY_FORM).title_fr,
       title_en: (initial ?? EMPTY_FORM).title_en,
       date: (initial ?? EMPTY_FORM).date,
+      start_time: (initial ?? EMPTY_FORM).start_time,
+      end_time: (initial ?? EMPTY_FORM).end_time,
       lang: (initial ?? EMPTY_FORM).lang,
       webinar_link: (initial ?? EMPTY_FORM).webinar_link,
     },
@@ -622,6 +631,8 @@ function WebinarFormDialog({
       title_fr: f.title_fr,
       title_en: f.title_en,
       date: f.date,
+      start_time: f.start_time,
+      end_time: f.end_time,
       lang: f.lang,
       webinar_link: f.webinar_link,
     });
@@ -776,13 +787,13 @@ function WebinarFormDialog({
                 </div>
                 <div>
                   <label className={lbl}>
-                    Date & time <span className="text-red-400">*</span>
+                    Date <span className="text-red-400">*</span>
                   </label>
                   <Controller
                     name="date"
                     control={basicsControl}
                     render={({ field }) => (
-                      <WebinarDateTimePicker
+                      <WebinarDatePicker
                         value={field.value}
                         onChange={(v) => {
                           field.onChange(v);
@@ -795,11 +806,55 @@ function WebinarFormDialog({
                     <p className={errTxt}>{basicsErrors.date.message}</p>
                   )}
                 </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <label className={lbl}>
+                      From <span className="text-red-400">*</span>
+                    </label>
+                    <Controller
+                      name="start_time"
+                      control={basicsControl}
+                      render={({ field }) => (
+                        <WebinarTimePicker
+                          value={field.value}
+                          onChange={(v) => {
+                            field.onChange(v);
+                            set("start_time", v);
+                          }}
+                        />
+                      )}
+                    />
+                    {basicsErrors.start_time && (
+                      <p className={errTxt}>{basicsErrors.start_time.message}</p>
+                    )}
+                  </div>
+                  <div>
+                    <label className={lbl}>
+                      To <span className="text-red-400">*</span>
+                    </label>
+                    <Controller
+                      name="end_time"
+                      control={basicsControl}
+                      render={({ field }) => (
+                        <WebinarTimePicker
+                          value={field.value}
+                          onChange={(v) => {
+                            field.onChange(v);
+                            set("end_time", v);
+                          }}
+                        />
+                      )}
+                    />
+                    {basicsErrors.end_time && (
+                      <p className={errTxt}>{basicsErrors.end_time.message}</p>
+                    )}
+                  </div>
+                </div>
                 <div>
                   <label className={lbl}>
                     Join link <span className="text-red-400">*</span>{" "}
                     <span className="text-slate-400 font-normal text-[11px]">
-                      (Zoom / Teams / Meet)
+                      (Zoom, Teams, Meet, or any other link)
                     </span>
                   </label>
                   <Controller
@@ -814,7 +869,7 @@ function WebinarFormDialog({
                           field.onChange(e);
                           set("webinar_link", e.target.value);
                         }}
-                        placeholder="https://zoom.us/j/..."
+                        placeholder="https://your-meeting-link.com"
                         aria-invalid={!!basicsErrors.webinar_link}
                       />
                     )}
@@ -1182,7 +1237,7 @@ function WebinarFormDialog({
                 onClick={async () => {
                   const fields =
                     step === 0
-                      ? (["date", "lang", "webinar_link"] as const)
+                      ? (["date", "start_time", "end_time", "lang", "webinar_link"] as const)
                       : (["title_fr", "title_en"] as const);
                   if (await triggerBasics(fields)) setStep((s) => s + 1);
                 }}
@@ -1233,108 +1288,12 @@ function WebinarFormDialog({
   );
 }
 
-// ── Questions preview dialog ───────────────────────────────────────────────────
-function QuestionsDialog({
-  webinar,
-  open,
-  onClose,
-}: {
-  webinar: Webinar | null;
-  open: boolean;
-  onClose: () => void;
-}) {
-  if (!webinar) return null;
-  return (
-    <Dialog
-      open={open}
-      onOpenChange={(next) => {
-        if (!next) onClose();
-      }}
-    >
-      <DialogContent
-        showCloseButton={false}
-        className="sm:max-w-2xl p-0 gap-0 overflow-hidden"
-        style={{ borderRadius: "16px" }}
-      >
-        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 font-bold text-base">
-          <DialogTitle asChild>
-            <span>Questions — {webinar.title}</span>
-          </DialogTitle>
-          <Button
-            variant="ghost"
-            onClick={onClose}
-            className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400"
-          >
-            <CloseIcon size={18} />
-          </Button>
-        </div>
-        <div className="max-h-[70vh] overflow-y-auto">
-          {webinar.questions.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-              <QIcon size={40} className="mb-2" />
-              <p className="text-[14px]">
-                No questions yet. Edit the webinar to add questions.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-slate-100">
-              {[...webinar.questions]
-                .sort((a, b) => a.order - b.order)
-                .map((q, i) => (
-                  <div key={q.key} className="px-5 py-4">
-                    <div className="flex items-start gap-3">
-                      <span className="shrink-0 w-7 h-7 rounded-lg bg-teal-50 border border-teal-100 text-teal-600 text-[11px] font-black flex items-center justify-center mt-0.5">
-                        {i + 1}
-                      </span>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-1">
-                          <span className="text-[13px] font-bold text-slate-800">
-                            {q.label_fr}
-                          </span>
-                          <Badge
-                            variant="outline"
-                            className="h-[18px] rounded-md border-transparent bg-slate-100 px-1.5 text-[10px] font-normal text-slate-500"
-                          >
-                            {q.type}
-                          </Badge>
-                        </div>
-                        <p className="text-[12px] text-slate-400 italic">
-                          {q.label_en}
-                        </p>
-                        {q.options.length > 0 && (
-                          <div className="flex flex-wrap gap-1.5 mt-2">
-                            {q.options.map((o) => (
-                              <span
-                                key={o.key}
-                                className="px-2 py-0.5 rounded-md bg-slate-100 text-slate-600 text-[11px]"
-                              >
-                                {o.label_fr}
-                              </span>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
-            </div>
-          )}
-        </div>
-      </DialogContent>
-    </Dialog>
-  );
-}
-
 // ── Webinar card ─────────────────────────────────────────────────────────────
 function WebinarCard({
   w,
   onEdit,
-  onSubs,
-  onQuestions,
   onVerify,
   verifyPending,
-  onRefresh,
-  refreshPending,
   onExport,
   exportPending,
   onSendLink,
@@ -1343,22 +1302,22 @@ function WebinarCard({
 }: {
   w: Webinar;
   onEdit: () => void;
-  onSubs: () => void;
-  onQuestions: () => void;
   onVerify: () => void;
   verifyPending: boolean;
-  onRefresh: () => void;
-  refreshPending: boolean;
   onExport: () => void;
   exportPending: boolean;
   onSendLink: () => void;
   sendLinkPending: boolean;
   onDelete: () => void;
 }) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const publicUrl = `/webinar?id=${w._id}`;
   const statusStyle = CARD_STATUS_STYLES[w.status] ?? CARD_STATUS_STYLES.draft;
+
+  const goToDetail = (tab?: "registrants") =>
+    router.push(`/admin/webinars/${w._id}${tab ? `?tab=${tab}` : ""}`);
 
   const handleCopyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -1375,7 +1334,9 @@ function WebinarCard({
   };
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-all hover:-translate-y-px hover:border-[#D1D5DB] hover:shadow-[0_4px_16px_rgba(0,0,0,0.07)]">
+    <div
+      onClick={() => goToDetail()}
+      className="flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-all hover:-translate-y-px hover:border-[#D1D5DB] hover:shadow-[0_4px_16px_rgba(0,0,0,0.07)]">
       <div
         className="h-[3px] shrink-0"
         style={{
@@ -1419,6 +1380,7 @@ function WebinarCard({
               <Button
                 variant="ghost"
                 size="icon-xs"
+                onClick={(e) => e.stopPropagation()}
                 className="shrink-0 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
               >
                 <MoreIcon size={15} />
@@ -1474,40 +1436,24 @@ function WebinarCard({
                 </DropdownMenuItem>
               )}
 
-              <DropdownMenuItem
-                onClick={onEdit}
-                className="gap-2.5 rounded-lg py-[9px] px-[10px]"
-              >
-                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#F3F4F6]">
-                  <EditIcon size={13} color="#6B7280" />
-                </div>
-                <div>
-                  <p className="text-[12.5px] font-semibold leading-[1.2] text-[#111827]">
-                    Edit
-                  </p>
-                  <p className="text-[10px] leading-[1.2] text-[#9CA3AF]">
-                    Update details & questions
-                  </p>
-                </div>
-              </DropdownMenuItem>
-
-              <DropdownMenuItem
-                onClick={onQuestions}
-                className="gap-2.5 rounded-lg py-[9px] px-[10px]"
-              >
-                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#F3F4F6]">
-                  <QIcon size={13} color="#6B7280" />
-                </div>
-                <div>
-                  <p className="text-[12.5px] font-semibold leading-[1.2] text-[#111827]">
-                    View questions
-                  </p>
-                  <p className="text-[10px] leading-[1.2] text-[#9CA3AF]">
-                    {w.questions.length} question
-                    {w.questions.length !== 1 ? "s" : ""}
-                  </p>
-                </div>
-              </DropdownMenuItem>
+              {w.status === "draft" && (
+                <DropdownMenuItem
+                  onClick={onEdit}
+                  className="gap-2.5 rounded-lg py-[9px] px-[10px]"
+                >
+                  <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#F3F4F6]">
+                    <EditIcon size={13} color="#6B7280" />
+                  </div>
+                  <div>
+                    <p className="text-[12.5px] font-semibold leading-[1.2] text-[#111827]">
+                      Edit
+                    </p>
+                    <p className="text-[10px] leading-[1.2] text-[#9CA3AF]">
+                      Update details & questions
+                    </p>
+                  </div>
+                </DropdownMenuItem>
+              )}
 
               <DropdownMenuItem
                 asChild
@@ -1550,24 +1496,6 @@ function WebinarCard({
                 </div>
               </DropdownMenuItem>
 
-              <DropdownMenuItem
-                onClick={onRefresh}
-                disabled={refreshPending}
-                className="gap-2.5 rounded-lg py-[9px] px-[10px]"
-              >
-                <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#F3F4F6]">
-                  <RefreshIcon size={13} color="#6B7280" />
-                </div>
-                <div>
-                  <p className="text-[12.5px] font-semibold leading-[1.2] text-[#111827]">
-                    Refresh stats
-                  </p>
-                  <p className="text-[10px] leading-[1.2] text-[#9CA3AF]">
-                    Recompute registrations & scores
-                  </p>
-                </div>
-              </DropdownMenuItem>
-
               <DropdownMenuSeparator />
 
               <DropdownMenuItem
@@ -1596,16 +1524,21 @@ function WebinarCard({
           {w.date && (
             <div className="flex items-center gap-1">
               <span className="text-xs text-[#9CA3AF]">
-                {new Date(w.date).toLocaleDateString("fr-FR", {
+                {new Date(w.date).toLocaleDateString("en-GB", {
                   day: "numeric",
                   month: "short",
                   year: "numeric",
                 })}
                 {" · "}
-                {new Date(w.date).toLocaleTimeString("fr-FR", {
+                {new Date(w.date).toLocaleTimeString("en-GB", {
                   hour: "2-digit",
                   minute: "2-digit",
                 })}
+                {w.end_date &&
+                  ` – ${new Date(w.end_date).toLocaleTimeString("en-GB", {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}`}
               </span>
             </div>
           )}
@@ -1647,7 +1580,10 @@ function WebinarCard({
               <Tooltip>
                 <TooltipTrigger asChild>
                   <button
-                    onClick={onSubs}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      goToDetail("registrants");
+                    }}
                     className="flex items-center gap-1 rounded-lg border border-[#E5E7EB] px-2 py-1.5 text-[#6B7280] hover:bg-gray-50"
                   >
                     <PeopleIcon size={13} />
@@ -1728,6 +1664,7 @@ function WebinarCard({
 
 // ── Main ──────────────────────────────────────────────────────────────────────
 const WebinarManagement: React.FC = () => {
+  const router = useRouter();
   const page = 1;
   const [statusFilter, setStatusFilter] = useState<string>("");
 
@@ -1740,13 +1677,22 @@ const WebinarManagement: React.FC = () => {
   const updateMut = useUpdateWebinarMutation();
   const deleteMut = useDeleteWebinarMutation();
   const verifyMut = useVerifyWebinarMutation();
-  const statsMut = useRefreshStatsMutation();
 
   const [formOpen, setFormOpen] = useState(false);
   const [editTarget, setEditTarget] = useState<Webinar | null>(null);
-  const [qTargetId, setQTargetId] = useState<string | null>(null);
-  const [subsTarget, setSubsTarget] = useState<Webinar | null>(null);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  // Deep link from the webinar detail page's "Edit" action (?edit=<id>).
+  React.useEffect(() => {
+    const editId = router.query.edit as string | undefined;
+    if (!editId || !data?.data) return;
+    const target = data.data.find((w) => w._id === editId);
+    if (target) {
+      setEditTarget(target);
+      setFormOpen(true);
+      router.replace({ pathname: router.pathname, query: { tab: "webinars" } }, undefined, { shallow: true });
+    }
+  }, [router, data]);
   const [exportingId, setExportingId] = useState<string | null>(null);
   const [reminderTarget, setReminderTarget] = useState<Webinar | null>(null);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(
@@ -1756,51 +1702,13 @@ const WebinarManagement: React.FC = () => {
   const handleExport = async (w: Webinar) => {
     setExportingId(w._id);
     try {
-      const result = await adminWebinarApi.listSubmissions(w._id, {
-        limit: 5000,
-      });
-      const submissions = result?.data ?? [];
-      const sortedQs = w.questions.slice().sort((a, b) => a.order - b.order);
-      const rows = submissions.map((s) => ({
-        Nom: s.contact?.nom ?? "",
-        Email: s.contact?.email ?? "",
-        Entreprise: s.contact?.entreprise ?? "",
-        Langue: s.lang ?? "",
-        Complété: s.completed ? "Oui" : "Non",
-        "Maturité IA": s.scoring?.maturite_ia ?? "",
-        "Intensité Pain": s.scoring?.intensite_pain ?? "",
-        Tier: s.scoring?.tier ?? "",
-        "ICP Fit": s.scoring?.icp_fit ?? "",
-        "UTM Source": s.source?.utm_source ?? "",
-        "UTM Campaign": s.source?.utm_campaign ?? "",
-        Date: new Date(s.createdAt).toLocaleString("fr-FR"),
-        ...Object.fromEntries(
-          sortedQs.map((q) => {
-            const raw = (s.answers as Record<string, unknown>)?.[q.key];
-            const opt = q.options.find((o) => o.key === raw);
-            return [q.label_fr.slice(0, 40), opt ? opt.label_fr : (raw ?? "")];
-          }),
-        ),
-      }));
-      const ws = XLSX.utils.json_to_sheet(rows);
-      const wb = XLSX.utils.book_new();
-      XLSX.utils.book_append_sheet(wb, ws, "Submissions");
-      XLSX.writeFile(
-        wb,
-        `${w.title.replace(/[^a-z0-9]/gi, "_").slice(0, 30)}_${new Date().toISOString().slice(0, 10)}.xlsx`,
-      );
+      await exportWebinarSubmissions(w);
     } catch {
       err("Export failed.");
     } finally {
       setExportingId(null);
     }
   };
-
-  const handleRefresh = (id: string) =>
-    statsMut.mutate(id, {
-      onSuccess: () => ok("Stats refreshed."),
-      onError: () => err("Failed to refresh stats."),
-    });
 
   const handleSave = (values: WebinarFormValues) => {
     if (createMut.isPending || updateMut.isPending) return;
@@ -1864,9 +1772,6 @@ const WebinarManagement: React.FC = () => {
   };
 
   const webinars = data?.data ?? [];
-  const qTarget = qTargetId
-    ? (webinars.find((w) => w._id === qTargetId) ?? null)
-    : null;
 
   return (
     <div>
@@ -1928,12 +1833,8 @@ const WebinarManagement: React.FC = () => {
                 setEditTarget(w);
                 setFormOpen(true);
               }}
-              onSubs={() => setSubsTarget(w)}
-              onQuestions={() => setQTargetId(w._id)}
               onVerify={() => handleVerify(w)}
               verifyPending={verifyMut.isPending}
-              onRefresh={() => handleRefresh(w._id)}
-              refreshPending={statsMut.isPending}
               onExport={() => handleExport(w)}
               exportPending={exportingId === w._id}
               onSendLink={() => setReminderTarget(w)}
@@ -1953,18 +1854,6 @@ const WebinarManagement: React.FC = () => {
         }}
         onSave={handleSave}
         saving={editTarget ? updateMut.isPending : createMut.isPending}
-      />
-
-      <QuestionsDialog
-        webinar={qTarget}
-        open={!!qTargetId}
-        onClose={() => setQTargetId(null)}
-      />
-
-      <WebinarSubmissionsDialog
-        webinar={subsTarget}
-        open={!!subsTarget}
-        onClose={() => setSubsTarget(null)}
       />
 
       <ConfirmDialog

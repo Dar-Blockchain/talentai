@@ -29,6 +29,9 @@ const WebinarSchema = new mongoose.Schema({
   highlights_en:  { type: [String], default: [] },
 
   date:        { type: Date, default: null },
+  // End of the live session — same day as `date`, shown as a "from–to" range
+  // on the landing page instead of just a start time.
+  end_date:    { type: Date, default: null },
   status:      { type: String, enum: ["draft", "active"], default: "draft" },
   lang:        { type: String, enum: ["fr", "en", "both"], default: "fr" },
 

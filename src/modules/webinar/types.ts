@@ -60,6 +60,7 @@ export interface WebinarData {
   about_fr?: string;
   about_en?: string;
   date?: string;
+  end_date?: string;
   questions: WebinarQuestion[];
   lang: string;
   stats?: WebinarStats;

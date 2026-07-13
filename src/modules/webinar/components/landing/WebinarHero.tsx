@@ -6,11 +6,13 @@ import { scrollToRegister } from "@/modules/webinar/utils/scrollToRegister";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-export function WebinarHero({ lang, title, desc, formattedDate, questionsCount, registrations, webinarLink }: {
+export function WebinarHero({ lang, title, desc, formattedDate, formattedEndTime, durationLabel, questionsCount, registrations, webinarLink }: {
   lang: "fr" | "en";
   title: string;
   desc: string;
   formattedDate: string | null;
+  formattedEndTime?: string | null;
+  durationLabel?: string | null;
   questionsCount: number;
   registrations: number;
   webinarLink?: string;
@@ -67,12 +69,12 @@ export function WebinarHero({ lang, title, desc, formattedDate, questionsCount, 
           >
             {formattedDate && (
               <span className="inline-flex items-center gap-1.5">
-                <Calendar size={13} />{formattedDate}
+                <Calendar size={13} />{formattedDate}{formattedEndTime ? ` – ${formattedEndTime}` : ""}
               </span>
             )}
             {formattedDate && <span aria-hidden>·</span>}
             <span className="inline-flex items-center gap-1.5">
-              <Clock size={13} />~3 min
+              <Clock size={13} />{durationLabel || "~3 min"}
             </span>
             <span aria-hidden>·</span>
             <span className="inline-flex items-center gap-1.5">

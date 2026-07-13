@@ -4,7 +4,9 @@ export const webinarBasicsSchema = z
   .object({
     title_fr:     z.string().trim().max(160, "Title is too long"),
     title_en:     z.string().trim().max(160, "Title is too long"),
-    date:         z.string().min(1, "Date & time is required"),
+    date:         z.string().min(1, "Date is required"),
+    start_time:   z.string().min(1, "Start time is required"),
+    end_time:     z.string().min(1, "End time is required"),
     lang:         z.enum(["fr", "en", "both"]),
     webinar_link: z.string().trim().min(1, "Join link is required").url("Enter a valid URL"),
   })

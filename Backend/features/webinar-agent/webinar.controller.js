@@ -62,8 +62,3 @@ exports.sendLinkReminder = handle(async (req, res) => {
   const result = await service.sendLinkReminder(req.params.id);
   res.json({ success: true, data: result });
 }, 400);
-
-exports.refreshStats = handle(async (req, res) => {
-  const doc = await service.refreshStats(req.params.id);
-  res.json({ success: true, data: doc });
-}, 400);
