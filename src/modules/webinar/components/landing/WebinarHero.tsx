@@ -1,18 +1,19 @@
 import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
-import { ChevronDown, Calendar, Clock, MessageSquare } from "lucide-react";
+import { ChevronDown, Calendar, Clock, MessageSquare, Video } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { scrollToRegister } from "@/modules/webinar/utils/scrollToRegister";
 
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-export function WebinarHero({ lang, title, desc, formattedDate, questionsCount, registrations }: {
+export function WebinarHero({ lang, title, desc, formattedDate, questionsCount, registrations, webinarLink }: {
   lang: "fr" | "en";
   title: string;
   desc: string;
   formattedDate: string | null;
   questionsCount: number;
   registrations: number;
+  webinarLink?: string;
 }) {
   const { t } = useTranslation("home");
   const isEn = lang === "en";
@@ -88,15 +89,29 @@ export function WebinarHero({ lang, title, desc, formattedDate, questionsCount, 
             {registrations}+ {isEn ? "professionals already registered" : "professionnels déjà inscrits"}
           </div>
 
-          <Button
-            asChild size="lg"
-            className="rounded-lg bg-[#6AD39C] text-[#0B2A22] hover:bg-[#52C88A] font-semibold"
-          >
-            <a href="#webinar-register" onClick={scrollToRegister}>
-              {t("webinar.cta")}
-              <ChevronDown size={16} />
-            </a>
-          </Button>
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            <Button
+              asChild size="lg"
+              className="rounded-lg bg-[#6AD39C] text-[#0B2A22] hover:bg-[#52C88A] font-semibold"
+            >
+              <a href="#webinar-register" onClick={scrollToRegister}>
+                {t("webinar.cta")}
+                <ChevronDown size={16} />
+              </a>
+            </Button>
+
+            {webinarLink && (
+              <Button
+                asChild size="lg" variant="outline"
+                className="rounded-lg font-semibold"
+              >
+                <a href={webinarLink} target="_blank" rel="noopener noreferrer">
+                  <Video size={16} />
+                  {isEn ? "Join Webinar" : "Rejoindre le webinar"}
+                </a>
+              </Button>
+            )}
+          </div>
         </motion.div>
 
       </div>

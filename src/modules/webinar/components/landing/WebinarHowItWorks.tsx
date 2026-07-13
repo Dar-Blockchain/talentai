@@ -26,7 +26,6 @@ export function WebinarHowItWorks({ lang }: { lang: "fr" | "en" }) {
     <motion.section
       initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={VP} transition={{ duration: 0.5, ease: EASE }}
-      className="mb-20"
     >
       <div className="flex items-center gap-3 mb-3">
         <span className="w-6 h-px bg-[#6AD39C]" />

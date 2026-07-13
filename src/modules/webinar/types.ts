@@ -1,47 +1,47 @@
 export type Lang = "fr" | "en";
 
 export interface WebinarContact {
-  nom:        string;
-  email:      string;
+  nom: string;
+  email: string;
   entreprise: string;
 }
 
 export interface WebinarScoring {
-  maturite_ia:         number;
-  intensite_pain:      number;
-  readiness_score?:    number;
-  icp_fit:             "ok" | "faible" | "hors";
-  these:               "v1" | "v2" | "v3" | "indetermine";
-  tier:                "A" | "B" | "C" | "D";
-  key_insight?:        string | null;
-  main_pain?:          string | null;
+  maturite_ia: number;
+  intensite_pain: number;
+  readiness_score?: number;
+  icp_fit: "ok" | "faible" | "hors";
+  these: "v1" | "v2" | "v3" | "indetermine";
+  tier: "A" | "B" | "C" | "D";
+  key_insight?: string | null;
+  main_pain?: string | null;
   recommended_action?: string | null;
-  strengths?:          string[];
-  blockers?:           string[];
+  strengths?: string[];
+  blockers?: string[];
 }
 
 export interface WebinarSubmission {
-  _id:         string;
-  webinar_id:  string;
-  contact:     WebinarContact;
-  answers:     Record<string, unknown>;
-  scoring?:    WebinarScoring;
-  completed:   boolean;
+  _id: string;
+  webinar_id: string;
+  contact: WebinarContact;
+  answers: Record<string, unknown>;
+  scoring?: WebinarScoring;
+  completed: boolean;
 }
 
 export interface WebinarQuestionOption {
-  key:      string;
+  key: string;
   label_fr: string;
   label_en: string;
 }
 
 export interface WebinarQuestion {
-  key:      string;
-  order:    number;
-  type:     "choice" | "scale" | "text" | "select";
+  key: string;
+  order: number;
+  type: "choice" | "scale" | "text" | "select";
   label_fr: string;
   label_en: string;
-  options:  WebinarQuestionOption[];
+  options: WebinarQuestionOption[];
   required: boolean;
 }
 
@@ -50,17 +50,20 @@ export interface WebinarStats {
 }
 
 export interface WebinarData {
-  _id:             string;
-  title:           string;
-  title_fr?:       string;
-  title_en?:       string;
-  description?:    string;
+  _id: string;
+  title: string;
+  title_fr?: string;
+  title_en?: string;
+  description?: string;
   description_fr?: string;
   description_en?: string;
-  about_fr?:       string;
-  about_en?:       string;
-  date?:           string;
-  questions:       WebinarQuestion[];
-  lang:            string;
-  stats?:          WebinarStats;
+  about_fr?: string;
+  about_en?: string;
+  date?: string;
+  questions: WebinarQuestion[];
+  lang: string;
+  stats?: WebinarStats;
+  highlights?: string[];
+  webinar_link?: string;
+  status?: "draft" | "active";
 }

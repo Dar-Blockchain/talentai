@@ -6,6 +6,7 @@ import WebinarHeader from "@/modules/webinar/components/shared/WebinarHeader";
 import WebinarFooter from "@/modules/webinar/components/shared/WebinarFooter";
 import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { WebinarHero } from "@/modules/webinar/components/landing/WebinarHero";
+import { WebinarAbout } from "@/modules/webinar/components/landing/WebinarAbout";
 import { WebinarHowItWorks } from "@/modules/webinar/components/landing/WebinarHowItWorks";
 import { WebinarFAQ } from "@/modules/webinar/components/landing/WebinarFAQ";
 import { WebinarFinalCta } from "@/modules/webinar/components/landing/WebinarFinalCta";
@@ -54,7 +55,7 @@ const WebinarPage: React.FC = () => {
   const webinarTitle = (isEn ? webinar?.title_en : webinar?.title_fr) || webinar?.title || "";
   const webinarDesc  = (isEn ? webinar?.description_en : webinar?.description_fr) || webinar?.description || "";
   const formattedDate = webinar?.date
-    ? new Date(webinar.date).toLocaleDateString(isEn ? "en-GB" : "fr-FR", { day: "numeric", month: "long" })
+    ? new Date(webinar.date).toLocaleString(isEn ? "en-GB" : "fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
     : null;
 
   // ── Questionnaire funnel — entered once the visitor registers below, or
@@ -128,12 +129,14 @@ const WebinarPage: React.FC = () => {
                 formattedDate={formattedDate}
                 questionsCount={webinar?.questions.length ?? 0}
                 registrations={webinar?.stats?.total_registrations ?? 0}
+                webinarLink={webinar?.webinar_link}
               />
 
               {/* ══ Lower content — light canvas, left-aligned with the header/hero ══ */}
               <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 py-16 md:py-24">
+                <WebinarAbout lang={lang} aboutText={aboutText} highlights={webinar?.highlights} />
                 <WebinarHowItWorks lang={lang} />
-                <WebinarFAQ lang={lang} aboutText={aboutText} />
+                {/* <WebinarFAQ lang={lang} /> */}
               </div>
 
               <WebinarFinalCta webinarId={webinar?._id} lang={lang} loading={loading} onRegistered={handleRegistered} />
