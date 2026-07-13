@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -143,6 +143,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
       <Dialog open={open} onOpenChange={(next) => { if (!next) setOpen(false); }}>
       <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden" style={{ borderRadius: "16px" }}>
         <div className="flex items-center justify-between px-5 pb-2.5 pt-4 border-b border-slate-100 font-bold text-[0.95rem]">
+          <DialogTitle asChild>
           <span className="flex items-center gap-2 flex-wrap">
             <span>{nom}</span>
             {sub.scoring?.tier && <TierBadge tier={sub.scoring.tier} />}
@@ -155,6 +156,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
               ? <Badge className="h-[18px] rounded-full border-transparent bg-emerald-50 px-2 text-[10px] font-bold text-emerald-700">Completed</Badge>
               : <Badge variant="outline" className="h-[18px] rounded-full border-transparent bg-slate-100 px-2 text-[10px] font-bold text-slate-500">In progress</Badge>}
           </span>
+          </DialogTitle>
           <Button variant="ghost" onClick={() => setOpen(false)} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
             <CloseIcon size={18} />
           </Button>
@@ -337,12 +339,14 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
     <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden" style={{ borderRadius: "16px" }}>
       <div className="flex items-center justify-between px-5 pb-1.5 pt-4 border-b border-slate-100 font-bold text-base">
+        <DialogTitle asChild>
         <div className="flex items-center gap-3">
           <span>Registrants — {webinar.title}</span>
           <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[12px] font-bold border border-teal-100">
             {total}
           </span>
         </div>
+        </DialogTitle>
         <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
           <CloseIcon size={18} />
         </Button>

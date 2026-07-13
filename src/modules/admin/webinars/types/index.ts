@@ -21,14 +21,20 @@ export interface WebinarStats {
 export interface Webinar {
   _id: string;
   title: string;
+  title_fr: string;
+  title_en: string;
   description: string;
+  description_fr: string;
+  description_en: string;
   date: string | null;
-  status: "draft" | "active" | "archived";
+  status: "draft" | "active";
   lang: "fr" | "en" | "both";
   about_fr: string;
   about_en: string;
   webinar_link: string;
   highlights: string[];
+  highlights_fr: string[];
+  highlights_en: string[];
   questions: WebinarQuestion[];
   stats: WebinarStats;
   created_by: string | null;
@@ -78,14 +84,17 @@ export interface WebinarSubmissionsResponse {
 }
 
 export interface WebinarFormValues {
-  title: string;
-  description: string;
+  title_fr: string;
+  title_en: string;
+  description_fr: string;
+  description_en: string;
   about_fr: string;
   about_en: string;
   webinar_link: string;
   date: string;
-  status: "draft" | "active" | "archived";
+  status: "draft" | "active";
   lang: "fr" | "en" | "both";
-  highlights: string[];
+  highlights_fr: string[];
+  highlights_en: string[];
   questions: WebinarQuestionDraft[];
 }

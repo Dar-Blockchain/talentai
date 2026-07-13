@@ -7,7 +7,7 @@ import {
   webinarBasicsSchema,
   type WebinarBasicsForm,
 } from "../schemas/webinarBasicsSchema";
-import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import {
@@ -36,7 +36,6 @@ import {
   CheckCircle2 as VerifyIcon,
   RefreshCw as RefreshIcon,
   Trash2 as DeleteIcon,
-  Archive as ArchiveIcon,
   MessageSquare as QIcon,
   ExternalLink as OpenIcon,
   X as CloseIcon,
@@ -72,7 +71,6 @@ import {
   useUpdateWebinarMutation,
   useDeleteWebinarMutation,
   useVerifyWebinarMutation,
-  useArchiveWebinarMutation,
   useRefreshStatsMutation,
 } from "../queries";
 import { ConfirmDialog } from "@/modules/admin/shared";
@@ -97,28 +95,27 @@ const CARD_STATUS_STYLES: Record<
   string,
   { label: string; color: string; bg: string; dot: string }
 > = {
-  active: { label: "Active", color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
+  active: { label: "Published", color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
   draft: { label: "Draft", color: "#D97706", bg: "#FFFBEB", dot: "#F59E0B" },
-  archived: {
-    label: "Archived",
-    color: "#6B7280",
-    bg: "#F3F4F6",
-    dot: "#9CA3AF",
-  },
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 function toFormValues(w: Webinar): WebinarFormValues {
   return {
-    title: w.title,
-    description: w.description,
+    // Pre-migration webinars only have the single `title`/`description`/`highlights`
+    // fields — mirror them into both languages so nothing looks blank on edit.
+    title_fr: w.title_fr || w.title || "",
+    title_en: w.title_en || w.title || "",
+    description_fr: w.description_fr || w.description || "",
+    description_en: w.description_en || w.description || "",
     about_fr: w.about_fr ?? "",
     about_en: w.about_en ?? "",
     webinar_link: w.webinar_link ?? "",
     date: w.date ? w.date.slice(0, 16) : "",
     status: w.status,
     lang: w.lang,
-    highlights: [...(w.highlights ?? []), "", "", ""].slice(0, 3),
+    highlights_fr: [...(w.highlights_fr?.length ? w.highlights_fr : w.highlights ?? []), "", "", ""].slice(0, 3),
+    highlights_en: [...(w.highlights_en?.length ? w.highlights_en : w.highlights ?? []), "", "", ""].slice(0, 3),
     questions: w.questions.map((q) => ({
       key: q.key,
       label_fr: q.label_fr,
@@ -133,15 +130,18 @@ function toFormValues(w: Webinar): WebinarFormValues {
 
 // ── Form dialog ───────────────────────────────────────────────────────────────
 const EMPTY_FORM: WebinarFormValues = {
-  title: "",
-  description: "",
+  title_fr: "",
+  title_en: "",
+  description_fr: "",
+  description_en: "",
   about_fr: "",
   about_en: "",
   webinar_link: "",
   date: "",
   status: "draft",
   lang: "fr",
-  highlights: ["", "", ""],
+  highlights_fr: ["", "", ""],
+  highlights_en: ["", "", ""],
   questions: [],
 };
 
@@ -162,6 +162,7 @@ function newQuestion(order: number): WebinarQuestionDraft {
 function QuestionEditor({
   q,
   idx,
+  lang,
   onChange,
   onDelete,
   onMoveUp,
@@ -171,6 +172,7 @@ function QuestionEditor({
 }: {
   q: WebinarQuestionDraft;
   idx: number;
+  lang: WebinarFormValues["lang"];
   onChange: (q: WebinarQuestionDraft) => void;
   onDelete: () => void;
   onMoveUp: () => void;
@@ -197,6 +199,18 @@ function QuestionEditor({
     onChange({
       ...q,
       options: q.options.map((o, j) => (j === i ? { ...o, [field]: val } : o)),
+    });
+  // Single-language webinars only collect one label, but `label_fr` is treated
+  // as the primary field everywhere else (previews, CSV export, funnel
+  // fallback) — mirror it into both so those keep working either way.
+  const setSingleLangLabel = (val: string) =>
+    onChange({ ...q, label_fr: val, label_en: val });
+  const setSingleLangOption = (i: number, val: string) =>
+    onChange({
+      ...q,
+      options: q.options.map((o, j) =>
+        j === i ? { ...o, label_fr: val, label_en: val } : o,
+      ),
     });
   const delOpt = (i: number) =>
     onChange({ ...q, options: q.options.filter((_, j) => j !== i) });
@@ -266,30 +280,44 @@ function QuestionEditor({
 
       {/* Body */}
       <div className="p-3 space-y-2.5">
-        <div className="grid grid-cols-2 gap-2">
+        {lang === "both" ? (
+          <div className="grid grid-cols-2 gap-2">
+            <LangBox flag="🇫🇷" name="French">
+              <p className="text-[10px] font-semibold text-slate-400 mb-1">
+                Label *
+              </p>
+              <input
+                className={inp}
+                value={q.label_fr}
+                onChange={(e) => onChange({ ...q, label_fr: e.target.value })}
+                placeholder="Question en français"
+              />
+            </LangBox>
+            <LangBox flag="🇬🇧" name="English">
+              <p className="text-[10px] font-semibold text-slate-400 mb-1">
+                Label
+              </p>
+              <input
+                className={inp}
+                value={q.label_en}
+                onChange={(e) => onChange({ ...q, label_en: e.target.value })}
+                placeholder="Question in English"
+              />
+            </LangBox>
+          </div>
+        ) : (
           <div>
             <p className="text-[10px] font-semibold text-slate-400 mb-1">
-              Label FR *
+              Label *
             </p>
             <input
               className={inp}
-              value={q.label_fr}
-              onChange={(e) => onChange({ ...q, label_fr: e.target.value })}
-              placeholder="Question en français"
+              value={lang === "en" ? q.label_en : q.label_fr}
+              onChange={(e) => setSingleLangLabel(e.target.value)}
+              placeholder={lang === "en" ? "Question in English" : "Question en français"}
             />
           </div>
-          <div>
-            <p className="text-[10px] font-semibold text-slate-400 mb-1">
-              Label EN
-            </p>
-            <input
-              className={inp}
-              value={q.label_en}
-              onChange={(e) => onChange({ ...q, label_en: e.target.value })}
-              placeholder="Question in English"
-            />
-          </div>
-        </div>
+        )}
 
         <div className="grid grid-cols-2 gap-2">
           <div>
@@ -352,18 +380,29 @@ function QuestionEditor({
             <div className="space-y-1.5">
               {q.options.map((opt, i) => (
                 <div key={i} className="flex items-center gap-1.5">
-                  <input
-                    className={inp + " flex-1"}
-                    value={opt.label_fr}
-                    onChange={(e) => setOpt(i, "label_fr", e.target.value)}
-                    placeholder={`Option ${i + 1} (FR)`}
-                  />
-                  <input
-                    className={inp + " flex-1"}
-                    value={opt.label_en}
-                    onChange={(e) => setOpt(i, "label_en", e.target.value)}
-                    placeholder={`Option ${i + 1} (EN)`}
-                  />
+                  {lang === "both" ? (
+                    <>
+                      <input
+                        className={inp + " flex-1"}
+                        value={opt.label_fr}
+                        onChange={(e) => setOpt(i, "label_fr", e.target.value)}
+                        placeholder={`Option ${i + 1} (FR)`}
+                      />
+                      <input
+                        className={inp + " flex-1"}
+                        value={opt.label_en}
+                        onChange={(e) => setOpt(i, "label_en", e.target.value)}
+                        placeholder={`Option ${i + 1} (EN)`}
+                      />
+                    </>
+                  ) : (
+                    <input
+                      className={inp + " flex-1"}
+                      value={lang === "en" ? opt.label_en : opt.label_fr}
+                      onChange={(e) => setSingleLangOption(i, e.target.value)}
+                      placeholder={`Option ${i + 1}`}
+                    />
+                  )}
                   <Button
                     variant="ghost"
                     onClick={() => delOpt(i)}
@@ -398,10 +437,24 @@ function QuestionEditor({
 }
 
 const STEPS = [
-  { label: "Basics", desc: "Title, date & link" },
+  { label: "Basics", desc: "Language, date & link" },
   { label: "Content", desc: "Landing page copy" },
   { label: "Questions", desc: "Registration form" },
 ];
+
+/** Bordered per-language card used to keep FR/EN content visually separate
+ * whenever a webinar's language is set to "both". */
+function LangBox({ flag, name, children }: { flag: string; name: string; children: React.ReactNode }) {
+  return (
+    <div className="rounded-2xl border border-slate-200 bg-slate-50/50 p-3.5">
+      <div className="flex items-center gap-1.5 mb-2.5">
+        <span className="text-[14px] leading-none">{flag}</span>
+        <span className="text-[11px] font-black text-slate-600 uppercase tracking-wide">{name}</span>
+      </div>
+      {children}
+    </div>
+  );
+}
 
 // ── Date & time picker (calendar + styled time selects, single popover) ────────
 const HOURS_12 = Array.from({ length: 12 }, (_, i) =>
@@ -554,12 +607,14 @@ function WebinarFormDialog({
     control: basicsControl,
     handleSubmit: handleBasicsSubmit,
     reset: resetBasics,
+    trigger: triggerBasics,
     formState: { errors: basicsErrors },
   } = useForm<WebinarBasicsForm>({
     resolver: zodResolver(webinarBasicsSchema),
     mode: "onChange",
     defaultValues: {
-      title: (initial ?? EMPTY_FORM).title,
+      title_fr: (initial ?? EMPTY_FORM).title_fr,
+      title_en: (initial ?? EMPTY_FORM).title_en,
       date: (initial ?? EMPTY_FORM).date,
       lang: (initial ?? EMPTY_FORM).lang,
       webinar_link: (initial ?? EMPTY_FORM).webinar_link,
@@ -571,7 +626,8 @@ function WebinarFormDialog({
     setForm(f);
     setStep(0);
     resetBasics({
-      title: f.title,
+      title_fr: f.title_fr,
+      title_en: f.title_en,
       date: f.date,
       lang: f.lang,
       webinar_link: f.webinar_link,
@@ -626,7 +682,7 @@ function WebinarFormDialog({
     >
       <DialogContent
         showCloseButton={false}
-        className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[92vh] overflow-hidden"
+        className="sm:max-w-3xl p-0 gap-0 flex flex-col max-h-[92vh] overflow-hidden"
         style={{ borderRadius: "20px" }}
       >
         {/* Header */}
@@ -636,9 +692,13 @@ function WebinarFormDialog({
               <p className="text-[11px] font-bold text-teal-600 uppercase tracking-widest mb-0.5">
                 Step {step + 1} of {STEPS.length}
               </p>
-              <h2 className="text-[17px] font-black text-slate-900">
-                {initial?.title ? `Edit — ${initial.title}` : "New Webinar"}
-              </h2>
+              <DialogTitle asChild>
+                <h2 className="text-[17px] font-black text-slate-900">
+                  {initial?.title_fr || initial?.title_en
+                    ? `Edit — ${initial.title_fr || initial.title_en}`
+                    : "New Webinar"}
+                </h2>
+              </DialogTitle>
             </div>
             <Button
               variant="ghost"
@@ -693,92 +753,54 @@ function WebinarFormDialog({
               <div className="space-y-4">
                 <div>
                   <label className={lbl}>
-                    Title <span className="text-red-400">*</span>
+                    Language <span className="text-red-400">*</span>
                   </label>
                   <Controller
-                    name="title"
+                    name="lang"
                     control={basicsControl}
                     render={({ field }) => (
-                      <input
-                        {...field}
-                        className={inp}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          set("title", e.target.value);
+                      <Select
+                        value={field.value}
+                        onValueChange={(v) => {
+                          field.onChange(v);
+                          set("lang", v as WebinarFormValues["lang"]);
                         }}
-                        placeholder="Webinar title"
-                        autoFocus
-                        aria-invalid={!!basicsErrors.title}
-                      />
+                      >
+                        <SelectTrigger className="w-full text-[14px]">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fr">French</SelectItem>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="both">Both</SelectItem>
+                        </SelectContent>
+                      </Select>
                     )}
                   />
-                  {basicsErrors.title && (
-                    <p className={errTxt}>{basicsErrors.title.message}</p>
+                  {basicsErrors.lang && (
+                    <p className={errTxt}>{basicsErrors.lang.message}</p>
                   )}
                 </div>
                 <div>
-                  <label className={lbl}>Short description</label>
-                  <textarea
-                    className={inp}
-                    rows={2}
-                    value={form.description}
-                    onChange={(e) => set("description", e.target.value)}
-                    placeholder="What's this webinar about?"
-                    style={{ resize: "none" }}
+                  <label className={lbl}>
+                    Date & time <span className="text-red-400">*</span>
+                  </label>
+                  <Controller
+                    name="date"
+                    control={basicsControl}
+                    render={({ field }) => (
+                      <WebinarDateTimePicker
+                        value={field.value}
+                        onChange={(v) => {
+                          field.onChange(v);
+                          set("date", v);
+                        }}
+                      />
+                    )}
                   />
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div>
-                    <label className={lbl}>
-                      Date & time <span className="text-red-400">*</span>
-                    </label>
-                    <Controller
-                      name="date"
-                      control={basicsControl}
-                      render={({ field }) => (
-                        <WebinarDateTimePicker
-                          value={field.value}
-                          onChange={(v) => {
-                            field.onChange(v);
-                            set("date", v);
-                          }}
-                        />
-                      )}
-                    />
-                    {basicsErrors.date && (
-                      <p className={errTxt}>{basicsErrors.date.message}</p>
-                    )}
-                  </div>
-                  <div>
-                    <label className={lbl}>
-                      Language <span className="text-red-400">*</span>
-                    </label>
-                    <Controller
-                      name="lang"
-                      control={basicsControl}
-                      render={({ field }) => (
-                        <Select
-                          value={field.value}
-                          onValueChange={(v) => {
-                            field.onChange(v);
-                            set("lang", v as WebinarFormValues["lang"]);
-                          }}
-                        >
-                          <SelectTrigger className="w-full text-[14px]">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="fr">French</SelectItem>
-                            <SelectItem value="en">English</SelectItem>
-                            <SelectItem value="both">Both</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    />
-                    {basicsErrors.lang && (
-                      <p className={errTxt}>{basicsErrors.lang.message}</p>
-                    )}
-                  </div>
+                  {basicsErrors.date && (
+                    <p className={errTxt}>{basicsErrors.date.message}</p>
+                  )}
                 </div>
                 <div>
                   <label className={lbl}>
@@ -810,87 +832,285 @@ function WebinarFormDialog({
                     </p>
                   )}
                 </div>
-                <div>
-                  <label className={lbl}>Status</label>
-                  <div className="flex gap-2">
-                    {(["draft", "active", "archived"] as const).map((s) => (
-                      <button
-                        key={s}
-                        onClick={() => set("status", s)}
-                        className={`flex-1 py-2 rounded-xl border text-[12px] font-semibold transition-colors capitalize
-                          ${form.status === s ? "bg-teal-600 border-teal-600 text-white" : "border-slate-200 text-slate-500 hover:border-teal-300 bg-white"}`}
-                      >
-                        {s}
-                      </button>
-                    ))}
-                  </div>
-                </div>
               </div>
             )}
 
             {step === 1 && (
               <div className="space-y-5">
-                <div className="grid grid-cols-2 gap-4">
+                {/* Title */}
+                {form.lang === "both" ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <LangBox flag="🇫🇷" name="French">
+                      <label className={lbl}>
+                        Title <span className="text-red-400">*</span>
+                      </label>
+                      <Controller
+                        name="title_fr"
+                        control={basicsControl}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            className={inp}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              set("title_fr", e.target.value);
+                            }}
+                            placeholder="Titre du webinar"
+                            autoFocus
+                            aria-invalid={!!basicsErrors.title_fr}
+                          />
+                        )}
+                      />
+                      {basicsErrors.title_fr && (
+                        <p className={errTxt}>{basicsErrors.title_fr.message}</p>
+                      )}
+                    </LangBox>
+                    <LangBox flag="🇬🇧" name="English">
+                      <label className={lbl}>
+                        Title <span className="text-red-400">*</span>
+                      </label>
+                      <Controller
+                        name="title_en"
+                        control={basicsControl}
+                        render={({ field }) => (
+                          <input
+                            {...field}
+                            className={inp}
+                            onChange={(e) => {
+                              field.onChange(e);
+                              set("title_en", e.target.value);
+                            }}
+                            placeholder="Webinar title"
+                            aria-invalid={!!basicsErrors.title_en}
+                          />
+                        )}
+                      />
+                      {basicsErrors.title_en && (
+                        <p className={errTxt}>{basicsErrors.title_en.message}</p>
+                      )}
+                    </LangBox>
+                  </div>
+                ) : (
                   <div>
                     <label className={lbl}>
-                      About — FR{" "}
-                      <span className="text-slate-400 font-normal text-[11px] ml-1">
-                        (landing page)
-                      </span>
+                      Title <span className="text-red-400">*</span>
                     </label>
-                    <textarea
-                      className={inp}
-                      rows={6}
-                      value={form.about_fr}
-                      onChange={(e) => set("about_fr", e.target.value)}
-                      placeholder="Décrivez ce webinar en français…"
-                      style={{ resize: "vertical" }}
-                    />
-                  </div>
-                  <div>
-                    <label className={lbl}>
-                      About — EN{" "}
-                      <span className="text-slate-400 font-normal text-[11px] ml-1">
-                        (landing page)
-                      </span>
-                    </label>
-                    <textarea
-                      className={inp}
-                      rows={6}
-                      value={form.about_en}
-                      onChange={(e) => set("about_en", e.target.value)}
-                      placeholder="Describe this webinar in English…"
-                      style={{ resize: "vertical" }}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className={lbl}>
-                    Highlights{" "}
-                    <span className="text-slate-400 font-normal text-[11px]">
-                      (up to 3 bullets on home page)
-                    </span>
-                  </label>
-                  <div className="space-y-2">
-                    {[0, 1, 2].map((i) => (
-                      <div key={i} className="flex items-center gap-2">
-                        <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-black flex items-center justify-center shrink-0">
-                          {i + 1}
-                        </span>
+                    <Controller
+                      name={form.lang === "fr" ? "title_fr" : "title_en"}
+                      control={basicsControl}
+                      render={({ field }) => (
                         <input
+                          {...field}
                           className={inp}
-                          value={form.highlights[i] ?? ""}
                           onChange={(e) => {
-                            const next = [...form.highlights];
-                            next[i] = e.target.value;
-                            set("highlights", next);
+                            field.onChange(e);
+                            set(form.lang === "fr" ? "title_fr" : "title_en", e.target.value);
                           }}
-                          placeholder={`Benefit ${i + 1}`}
+                          placeholder={form.lang === "fr" ? "Titre du webinar" : "Webinar title"}
+                          autoFocus
+                          aria-invalid={!!(form.lang === "fr" ? basicsErrors.title_fr : basicsErrors.title_en)}
                         />
-                      </div>
-                    ))}
+                      )}
+                    />
+                    {(form.lang === "fr" ? basicsErrors.title_fr : basicsErrors.title_en) && (
+                      <p className={errTxt}>
+                        {(form.lang === "fr" ? basicsErrors.title_fr : basicsErrors.title_en)?.message}
+                      </p>
+                    )}
                   </div>
-                </div>
+                )}
+
+                {/* Short description */}
+                {form.lang === "both" ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <LangBox flag="🇫🇷" name="French">
+                      <label className={lbl}>Short description</label>
+                      <textarea
+                        className={inp}
+                        rows={2}
+                        value={form.description_fr}
+                        onChange={(e) => set("description_fr", e.target.value)}
+                        placeholder="De quoi parle ce webinar ?"
+                        style={{ resize: "none" }}
+                      />
+                    </LangBox>
+                    <LangBox flag="🇬🇧" name="English">
+                      <label className={lbl}>Short description</label>
+                      <textarea
+                        className={inp}
+                        rows={2}
+                        value={form.description_en}
+                        onChange={(e) => set("description_en", e.target.value)}
+                        placeholder="What's this webinar about?"
+                        style={{ resize: "none" }}
+                      />
+                    </LangBox>
+                  </div>
+                ) : (
+                  <div>
+                    <label className={lbl}>Short description</label>
+                    <textarea
+                      className={inp}
+                      rows={2}
+                      value={form.lang === "fr" ? form.description_fr : form.description_en}
+                      onChange={(e) =>
+                        set(form.lang === "fr" ? "description_fr" : "description_en", e.target.value)
+                      }
+                      placeholder={form.lang === "fr" ? "De quoi parle ce webinar ?" : "What's this webinar about?"}
+                      style={{ resize: "none" }}
+                    />
+                  </div>
+                )}
+
+                {/* About */}
+                {form.lang === "both" ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <LangBox flag="🇫🇷" name="French">
+                      <label className={lbl}>
+                        About{" "}
+                        <span className="text-slate-400 font-normal text-[11px] ml-1">
+                          (landing page)
+                        </span>
+                      </label>
+                      <textarea
+                        className={inp}
+                        rows={6}
+                        value={form.about_fr}
+                        onChange={(e) => set("about_fr", e.target.value)}
+                        placeholder="Décrivez ce webinar en français…"
+                        style={{ resize: "vertical" }}
+                      />
+                    </LangBox>
+                    <LangBox flag="🇬🇧" name="English">
+                      <label className={lbl}>
+                        About{" "}
+                        <span className="text-slate-400 font-normal text-[11px] ml-1">
+                          (landing page)
+                        </span>
+                      </label>
+                      <textarea
+                        className={inp}
+                        rows={6}
+                        value={form.about_en}
+                        onChange={(e) => set("about_en", e.target.value)}
+                        placeholder="Describe this webinar in English…"
+                        style={{ resize: "vertical" }}
+                      />
+                    </LangBox>
+                  </div>
+                ) : (
+                  <div>
+                    <label className={lbl}>
+                      About{" "}
+                      <span className="text-slate-400 font-normal text-[11px] ml-1">
+                        (landing page)
+                      </span>
+                    </label>
+                    <textarea
+                      className={inp}
+                      rows={6}
+                      value={form.lang === "fr" ? form.about_fr : form.about_en}
+                      onChange={(e) => set(form.lang === "fr" ? "about_fr" : "about_en", e.target.value)}
+                      placeholder={
+                        form.lang === "fr"
+                          ? "Décrivez ce webinar en français…"
+                          : "Describe this webinar in English…"
+                      }
+                      style={{ resize: "vertical" }}
+                    />
+                  </div>
+                )}
+
+                {/* Highlights */}
+                {form.lang === "both" ? (
+                  <div className="grid grid-cols-2 gap-4">
+                    <LangBox flag="🇫🇷" name="French">
+                      <label className={lbl}>
+                        Highlights{" "}
+                        <span className="text-slate-400 font-normal text-[11px]">
+                          (up to 3 bullets)
+                        </span>
+                      </label>
+                      <div className="space-y-2">
+                        {[0, 1, 2].map((i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-black flex items-center justify-center shrink-0">
+                              {i + 1}
+                            </span>
+                            <input
+                              className={inp}
+                              value={form.highlights_fr[i] ?? ""}
+                              onChange={(e) => {
+                                const next = [...form.highlights_fr];
+                                next[i] = e.target.value;
+                                set("highlights_fr", next);
+                              }}
+                              placeholder={`Bénéfice ${i + 1}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </LangBox>
+                    <LangBox flag="🇬🇧" name="English">
+                      <label className={lbl}>
+                        Highlights{" "}
+                        <span className="text-slate-400 font-normal text-[11px]">
+                          (up to 3 bullets)
+                        </span>
+                      </label>
+                      <div className="space-y-2">
+                        {[0, 1, 2].map((i) => (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-black flex items-center justify-center shrink-0">
+                              {i + 1}
+                            </span>
+                            <input
+                              className={inp}
+                              value={form.highlights_en[i] ?? ""}
+                              onChange={(e) => {
+                                const next = [...form.highlights_en];
+                                next[i] = e.target.value;
+                                set("highlights_en", next);
+                              }}
+                              placeholder={`Benefit ${i + 1}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    </LangBox>
+                  </div>
+                ) : (
+                  <div>
+                    <label className={lbl}>
+                      Highlights{" "}
+                      <span className="text-slate-400 font-normal text-[11px]">
+                        (up to 3 bullets on home page)
+                      </span>
+                    </label>
+                    <div className="space-y-2">
+                      {[0, 1, 2].map((i) => {
+                        const key = form.lang === "fr" ? "highlights_fr" : "highlights_en";
+                        return (
+                          <div key={i} className="flex items-center gap-2">
+                            <span className="w-5 h-5 rounded-full bg-teal-100 text-teal-700 text-[10px] font-black flex items-center justify-center shrink-0">
+                              {i + 1}
+                            </span>
+                            <input
+                              className={inp}
+                              value={form[key][i] ?? ""}
+                              onChange={(e) => {
+                                const next = [...form[key]];
+                                next[i] = e.target.value;
+                                set(key, next);
+                              }}
+                              placeholder={form.lang === "fr" ? `Bénéfice ${i + 1}` : `Benefit ${i + 1}`}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -922,6 +1142,7 @@ function WebinarFormDialog({
                       key={q.key}
                       q={q}
                       idx={idx}
+                      lang={form.lang}
                       onChange={(nq) => updateQuestion(idx, nq)}
                       onDelete={() => deleteQuestion(idx)}
                       onMoveUp={() => moveQuestion(idx, -1)}
@@ -965,31 +1186,52 @@ function WebinarFormDialog({
             {step < STEPS.length - 1 ? (
               <Button
                 variant="ghost"
-                onClick={
-                  step === 0
-                    ? handleBasicsSubmit(() => setStep((s) => s + 1))
-                    : () => setStep((s) => s + 1)
-                }
+                onClick={async () => {
+                  const fields =
+                    step === 0
+                      ? (["date", "lang", "webinar_link"] as const)
+                      : (["title_fr", "title_en"] as const);
+                  if (await triggerBasics(fields)) setStep((s) => s + 1);
+                }}
                 className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold"
               >
                 Next →
               </Button>
             ) : (
-              <Button
-                variant="ghost"
-                onClick={handleBasicsSubmit(
-                  () => onSave(form),
-                  () => {
-                    setStep(0);
-                    err("Please fix the Basics step.");
-                  },
-                )}
-                disabled={!canSave}
-                title={!canSave ? "Add at least one question" : undefined}
-                className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold"
-              >
-                Save webinar
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    // Draft is a work-in-progress save — only a title is needed,
+                    // not the full Publish checklist (date/link/questions).
+                    const hasTitle = form.title_fr.trim() || form.title_en.trim();
+                    if (!hasTitle) {
+                      setStep(1);
+                      err("Add a title first.");
+                      return;
+                    }
+                    onSave({ ...form, status: "draft" });
+                  }}
+                  className="rounded-xl text-[13px] font-bold text-slate-600"
+                >
+                  Save as Draft
+                </Button>
+                <Button
+                  variant="ghost"
+                  onClick={handleBasicsSubmit(
+                    () => onSave({ ...form, status: "active" }),
+                    (formErrors) => {
+                      setStep(formErrors.title_fr || formErrors.title_en ? 1 : 0);
+                      err("Please check the highlighted fields.");
+                    },
+                  )}
+                  disabled={!canSave}
+                  title={!canSave ? "Add at least one question" : undefined}
+                  className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold"
+                >
+                  Publish
+                </Button>
+              </div>
             )}
           </div>
         </div>
@@ -1022,7 +1264,9 @@ function QuestionsDialog({
         style={{ borderRadius: "16px" }}
       >
         <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 font-bold text-base">
-          <span>Questions — {webinar.title}</span>
+          <DialogTitle asChild>
+            <span>Questions — {webinar.title}</span>
+          </DialogTitle>
           <Button
             variant="ghost"
             onClick={onClose}
@@ -1096,8 +1340,6 @@ function WebinarCard({
   onQuestions,
   onVerify,
   verifyPending,
-  onArchive,
-  archivePending,
   onRefresh,
   refreshPending,
   onExport,
@@ -1112,8 +1354,6 @@ function WebinarCard({
   onQuestions: () => void;
   onVerify: () => void;
   verifyPending: boolean;
-  onArchive: () => void;
-  archivePending: boolean;
   onRefresh: () => void;
   refreshPending: boolean;
   onExport: () => void;
@@ -1280,7 +1520,7 @@ function WebinarCard({
                 asChild
                 className="gap-2.5 rounded-lg py-[9px] px-[10px]"
               >
-                <a href={`${publicUrl}&preview=1`} target="_blank" rel="noopener noreferrer">
+                <a href={publicUrl} target="_blank" rel="noopener noreferrer">
                   <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#F3F4F6]">
                     <OpenIcon size={13} color="#6B7280" />
                   </div>
@@ -1334,26 +1574,6 @@ function WebinarCard({
                   </p>
                 </div>
               </DropdownMenuItem>
-
-              {w.status === "active" && (
-                <DropdownMenuItem
-                  onClick={onArchive}
-                  disabled={archivePending}
-                  className="gap-2.5 rounded-lg py-[9px] px-[10px]"
-                >
-                  <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#F3F4F6]">
-                    <ArchiveIcon size={13} color="#6B7280" />
-                  </div>
-                  <div>
-                    <p className="text-[12.5px] font-semibold leading-[1.2] text-[#111827]">
-                      Archive
-                    </p>
-                    <p className="text-[10px] leading-[1.2] text-[#9CA3AF]">
-                      Hide from the active list
-                    </p>
-                  </div>
-                </DropdownMenuItem>
-              )}
 
               <DropdownMenuSeparator />
 
@@ -1533,7 +1753,6 @@ const WebinarManagement: React.FC = () => {
   const updateMut = useUpdateWebinarMutation();
   const deleteMut = useDeleteWebinarMutation();
   const verifyMut = useVerifyWebinarMutation();
-  const archiveMut = useArchiveWebinarMutation();
   const statsMut = useRefreshStatsMutation();
 
   const [formOpen, setFormOpen] = useState(false);
@@ -1623,14 +1842,8 @@ const WebinarManagement: React.FC = () => {
 
   const handleVerify = (w: Webinar) =>
     verifyMut.mutate(w._id, {
-      onSuccess: () => ok(`"${w.title}" is now Active.`),
-      onError: () => err("Failed to verify webinar."),
-    });
-
-  const handleArchive = (w: Webinar) =>
-    archiveMut.mutate(w._id, {
-      onSuccess: () => ok(`"${w.title}" archived.`),
-      onError: () => err("Failed to archive webinar."),
+      onSuccess: () => ok(`"${w.title}" is now Published.`),
+      onError: () => err("Failed to publish webinar."),
     });
 
   const handleDelete = () => {
@@ -1678,14 +1891,14 @@ const WebinarManagement: React.FC = () => {
       {/* Toolbar */}
       <div className="flex items-center justify-between gap-3 mb-5 flex-wrap">
         <div className="flex items-center gap-2">
-          {["", "draft", "active", "archived"].map((s) => (
+          {["", "draft", "active"].map((s) => (
             <button
               key={s}
               onClick={() => setStatusFilter(s)}
               className={`px-3 py-1.5 rounded-lg text-[12px] font-semibold transition-colors border
                 ${statusFilter === s ? "bg-teal-600 border-teal-600 text-white" : "border-slate-200 text-slate-600 hover:border-teal-300 bg-white"}`}
             >
-              {s === "" ? "All" : s.charAt(0).toUpperCase() + s.slice(1)}
+              {s === "" ? "All" : s === "active" ? "Published" : "Draft"}
             </button>
           ))}
         </div>
@@ -1732,8 +1945,6 @@ const WebinarManagement: React.FC = () => {
               onQuestions={() => setQTargetId(w._id)}
               onVerify={() => handleVerify(w)}
               verifyPending={verifyMut.isPending}
-              onArchive={() => handleArchive(w)}
-              archivePending={archiveMut.isPending}
               onRefresh={() => handleRefresh(w._id)}
               refreshPending={statsMut.isPending}
               onExport={() => handleExport(w)}

@@ -46,11 +46,6 @@ export const useVerifyWebinarMutation = () => {
   return useMutation({ mutationFn: adminWebinarApi.verify, onSuccess: () => invalidate(qc) });
 };
 
-export const useArchiveWebinarMutation = () => {
-  const qc = useQueryClient();
-  return useMutation({ mutationFn: adminWebinarApi.archive, onSuccess: () => invalidate(qc) });
-};
-
 export const useRefreshStatsMutation = () => {
   const qc = useQueryClient();
   return useMutation({ mutationFn: adminWebinarApi.refreshStats, onSuccess: () => invalidate(qc) });

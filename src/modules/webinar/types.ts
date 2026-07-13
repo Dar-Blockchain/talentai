@@ -50,14 +50,17 @@ export interface WebinarStats {
 }
 
 export interface WebinarData {
-  _id:          string;
-  title:        string;
-  description?: string;
-  about_fr?:    string;
-  about_en?:    string;
-  date?:        string;
-  questions:    WebinarQuestion[];
-  lang:         string;
-  status?:      "draft" | "active" | "archived";
-  stats?:       WebinarStats;
+  _id:             string;
+  title:           string;
+  title_fr?:       string;
+  title_en?:       string;
+  description?:    string;
+  description_fr?: string;
+  description_en?: string;
+  about_fr?:       string;
+  about_en?:       string;
+  date?:           string;
+  questions:       WebinarQuestion[];
+  lang:            string;
+  stats?:          WebinarStats;
 }

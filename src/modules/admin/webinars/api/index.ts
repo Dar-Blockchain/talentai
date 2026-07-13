@@ -40,12 +40,6 @@ export const adminWebinarApi = {
       return data.data as Webinar;
     }, "Failed to verify webinar."),
 
-  archive: (id: string) =>
-    apiCall(async () => {
-      const { data } = await axiosInstance.patch(`${BASE}/${id}/archive`);
-      return data.data as Webinar;
-    }, "Failed to archive webinar."),
-
   refreshStats: (id: string) =>
     apiCall(async () => {
       const { data } = await axiosInstance.post(`${BASE}/${id}/refresh-stats`);
