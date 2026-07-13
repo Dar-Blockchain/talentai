@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Fraunces } from "next/font/google";
 import WebinarHeader from "@/modules/webinar/components/shared/WebinarHeader";
 import WebinarFooter from "@/modules/webinar/components/shared/WebinarFooter";
+import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { WebinarHero } from "@/modules/webinar/components/landing/WebinarHero";
 import { WebinarHowItWorks } from "@/modules/webinar/components/landing/WebinarHowItWorks";
 import { WebinarFAQ } from "@/modules/webinar/components/landing/WebinarFAQ";
@@ -108,6 +109,8 @@ const WebinarPage: React.FC = () => {
                 welcomeBack={funnelSeed.welcomeBack}
               />
             )
+          ) : loading ? (
+            <LoadingScreen title={isEn ? "Loading webinar…" : "Chargement du webinar…"} />
           ) : (
             <>
               <WebinarHero
