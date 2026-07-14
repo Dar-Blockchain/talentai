@@ -136,6 +136,7 @@ export function WebinarCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent
               align="end"
+              onClick={(e) => e.stopPropagation()}
               className="min-w-[188px] rounded-xl border border-[#E5E7EB] p-1.5 shadow-lg"
             >
               <div className="px-1.5 pb-1 pt-0.5">
