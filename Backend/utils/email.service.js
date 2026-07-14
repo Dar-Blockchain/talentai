@@ -248,7 +248,7 @@ const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, m
 const sendPlanUpgradeReminder = async (companyEmail, companyName, language = "en") => {
   const locale = locales[language] || locales.en;
   const t = { ...locale.common, ...locale.plan_upgrade };
-  const upgradeUrl = `${process.env.FRONTEND_URL}company/plans`;
+  const upgradeUrl = `${process.env.BASE_URL}company/plans`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: companyEmail,
@@ -362,8 +362,10 @@ const sendWebinarResultsEmail = async (submission, webinar) => {
 
   const nom         = submission.contact?.nom || "Participant";
   const scoring     = submission.scoring || {};
-  const lang        = submission.lang || "fr";
-  const resultsUrl  = `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar?id=${webinar._id || webinar.id}&submission=${submission._id}&snapshot=1`;
+  // Follows the webinar's own language, not the registrant's pick — "both"
+  // defaults to English so every email for that webinar reads consistently.
+  const lang        = webinar.lang !== "fr" ? "en" : "fr";
+  const resultsUrl  = `${process.env.BASE_URL}/webinar?id=${webinar._id || webinar.id}&submission=${submission._id}&snapshot=1`;
 
   const webinarDate = webinar.date
     ? new Date(webinar.date).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR", {
@@ -410,8 +412,9 @@ const sendWebinarReminderEmail = async (submission, webinar) => {
   if (!email) return false;
 
   const nom  = submission.contact?.nom || "Participant";
-  const lang = submission.lang || "fr";
-  const isEn = lang === "en";
+  // Follows the webinar's own language, not the registrant's pick — "both"
+  // defaults to English so every email for that webinar reads consistently.
+  const isEn = webinar.lang !== "fr";
 
   const locale = isEn ? "en-GB" : "fr-FR";
   const webinarDate = webinar.date
@@ -420,9 +423,23 @@ const sendWebinarReminderEmail = async (submission, webinar) => {
   const webinarTime = webinar.date
     ? new Date(webinar.date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
     : null;
+  const webinarEndTime = webinar.end_date
+    ? new Date(webinar.end_date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : null;
 
-  const webinarUrl = webinar.webinar_link
-    || `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar?id=${webinar._id || webinar.id}`;
+  // Duration only when both ends are known and the gap makes sense (avoids
+  // showing "0 min" or negative spans for mis-entered end dates).
+  let webinarDuration = null;
+  if (webinar.date && webinar.end_date) {
+    const minutes = Math.round((new Date(webinar.end_date) - new Date(webinar.date)) / 60000);
+    if (minutes > 0) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      webinarDuration = [h && `${h}h`, m && `${m}min`].filter(Boolean).join(" ");
+    }
+  }
+
+  const webinarUrl = webinar.webinar_link || null;
 
   const mailOptions = {
     from: FROM_ADDRESS,
@@ -435,6 +452,8 @@ const sendWebinarReminderEmail = async (submission, webinar) => {
       webinarTitle: webinar.title,
       webinarDate,
       webinarTime,
+      webinarEndTime,
+      webinarDuration,
       webinarUrl,
       isEn,
       year: new Date().getFullYear(),
@@ -456,7 +475,9 @@ const sendWebinarReminderEmail = async (submission, webinar) => {
 const sendWebinarInvitationEmail = async (email, webinar) => {
   if (!email) return false;
 
-  const isEn = webinar.lang === "en";
+  // Bilingual webinars ("both") default to English since there's no
+  // registrant language to key off yet — only an explicit "fr" gets French.
+  const isEn = webinar.lang !== "fr";
   const locale = isEn ? "en-GB" : "fr-FR";
   const title = (isEn ? webinar.title_en : webinar.title_fr) || webinar.title;
 
@@ -466,8 +487,26 @@ const sendWebinarInvitationEmail = async (email, webinar) => {
   const webinarTime = webinar.date
     ? new Date(webinar.date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
     : null;
+  const webinarEndTime = webinar.end_date
+    ? new Date(webinar.end_date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : null;
 
-  const registerUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://talentai.bid"}/webinar?id=${webinar._id || webinar.id}`;
+  // Duration only when both ends are known and the gap makes sense (avoids
+  // showing "0 min" or negative spans for mis-entered end dates).
+  let webinarDuration = null;
+  if (webinar.date && webinar.end_date) {
+    const minutes = Math.round((new Date(webinar.end_date) - new Date(webinar.date)) / 60000);
+    if (minutes > 0) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      webinarDuration = isEn
+        ? [h && `${h}h`, m && `${m}min`].filter(Boolean).join(" ")
+        : [h && `${h}h`, m && `${m}min`].filter(Boolean).join(" ");
+    }
+  }
+
+  const registerUrl = `${process.env.BASE_URL}/webinar?id=${webinar._id || webinar.id}`;
+  const meetingUrl  = webinar.webinar_link || null;
 
   const mailOptions = {
     from: FROM_ADDRESS,
@@ -479,7 +518,10 @@ const sendWebinarInvitationEmail = async (email, webinar) => {
       webinarTitle: title,
       webinarDate,
       webinarTime,
+      webinarEndTime,
+      webinarDuration,
       registerUrl,
+      meetingUrl,
       isEn,
       year: new Date().getFullYear(),
     }),
