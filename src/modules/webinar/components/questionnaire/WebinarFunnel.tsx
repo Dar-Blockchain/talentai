@@ -1,12 +1,23 @@
 import { useCallback, useEffect, useState } from "react";
-import { useRouter } from "next/router";
 import { motion, AnimatePresence } from "framer-motion";
 import { WebinarQuestionSlide } from "./WebinarQuestionSlide";
 import { WebinarSnapshot } from "../report/WebinarSnapshot";
 import { ChevronIcon, CheckIcon } from "../shared/icons";
-import { useSaveWebinarProgressMutation, useCompleteWebinarMutation } from "@/modules/webinar/queries";
+import { useCompleteWebinarMutation } from "@/modules/webinar/queries";
 import i18n from "@/i18n/config";
 import type { WebinarContact, WebinarData, WebinarScoring } from "@/modules/webinar/types";
+
+const ANSWERS_STORAGE_KEY = "webinar_answers";
+
+const loadStoredAnswers = (): Record<string, unknown> => {
+  if (typeof window === "undefined") return {};
+  try {
+    const saved = localStorage.getItem(ANSWERS_STORAGE_KEY);
+    return saved ? JSON.parse(saved) : {};
+  } catch {
+    return {};
+  }
+};
 
 const EASE = [0.32, 0.72, 0, 1] as const;
 
@@ -30,83 +41,59 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
    * session started it — shown as a one-time banner on the first question. */
   welcomeBack: boolean;
 }) {
-  const router = useRouter();
   const t = i18n.getFixedT(lang, "webinar");
 
   const questions = [...webinar.questions].sort((a, b) => a.order - b.order);
   const total     = questions.length;
 
   const [stepIdx,      setStepIdx]  = useState(0);
-  const [consent,      setConsent]  = useState(initialConsent);
-  const [contact,      setContact]  = useState(initialContact);
-  const [submissionId, setSubId]    = useState(initialSubmissionId);
-  const [answers,      setAnswers]  = useState<Record<string, unknown>>({});
+  const [answers,      setAnswers]  = useState<Record<string, unknown>>(loadStoredAnswers);
   const [scoring,      setScoring]  = useState<WebinarScoring | null>(null);
 
-  const saveProgress = useSaveWebinarProgressMutation();
-  const complete     = useCompleteWebinarMutation();
-  const saving       = saveProgress.isPending || complete.isPending;
+  const complete = useCompleteWebinarMutation();
+  const saving   = complete.isPending;
 
-  const firstName  = contact.nom?.trim().split(" ")[0];
+  const firstName  = initialContact.nom?.trim().split(" ")[0];
   const isSnapshot = stepIdx === total;
   const isQuestion = !isSnapshot;
   const qIdx       = isQuestion ? stepIdx : -1;
   const currentQ   = qIdx >= 0 ? questions[qIdx] : null;
 
-  const persistSubId = (id: string) => {
-    setSubId(id);
-    localStorage.setItem("webinar_submission_id", id);
-  };
+  // Answers only ever live in localStorage while the questionnaire is in
+  // progress — nothing is sent to the backend per-question. The full set
+  // goes out in one shot on the last question, via handleComplete below.
+  useEffect(() => {
+    if (Object.keys(answers).length === 0) return;
+    localStorage.setItem(ANSWERS_STORAGE_KEY, JSON.stringify(answers));
+  }, [answers]);
 
-  const saveStep = useCallback(async (patch: Record<string, unknown> = {}): Promise<string | null> => {
-    const merged = { ...answers, ...patch };
-    const res = await saveProgress.mutateAsync({
-      submissionId,
-      webinarId: webinar._id, lang, consent,
-      contact: contact.email.trim() ? contact : undefined,
-      answers: merged as Record<string, string | number>,
-      source: {
-        utm_source:   (router.query.utm_source as string) || "",
-        utm_campaign: (router.query.utm_campaign as string) || "",
-      },
+  const handleComplete = useCallback(async () => {
+    if (!initialSubmissionId) return;
+    const sub = await complete.mutateAsync({
+      submissionId: initialSubmissionId,
+      answers: answers as Record<string, string | number>,
     });
-    persistSubId(res.submissionId);
-    setAnswers(merged);
-    return res.submissionId;
-  }, [webinar._id, submissionId, lang, consent, contact, answers, router.query, saveProgress]);
-
-  // subId param lets callers pass the fresh ID returned by saveStep directly,
-  // bypassing the stale React state closure (which still holds the pre-save value).
-  const handleComplete = useCallback(async (subId?: string) => {
-    const id = subId ?? submissionId;
-    if (!id) return;
-    const sub = await complete.mutateAsync({ submissionId: id, answers: answers as Record<string, string | number> });
     setScoring(sub.scoring ?? null);
     localStorage.removeItem("webinar_submission_id");
+    localStorage.removeItem(ANSWERS_STORAGE_KEY);
     sessionStorage.removeItem("webinar_contact");
     sessionStorage.removeItem("webinar_consent");
     setStepIdx(total);
-  }, [submissionId, answers, total, complete]);
+  }, [initialSubmissionId, answers, total, complete]);
 
   const goTo   = useCallback((idx: number) => setStepIdx(idx), []);
   const goNext = useCallback(() => goTo(stepIdx + 1), [stepIdx, goTo]);
   const goBack = useCallback(() => goTo(Math.max(0, stepIdx - 1)), [stepIdx, goTo]);
 
-  const saveAndNext = useCallback(async (patch: Record<string, unknown> = {}) => {
-    await saveStep(patch);
-    goNext();
-  }, [saveStep, goNext]);
-
-  const handleLastQuestion = useCallback(async () => {
-    const freshId = currentQ ? await saveStep({ [currentQ.key]: answers[currentQ.key] }) : null;
-    await handleComplete(freshId ?? undefined);
-  }, [currentQ, saveStep, answers, handleComplete]);
+  const handleLastQuestion = useCallback(() => {
+    handleComplete();
+  }, [handleComplete]);
 
   const handleNavNext = useCallback(() => {
     if (!currentQ) return;
     if (qIdx === total - 1) handleLastQuestion();
-    else saveAndNext({ [currentQ.key]: answers[currentQ.key] });
-  }, [currentQ, qIdx, total, handleLastQuestion, saveAndNext, answers]);
+    else goNext();
+  }, [currentQ, qIdx, total, handleLastQuestion, goNext]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -177,7 +164,7 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
               value={answers[currentQ.key]}
               onChange={v => setAnswers(prev => ({ ...prev, [currentQ.key]: v }))}
               onBack={goBack}
-              onNext={qIdx === total - 1 ? handleLastQuestion : () => saveAndNext({ [currentQ.key]: answers[currentQ.key] })}
+              onNext={qIdx === total - 1 ? handleLastQuestion : goNext}
               saving={saving} isLast={qIdx === total - 1} active
             />
           </motion.div>
