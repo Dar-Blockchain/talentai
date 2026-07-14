@@ -1,0 +1,104 @@
+{
+  "page": {
+    "backToLanding": "Back to landing page",
+    "notFound": "Webinar not found.",
+    "loading": "Loading webinar…"
+  },
+  "header": {
+    "cta": "Reserve My Spot",
+    "switchToEnglish": "Switch to English",
+    "switchToFrench": "Passer en français"
+  },
+  "hero": {
+    "badge": "Free live session",
+    "titleLine1": "Discover your AI",
+    "titleLine2": "recruitment readiness",
+    "desc": "A focused, 3-minute conversation with our AI — turned into a personal report on where your hiring stands today.",
+    "questions": "questions",
+    "durationDefault": "~3 min",
+    "registrations": "{{count}}+ professionals already registered",
+    "joinWebinar": "Join Webinar"
+  },
+  "about": {
+    "overline": "About",
+    "heading": "What is this webinar?"
+  },
+  "howItWorks": {
+    "overline": "Process",
+    "heading": "How does it work?",
+    "steps": [
+      { "title": "Access the webinar", "desc": "Fill in the form above — no account needed." },
+      { "title": "Answer the questions", "desc": "3 minutes on your AI maturity and hiring challenges." },
+      { "title": "AI analyses your profile", "desc": "We calculate your maturity score and key pain points." },
+      { "title": "Receive your report", "desc": "A personalised report lands straight in your inbox." }
+    ]
+  },
+  "faq": {
+    "heading": "Good to know",
+    "items": [
+      { "q": "Is it really free?", "a": "Yes, 100% free — no credit card, no hidden fees." },
+      { "q": "Do I need to attend live?", "a": "No — answer a few questions and we'll email your personalised AI report whenever it's ready." },
+      { "q": "What happens to my answers?", "a": "They're used only to personalise your report and are handled per our Privacy Policy." }
+    ]
+  },
+  "finalCta": {
+    "overline": "Last step",
+    "heading": "Ready to see where you stand?",
+    "body": "Fill in your details below — your personalised AI report is one form away."
+  },
+  "registerForm": {
+    "title": "Reserve Your Spot",
+    "subtitle": "Takes less than a minute.",
+    "fullName": "Full name",
+    "fullNamePlaceholder": "Jane Doe",
+    "company": "Company",
+    "optional": "optional",
+    "companyPlaceholder": "Acme Inc.",
+    "email": "Email",
+    "emailPlaceholder": "you@company.com",
+    "emailInvalid": "Please enter a valid email address",
+    "consent": "I agree that my answers will be processed to personalize my experience.",
+    "submit": "Confirm My Registration",
+    "privacy": "No spam. Your data stays private.",
+    "submitError": "Something went wrong. Please try again.",
+    "alreadyDoneTitle": "You're all set",
+    "alreadyDoneBody": "You're already registered for this webinar and have already completed the questionnaire. Check your email for the webinar details."
+  },
+  "funnel": {
+    "analysing": "Analysing your profile…",
+    "welcomeBack": "Welcome back! You've already reserved your spot. Please complete the questionnaire to finish your registration.",
+    "letsBegin": "Let's begin",
+    "readyName": "Ready, {{name}}?",
+    "readyGeneric": "A few things about your hiring",
+    "questionProgress": "Question {{current}} of {{total}} — about 3 minutes. Your answers shape the personalised AI report you'll receive by email."
+  },
+  "question": {
+    "of": "of {{total}}",
+    "select": "Select…",
+    "yourAnswer": "Your answer…",
+    "saving": "Saving…",
+    "confirm": "Confirm",
+    "next": "Next →",
+    "pressEnter": "Press Enter to continue"
+  },
+  "scale": {
+    "notAtAll": "Not at all",
+    "slightly": "Slightly",
+    "neutral": "Neutral",
+    "ratherYes": "Rather yes",
+    "absolutely": "Absolutely"
+  },
+  "snapshot": {
+    "aiReport": "AI Report",
+    "registeredTitle": "You're registered!",
+    "analysedBody": "Your profile has been analysed by our AI engine.",
+    "readinessScore": "Your readiness score",
+    "strongProfile": "Strong profile",
+    "goodPotential": "Good potential",
+    "keepGrowing": "Keep growing",
+    "knowledge": "Knowledge",
+    "engagement": "Engagement",
+    "emailNotice": "Your join link & full report are on their way to your inbox.",
+    "confidential": "Confidential · No spam"
+  }
+}

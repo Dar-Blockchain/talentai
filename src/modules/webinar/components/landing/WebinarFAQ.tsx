@@ -2,21 +2,14 @@ import { motion } from "framer-motion";
 import {
   Accordion, AccordionItem, AccordionTrigger, AccordionContent,
 } from "@/modules/shared/ui/shadcn/accordion";
+import i18n from "@/i18n/config";
 
 const VP   = { once: true, margin: "-40px" };
 const EASE = [0.22, 1, 0.36, 1] as const;
 
 export function WebinarFAQ({ lang }: { lang: "fr" | "en" }) {
-  const isEn = lang === "en";
-
-  const faq = [
-    { q: isEn ? "Is it really free?" : "Est-ce vraiment gratuit ?",
-      a: isEn ? "Yes, 100% free — no credit card, no hidden fees." : "Oui, 100% gratuit — sans carte bancaire, sans frais cachés." },
-    { q: isEn ? "Do I need to attend live?" : "Dois-je y assister en direct ?",
-      a: isEn ? "No — answer a few questions and we'll email your personalised AI report whenever it's ready." : "Non — répondez à quelques questions et nous vous enverrons votre rapport IA personnalisé par email." },
-    { q: isEn ? "What happens to my answers?" : "Que deviennent mes réponses ?",
-      a: isEn ? "They're used only to personalise your report and are handled per our Privacy Policy." : "Elles servent uniquement à personnaliser votre rapport, conformément à notre politique de confidentialité." },
-  ];
+  const t = i18n.getFixedT(lang, "webinar");
+  const faq = t("faq.items", { returnObjects: true }) as { q: string; a: string }[];
 
   return (
     <motion.section
@@ -33,7 +26,7 @@ export function WebinarFAQ({ lang }: { lang: "fr" | "en" }) {
         className="text-[#10453F] mb-8"
         style={{ fontFamily: "var(--font-fraunces)", fontWeight: 600, fontSize: "clamp(1.6rem, 2vw + 1rem, 2.2rem)", letterSpacing: "-0.01em" }}
       >
-        {isEn ? "Good to know" : "Bon à savoir"}
+        {t("faq.heading")}
       </h2>
 
       <Accordion type="single" collapsible className="space-y-3">

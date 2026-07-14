@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useCallback, useEffect, useState } from "react";
-import { useTranslation } from "react-i18next";
 import { Fraunces } from "next/font/google";
+import i18n from "@/i18n/config";
 import WebinarHeader from "@/modules/webinar/components/shared/WebinarHeader";
 import WebinarFooter from "@/modules/webinar/components/shared/WebinarFooter";
 import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
@@ -33,32 +33,30 @@ interface FunnelSeed {
 
 const WebinarPage: React.FC = () => {
   const router = useRouter();
-  const { i18n } = useTranslation();
 
   // "active" is a literal id the backend treats specially on the same
   // /public/:id route, so previewing a specific webinar (?id=) and showing
   // the currently active one both go through this one endpoint.
   const previewId = (router.query.id as string | undefined) || "active";
   const langParam = (router.query.lang as string)?.toLowerCase();
-  const i18nLang: "fr" | "en" = i18n.language?.startsWith("en") ? "en" : "fr";
 
   const { data: webinar, isLoading: queryLoading } = usePublicWebinarQuery(previewId, router.isReady);
   const loading = !router.isReady || queryLoading;
 
   // A single-language webinar (fr or en) always renders in that language —
   // no switcher, no falling back to the visitor's browser language. Only a
-  // "both" webinar lets the visitor pick, via the header toggle or ?lang=.
+  // "both" webinar lets the visitor pick, via the header toggle or ?lang=,
+  // and defaults to English until they do.
   const lang: "fr" | "en" =
     webinar?.lang === "en"
       ? "en"
       : webinar?.lang === "fr"
         ? "fr"
-        : langParam === "en"
-          ? "en"
-          : langParam === "fr"
-            ? "fr"
-            : i18nLang;
+        : langParam === "fr"
+          ? "fr"
+          : "en";
   const isEn = lang === "en";
+  const t = i18n.getFixedT(lang, "webinar");
 
   const aboutText    = isEn ? webinar?.about_en : webinar?.about_fr;
   const webinarTitle = (isEn ? webinar?.title_en : webinar?.title_fr) || webinar?.title || "";
@@ -116,8 +114,8 @@ const WebinarPage: React.FC = () => {
         <WebinarHeader
           ctaTargetId={inFunnel ? undefined : "webinar-register"}
           onBack={inFunnel ? backToLanding : undefined}
-          backLabel={isEn ? "Back to landing page" : "Retour à la page d'accueil"}
-          lang={showLangSwitch ? lang : undefined}
+          backLabel={t("page.backToLanding")}
+          lang={lang}
           onToggleLang={showLangSwitch ? toggleLang : undefined}
         />
 
@@ -129,7 +127,7 @@ const WebinarPage: React.FC = () => {
               </div>
             ) : !webinar || webinar.questions.length === 0 ? (
               <div className="flex-1 flex items-center justify-center">
-                <p className="text-[14px] text-slate-400">{isEn ? "Webinar not found." : "Webinaire introuvable."}</p>
+                <p className="text-[14px] text-slate-400">{t("page.notFound")}</p>
               </div>
             ) : (
               <WebinarFunnel
@@ -141,7 +139,7 @@ const WebinarPage: React.FC = () => {
               />
             )
           ) : loading ? (
-            <LoadingScreen title={isEn ? "Loading webinar…" : "Chargement du webinar…"} />
+            <LoadingScreen title={t("page.loading")} />
           ) : (
             <>
               <WebinarHero

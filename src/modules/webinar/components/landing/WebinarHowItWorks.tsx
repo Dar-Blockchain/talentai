@@ -1,46 +1,35 @@
 import { motion } from "framer-motion";
 import { Card } from "@/modules/shared/ui/shadcn/card";
+import i18n from "@/i18n/config";
 
 const VP   = { once: true, margin: "-40px" };
 const EASE = [0.22, 1, 0.36, 1] as const;
 
-const STEPS_FR = [
-  { title: "Accédez au webinar",        desc: "Remplissez le formulaire ci-dessus — aucun compte requis." },
-  { title: "Répondez aux questions",    desc: "3 minutes sur votre maturité IA et vos défis recrutement." },
-  { title: "L'IA analyse votre profil", desc: "Calcul de votre score de maturité et de vos points clés." },
-  { title: "Recevez votre rapport",     desc: "Un rapport personnalisé livré directement par email." },
-];
-
-const STEPS_EN = [
-  { title: "Access the webinar",       desc: "Fill in the form above — no account needed." },
-  { title: "Answer the questions",     desc: "3 minutes on your AI maturity and hiring challenges." },
-  { title: "AI analyses your profile", desc: "We calculate your maturity score and key pain points." },
-  { title: "Receive your report",      desc: "A personalised report lands straight in your inbox." },
-];
-
 export function WebinarHowItWorks({ lang }: { lang: "fr" | "en" }) {
-  const isEn = lang === "en";
-  const steps = isEn ? STEPS_EN : STEPS_FR;
+  const t = i18n.getFixedT(lang, "webinar");
+  const steps = t("howItWorks.steps", { returnObjects: true }) as { title: string; desc: string }[];
 
   return (
     <motion.section
       initial={{ opacity: 0, y: 16 }} whileInView={{ opacity: 1, y: 0 }}
       viewport={VP} transition={{ duration: 0.5, ease: EASE }}
+      className="text-center"
     >
-      <div className="flex items-center gap-3 mb-3">
+      <div className="flex items-center justify-center gap-3 mb-3">
         <span className="w-6 h-px bg-[#6AD39C]" />
         <span className="text-[11px] font-semibold uppercase text-[#10453F]/60" style={{ letterSpacing: "0.16em" }}>
-          {isEn ? "Process" : "Déroulement"}
+          {t("howItWorks.overline")}
         </span>
+        <span className="w-6 h-px bg-[#6AD39C]" />
       </div>
       <h2
         className="text-[#10453F] mb-8"
         style={{ fontFamily: "var(--font-fraunces)", fontWeight: 600, fontSize: "clamp(1.6rem, 2vw + 1rem, 2.2rem)", letterSpacing: "-0.01em" }}
       >
-        {isEn ? "How does it work?" : "Comment ça marche ?"}
+        {t("howItWorks.heading")}
       </h2>
 
-      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5 text-left">
         {steps.map((s, i) => (
           <Card
             key={i}

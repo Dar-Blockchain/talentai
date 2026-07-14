@@ -5,6 +5,7 @@ import { WebinarQuestionSlide } from "./WebinarQuestionSlide";
 import { WebinarSnapshot } from "../report/WebinarSnapshot";
 import { ChevronIcon, CheckIcon } from "../shared/icons";
 import { useSaveWebinarProgressMutation, useCompleteWebinarMutation } from "@/modules/webinar/queries";
+import i18n from "@/i18n/config";
 import type { WebinarContact, WebinarData, WebinarScoring } from "@/modules/webinar/types";
 
 const EASE = [0.32, 0.72, 0, 1] as const;
@@ -30,7 +31,7 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
   welcomeBack: boolean;
 }) {
   const router = useRouter();
-  const isEn = lang === "en";
+  const t = i18n.getFixedT(lang, "webinar");
 
   const questions = [...webinar.questions].sort((a, b) => a.order - b.order);
   const total     = questions.length;
@@ -128,7 +129,7 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
       : (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-slate-400">
           <div className="w-10 h-10 border-2 border-[#6AD39C]/30 border-t-[#10453F] rounded-full animate-spin" />
-          <p className="text-[14px]">{isEn ? "Analysing your profile…" : "Analyse de votre profil…"}</p>
+          <p className="text-[14px]">{t("funnel.analysing")}</p>
         </div>
       );
   }
@@ -140,9 +141,7 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
         <div className="mb-6 mx-auto max-w-[560px] flex items-start gap-3 rounded-2xl border border-[#6AD39C]/30 bg-[#EAF6F0] px-5 py-4 text-left">
           <span className="mt-0.5 shrink-0 text-[#10453F]"><CheckIcon /></span>
           <p className="text-[13.5px] text-[#10453F] leading-relaxed">
-            {isEn
-              ? "Welcome back! You've already reserved your spot. Please complete the questionnaire to finish your registration."
-              : "Bon retour ! Vous avez déjà réservé votre place. Merci de compléter le questionnaire pour finaliser votre inscription."}
+            {t("funnel.welcomeBack")}
           </p>
         </div>
       )}
@@ -151,7 +150,7 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
         <div className="flex items-center justify-center gap-3 mb-4">
           <span className="w-6 h-px bg-[#6AD39C]" />
           <span className="text-[11px] font-semibold uppercase text-[#10453F]" style={{ letterSpacing: "0.16em" }}>
-            {isEn ? "Let's begin" : "Commençons"}
+            {t("funnel.letsBegin")}
           </span>
           <span className="w-6 h-px bg-[#6AD39C]" />
         </div>
@@ -160,13 +159,11 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
           style={{ fontFamily: "var(--font-fraunces)", fontWeight: 600 }}
         >
           {firstName
-            ? (isEn ? `Ready, ${firstName}?` : `Prêt, ${firstName} ?`)
-            : (isEn ? "A few things about your hiring" : "Quelques questions sur votre recrutement")}
+            ? t("funnel.readyName", { name: firstName })
+            : t("funnel.readyGeneric")}
         </h2>
         <p className="text-[15px] text-slate-500 leading-relaxed mt-3 max-w-[480px] mx-auto">
-          {isEn
-            ? `Question ${qIdx + 1} of ${total} — about 3 minutes. Your answers shape the personalised AI report you'll receive by email.`
-            : `Question ${qIdx + 1} sur ${total} — environ 3 minutes. Vos réponses façonnent le rapport IA personnalisé que vous recevrez par email.`}
+          {t("funnel.questionProgress", { current: qIdx + 1, total })}
         </p>
       </div>
 

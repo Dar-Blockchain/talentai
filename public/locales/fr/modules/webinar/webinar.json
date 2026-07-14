@@ -1,0 +1,104 @@
+{
+  "page": {
+    "backToLanding": "Retour à la page d'accueil",
+    "notFound": "Webinaire introuvable.",
+    "loading": "Chargement du webinar…"
+  },
+  "header": {
+    "cta": "Réserver ma place",
+    "switchToEnglish": "Switch to English",
+    "switchToFrench": "Passer en français"
+  },
+  "hero": {
+    "badge": "Session live gratuite",
+    "titleLine1": "Découvrez votre",
+    "titleLine2": "maturité IA en recrutement",
+    "desc": "Un échange ciblé de 3 minutes avec notre IA, transformé en un rapport personnalisé sur l'état de votre recrutement.",
+    "questions": "questions",
+    "durationDefault": "~3 min",
+    "registrations": "{{count}}+ professionnels déjà inscrits",
+    "joinWebinar": "Rejoindre le webinar"
+  },
+  "about": {
+    "overline": "À propos",
+    "heading": "C'est quoi ce webinar ?"
+  },
+  "howItWorks": {
+    "overline": "Déroulement",
+    "heading": "Comment ça marche ?",
+    "steps": [
+      { "title": "Accédez au webinar", "desc": "Remplissez le formulaire ci-dessus — aucun compte requis." },
+      { "title": "Répondez aux questions", "desc": "3 minutes sur votre maturité IA et vos défis recrutement." },
+      { "title": "L'IA analyse votre profil", "desc": "Calcul de votre score de maturité et de vos points clés." },
+      { "title": "Recevez votre rapport", "desc": "Un rapport personnalisé livré directement par email." }
+    ]
+  },
+  "faq": {
+    "heading": "Bon à savoir",
+    "items": [
+      { "q": "Est-ce vraiment gratuit ?", "a": "Oui, 100% gratuit — sans carte bancaire, sans frais cachés." },
+      { "q": "Dois-je y assister en direct ?", "a": "Non — répondez à quelques questions et nous vous enverrons votre rapport IA personnalisé par email." },
+      { "q": "Que deviennent mes réponses ?", "a": "Elles servent uniquement à personnaliser votre rapport, conformément à notre politique de confidentialité." }
+    ]
+  },
+  "finalCta": {
+    "overline": "Dernière étape",
+    "heading": "Prêt à connaître votre position ?",
+    "body": "Renseignez vos coordonnées ci-dessous — votre rapport IA personnalisé n'est plus qu'à un formulaire."
+  },
+  "registerForm": {
+    "title": "Réservez Votre Place",
+    "subtitle": "Moins d'une minute.",
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "Jean Dupont",
+    "company": "Entreprise",
+    "optional": "optionnel",
+    "companyPlaceholder": "Nom de la société",
+    "email": "Email",
+    "emailPlaceholder": "vous@entreprise.com",
+    "emailInvalid": "Veuillez entrer une adresse email valide",
+    "consent": "J'accepte que mes réponses soient traitées pour personnaliser mon expérience.",
+    "submit": "Confirmer mon inscription",
+    "privacy": "Sans spam. Vos données restent privées.",
+    "submitError": "Une erreur est survenue. Veuillez réessayer.",
+    "alreadyDoneTitle": "Vous êtes déjà inscrit",
+    "alreadyDoneBody": "Vous êtes déjà inscrit à ce webinar et avez déjà complété le questionnaire. Consultez votre email pour les détails du webinar."
+  },
+  "funnel": {
+    "analysing": "Analyse de votre profil…",
+    "welcomeBack": "Bon retour ! Vous avez déjà réservé votre place. Merci de compléter le questionnaire pour finaliser votre inscription.",
+    "letsBegin": "Commençons",
+    "readyName": "Prêt, {{name}} ?",
+    "readyGeneric": "Quelques questions sur votre recrutement",
+    "questionProgress": "Question {{current}} sur {{total}} — environ 3 minutes. Vos réponses façonnent le rapport IA personnalisé que vous recevrez par email."
+  },
+  "question": {
+    "of": "sur {{total}}",
+    "select": "Sélectionner…",
+    "yourAnswer": "Votre réponse…",
+    "saving": "Enregistrement…",
+    "confirm": "Confirmer",
+    "next": "Suivant →",
+    "pressEnter": "Appuyez sur Entrée pour continuer"
+  },
+  "scale": {
+    "notAtAll": "Pas du tout",
+    "slightly": "Peu",
+    "neutral": "Neutre",
+    "ratherYes": "Plutôt oui",
+    "absolutely": "Absolument"
+  },
+  "snapshot": {
+    "aiReport": "Rapport IA",
+    "registeredTitle": "Vous êtes inscrit !",
+    "analysedBody": "Votre profil a été analysé par notre moteur IA.",
+    "readinessScore": "Votre score de disposition",
+    "strongProfile": "Profil solide",
+    "goodPotential": "Bon potentiel",
+    "keepGrowing": "En progression",
+    "knowledge": "Maîtrise",
+    "engagement": "Engagement",
+    "emailNotice": "Votre lien de connexion et votre rapport complet arrivent dans votre boîte mail.",
+    "confidential": "Données confidentielles · Aucun spam"
+  }
+}

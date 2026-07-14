@@ -1,9 +1,16 @@
 import { motion } from "framer-motion";
+import i18n from "@/i18n/config";
 
 export function QuestionScale({ value, onChange, lang }: { value?: number; onChange: (v: number) => void; lang: string }) {
-  const labels = lang === "en"
-    ? ["", "Not at all", "Slightly", "Neutral", "Rather yes", "Absolutely"]
-    : ["", "Pas du tout", "Peu", "Neutre", "Plutôt oui", "Absolument"];
+  const t = i18n.getFixedT(lang === "en" ? "en" : "fr", "webinar");
+  const labels = [
+    "",
+    t("scale.notAtAll"),
+    t("scale.slightly"),
+    t("scale.neutral"),
+    t("scale.ratherYes"),
+    t("scale.absolutely"),
+  ];
   return (
     <div className="space-y-4">
       <div className="flex gap-3">

@@ -1,6 +1,7 @@
 import { motion } from "framer-motion";
 import type { WebinarScoring } from "@/modules/webinar/types";
 import { ArcRing } from "./ArcRing";
+import i18n from "@/i18n/config";
 
 const EASE  = [0.22, 1, 0.36, 1] as const;
 const TEAL  = "#10453F";
@@ -8,18 +9,18 @@ const BRAND = "#6AD39C";
 
 /** Congratulations / results screen shown once AI scoring completes. */
 export function WebinarSnapshot({ scoring, lang }: { scoring: WebinarScoring; lang: string }) {
-  const isEn       = lang === "en";
+  const t           = i18n.getFixedT(lang === "en" ? "en" : "fr", "webinar");
   const score      = scoring.readiness_score ?? Math.round((scoring.maturite_ia + scoring.intensite_pain) / 2);
   const scoreColor = score >= 65 ? BRAND : score >= 35 ? TEAL : "#F59E0B";
   const scoreLabel = score >= 65
-    ? (isEn ? "Strong profile"  : "Profil solide")
+    ? t("snapshot.strongProfile")
     : score >= 35
-      ? (isEn ? "Good potential" : "Bon potentiel")
-      : (isEn ? "Keep growing"   : "En progression");
+      ? t("snapshot.goodPotential")
+      : t("snapshot.keepGrowing");
 
   const bars = [
-    { label: isEn ? "Knowledge"  : "Maîtrise",   value: scoring.maturite_ia,   color: BRAND },
-    { label: isEn ? "Engagement" : "Engagement",  value: scoring.intensite_pain, color: TEAL  },
+    { label: t("snapshot.knowledge"),  value: scoring.maturite_ia,   color: BRAND },
+    { label: t("snapshot.engagement"), value: scoring.intensite_pain, color: TEAL  },
   ];
 
   return (
@@ -45,18 +46,16 @@ export function WebinarSnapshot({ scoring, lang }: { scoring: WebinarScoring; la
           <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}
             className="text-center mb-8">
             <p className="text-[11px] font-bold uppercase tracking-[2.5px] mb-3" style={{ color: BRAND }}>
-              Talent AI · {isEn ? "AI Report" : "Rapport IA"}
+              Talent AI · {t("snapshot.aiReport")}
             </p>
             <h1
               className="text-[2.2rem] leading-[1.1] tracking-tight mb-3"
               style={{ fontFamily: "var(--font-fraunces)", fontWeight: 600, color: TEAL }}
             >
-              {isEn ? "You're registered!" : "Vous êtes inscrit !"}
+              {t("snapshot.registeredTitle")}
             </h1>
             <p className="text-[15px] text-slate-500 leading-relaxed">
-              {isEn
-                ? "Your profile has been analysed by our AI engine."
-                : "Votre profil a été analysé par notre moteur IA."}
+              {t("snapshot.analysedBody")}
             </p>
           </motion.div>
 
@@ -65,7 +64,7 @@ export function WebinarSnapshot({ scoring, lang }: { scoring: WebinarScoring; la
             className="rounded-2xl p-6 mb-4 text-center border border-[#E7E5DE] bg-white shadow-[0_10px_30px_-16px_rgba(16,69,63,0.25)]">
 
             <p className="text-[10.5px] font-bold uppercase tracking-[2px] mb-4 text-slate-400">
-              {isEn ? "Your readiness score" : "Votre score de disposition"}
+              {t("snapshot.readinessScore")}
             </p>
 
             <div className="flex items-center justify-center gap-6">
@@ -111,14 +110,12 @@ export function WebinarSnapshot({ scoring, lang }: { scoring: WebinarScoring; la
               </svg>
             </div>
             <p className="text-[13px] text-slate-600 leading-snug flex-1">
-              {isEn
-                ? "Your join link & full report are on their way to your inbox."
-                : "Votre lien de connexion et votre rapport complet arrivent dans votre boîte mail."}
+              {t("snapshot.emailNotice")}
             </p>
           </motion.div>
 
           <p className="mt-7 text-center text-[10.5px] text-slate-300">
-            Talent AI · {isEn ? "Confidential · No spam" : "Données confidentielles · Aucun spam"}
+            Talent AI · {t("snapshot.confidential")}
           </p>
         </motion.div>
       </div>

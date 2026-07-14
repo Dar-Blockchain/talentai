@@ -6,6 +6,8 @@ import type { WebinarQuestion } from "@/modules/webinar/types";
 import { ChevronIcon } from "../shared/icons";
 import { QuestionOption } from "./QuestionOption";
 import { QuestionScale } from "./QuestionScale";
+import { WebinarSubmitButton } from "../landing/WebinarSubmitButton";
+import i18n from "@/i18n/config";
 
 const ALPHA = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
@@ -27,6 +29,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
   onNext: () => void; onBack: () => void; saving: boolean; isLast: boolean; active: boolean;
 }) {
   const isEn    = lang === "en";
+  const t       = i18n.getFixedT(isEn ? "en" : "fr", "webinar");
   const label   = (isEn ? q.label_en : q.label_fr) || q.label_fr || q.label_en;
   const hasValue = Array.isArray(value)
     ? value.length > 0
@@ -77,7 +80,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
         className="flex items-center gap-2 mb-5">
         <span className="text-[13px] font-black text-[#10453F] tabular-nums">Question {idx + 1}</span>
         <ChevronIcon dir="right" />
-        <span className="text-[13px] text-slate-400">{isEn ? `of ${total}` : `sur ${total}`}</span>
+        <span className="text-[13px] text-slate-400">{t("question.of", { total })}</span>
       </motion.div>
 
       <motion.h2 initial={{ opacity: 0, y: 20 }} animate={{ opacity: active ? 1 : 0, y: 0 }}
@@ -140,7 +143,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
         {q.type === "select" && (
           <Select value={(value as string) || undefined} onValueChange={onChange}>
             <SelectTrigger className="w-full h-auto rounded-2xl border-2 border-[#E7E5DE] px-5 py-4 text-[15px] text-slate-700 bg-white shadow-[0_1px_3px_rgba(16,69,63,0.05)] data-[state=open]:border-[#6AD39C] data-[state=open]:ring-[#6AD39C]/20">
-              <SelectValue placeholder={isEn ? "Select…" : "Sélectionner…"} />
+              <SelectValue placeholder={t("question.select")} />
             </SelectTrigger>
             <SelectContent>
               {(q.options?.length ?? 0) > 0
@@ -157,7 +160,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
         {isFreeInput && (
           <textarea value={(value as string) || ""}
             onChange={e => onChange(e.target.value)}
-            placeholder={isEn ? "Your answer…" : "Votre réponse…"}
+            placeholder={t("question.yourAnswer")}
             rows={4}
             className="w-full rounded-2xl border-2 border-[#E7E5DE] focus:border-[#6AD39C] outline-none px-5 py-4 text-[15px] text-slate-700 placeholder:text-slate-300 resize-none transition-colors bg-white shadow-[0_1px_3px_rgba(16,69,63,0.05)]"
           />
@@ -173,29 +176,20 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
             <ChevronIcon dir="left" />
           </button>
         )}
-        <motion.button onClick={onNext} disabled={saving || (q.required && !hasValue)}
-          whileHover={!saving ? { y: -1 } : {}}
-          whileTap={!saving ? { scale: 0.98 } : {}}
-          className={`flex-1 h-12 rounded-2xl text-[15px] font-semibold transition-all
-            ${saving || (q.required && !hasValue)
-              ? "bg-slate-100 text-slate-300 cursor-not-allowed"
-              : "bg-[#6AD39C] text-[#0B2A22] hover:bg-[#52C88A] shadow-[0_2px_12px_rgba(106,211,156,0.35)]"}`}
-        >
-          {saving
-            ? <span className="flex items-center justify-center gap-2">
-                <span className="w-4 h-4 border-2 border-[#0B2A22]/20 border-t-[#0B2A22] rounded-full animate-spin" />
-                {isEn ? "Saving…" : "Enregistrement…"}
-              </span>
-            : isLast
-              ? (isEn ? "Confirm" : "Confirmer")
-              : (isEn ? "Next →" : "Suivant →")}
-        </motion.button>
+        <WebinarSubmitButton
+          type="button"
+          onClick={onNext}
+          loading={saving}
+          disabled={saving || (q.required && !hasValue)}
+          label={isLast ? t("question.confirm") : t("question.next")}
+          className="flex-1 h-12 rounded-2xl shadow-[0_2px_12px_rgba(106,211,156,0.35)]"
+        />
       </motion.div>
 
       {!hasChoiceOptions && hasValue && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: active ? 0.5 : 0 }} transition={{ delay: 0.2 }}
           className="text-center text-[11px] text-slate-400 mt-4">
-          {isEn ? "Press Enter to continue" : "Appuyez sur Entrée pour continuer"}
+          {t("question.pressEnter")}
         </motion.p>
       )}
     </div>
