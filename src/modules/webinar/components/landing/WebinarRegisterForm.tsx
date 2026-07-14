@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { motion } from "framer-motion";
 import { ArrowRight, CheckCircle2 } from "lucide-react";
 import { useSaveWebinarProgressMutation } from "@/modules/webinar/queries";
-import { validateEmail, emailKeyDownGuard } from "@/lib/validation/email";
+import { validateEmail } from "@/lib/validation/email";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Input } from "@/modules/shared/ui/shadcn/input";
@@ -180,7 +180,6 @@ export function WebinarRegisterForm({ webinarId, lang, loading, onRegistered }: 
             <Input
               id="email" type="email" value={form.email}
               onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-              onKeyDown={emailKeyDownGuard}
               placeholder={isEn ? "you@company.com" : "vous@entreprise.com"}
               aria-invalid={showEmailError}
               className="rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25"
