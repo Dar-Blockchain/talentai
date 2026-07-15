@@ -105,7 +105,13 @@ export function WebinarFormDialog({
     set("questions", arr.map((q, i) => ({ ...q, order: i + 1 })));
   };
 
-  const canSave = form.questions.length > 0;
+  // Choice/select/multiselect questions need at least 2 options to make
+  // sense as a pick-one/pick-many prompt — a single option isn't a choice.
+  const invalidQuestion = form.questions.find((q) => {
+    const isChoiceGroup = q.type === "choice" || q.type === "select" || q.type === "multiselect";
+    return isChoiceGroup && q.options.length < 2;
+  });
+  const canSave = form.questions.length > 0 && !invalidQuestion;
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
@@ -258,7 +264,13 @@ export function WebinarFormDialog({
                     },
                   )}
                   disabled={!canSave}
-                  title={!canSave ? "Add at least one question" : undefined}
+                  title={
+                    !canSave
+                      ? invalidQuestion
+                        ? "Choice questions need at least 2 options"
+                        : "Add at least one question"
+                      : undefined
+                  }
                   className="rounded-xl bg-teal-600 hover:bg-teal-700 hover:text-white text-white text-[13px] font-bold"
                 >
                   Publish

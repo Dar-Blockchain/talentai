@@ -1,6 +1,4 @@
-import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { Checkbox } from "@/modules/shared/ui/shadcn/checkbox";
 import type { WebinarQuestion } from "@/modules/webinar/types";
 import { ChevronIcon } from "../shared/icons";
@@ -35,35 +33,34 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
     ? value.length > 0
     : value !== undefined && value !== "" && value !== null;
 
+  // "select" is a legacy type from the old dropdown-style display — it's
+  // rendered with the same option cards as "choice" now, falling back to a
+  // country list when it was configured with no options of its own.
+  const isChoiceLike = q.type === "choice" || q.type === "select";
+  const choiceItems: { key: string; label: string }[] = isChoiceLike
+    ? (q.options?.length ?? 0) > 0
+      ? q.options.map(o => ({ key: o.key, label: (isEn ? o.label_en : o.label_fr) || o.label_fr || o.label_en }))
+      : q.type === "select" ? COUNTRIES.map(c => ({ key: c, label: c })) : []
+    : [];
+  const hasChoiceOptions = choiceItems.length > 0;
+  const hasMultiselectOptions = q.type === "multiselect" && (q.options?.length ?? 0) > 0;
+
   // A "choice" question with no options defined (e.g. left on the type
   // selector's default while the admin only ever intended free text) is
   // just as broken as an unrecognised type — treat both the same way.
-  const hasChoiceOptions = q.type === "choice" && (q.options?.length ?? 0) > 0;
-  const hasMultiselectOptions = q.type === "multiselect" && (q.options?.length ?? 0) > 0;
   const isFreeInput =
     (q.type !== "choice" && q.type !== "scale" && q.type !== "select" && q.type !== "multiselect") ||
-    (q.type === "choice" && !hasChoiceOptions) ||
+    (isChoiceLike && !hasChoiceOptions) ||
     (q.type === "multiselect" && !hasMultiselectOptions);
 
-  // onNext is captured by the deferred setTimeout below, but the onChange
-  // call right before it triggers a state update in the parent that hasn't
-  // landed yet — a plain closure would call a stale onNext still bound to
-  // the answers snapshot from before this selection. Route through a ref
-  // that's always kept current so the timer calls the latest one instead.
-  const onNextRef = useRef(onNext);
-  useEffect(() => { onNextRef.current = onNext; }, [onNext]);
+  // Picking a card only records the answer — it never advances on its own,
+  // so a misclick doesn't skip a question. Moving on is always an explicit
+  // Next/Confirm click (or Enter).
+  const handleChoice = (key: string) => onChange(key);
 
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const handleChoice = (key: string) => {
-    onChange(key);
-    if (timerRef.current) clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => onNextRef.current(), 400);
-  };
-  useEffect(() => () => { if (timerRef.current) clearTimeout(timerRef.current); }, []);
-
-  // Multiselect never auto-advances (there's no single "final" pick that
-  // signals completion) — just toggle the key in/out of the answer array
-  // and let the visitor hit the Next button themselves.
+  // Multiselect never auto-advances either (there's no single "final" pick
+  // that signals completion) — just toggle the key in/out of the answer
+  // array and let the visitor hit the Next button themselves.
   const selectedKeys = Array.isArray(value) ? (value as string[]) : [];
   const toggleMultiselect = (key: string) => {
     onChange(
@@ -95,9 +92,9 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
 
         {hasChoiceOptions && (
           <div className="space-y-2.5">
-            {q.options.map((opt, i) => (
+            {choiceItems.map((opt, i) => (
               <QuestionOption key={opt.key} letter={ALPHA[i]}
-                label={(isEn ? opt.label_en : opt.label_fr) || opt.label_fr || opt.label_en}
+                label={opt.label}
                 selected={value === opt.key}
                 onClick={() => handleChoice(opt.key)}
               />
@@ -125,10 +122,10 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
                   }}
                   className={`group w-full flex items-center gap-4 px-5 py-4 rounded-2xl border-2 transition-all duration-150 cursor-pointer outline-none
                     ${selected
-                      ? "border-[#10453F] bg-[#10453F] text-white shadow-[0_4px_20px_rgba(16,69,63,0.30)]"
+                      ? "border-[#6AD39C]/70 bg-[#EAF6F0] text-slate-700 shadow-[0_4px_14px_rgba(16,69,63,0.08)]"
                       : "border-[#E7E5DE] bg-white text-slate-700 shadow-[0_1px_3px_rgba(16,69,63,0.05)] hover:border-[#6AD39C]/70 hover:bg-[#EAF6F0] hover:shadow-[0_4px_14px_rgba(16,69,63,0.08)]"}`}
                 >
-                  <Checkbox checked={selected} className="shrink-0 size-5 pointer-events-none border-current data-[state=checked]:bg-white data-[state=checked]:text-[#10453F]" />
+                  <Checkbox checked={selected} className="shrink-0 size-5 pointer-events-none border-slate-300 data-[state=checked]:bg-[#10453F] data-[state=checked]:border-[#10453F] data-[state=checked]:text-white" />
                   <span className="text-[15px] font-medium leading-snug flex-1">
                     {(isEn ? opt.label_en : opt.label_fr) || opt.label_fr || opt.label_en}
                   </span>
@@ -138,21 +135,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
           </div>
         )}
 
-        {q.type === "scale" && <QuestionScale value={value as number | undefined} onChange={onChange} lang={lang} />}
-
-        {q.type === "select" && (
-          <Select value={(value as string) || undefined} onValueChange={onChange}>
-            <SelectTrigger className="w-full h-auto rounded-2xl border-2 border-[#E7E5DE] px-5 py-4 text-[15px] text-slate-700 bg-white shadow-[0_1px_3px_rgba(16,69,63,0.05)] data-[state=open]:border-[#6AD39C] data-[state=open]:ring-[#6AD39C]/20">
-              <SelectValue placeholder={t("question.select")} />
-            </SelectTrigger>
-            <SelectContent>
-              {(q.options?.length ?? 0) > 0
-                ? q.options.map(o => <SelectItem key={o.key} value={o.key}>{(isEn ? o.label_en : o.label_fr) || o.label_fr || o.label_en}</SelectItem>)
-                : COUNTRIES.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)
-              }
-            </SelectContent>
-          </Select>
-        )}
+        {q.type === "scale" && <QuestionScale value={value as number | undefined} onChange={onChange} />}
 
         {/* Fallback: an unrecognised type, or a "choice" question with no options
             defined (e.g. left on the default while only free text was intended),
@@ -186,7 +169,7 @@ export function WebinarQuestionSlide({ q, idx, total, lang, value, onChange, onN
         />
       </motion.div>
 
-      {!hasChoiceOptions && hasValue && (
+      {hasValue && (
         <motion.p initial={{ opacity: 0 }} animate={{ opacity: active ? 0.5 : 0 }} transition={{ delay: 0.2 }}
           className="text-center text-[11px] text-slate-400 mt-4">
           {t("question.pressEnter")}

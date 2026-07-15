@@ -37,6 +37,11 @@ export function QuestionEditor({
     "w-full border border-slate-200 rounded-lg px-2.5 py-2 text-[13px] text-slate-700 outline-none focus:border-teal-400 transition-colors bg-white";
   const labelInp = `${inp} min-h-[52px] leading-relaxed resize-y`;
 
+  // "select" is a legacy type predating the card-based questionnaire display —
+  // it's grouped with "choice"/"multiselect" here so editing an old question
+  // doesn't show a blank type dropdown, and saving normalizes it away.
+  const isChoiceGroup = q.type === "choice" || q.type === "select" || q.type === "multiselect";
+
   const addOption = () =>
     onChange({
       ...q,
@@ -182,7 +187,7 @@ export function QuestionEditor({
               Type
             </p>
             <Select
-              value={q.type}
+              value={isChoiceGroup ? "choice" : q.type}
               onValueChange={(v) =>
                 onChange({
                   ...q,
@@ -203,7 +208,7 @@ export function QuestionEditor({
               </SelectContent>
             </Select>
           </div>
-          <div className="flex items-end gap-3">
+          <div className="flex items-end gap-4">
             <label className="flex items-center gap-1.5 cursor-pointer pb-1.5">
               <div
                 onClick={() => onChange({ ...q, required: !q.required })}
@@ -217,10 +222,30 @@ export function QuestionEditor({
                 Required
               </span>
             </label>
+            {isChoiceGroup && (
+              <label className="flex items-center gap-1.5 cursor-pointer pb-1.5">
+                <div
+                  onClick={() =>
+                    onChange({
+                      ...q,
+                      type: q.type === "multiselect" ? "choice" : "multiselect",
+                    })
+                  }
+                  className={`w-8 h-4 rounded-full transition-colors relative ${q.type === "multiselect" ? "bg-teal-500" : "bg-slate-200"}`}
+                >
+                  <span
+                    className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow transition-all ${q.type === "multiselect" ? "left-4" : "left-0.5"}`}
+                  />
+                </div>
+                <span className="text-[11px] font-semibold text-slate-500">
+                  Multi-select
+                </span>
+              </label>
+            )}
           </div>
         </div>
 
-        {(q.type === "choice" || q.type === "select" || q.type === "multiselect") && (
+        {isChoiceGroup && (
           <div>
             <div className="flex items-center justify-between mb-1.5">
               <p className="text-[10px] font-semibold text-slate-400">
@@ -272,6 +297,11 @@ export function QuestionEditor({
               {q.options.length === 0 && (
                 <p className="text-[11px] text-slate-300 italic">
                   No options yet — click "Add option"
+                </p>
+              )}
+              {q.options.length === 1 && (
+                <p className="text-[11px] text-amber-600 font-semibold">
+                  Add at least one more option — 2 minimum
                 </p>
               )}
             </div>

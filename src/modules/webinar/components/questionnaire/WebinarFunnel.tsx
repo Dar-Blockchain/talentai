@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { WebinarQuestionSlide } from "./WebinarQuestionSlide";
 import { WebinarSnapshot } from "../report/WebinarSnapshot";
-import { ChevronIcon, CheckIcon } from "../shared/icons";
+import { CheckIcon } from "../shared/icons";
 import { useCompleteWebinarMutation } from "@/modules/webinar/queries";
 import i18n from "@/i18n/config";
 import type { WebinarContact, WebinarData, WebinarScoring } from "@/modules/webinar/types";
@@ -98,10 +98,6 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key !== "Enter" || isSnapshot || !currentQ) return;
-      // Auto-advancing choice questions don't need Enter — but a "choice"
-      // question with no options defined renders as free text (see
-      // WebinarQuestionSlide's hasChoiceOptions) and does need it.
-      if (currentQ.type === "choice" && (currentQ.options?.length ?? 0) > 0) return;
       const hasVal = hasAnswer(answers[currentQ.key]);
       if (currentQ.required && !hasVal) return;
       handleNavNext();
@@ -170,19 +166,6 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
           </motion.div>
         )}
       </AnimatePresence>
-
-      {/* Desktop nav arrows */}
-      <div className="fixed right-6 top-1/2 -translate-y-1/2 flex flex-col gap-2 z-40 hidden md:flex">
-        <button onClick={goBack} disabled={stepIdx <= 0}
-          className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-30 transition-all flex items-center justify-center">
-          <ChevronIcon dir="up" />
-        </button>
-        <button onClick={handleNavNext}
-          disabled={!!(currentQ?.required && !hasAnswer(answers[currentQ?.key]))}
-          className="w-10 h-10 rounded-full bg-white border border-slate-200 shadow-md text-slate-400 hover:text-slate-700 hover:border-slate-300 disabled:opacity-30 transition-all flex items-center justify-center">
-          <ChevronIcon dir="down" />
-        </button>
-      </div>
     </div>
   );
 }
