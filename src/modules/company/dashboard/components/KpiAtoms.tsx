@@ -1,10 +1,8 @@
 "use client";
 import React, { memo } from "react";
-import { useRouter } from "next/router";
-import { ArrowUp as ArrowUpwardOutlined, ArrowDown as ArrowDownwardOutlined, Minus as RemoveOutlined, ChevronRight as ArrowForwardIosRounded } from "lucide-react";
+import { ArrowUp as ArrowUpwardOutlined, ArrowDown as ArrowDownwardOutlined, Minus as RemoveOutlined } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
-import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { cn } from "@/lib/utils";
 
 export const Delta = memo<{ cur: number; prev: number }>(({ cur, prev }) => {
@@ -84,80 +82,3 @@ export const MetricRow = memo<{ label: string; value: string | number; sub?: str
   ),
 );
 MetricRow.displayName = "MetricRow";
-
-export interface StatCardProps {
-  icon:    React.ElementType;
-  color:   string;
-  bg:      string;
-  value:   React.ReactNode;
-  label:   string;
-  loading: boolean;
-  href?:   string;
-}
-
-export const StatCard = memo<StatCardProps>(({ icon: Icon, color, bg, value, label, loading, href }) => {
-  const router = useRouter();
-  const clickable = !!href;
-
-  if (loading) return (
-    <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm p-4">
-      <div className="flex items-start gap-3">
-        <Skeleton className="w-11 h-11 rounded-xl shrink-0" />
-        <div className="flex-1 space-y-2 pt-0.5">
-          <Skeleton className="h-7 w-14" />
-          <Skeleton className="h-3 w-4/5" />
-        </div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div
-      role={clickable ? "button" : undefined}
-      tabIndex={clickable ? 0 : undefined}
-      onClick={clickable ? () => router.push(href!) : undefined}
-      onKeyDown={clickable ? (e) => e.key === "Enter" && router.push(href!) : undefined}
-      className={cn(
-        "group relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm p-4 transition-all duration-200",
-        clickable && "cursor-pointer hover:shadow-lg hover:-translate-y-0.5 hover:border-slate-200"
-      )}
-    >
-      <div className="flex items-start gap-3 mt-1">
-        {/* icon bubble */}
-        <div
-          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
-          style={{ background: bg }}
-        >
-          <Icon size={22} color={color} />
-        </div>
-
-        {/* text */}
-        <div className="flex-1 min-w-0">
-          <div className="text-2xl font-black text-slate-800 leading-none tabular-nums tracking-tight">
-            {value}
-          </div>
-          <div className="text-[11px] font-semibold text-slate-400 mt-1.5 leading-snug uppercase tracking-wide">
-            {label}
-          </div>
-        </div>
-
-        {/* arrow for clickable cards */}
-        {clickable && (
-          <ArrowForwardIosRounded
-            size={13}
-            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-300 shrink-0 mt-0.5"
-          />
-        )}
-      </div>
-
-      {/* subtle hover overlay */}
-      {clickable && (
-        <div
-          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-2xl"
-          style={{ background: `${bg}33` }}
-        />
-      )}
-    </div>
-  );
-});
-StatCard.displayName = "StatCard";

@@ -240,26 +240,6 @@
     "in_progress": "En cours",
     "not_started": "Non commencé"
   },
-  "team": {
-    "growth": {
-      "title": "Croissance de l'équipe",
-      "subtitle": "Nouveaux membres au cours des 30 derniers jours",
-      "total_members": "Membres au total",
-      "pending_invitations": "Invitations en attente",
-      "new_members": "Nouveaux membres",
-      "no_data": "Aucun nouveau membre sur cette période"
-    },
-    "by_department": {
-      "title": "Membres par département",
-      "subtitle": "Répartition des effectifs par département",
-      "members": "Membres",
-      "empty": "Aucun département pour l'instant"
-    },
-    "campaign_status": {
-      "title": "Répartition des campagnes",
-      "subtitle": "Campagnes internes par statut"
-    }
-  },
   "sidebar": {
     "groups": {
       "main": "Principal",
@@ -272,8 +252,6 @@
     },
     "nav": {
       "dashboard": "Tableau de bord",
-      "hiring-dashboard": "Tableau de recrutement",
-      "team-dashboard": "Tableau d'équipe",
       "kpi-dashboard": "Tableau KPI",
       "campaigns": "Campagnes",
       "posts": "Offres",

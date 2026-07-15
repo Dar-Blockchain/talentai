@@ -240,26 +240,6 @@
     "in_progress": "In Progress",
     "not_started": "Not Started"
   },
-  "team": {
-    "growth": {
-      "title": "Team Growth",
-      "subtitle": "New members over the last 30 days",
-      "total_members": "Total members",
-      "pending_invitations": "Pending invitations",
-      "new_members": "New members",
-      "no_data": "No new members in this period"
-    },
-    "by_department": {
-      "title": "Members per Department",
-      "subtitle": "Headcount distribution across departments",
-      "members": "Members",
-      "empty": "No departments yet"
-    },
-    "campaign_status": {
-      "title": "Campaign Status Breakdown",
-      "subtitle": "Internal campaigns by status"
-    }
-  },
   "sidebar": {
     "groups": {
       "main": "Main",
@@ -272,8 +252,6 @@
     },
     "nav": {
       "dashboard": "Dashboard",
-      "hiring-dashboard": "Hiring Dashboard",
-      "team-dashboard": "Team Dashboard",
       "kpi-dashboard": "KPI Dashboard",
       "campaigns": "Campaigns",
       "posts": "Posts",
