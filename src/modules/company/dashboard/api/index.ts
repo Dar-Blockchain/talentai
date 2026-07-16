@@ -27,8 +27,8 @@ export const fetchKpiVelocity = (params: KpiFilterParams): Promise<KpiVelocityDa
 export const fetchKpiSourcing = (params: KpiFilterParams): Promise<KpiSourcingData> =>
   axiosInstance.get(`job-applications/company/my/kpi/sourcing${qs(params)}`).then(sel);
 
-export const fetchKpiRoi = (): Promise<KpiRoiData> =>
-  axiosInstance.get("job-applications/company/my/kpi/roi").then(sel);
+export const fetchKpiRoi = (params: KpiFilterParams): Promise<KpiRoiData> =>
+  axiosInstance.get(`job-applications/company/my/kpi/roi${qs(params)}`).then(sel);
 
 export const fetchKpiPostsForFilter = async (): Promise<KpiPostOption[]> => {
   const res  = await axiosInstance.get("post/my-posts?limit=100");
@@ -47,3 +47,9 @@ export const fetchKpiPostsStatus = async (params: PostsStatusParams): Promise<Po
     pagination: res.data?.pagination ?? { currentPage: 1, totalPages: 1, totalCount: 0 },
   };
 };
+
+export const fetchDashboardStats = (params: KpiFilterParams) =>
+  axiosInstance.get(`dashboard/statsCards${qs(params)}`).then(sel);
+
+export const fetchAppMetrics = (params: KpiFilterParams) =>
+  axiosInstance.get(`job-applications/company/my/metrics${qs(params)}`).then(sel);

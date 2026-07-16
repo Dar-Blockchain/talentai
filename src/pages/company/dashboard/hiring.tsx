@@ -19,6 +19,7 @@ const HiringDashboardContent = memo(() => {
     postId, activeDays,
     statusPage, handlePostChange, handlePeriodChange, handleStatusPageChange,
     actionsQ, funnelQ, velocityQ, sourcingQ, roiQ, postsQ, postsStatusQ,
+    statCardsQ, appMetricsQ,
   } = useDashboard();
 
   const availablePosts = useMemo(
@@ -28,7 +29,12 @@ const HiringDashboardContent = memo(() => {
 
   return (
       <div className="max-w-[1440px] mx-auto">
-        <HiringStatCards />
+        <HiringStatCards
+          stats={statCardsQ.data}
+          appMetrics={appMetricsQ.data}
+          loadingStats={statCardsQ.isLoading}
+          loadingAppMetrics={appMetricsQ.isLoading}
+        />
         <KpiFiltersBar
           postId={postId}
           activeDays={activeDays}

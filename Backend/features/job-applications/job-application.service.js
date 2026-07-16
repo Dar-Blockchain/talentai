@@ -648,7 +648,7 @@ module.exports.getApplicationStats = async (companyId, postId = null) => {
   }
 };
 
-module.exports.getApplicationMetrics = async (companyId) => {
+module.exports.getApplicationMetrics = async (companyId, postId = null, dateFrom = null) => {
   try {
     if (!companyId) {
       const error = new Error("Company ID is required");
@@ -659,19 +659,23 @@ module.exports.getApplicationMetrics = async (companyId) => {
     const ObjectId = require("mongoose").Types.ObjectId;
     const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
 
+    const appFilter = { company: new ObjectId(companyId) };
+    if (postId) appFilter.post = new ObjectId(postId);
+    if (dateFrom) appFilter.appliedAt = { $gte: new Date(dateFrom) };
+
     // Get total number of applicants (all applications for this company)
-    const totalApplicants = await JobApplication.countDocuments({ company: new ObjectId(companyId) });
+    const totalApplicants = await JobApplication.countDocuments(appFilter);
 
     // Get unique job posts that have received applications
     const postsWithApplications = await JobApplication.aggregate([
-      { $match: { company: new ObjectId(companyId) } },
+      { $match: appFilter },
       { $group: { _id: "$post" } },
     ]);
     const postIds = postsWithApplications.map((p) => p._id);
 
     // Get avg/top match scores across all applications
     const applicationsMetrics = await JobApplication.aggregate([
-      { $match: { company: new ObjectId(companyId) } },
+      { $match: appFilter },
       {
         $group: {
           _id: null,
@@ -682,8 +686,10 @@ module.exports.getApplicationMetrics = async (companyId) => {
     ]);
 
     // Get top interview score across this company's post interviews
+    const interviewMatch = { post: { $in: postIds } };
+    if (dateFrom) interviewMatch.createdAt = { $gte: new Date(dateFrom) };
     const interviewMetrics = await PostInterviewAssessment.aggregate([
-      { $match: { post: { $in: postIds } } },
+      { $match: interviewMatch },
       { $group: { _id: null, topInterviewScore: { $max: "$interviewData.finalReport.scores.overall" } } },
     ]);
 
@@ -1284,12 +1290,14 @@ module.exports.getVelocityKPI = async (companyId, postId = null, dateFrom = null
 
 // ========== KPI - REPORTING & ROI (Zone 7) ==========
 // savedHours, subscriptionCost, costPerHire, costPerShortlisted, tth trend 12 months
-module.exports.getRoiKPI = async (companyId) => {
+module.exports.getRoiKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
     const Payment      = require('../billing/payments/payment.model');
     const Profile      = require('../users/profile.model');
 
     const base = { company: companyId, isArchived: false };
+    if (postId) base.post = new mongoose.Types.ObjectId(postId);
+    if (dateFrom) base.appliedAt = { $gte: new Date(dateFrom) };
 
     // ── Counts (single aggregation pass) ────────────────────────────────────────
     const [counts] = await JobApplication.aggregate([

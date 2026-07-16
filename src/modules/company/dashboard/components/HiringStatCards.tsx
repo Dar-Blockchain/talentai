@@ -1,8 +1,6 @@
 "use client";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
-import { useQuery } from "@tanstack/react-query";
-import axiosInstance from "@/utils/axiosInstance";
 import { StatCard } from "./KpiAtoms";
 import {
   Brain as PsychologyOutlined,
@@ -10,17 +8,15 @@ import {
   Users as PeopleOutlined,
 } from "lucide-react";
 
-const STALE = 60_000;
-const sel   = (r: any) => r.data?.data ?? r.data;
+interface Props {
+  stats:       { avgInterviewScore?: number; activeJobPosts?: number } | undefined;
+  appMetrics:  { totalApplicants?: number } | undefined;
+  loadingStats:      boolean;
+  loadingAppMetrics: boolean;
+}
 
-const fetchDashboardStats = () => axiosInstance.get("dashboard/statsCards").then(sel);
-const fetchAppMetrics     = () => axiosInstance.get("job-applications/company/my/metrics").then(sel);
-
-const HiringStatCards = memo(() => {
+const HiringStatCards = memo<Props>(({ stats, appMetrics: appMet, loadingStats: l0, loadingAppMetrics: l1 }) => {
   const { t } = useTranslation("dashboard");
-
-  const { data: stats,  isLoading: l0 } = useQuery({ queryKey: ["statCards", "dashboard"],  queryFn: fetchDashboardStats, staleTime: STALE });
-  const { data: appMet, isLoading: l1 } = useQuery({ queryKey: ["statCards", "appMetrics"], queryFn: fetchAppMetrics,      staleTime: STALE });
 
   const avgScore = stats?.avgInterviewScore != null
     ? `${stats.avgInterviewScore}%`

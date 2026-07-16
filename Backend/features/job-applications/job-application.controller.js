@@ -296,6 +296,7 @@ module.exports.getApplicationStats = async (req, res) => {
 module.exports.getApplicationMetrics = async (req, res) => {
   try {
     const companyId = req.user._id;
+    const { postId, dateFrom } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -304,7 +305,7 @@ module.exports.getApplicationMetrics = async (req, res) => {
       });
     }
 
-    const metrics = await jobApplicationService.getApplicationMetrics(companyId);
+    const metrics = await jobApplicationService.getApplicationMetrics(companyId, postId || null, dateFrom || null);
 
     res.status(200).json({
       success: true,
@@ -700,7 +701,8 @@ module.exports.getNoshowsKPI = async (req, res) => {
 module.exports.getRoiKPI = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const data = await jobApplicationService.getRoiKPI(companyId);
+    const { postId, dateFrom } = req.query;
+    const data = await jobApplicationService.getRoiKPI(companyId, postId || null, dateFrom || null);
     res.status(200).json({ success: true, data });
   } catch (error) {
     handleError(res, error);
