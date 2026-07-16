@@ -3,15 +3,14 @@ import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { TrendingUp as TrendingUpOutlined } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
-import { ZoneHeading, KpiCard, Delta, MetricRow } from "./KpiAtoms";
-import { ChartTooltip, GRAY, T, passRate } from "../utils/kpiTokens";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
+import { ZoneHeading, KpiCard, Delta } from "./KpiAtoms";
+import { ChartTooltip, GRAY, T } from "../utils/kpiTokens";
 import type { KpiFunnelData } from "../types";
 
 const OPACITIES  = ["FF", "AA", "77"] as const;
 const STEP_KEYS  = ["funnel_applied", "funnel_completed", "funnel_shortlisted"] as const;
-
-const fmtTick = (t: (k: string) => string) => (k: string) => t(`pages.kpi.${k}`);
+const TREND_KEYS = ["applied", "completed", "shortlisted"] as const;
 
 const StepSkeleton = () => (
   <div className="flex-1 min-w-[calc(50%-8px)] md:min-w-0 border border-slate-200 rounded-[14px] p-4 sm:p-5 space-y-2">
@@ -40,7 +39,19 @@ const KpiRecruitmentFunnel = memo<Props>(({ data, loading }) => {
     { key: STEP_KEYS[2], value: shortlisted },
   ], [applied, completed, shortlisted]);
 
-  const tickFmt = fmtTick(t);
+  const trend   = data?.trend ?? [];
+  const seriesLabel = (key: string) => t(`pages.kpi.funnel_${key}`);
+
+  // Real month-over-month comparison (current month's bucket vs the one before
+  // it), instead of comparing a value to itself.
+  const currentMonth  = trend[trend.length - 1];
+  const previousMonth = trend[trend.length - 2];
+
+  const SERIES_COLORS: Record<(typeof TREND_KEYS)[number], string> = {
+    applied:     T,
+    completed:   "#7C3AED",
+    shortlisted: "#F59E0B",
+  };
 
   return (
     <>
@@ -65,7 +76,12 @@ const KpiRecruitmentFunnel = memo<Props>(({ data, loading }) => {
                             {rate}%
                           </span>
                         )}
-                        <Delta cur={step.value} prev={step.value} />
+                        {currentMonth && previousMonth && (
+                          <Delta
+                            cur={currentMonth[TREND_KEYS[i]] ?? 0}
+                            prev={previousMonth[TREND_KEYS[i]] ?? 0}
+                          />
+                        )}
                       </div>
                       <div className="mt-3 h-1 rounded-full bg-slate-100 overflow-hidden">
                         <div className="h-full rounded-full" style={{ width: `${fillPct}%`, background: `${T}${OPACITIES[i]}` }} />
@@ -76,44 +92,22 @@ const KpiRecruitmentFunnel = memo<Props>(({ data, loading }) => {
               })}
         </div>
 
-        <div className="flex flex-col md:flex-row gap-5">
-          <div className="flex-1 min-w-0">
-            {loading ? (
-              <Skeleton className="w-full h-[190px] rounded-[10px]" />
-            ) : (
-              <ResponsiveContainer width="100%" height={190}>
-                <BarChart data={steps} barSize={40}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-                  <XAxis dataKey="key" tickFormatter={tickFmt} tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
-                  <RechartsTooltip {...ChartTooltip} formatter={(v: any) => [v, ""]} labelFormatter={tickFmt} />
-                  <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                    {steps.map((_, i) => <Cell key={i} fill={`${T}${OPACITIES[i]}`} />)}
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            )}
-          </div>
-
-          <div className="w-full md:w-[220px] shrink-0 bg-slate-50 border border-slate-200 rounded-[14px] p-4 flex flex-col justify-center">
-            <div className="font-bold text-[0.7rem] text-slate-400 uppercase tracking-[0.07em] mb-3">
-              {t("pages.kpi.key_metrics")}
-            </div>
-            {loading ? (
-              [0, 1, 2].map((i) => (
-                <div key={i} className="py-3 border-b border-slate-100 last:border-0">
-                  <Skeleton className="h-5 w-full rounded" />
-                </div>
-              ))
-            ) : (
-              <>
-                <MetricRow label={t("pages.kpi.completed_rate")}  value={passRate(completed, applied)}   color="#7C3AED" />
-                <MetricRow label={t("pages.kpi.shortlist_rate")}  value={passRate(shortlisted, applied)} color="#F59E0B" />
-                <MetricRow label={t("pages.kpi.hire_conversion")} value={passRate(shortlisted, applied)} color="#10B981" last />
-              </>
-            )}
-          </div>
-        </div>
+        {loading ? (
+          <Skeleton className="w-full h-[190px] rounded-[10px]" />
+        ) : (
+          <ResponsiveContainer width="100%" height={190}>
+            <BarChart data={trend} barGap={4}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+              <XAxis dataKey="month" tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
+              <YAxis tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} allowDecimals={false} />
+              <RechartsTooltip {...ChartTooltip} formatter={(v: any, key: any) => [v, seriesLabel(key)]} />
+              <Legend formatter={(key: string) => seriesLabel(key)} wrapperStyle={{ fontFamily: "Poppins", fontSize: 11 }} />
+              {TREND_KEYS.map((key) => (
+                <Bar key={key} dataKey={key} name={key} radius={[4, 4, 0, 0]} fill={SERIES_COLORS[key]} />
+              ))}
+            </BarChart>
+          </ResponsiveContainer>
+        )}
       </KpiCard>
     </>
   );

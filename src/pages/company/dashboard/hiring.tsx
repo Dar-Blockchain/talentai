@@ -5,7 +5,6 @@ import KpiFiltersBar        from "@/modules/company/dashboard/components/KpiFilt
 import KpiApplicationHistory from "@/modules/company/dashboard/components/KpiApplicationHistory";
 import KpiPostsOverview     from "@/modules/company/dashboard/components/KpiPostsOverview";
 import KpiRecruitmentFunnel from "@/modules/company/dashboard/components/KpiRecruitmentFunnel";
-import KpiHiringVelocity    from "@/modules/company/dashboard/components/KpiHiringVelocity";
 import KpiCandidateQuality  from "@/modules/company/dashboard/components/KpiCandidateQuality";
 import KpiRoiSavings        from "@/modules/company/dashboard/components/KpiRoiSavings";
 import { getDashboardLayout } from "@/modules/shared/layouts";
@@ -18,7 +17,7 @@ const HiringDashboardContent = memo(() => {
   const {
     postId, activeDays,
     statusPage, handlePostChange, handlePeriodChange, handleStatusPageChange,
-    historyQ, funnelQ, velocityQ, sourcingQ, roiQ, postsQ, postsStatusQ,
+    historyQ, funnelQ, sourcingQ, roiQ, postsQ, postsStatusQ,
     statCardsQ, appMetricsQ,
   } = useDashboard();
 
@@ -55,10 +54,6 @@ const HiringDashboardContent = memo(() => {
         <KpiRecruitmentFunnel
           data={funnelQ.data}
           loading={funnelQ.isLoading}
-        />
-        <KpiHiringVelocity
-          data={velocityQ.data}
-          loading={velocityQ.isLoading}
         />
         <KpiCandidateQuality
           data={sourcingQ.data}

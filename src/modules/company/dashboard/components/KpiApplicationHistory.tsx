@@ -3,17 +3,19 @@ import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Card } from "@/modules/shared/ui/shadcn/card";
-import { History as HistoryOutlined, UserPlus as UserPlusOutlined, Mail as MailOutlined, CheckCircle2 as CheckCircleOutlined, Award as AwardOutlined, XCircle as XCircleOutlined } from "lucide-react";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import { History as HistoryOutlined, UserPlus as UserPlusOutlined, Mail as MailOutlined, CheckCircle2 as CheckCircleOutlined, Award as AwardOutlined, XCircle as XCircleOutlined, SearchX as SearchXOutlined, Info as InfoOutlined } from "lucide-react";
 import { ZoneHeading } from "./KpiAtoms";
 import { cn } from "@/lib/utils";
 import type { ApplicationHistoryData } from "../types";
 
 const STATUS_META = {
-  applied:     { icon: UserPlusOutlined,    color: "#64748B", bg: "#F1F5F9", labelKey: "pages.kpi.history_applied" },
-  invited:     { icon: MailOutlined,        color: "#0891B2", bg: "#ECFEFF", labelKey: "pages.kpi.history_invited" },
-  completed:   { icon: CheckCircleOutlined, color: "#7C3AED", bg: "#F5F3FF", labelKey: "pages.kpi.history_completed" },
-  shortlisted: { icon: AwardOutlined,       color: "#0D9488", bg: "#F0FDFA", labelKey: "pages.kpi.history_shortlisted" },
-  rejected:    { icon: XCircleOutlined,     color: "#EF4444", bg: "#FEF2F2", labelKey: "pages.kpi.history_rejected" },
+  applied:     { icon: UserPlusOutlined,    color: "#64748B", bg: "#F1F5F9", labelKey: "pages.kpi.history_applied",     descKey: "pages.kpi.history_applied_desc" },
+  invited:     { icon: MailOutlined,        color: "#0891B2", bg: "#ECFEFF", labelKey: "pages.kpi.history_invited",     descKey: "pages.kpi.history_invited_desc" },
+  completed:   { icon: CheckCircleOutlined, color: "#7C3AED", bg: "#F5F3FF", labelKey: "pages.kpi.history_completed",   descKey: "pages.kpi.history_completed_desc" },
+  shortlisted: { icon: AwardOutlined,       color: "#0D9488", bg: "#F0FDFA", labelKey: "pages.kpi.history_shortlisted", descKey: "pages.kpi.history_shortlisted_desc" },
+  rejected:    { icon: XCircleOutlined,     color: "#EF4444", bg: "#FEF2F2", labelKey: "pages.kpi.history_rejected",    descKey: "pages.kpi.history_rejected_desc" },
+  not_matched: { icon: SearchXOutlined,     color: "#64748B", bg: "#F8FAFC", labelKey: "pages.kpi.history_not_matched", descKey: "pages.kpi.history_not_matched_desc" },
 } as const;
 
 const timeAgo = (iso: string): string => {
@@ -44,8 +46,13 @@ const KpiApplicationHistory = memo<Props>(({ data, loading }) => {
   const items = data ?? [];
 
   return (
-    <>
-      <ZoneHeading icon={HistoryOutlined} label={t("pages.kpi.zone1_title", "Recent Activity")} color="#7C3AED" />
+    <TooltipProvider>
+      <div className="flex items-start justify-between mb-1 mt-1 gap-3">
+        <ZoneHeading icon={HistoryOutlined} label={t("pages.kpi.zone1_title", "Recent Activity")} color="#7C3AED" />
+      </div>
+      <p className="text-[12px] text-slate-400 -mt-4 mb-4">
+        {t("pages.kpi.zone1_subtitle", "The last things that happened with your candidates — who applied, who's being interviewed, and who moved forward.")}
+      </p>
       <Card className="mb-8 overflow-hidden py-0 gap-0">
         {loading ? (
           <div className="divide-y divide-slate-100">
@@ -74,20 +81,31 @@ const KpiApplicationHistory = memo<Props>(({ data, loading }) => {
                       {item.firstName} {item.lastName}
                     </div>
                     <div className="text-[11.5px] text-slate-400 truncate">
-                      {item.postTitle}
+                      {t("pages.kpi.history_applied_to", "Applied to")} {item.postTitle}
                       {item.matchScore != null && (
-                        <span className="ml-1.5 font-semibold text-teal-600">&bull; {item.matchScore}% match</span>
+                        <span className="ml-1.5 font-semibold text-teal-600">&bull; {t("pages.kpi.history_ai_match", "AI CV Match")}: {item.matchScore}%</span>
+                      )}
+                      {item.interviewScore != null && (
+                        <span className="ml-1.5 font-semibold text-violet-600">&bull; {t("pages.kpi.history_interview_score", "Interview Score")}: {item.interviewScore}%</span>
                       )}
                     </div>
                   </div>
                   <div className="flex flex-col items-end gap-1 shrink-0">
-                    <span
-                      className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[11px] whitespace-nowrap")}
-                      style={{ background: meta.bg, color: meta.color }}
-                    >
-                      <Icon size={12} />
-                      {t(meta.labelKey)}
-                    </span>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span
+                          className={cn("inline-flex items-center gap-1 px-2.5 py-1 rounded-full font-bold text-[11px] whitespace-nowrap cursor-help")}
+                          style={{ background: meta.bg, color: meta.color }}
+                        >
+                          <Icon size={12} />
+                          {t(meta.labelKey)}
+                          <InfoOutlined size={10} className="opacity-50" />
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent side="left" className="max-w-[220px] text-center">
+                        {t(meta.descKey)}
+                      </TooltipContent>
+                    </Tooltip>
                     <span className="text-[10px] text-slate-400">{timeAgo(item.date)}</span>
                   </div>
                 </div>
@@ -96,7 +114,7 @@ const KpiApplicationHistory = memo<Props>(({ data, loading }) => {
           </div>
         )}
       </Card>
-    </>
+    </TooltipProvider>
   );
 });
 KpiApplicationHistory.displayName = "KpiApplicationHistory";

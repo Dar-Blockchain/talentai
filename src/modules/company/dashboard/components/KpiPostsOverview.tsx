@@ -11,13 +11,17 @@ import {
   AlertTriangle as WarningAmberOutlined,
   ChevronLeft as ChevronLeftOutlined,
   ChevronRight as ChevronRightOutlined,
+  CheckCircle2 as CheckCircleOutlined,
+  XCircle as XCircleOutlined,
+  Video as VideoOutlined,
 } from "lucide-react";
 import { ZoneHeading } from "./KpiAtoms";
-import { coverageColor, coverageLabel } from "../utils/kpiTokens";
+import { coverageColor } from "../utils/kpiTokens";
 import type { PostsStatusResult } from "../types";
 
-const SKEL_COLS = [180, 70, 70, 100, 70, 60] as const;
-const SKEL_ROWS = [0, 1, 2] as const;
+const SKEL_COLS = [180, 80, 100, 70, 70, 60] as const;
+const SKEL_ROWS = [0, 1, 2, 3] as const;
+const PAGE_WINDOW = 5;
 
 // ─── RowSkeleton ─────────────────────────────────────────────────────────────
 
@@ -72,15 +76,23 @@ const KpiPostsOverview = memo<KpiPostsOverviewProps>(({ data, loading, page, onP
   const goNext = useCallback(() => onPageChange(page + 1), [onPageChange, page]);
 
   const headers = useMemo(() => [
-    t("pages.kpi.col_post"),        t("pages.kpi.col_shortlisted"),
-    t("pages.kpi.col_velocity"),    t("pages.kpi.col_coverage"),
+    t("pages.kpi.col_post"),        t("pages.kpi.col_job_status"),
+    t("pages.kpi.col_coverage"),    t("pages.kpi.col_completed"),
     t("pages.kpi.col_status"),      t("pages.kpi.col_deadline"),
   ], [t]);
 
-  const pageNumbers = useMemo(
-    () => Array.from({ length: totalPages }, (_, i) => i + 1),
-    [totalPages],
-  );
+  // Sliding window of at most PAGE_WINDOW page buttons, centered on the
+  // current page — never renders every page number for large result sets.
+  const pageNumbers = useMemo(() => {
+    if (totalPages <= PAGE_WINDOW) return Array.from({ length: totalPages }, (_, i) => i + 1);
+    let start = Math.max(1, page - Math.floor(PAGE_WINDOW / 2));
+    let end   = start + PAGE_WINDOW - 1;
+    if (end > totalPages) {
+      end   = totalPages;
+      start = end - PAGE_WINDOW + 1;
+    }
+    return Array.from({ length: PAGE_WINDOW }, (_, i) => start + i);
+  }, [totalPages, page]);
 
   return (
     <>
@@ -118,7 +130,6 @@ const KpiPostsOverview = memo<KpiPostsOverviewProps>(({ data, loading, page, onP
               ) : (
                 rows.map((p, idx) => {
                   const sc      = coverageColor(p.coverage, p.deadline ?? 99);
-                  const sl      = coverageLabel(p.coverage, p.deadline ?? 99);
                   const isAlert = p.deadline !== null && p.deadline < 14;
                   return (
                     <tr
@@ -140,31 +151,40 @@ const KpiPostsOverview = memo<KpiPostsOverviewProps>(({ data, loading, page, onP
                         </div>
                       </td>
                       <td className="py-3 px-3 border-b border-slate-100 text-center">
-                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full" style={{ background: "#0D948812" }}>
-                          <GroupsOutlined size={12} color="#0D9488" />
-                          <span className="font-bold text-[12px] text-teal-600">{p.shortlisted}</span>
-                        </span>
-                      </td>
-                      <td className="py-3 px-3 border-b border-slate-100 text-center font-semibold text-[13px] text-slate-700">
-                        {p.velocity !== null ? `${p.velocity}j` : "—"}
-                      </td>
-                      <td className="py-3 px-3 border-b border-slate-100 text-center">
-                        <div className="flex items-center justify-center gap-2">
-                          <div className="w-14 h-[6px] rounded-full bg-slate-100 overflow-hidden">
-                            <div className="h-full rounded-full" style={{ width: `${Math.min(p.coverage * 100, 100)}%`, background: sc }} />
-                          </div>
-                          <span className="font-bold text-[12px] min-w-[34px]" style={{ color: sc }}>
-                            {Math.round(p.coverage * 100)}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="py-3 px-3 border-b border-slate-100 text-center">
                         <span
                           className="font-bold text-[11px] px-2.5 py-1 rounded-full border whitespace-nowrap"
-                          style={{ background: `${sc}15`, color: sc, borderColor: `${sc}35` }}
+                          style={
+                            p.jobStatus === "draft"
+                              ? { background: "#F1F5F9", color: "#64748B", borderColor: "#E2E8F0" }
+                              : { background: "#10B98115", color: "#10B981", borderColor: "#10B98135" }
+                          }
                         >
-                          {t(`pages.kpi.status_${sl}`)}
+                          {p.jobStatus === "draft" ? t("pages.kpi.job_status_draft") : t("pages.kpi.job_status_published")}
                         </span>
+                      </td>
+                      <td className="py-3 px-3 border-b border-slate-100 text-center">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full" style={{ background: "#0D948812" }}>
+                          <GroupsOutlined size={12} color="#0D9488" />
+                          <span className="font-bold text-[12px] text-teal-600">{p.matched}</span>
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 border-b border-slate-100 text-center">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full" style={{ background: "#7C3AED15" }}>
+                          <VideoOutlined size={12} color="#7C3AED" />
+                          <span className="font-bold text-[12px]" style={{ color: "#7C3AED" }}>{p.completedInterviews}</span>
+                        </span>
+                      </td>
+                      <td className="py-3 px-3 border-b border-slate-100 text-center">
+                        <div className="inline-flex items-center gap-2">
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[11px]" style={{ background: "#10B98115", color: "#10B981" }}>
+                            <CheckCircleOutlined size={12} />
+                            {p.shortlisted}
+                          </span>
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[11px]" style={{ background: "#EF444415", color: "#EF4444" }}>
+                            <XCircleOutlined size={12} />
+                            {p.rejected}
+                          </span>
+                        </div>
                       </td>
                       <td className="py-3 px-3 border-b border-slate-100 text-center">
                         <div className="inline-flex items-center gap-1">

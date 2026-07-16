@@ -23,13 +23,14 @@ export interface KpiActionsData {
 // ── Application history ───────────────────────────────────────────────────────
 
 export interface ApplicationHistoryItem {
-  id:         string;
-  firstName:  string;
-  lastName:   string;
-  postTitle:  string;
-  status:     "applied" | "invited" | "completed" | "shortlisted" | "rejected";
-  matchScore: number | null;
-  date:       string;
+  id:                   string;
+  firstName:            string;
+  lastName:             string;
+  postTitle:            string;
+  status:               "applied" | "invited" | "completed" | "shortlisted" | "rejected" | "not_matched";
+  matchScore:           number | null;
+  interviewScore:       number | null;
+  date:                 string;
 }
 
 export type ApplicationHistoryData = ApplicationHistoryItem[];
@@ -37,12 +38,16 @@ export type ApplicationHistoryData = ApplicationHistoryItem[];
 // ── Posts status ───────────────────────────────────────────────────────────────
 
 export interface PostStatusRow {
-  id:          string;
-  title:       string;
-  shortlisted: number;
-  velocity:    number | null;
-  coverage:    number;
-  deadline:    number | null;
+  id:                  string;
+  title:               string;
+  jobStatus:           "draft" | "published";
+  matched:             number;
+  shortlisted:         number;
+  rejected:            number;
+  completedInterviews: number;
+  totalApplicants:     number;
+  coverage:            number;
+  deadline:            number | null;
 }
 
 export interface PostsStatusParams extends KpiFilterParams {
@@ -57,38 +62,31 @@ export interface PostsStatusResult {
 
 // ── Funnel ─────────────────────────────────────────────────────────────────────
 
+export interface FunnelTrendPoint {
+  month:       string;
+  applied:     number;
+  completed:   number;
+  shortlisted: number;
+}
+
 export interface KpiFunnelData {
   applied:     number;
   invited:     number;
   completed:   number;
   shortlisted: number;
-}
-
-// ── Velocity ───────────────────────────────────────────────────────────────────
-
-export interface VelocityTrendPoint {
-  period: string;
-  tts:    number | null;
-  tth:    number | null;
-}
-
-export interface KpiVelocityData {
-  tts:      number | null;
-  ttsDelta: number | null;
-  tth:      number | null;
-  tthDelta: number | null;
-  trend:    VelocityTrendPoint[];
+  trend:       FunnelTrendPoint[];
 }
 
 // ── Sourcing / Candidate quality ───────────────────────────────────────────────
 
 export interface SourcingCandidate {
-  rank:      number;
-  firstName: string;
-  lastName:  string;
-  postTitle: string;
-  score:     number | null;
-  status:    "shortlisted" | "completed";
+  rank:       number;
+  firstName:  string;
+  lastName:   string;
+  postTitle:  string;
+  score:      number | null;
+  matchScore: number | null;
+  status:     "shortlisted" | "completed";
 }
 
 export interface SourcingByPost {

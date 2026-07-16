@@ -171,6 +171,11 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
 
   const busy = decidingShortlist || decidingReject;
 
+  // A candidate under the job's match threshold gets a second chance once they've
+  // actually been invited and completed an interview — the interview outcome then
+  // decides shortlist/reject, not the raw CV match score.
+  const showDecisionButtons = !app.belowThreshold || hasInterview;
+
   return (
     <>
       {/* Score circles */}
@@ -179,23 +184,25 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
         <ScoreCircle value={app.interviewScore} label={t("pages.applications.actions.score_interview")} />
       </div>
 
-      {/* Shortlist / Reject */}
-      <div className="flex gap-1.5 shrink-0" onClick={stopProp}>
-        <DecisionButton
-          active={isShortlisted} loading={decidingShortlist} disabled={busy || isShortlisted}
-          activeColor="#059669" activeBg="#ECFDF5"
-          icon={<Star size={13} />}
-          label={isShortlisted ? "Shortlisted" : "Shortlist"}
-          onClick={handleShortlist}
-        />
-        <DecisionButton
-          active={isRejected} loading={decidingReject} disabled={busy || isRejected}
-          activeColor="#DC2626" activeBg="#FEF2F2"
-          icon={<XCircle size={13} />}
-          label={isRejected ? "Rejected" : "Reject"}
-          onClick={handleReject}
-        />
-      </div>
+      {/* Shortlist / Reject — hidden when below the job's qualification threshold, unless the candidate was interviewed anyway */}
+      {showDecisionButtons && (
+        <div className="flex gap-1.5 shrink-0" onClick={stopProp}>
+          <DecisionButton
+            active={isShortlisted} loading={decidingShortlist} disabled={busy || isShortlisted}
+            activeColor="#059669" activeBg="#ECFDF5"
+            icon={<Star size={13} />}
+            label={isShortlisted ? "Shortlisted" : "Shortlist"}
+            onClick={handleShortlist}
+          />
+          <DecisionButton
+            active={isRejected} loading={decidingReject} disabled={busy || isRejected}
+            activeColor="#DC2626" activeBg="#FEF2F2"
+            icon={<XCircle size={13} />}
+            label={isRejected ? "Rejected" : "Reject"}
+            onClick={handleReject}
+          />
+        </div>
+      )}
 
       <div className="w-px h-10 bg-slate-100 shrink-0" />
 

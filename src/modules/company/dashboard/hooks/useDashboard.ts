@@ -1,11 +1,11 @@
 import { useState, useCallback, useMemo } from "react";
 import {
-  useKpiHistoryQuery, useKpiFunnelQuery, useKpiVelocityQuery,
+  useKpiHistoryQuery, useKpiFunnelQuery,
   useKpiSourcingQuery, useKpiRoiQuery, useKpiPostsQuery,
   useKpiPostsStatusQuery, useKpiStatCardsQuery, useKpiAppMetricsQuery,
 } from "../queries";
 
-const PAGE_SIZE = 3;
+const PAGE_SIZE = 4;
 
 export const useDashboard = () => {
   const [postId,     setPostId]     = useState<string>("");
@@ -25,7 +25,6 @@ export const useDashboard = () => {
 
   const historyQ     = useKpiHistoryQuery(filterParams);
   const funnelQ      = useKpiFunnelQuery(filterParams);
-  const velocityQ    = useKpiVelocityQuery(filterParams);
   const sourcingQ    = useKpiSourcingQuery(filterParams);
   const roiQ         = useKpiRoiQuery(filterParams);
   const postsQ       = useKpiPostsQuery();
@@ -61,7 +60,6 @@ export const useDashboard = () => {
     handleStatusPageChange,
     historyQ,
     funnelQ,
-    velocityQ,
     sourcingQ,
     roiQ,
     postsQ,

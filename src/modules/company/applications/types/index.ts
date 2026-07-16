@@ -15,8 +15,9 @@ export interface ApplicationSummaryItem {
   postId?: string | null;
   postTitle?: string | null;
   resumeFile?: string | null;
-  recruiterDecision?: 'shortlisted' | 'rejected' | null;
+  recruiterDecision?: 'shortlisted' | 'rejected' | 'not_matched' | null;
   invitedAt?: string | null;
+  belowThreshold?: boolean;
 }
 
 // ─── CV / Profile shapes ──────────────────────────────────────────────────────
@@ -140,7 +141,7 @@ export interface ApplicationDetail {
   appliedAt?: string;
   createdAt?: string;
   invitedAt?: string;
-  recruiterDecision?: "shortlisted" | "rejected" | null;
+  recruiterDecision?: "shortlisted" | "rejected" | "not_matched" | null;
   matchScore?: number;
   matchReasoning?: string;
   matchRecommendation?: string;

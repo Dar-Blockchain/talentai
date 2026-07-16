@@ -1,7 +1,7 @@
 import axiosInstance from "@/utils/axiosInstance";
 import type {
   KpiFilterParams, KpiFunnelData,
-  KpiVelocityData, KpiSourcingData, KpiRoiData,
+  KpiSourcingData, KpiRoiData,
   PostsStatusParams, PostsStatusResult, KpiPostOption,
   ApplicationHistoryData,
 } from "../types";
@@ -21,9 +21,6 @@ export const fetchKpiHistory = (params: KpiFilterParams): Promise<ApplicationHis
 
 export const fetchKpiFunnel = (params: KpiFilterParams): Promise<KpiFunnelData> =>
   axiosInstance.get(`job-applications/company/my/kpi/funnel${qs(params)}`).then(sel);
-
-export const fetchKpiVelocity = (params: KpiFilterParams): Promise<KpiVelocityData> =>
-  axiosInstance.get(`job-applications/company/my/kpi/velocity${qs(params)}`).then(sel);
 
 export const fetchKpiSourcing = (params: KpiFilterParams): Promise<KpiSourcingData> =>
   axiosInstance.get(`job-applications/company/my/kpi/sourcing${qs(params)}`).then(sel);

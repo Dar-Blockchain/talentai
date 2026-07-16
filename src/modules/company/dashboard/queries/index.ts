@@ -1,7 +1,7 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { KpiFilterParams, PostsStatusParams } from "../types";
 import {
-  fetchKpiFunnel, fetchKpiVelocity,
+  fetchKpiFunnel,
   fetchKpiSourcing, fetchKpiRoi, fetchKpiPostsForFilter,
   fetchKpiPostsStatus, fetchDashboardStats, fetchAppMetrics,
   fetchKpiHistory,
@@ -13,7 +13,6 @@ export const KPI_KEYS = {
   all:         ["kpi"] as const,
   history:     (p: KpiFilterParams)     => ["kpi", "history",     p] as const,
   funnel:      (p: KpiFilterParams)     => ["kpi", "funnel",      p] as const,
-  velocity:    (p: KpiFilterParams)     => ["kpi", "velocity",    p] as const,
   sourcing:    (p: KpiFilterParams)     => ["kpi", "sourcing",    p] as const,
   roi:         (p: KpiFilterParams)     => ["kpi", "roi", p]         as const,
   posts:       ()                       => ["kpi", "posts"]          as const,
@@ -35,13 +34,6 @@ export const useKpiFunnelQuery = (params: KpiFilterParams) =>
   useQuery({
     queryKey:  KPI_KEYS.funnel(params),
     queryFn:   () => fetchKpiFunnel(params),
-    staleTime: 60_000,
-  });
-
-export const useKpiVelocityQuery = (params: KpiFilterParams) =>
-  useQuery({
-    queryKey:  KPI_KEYS.velocity(params),
-    queryFn:   () => fetchKpiVelocity(params),
     staleTime: 60_000,
   });
 

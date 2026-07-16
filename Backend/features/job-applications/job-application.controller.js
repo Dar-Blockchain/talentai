@@ -96,13 +96,10 @@ module.exports.createJobApplication = async (req, res) => {
       applicationData
     );
 
-    if (application.recruiterDecision === "rejected") {
-    }
-
     res.status(201).json({
       success: true,
-      message: application.recruiterDecision === "rejected" 
-        ? "Job application created but automatically rejected due to low match score" 
+      message: application.recruiterDecision === "not_matched"
+        ? "Job application created but automatically marked as not matched due to low match score"
         : "Job application created successfully (match score calculated by AI)",
       data: application,
     });

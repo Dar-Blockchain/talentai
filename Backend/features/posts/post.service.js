@@ -606,19 +606,19 @@ module.exports.getPostsInAlertKPI = async (userId) => {
   }
 };
 
-module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = null) => {
+module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 4, postId = null) => {
   try {
     const now      = new Date();
     const pageNum  = Math.max(1, parseInt(page)  || 1);
-    const limitNum = Math.max(1, parseInt(limit) || 3);
+    const limitNum = Math.max(1, parseInt(limit) || 4);
     const skip     = (pageNum - 1) * limitNum;
 
-    const postMatch = { user: userId, status: 'open', archived: { $ne: true } };
+    const postMatch = { user: userId, status: { $in: ['draft', 'open'] }, archived: { $ne: true } };
     if (postId) postMatch._id = postId;
 
     const [totalCount, posts] = await Promise.all([
       Post.countDocuments(postMatch),
-      Post.find(postMatch).select('_id jobDetails expirationDate').skip(skip).limit(limitNum).lean(),
+      Post.find(postMatch).select('_id jobDetails expirationDate thresholdScore status createdAt').sort({ createdAt: -1 }).skip(skip).limit(limitNum).lean(),
     ]);
 
     if (!posts.length) {
@@ -628,30 +628,14 @@ module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = 
     const postIds = posts.map(p => p._id);
 
     const agg = await JobApplication.aggregate([
-      { $match: { company: userId, post: { $in: postIds }, isArchived: false } },
+      { $match: { company: userId, post: { $in: postIds }, isArchived: false, isWithdrawn: false } },
       {
         $group: {
-          _id:            '$post',
-          totalCount:     { $sum: 1 },
-          shortlistedCount: { $sum: { $cond: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, 1, 0] } },
-          velocitySum: {
-            $sum: {
-              $cond: [
-                { $and: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, { $ne: ['$recruiterDecisionAt', null] }] },
-                { $divide: [{ $subtract: ['$recruiterDecisionAt', '$appliedAt'] }, 86400000] },
-                0,
-              ],
-            },
-          },
-          velocityCount: {
-            $sum: {
-              $cond: [
-                { $and: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, { $ne: ['$recruiterDecisionAt', null] }] },
-                1,
-                0,
-              ],
-            },
-          },
+          _id:              '$post',
+          totalCount:       { $sum: 1 },
+          // Pushed together so the per-post threshold can be applied in JS below.
+          applications:     { $push: { matchScore: '$matchScore', recruiterDecision: '$recruiterDecision' } },
+          completedCount:   { $sum: { $cond: [{ $eq: ['$status', 'interview_completed'] }, 1, 0] } },
         },
       },
     ]);
@@ -659,17 +643,34 @@ module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = 
     const aggMap = {};
     agg.forEach(a => { aggMap[String(a._id)] = a; });
 
+    // "Matched" (CV Match Coverage column) = candidate qualifies for interview on
+    // CV match alone (matchScore >= the post's own acceptance threshold).
+    // "Shortlisted"/"Rejected" (Status column) both require a manual recruiter
+    // decision AND matchScore >= threshold — so a candidate who was never a real
+    // match (matchScore < threshold, incl. legacy rows auto-marked "rejected"
+    // before the "not_matched" outcome existed) never counts as either. Neither
+    // count can exceed Matched/Coverage. Withdrawn/archived apps are excluded
+    // from everything below.
     const data = posts.map(post => {
-      const a          = aggMap[String(post._id)] || { totalCount: 0, shortlistedCount: 0, velocitySum: 0, velocityCount: 0 };
-      const shortlisted = a.shortlistedCount;
-      const total       = a.totalCount;
+      const a       = aggMap[String(post._id)] || { totalCount: 0, applications: [], completedCount: 0 };
+      const threshold = post.thresholdScore || 60;
+      const apps      = a.applications || [];
+      const isMatch      = x => x.matchScore != null && x.matchScore >= threshold;
+      const matched     = apps.filter(isMatch).length;
+      const shortlisted = apps.filter(x => x.recruiterDecision === 'shortlisted' && isMatch(x)).length;
+      const rejected     = apps.filter(x => x.recruiterDecision === 'rejected' && isMatch(x)).length;
+      const total     = a.totalCount;
       return {
-        id:         String(post._id),
-        title:      post.jobDetails?.title || 'Untitled',
+        id:                String(post._id),
+        title:             post.jobDetails?.title || 'Untitled',
+        jobStatus:         post.status === 'draft' ? 'draft' : 'published',
+        matched,
         shortlisted,
-        velocity:   a.velocityCount > 0 ? Math.round(a.velocitySum / a.velocityCount) : null,
-        coverage:   total > 0 ? Math.round((shortlisted / total) * 100) / 100 : 0,
-        deadline:   post.expirationDate
+        rejected,
+        completedInterviews: a.completedCount || 0,
+        totalApplicants:   total,
+        coverage:        total > 0 ? Math.round((matched / total) * 100) / 100 : 0,
+        deadline:        post.expirationDate
           ? Math.max(0, Math.round((new Date(post.expirationDate) - now) / 86400000))
           : null,
       };

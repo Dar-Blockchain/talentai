@@ -38,6 +38,12 @@ export const STATUS_STYLE: Record<string, { i18nKey: string; bg: string; color: 
   withdrawn:           { i18nKey: "pages.applications.status.withdrawn",           bg: "#F3F4F6", color: "#6B7280" },
 };
 
+const DECISION_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  shortlisted: { bg: "#F0FDF4", color: "#16A34A", label: "Shortlisted" },
+  rejected:    { bg: "#FEF2F2", color: "#DC2626", label: "Rejected" },
+  not_matched: { bg: "#F8FAFC", color: "#64748B", label: "Not Matched" },
+};
+
 // ─── Component ────────────────────────────────────────────────────────────────
 
 export interface ApplicationCardProps {
@@ -111,7 +117,7 @@ const ApplicationCard = memo<ApplicationCardProps>(({
     if (app.postId) router.push(`/company/posts/${app.postId}`);
   }, [app.postId, router]);
 
-  const decisionIsShortlisted = app.recruiterDecision === "shortlisted";
+  const decisionStyle = app.recruiterDecision ? DECISION_STYLE[app.recruiterDecision] : null;
 
   return (
     <>
@@ -145,15 +151,12 @@ const ApplicationCard = memo<ApplicationCardProps>(({
               {t(statusDef.i18nKey)}
             </span>
 
-            {app.recruiterDecision && (
+            {decisionStyle && (
               <span
                 className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                style={{
-                  backgroundColor: decisionIsShortlisted ? "#F0FDF4" : "#FEF2F2",
-                  color:           decisionIsShortlisted ? "#16A34A" : "#DC2626",
-                }}
+                style={{ backgroundColor: decisionStyle.bg, color: decisionStyle.color }}
               >
-                {decisionIsShortlisted ? "Shortlisted" : "Rejected"}
+                {decisionStyle.label}
               </span>
             )}
 
