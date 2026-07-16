@@ -373,6 +373,7 @@
       "shortlisted_chip": "Présélectionné",
       "completed_chip": "Entretien réalisé",
       "cv_match": "Correspondance CV",
+      "interview_score_label": "Score d'entretien",
       "zone6_title": "Conformité & Audit",
       "rgpd_title": "Audit & Conformité RGPD",
       "audit_ready": "Audit-ready",

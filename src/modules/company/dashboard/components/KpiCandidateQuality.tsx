@@ -10,8 +10,8 @@ import { cn } from "@/lib/utils";
 
 const SKEL_WIDTHS = [22, 120, 110, 40, 70] as const;
 
-const CandidateRow = memo<{ c: SourcingCandidate; shortlistedLabel: string; completedLabel: string; cvMatchLabel: string }>(
-  ({ c, shortlistedLabel, completedLabel, cvMatchLabel }) => {
+const CandidateRow = memo<{ c: SourcingCandidate; shortlistedLabel: string; completedLabel: string; cvMatchLabel: string; interviewScoreLabel: string }>(
+  ({ c, shortlistedLabel, completedLabel, cvMatchLabel, interviewScoreLabel }) => {
     const isTop   = c.rank <= 3;
     const isShort = c.status === "shortlisted";
     return (
@@ -24,17 +24,24 @@ const CandidateRow = memo<{ c: SourcingCandidate; shortlistedLabel: string; comp
         <td className="py-2.5 border-b border-slate-100 font-semibold text-[0.8rem] text-slate-700">{c.firstName} {c.lastName}</td>
         <td className="py-2.5 border-b border-slate-100 text-[0.8rem] text-slate-400">{c.postTitle}</td>
         <td className="py-2.5 border-b border-slate-100 text-center">
-          {c.score !== null ? (
-            <span className="inline-flex items-center gap-1">
-              <StarOutlined size={13} color="#F59E0B" />
-              <span className="font-bold text-[0.82rem] text-teal-600">{c.score}</span>
+          {c.score === null && c.matchScore === null ? (
+            <span className="text-[0.82rem] text-slate-400">—</span>
+          ) : (
+            <span className="inline-flex flex-col items-center leading-tight gap-0.5">
+              {c.score !== null && (
+                <span className="inline-flex items-center gap-1" title={interviewScoreLabel}>
+                  <StarOutlined size={13} color="#F59E0B" />
+                  <span className="font-bold text-[0.82rem] text-teal-600">{c.score}%</span>
+                </span>
+              )}
+              {c.matchScore !== null && (
+                <span className="inline-flex items-center gap-1" title={cvMatchLabel}>
+                  <span className="font-bold text-[0.7rem] text-slate-500">{c.matchScore}%</span>
+                  <span className="text-[0.58rem] text-slate-400">{cvMatchLabel}</span>
+                </span>
+              )}
             </span>
-          ) : c.matchScore !== null ? (
-            <span className="inline-flex flex-col items-center leading-tight" title={cvMatchLabel}>
-              <span className="font-bold text-[0.82rem] text-slate-500">{c.matchScore}%</span>
-              <span className="text-[0.58rem] text-slate-400">{cvMatchLabel}</span>
-            </span>
-          ) : <span className="text-[0.82rem] text-slate-400">—</span>}
+          )}
         </td>
         <td className="py-2.5 border-b border-slate-100 text-center">
           <span className="font-semibold text-[0.63rem] px-2 py-0.5 rounded-full" style={isShort ? { background: `${T}12`, color: T } : { background: "#EFF6FF", color: "#2563EB" }}>
@@ -52,11 +59,12 @@ interface Props { data: KpiSourcingData | undefined; loading: boolean }
 const KpiCandidateQuality = memo<Props>(({ data, loading }) => {
   const { t } = useTranslation("dashboard");
 
-  const top10         = data?.top10  ?? [];
-  const shortlisted   = t("pages.kpi.shortlisted_chip");
-  const completed     = t("pages.kpi.completed_chip");
-  const cvMatch       = t("pages.kpi.cv_match");
-  const tableHeaders  = ["#", t("pages.kpi.col_candidate"), t("pages.kpi.col_post"), t("pages.kpi.col_score"), t("pages.kpi.col_statut")];
+  const top10           = data?.top10  ?? [];
+  const shortlisted     = t("pages.kpi.shortlisted_chip");
+  const completed       = t("pages.kpi.completed_chip");
+  const cvMatch         = t("pages.kpi.cv_match");
+  const interviewScore  = t("pages.kpi.interview_score_label", "Interview score");
+  const tableHeaders    = ["#", t("pages.kpi.col_candidate"), t("pages.kpi.col_post"), t("pages.kpi.col_score"), t("pages.kpi.col_statut")];
 
   return (
     <>
@@ -88,7 +96,7 @@ const KpiCandidateQuality = memo<Props>(({ data, loading }) => {
                       ))
                     : top10.length === 0
                     ? <tr><td colSpan={5} className="text-center py-8 text-[0.82rem] text-slate-400">No completed interviews yet</td></tr>
-                    : top10.map((c) => <CandidateRow key={c.rank} c={c} shortlistedLabel={shortlisted} completedLabel={completed} cvMatchLabel={cvMatch} />)}
+                    : top10.map((c) => <CandidateRow key={c.rank} c={c} shortlistedLabel={shortlisted} completedLabel={completed} cvMatchLabel={cvMatch} interviewScoreLabel={interviewScore} />)}
                 </tbody>
               </table>
             </div>

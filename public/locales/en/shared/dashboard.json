@@ -377,6 +377,7 @@
       "shortlisted_chip": "Shortlisted",
       "completed_chip": "Interview done",
       "cv_match": "CV match",
+      "interview_score_label": "Interview score",
       "zone6_title": "Compliance & Audit",
       "rgpd_title": "Audit & GDPR Compliance",
       "audit_ready": "Audit-ready",
