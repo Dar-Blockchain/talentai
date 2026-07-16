@@ -190,6 +190,28 @@ router.get("/company/my/kpi/actions", jobApplicationController.getActionsKPI);
 
 /**
  * @openapi
+ * /job-applications/company/my/kpi/history:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: Zone 1 — recent application history (invited/completed/shortlisted, matched candidates)
+ *     parameters:
+ *       - in: query
+ *         name: postId
+ *         schema: { type: string }
+ *       - in: query
+ *         name: dateFrom
+ *         schema: { type: string, format: date }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 4 }
+ *     responses:
+ *       200:
+ *         description: Recent application history
+ */
+router.get("/company/my/kpi/history", jobApplicationController.getApplicationHistoryKPI);
+
+/**
+ * @openapi
  * /job-applications/company/my/kpi/sourcing:
  *   get:
  *     tags: [Job Applications]

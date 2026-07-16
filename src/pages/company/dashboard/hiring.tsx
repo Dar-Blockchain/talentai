@@ -2,7 +2,7 @@ import React, { memo, useMemo } from "react";
 import { useDashboard } from "@/modules/company/dashboard/hooks/useDashboard";
 import HiringStatCards      from "@/modules/company/dashboard/components/HiringStatCards";
 import KpiFiltersBar        from "@/modules/company/dashboard/components/KpiFiltersBar";
-import KpiActionsToTake     from "@/modules/company/dashboard/components/KpiActionsToTake";
+import KpiApplicationHistory from "@/modules/company/dashboard/components/KpiApplicationHistory";
 import KpiPostsOverview     from "@/modules/company/dashboard/components/KpiPostsOverview";
 import KpiRecruitmentFunnel from "@/modules/company/dashboard/components/KpiRecruitmentFunnel";
 import KpiHiringVelocity    from "@/modules/company/dashboard/components/KpiHiringVelocity";
@@ -18,7 +18,7 @@ const HiringDashboardContent = memo(() => {
   const {
     postId, activeDays,
     statusPage, handlePostChange, handlePeriodChange, handleStatusPageChange,
-    actionsQ, funnelQ, velocityQ, sourcingQ, roiQ, postsQ, postsStatusQ,
+    historyQ, funnelQ, velocityQ, sourcingQ, roiQ, postsQ, postsStatusQ,
     statCardsQ, appMetricsQ,
   } = useDashboard();
 
@@ -42,9 +42,9 @@ const HiringDashboardContent = memo(() => {
           onPostChange={handlePostChange}
           onPeriodChange={handlePeriodChange}
         />
-        <KpiActionsToTake
-          data={actionsQ.data}
-          loading={actionsQ.isLoading}
+        <KpiApplicationHistory
+          data={historyQ.data}
+          loading={historyQ.isLoading}
         />
         <KpiPostsOverview
           data={postsStatusQ.data}

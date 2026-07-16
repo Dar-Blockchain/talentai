@@ -20,6 +20,20 @@ export interface KpiActionsData {
   postsInAlert:      number;
 }
 
+// ── Application history ───────────────────────────────────────────────────────
+
+export interface ApplicationHistoryItem {
+  id:         string;
+  firstName:  string;
+  lastName:   string;
+  postTitle:  string;
+  status:     "applied" | "invited" | "completed" | "shortlisted" | "rejected";
+  matchScore: number | null;
+  date:       string;
+}
+
+export type ApplicationHistoryData = ApplicationHistoryItem[];
+
 // ── Posts status ───────────────────────────────────────────────────────────────
 
 export interface PostStatusRow {

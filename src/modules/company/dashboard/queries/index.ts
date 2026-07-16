@@ -1,16 +1,17 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
 import type { KpiFilterParams, PostsStatusParams } from "../types";
 import {
-  fetchKpiActions, fetchKpiFunnel, fetchKpiVelocity,
+  fetchKpiFunnel, fetchKpiVelocity,
   fetchKpiSourcing, fetchKpiRoi, fetchKpiPostsForFilter,
   fetchKpiPostsStatus, fetchDashboardStats, fetchAppMetrics,
+  fetchKpiHistory,
 } from "../api";
 
 // ─── Query key factory ────────────────────────────────────────────────────────
 
 export const KPI_KEYS = {
   all:         ["kpi"] as const,
-  actions:     (p: KpiFilterParams)     => ["kpi", "actions",     p] as const,
+  history:     (p: KpiFilterParams)     => ["kpi", "history",     p] as const,
   funnel:      (p: KpiFilterParams)     => ["kpi", "funnel",      p] as const,
   velocity:    (p: KpiFilterParams)     => ["kpi", "velocity",    p] as const,
   sourcing:    (p: KpiFilterParams)     => ["kpi", "sourcing",    p] as const,
@@ -23,10 +24,10 @@ export const KPI_KEYS = {
 
 // ─── React Query hooks ────────────────────────────────────────────────────────
 
-export const useKpiActionsQuery = (params: KpiFilterParams) =>
+export const useKpiHistoryQuery = (params: KpiFilterParams) =>
   useQuery({
-    queryKey:  KPI_KEYS.actions(params),
-    queryFn:   () => fetchKpiActions(params),
+    queryKey:  KPI_KEYS.history(params),
+    queryFn:   () => fetchKpiHistory(params),
     staleTime: 60_000,
   });
 

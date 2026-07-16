@@ -616,6 +616,20 @@ module.exports.getActionsKPI = async (req, res) => {
   }
 };
 
+// ========== KPI - APPLICATION HISTORY (Zone 1 replacement) ==========
+module.exports.getApplicationHistoryKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, dateFrom, limit } = req.query;
+    const data = await jobApplicationService.getApplicationHistoryKPI(
+      companyId, postId || null, dateFrom || null, limit ? parseInt(limit, 10) : 4,
+    );
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 module.exports.getPendingShortlistsKPI = async (req, res) => {
   try {
     const companyId = req.user._id;

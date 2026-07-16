@@ -1420,6 +1420,46 @@ module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) 
   }
 };
 
+// ========== KPI - RECENT ACTIVITY (Zone 1 replacement) ==========
+// Last N application events on the site: applied, invited, interview completed,
+// shortlisted, or rejected — whichever is each application's latest change.
+module.exports.getApplicationHistoryKPI = async (companyId, postId = null, dateFrom = null, limit = 4) => {
+  try {
+    const match = { company: companyId, isArchived: false };
+    if (postId)   match.post      = new mongoose.Types.ObjectId(postId);
+    if (dateFrom) match.appliedAt = { $gte: new Date(dateFrom) };
+
+    const apps = await JobApplication.find(match)
+      .sort({ updatedAt: -1 })
+      .limit(limit)
+      .select('profile post status recruiterDecision matchScore updatedAt firstInvitationSentAt')
+      .populate('profile', 'firstName lastName')
+      .populate('post', 'jobDetails')
+      .lean();
+
+    return apps.map((a) => ({
+      id:         String(a._id),
+      firstName:  a.profile?.firstName || 'â€”',
+      lastName:   a.profile?.lastName  || '',
+      postTitle:  a.post?.jobDetails?.title || 'â€”',
+      status:     a.recruiterDecision === 'shortlisted'
+                    ? 'shortlisted'
+                    : a.recruiterDecision === 'rejected'
+                      ? 'rejected'
+                      : a.status === 'interview_completed'
+                        ? 'completed'
+                        : a.firstInvitationSentAt
+                          ? 'invited'
+                          : 'applied',
+      matchScore: a.matchScore ?? null,
+      date:       a.updatedAt,
+    }));
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
 // ========== UPDATE RECRUITER DECISION ==========
 module.exports.updateRecruiterDecision = async (applicationId, decision, rejectionReason = null) => {
   try {
