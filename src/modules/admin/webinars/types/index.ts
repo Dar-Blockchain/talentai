@@ -2,7 +2,7 @@ export interface WebinarQuestion {
   key: string;
   label_fr: string;
   label_en: string;
-  type: "choice" | "scale" | "text" | "select";
+  type: "choice" | "scale" | "text" | "select" | "multiselect";
   options: { key: string; label_fr: string; label_en: string }[];
   required: boolean;
   order: number;
@@ -21,14 +21,21 @@ export interface WebinarStats {
 export interface Webinar {
   _id: string;
   title: string;
+  title_fr: string;
+  title_en: string;
   description: string;
+  description_fr: string;
+  description_en: string;
   date: string | null;
-  status: "draft" | "active" | "archived";
+  end_date: string | null;
+  status: "draft" | "active";
   lang: "fr" | "en" | "both";
   about_fr: string;
   about_en: string;
   webinar_link: string;
   highlights: string[];
+  highlights_fr: string[];
+  highlights_en: string[];
   questions: WebinarQuestion[];
   stats: WebinarStats;
   created_by: string | null;
@@ -78,14 +85,25 @@ export interface WebinarSubmissionsResponse {
 }
 
 export interface WebinarFormValues {
-  title: string;
-  description: string;
+  title_fr: string;
+  title_en: string;
+  description_fr: string;
+  description_en: string;
   about_fr: string;
   about_en: string;
   webinar_link: string;
+  /** Just the calendar day, "YYYY-MM-DD" — the actual start/end clock times
+   * live in `start_time`/`end_time` below. */
   date: string;
-  status: "draft" | "active" | "archived";
-  lang: "fr" | "en" | "both";
-  highlights: string[];
+  /** "HH:mm" — combined with `date` into the full start datetime on save. */
+  start_time: string;
+  /** "HH:mm" — combined with `date` into the full end datetime on save. */
+  end_time: string;
+  status: "draft" | "active";
+  /** "" means not chosen yet — the New Webinar form has no preselected
+   * language until the admin picks one on the Basics step. */
+  lang: "" | "fr" | "en" | "both";
+  highlights_fr: string[];
+  highlights_en: string[];
   questions: WebinarQuestionDraft[];
 }

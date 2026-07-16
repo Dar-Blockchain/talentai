@@ -10,8 +10,8 @@ module.exports = {
       "http://localhost:5173",
       "https://app.talentai.bid"
     ];
-    if (process.env.FRONTEND_URL && !corsOrigins.includes(process.env.FRONTEND_URL)) {
-      corsOrigins.push(process.env.FRONTEND_URL);
+    if (process.env.BASE_URL && !corsOrigins.includes(process.env.BASE_URL)) {
+      corsOrigins.push(process.env.BASE_URL);
     }
 
     io = require('socket.io')(server, {

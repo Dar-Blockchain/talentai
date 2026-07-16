@@ -1,184 +1,173 @@
-import Head from "next/head";
 import { useRouter } from "next/router";
-import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
-import { motion } from "framer-motion";
-import LandingPageLayout from "@/modules/home/shared/components/LandingPageLayout";
-import WebinarSection from "@/modules/home/company/components/WebinarSection";
-import { SITE_URL, OG_IMAGE } from "@/modules/shared/constants";
+import { useCallback, useEffect, useState } from "react";
+import { Fraunces } from "next/font/google";
+import i18n from "@/i18n/config";
+import WebinarHeader from "@/modules/webinar/components/shared/WebinarHeader";
+import WebinarFooter from "@/modules/webinar/components/shared/WebinarFooter";
+import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
+import { WebinarHero } from "@/modules/webinar/components/landing/WebinarHero";
+import { WebinarAbout } from "@/modules/webinar/components/landing/WebinarAbout";
+import { WebinarHowItWorks } from "@/modules/webinar/components/landing/WebinarHowItWorks";
+import { WebinarFAQ } from "@/modules/webinar/components/landing/WebinarFAQ";
+import { WebinarFinalCta } from "@/modules/webinar/components/landing/WebinarFinalCta";
+import { WebinarFunnel } from "@/modules/webinar/components/questionnaire/WebinarFunnel";
+import { usePublicWebinarQuery } from "@/modules/webinar/queries";
+import type { WebinarContact } from "@/modules/webinar/types";
 
-const CANONICAL = `${SITE_URL}/webinar`;
-const BACKEND   = (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000").replace(/\/$/, "");
-const VP   = { once: true, margin: "-40px" };
-const EASE = [0.22, 1, 0.36, 1] as const;
+// Display serif for headlines only — everything else stays on the app's
+// Poppins body font. Distinct pairing on purpose: a characterful serif reads
+// as "designed", not another SaaS-template geometric sans.
+const fraunces = Fraunces({
+  subsets: ["latin"],
+  weight: ["500", "600"],
+  style: ["normal", "italic"],
+  variable: "--font-fraunces",
+});
 
-const STEPS_FR = [
-  { n: "1", title: "Accédez au webinar", desc: "Cliquez sur le bouton d'inscription ci-contre. Aucun compte requis." },
-  { n: "2", title: "Répondez aux questions", desc: "3 minutes de questions ciblées sur votre maturité IA et vos défis recrutement." },
-  { n: "3", title: "L'IA analyse votre profil", desc: "Notre moteur calcule votre score de maturité et identifie vos douleurs clés." },
-  { n: "4", title: "Recevez votre rapport", desc: "Un rapport personnalisé livré directement dans votre boîte email." },
-];
-
-const STEPS_EN = [
-  { n: "1", title: "Access the webinar", desc: "Click the registration button. No account required." },
-  { n: "2", title: "Answer the questions", desc: "3 minutes of targeted questions about your AI maturity and hiring challenges." },
-  { n: "3", title: "AI analyses your profile", desc: "Our engine calculates your maturity score and identifies your key pain points." },
-  { n: "4", title: "Receive your report", desc: "A personalised report delivered directly to your email inbox." },
-];
-
-interface WebinarMeta {
-  about_fr: string;
-  about_en: string;
-  title: string;
-  description: string;
+interface FunnelSeed {
+  contact:      WebinarContact;
+  submissionId: string;
+  consent:      boolean;
+  welcomeBack:  boolean;
 }
 
 const WebinarPage: React.FC = () => {
   const router = useRouter();
-  const { i18n } = useTranslation();
-  const previewId = router.isReady ? (router.query.id as string | undefined) : undefined;
+
+  // "active" is a literal id the backend treats specially on the same
+  // /public/:id route, so previewing a specific webinar (?id=) and showing
+  // the currently active one both go through this one endpoint.
+  const previewId = (router.query.id as string | undefined) || "active";
+  const langParam = (router.query.lang as string)?.toLowerCase();
+
+  const { data: webinar, isLoading: queryLoading } = usePublicWebinarQuery(previewId, router.isReady);
+  const loading = !router.isReady || queryLoading;
+
+  // A single-language webinar (fr or en) always renders in that language —
+  // no switcher, no falling back to the visitor's browser language. Only a
+  // "both" webinar lets the visitor pick, via the header toggle or ?lang=,
+  // and defaults to English until they do.
   const lang: "fr" | "en" =
-    (router.query.lang as string) === "en" || i18n.language?.startsWith("en") ? "en" : "fr";
+    webinar?.lang === "en"
+      ? "en"
+      : webinar?.lang === "fr"
+        ? "fr"
+        : langParam === "fr"
+          ? "fr"
+          : "en";
+  const isEn = lang === "en";
+  const t = i18n.getFixedT(lang, "webinar");
 
-  const steps = lang === "en" ? STEPS_EN : STEPS_FR;
+  const aboutText    = isEn ? webinar?.about_en : webinar?.about_fr;
+  const webinarTitle = (isEn ? webinar?.title_en : webinar?.title_fr) || webinar?.title || "";
+  const webinarDesc  = (isEn ? webinar?.description_en : webinar?.description_fr) || webinar?.description || "";
+  const formattedDate = webinar?.date
+    ? new Date(webinar.date).toLocaleString(isEn ? "en-GB" : "fr-FR", { day: "numeric", month: "long", hour: "2-digit", minute: "2-digit" })
+    : null;
+  const formattedEndTime = webinar?.end_date
+    ? new Date(webinar.end_date).toLocaleTimeString(isEn ? "en-GB" : "fr-FR", { hour: "2-digit", minute: "2-digit" })
+    : null;
+  const durationLabel = (() => {
+    if (!webinar?.date || !webinar?.end_date) return null;
+    const minutes = Math.round((new Date(webinar.end_date).getTime() - new Date(webinar.date).getTime()) / 60000);
+    if (minutes <= 0) return null;
+    const h = Math.floor(minutes / 60);
+    const m = minutes % 60;
+    if (h === 0) return `${m} min`;
+    if (m === 0) return `${h}h`;
+    return `${h}h${m}`;
+  })();
 
-  const [meta, setMeta] = useState<WebinarMeta | null>(null);
+  // ── Questionnaire funnel — entered once the visitor registers below, or
+  // resumed on reload if this device already has an in-progress submission ──
+  const [funnelSeed, setFunnelSeed] = useState<FunnelSeed | null>(null);
+  const inFunnel = !!funnelSeed;
 
   useEffect(() => {
     if (!router.isReady) return;
-    const url = previewId
-      ? `${BACKEND}/webinars/public/${previewId}`
-      : `${BACKEND}/webinars/public/active`;
-    fetch(url)
-      .then(r => r.ok ? r.json() : null)
-      .then(d => {
-        if (d?.data) {
-          setMeta({
-            about_fr:    d.data.about_fr    || "",
-            about_en:    d.data.about_en    || "",
-            title:       d.data.title       || "",
-            description: d.data.description || "",
-          });
-        }
-      })
-      .catch(() => {});
-  }, [previewId, router.isReady]);
+    const saved = localStorage.getItem("webinar_submission_id");
+    if (!saved) return;
+    let contact: WebinarContact = { nom: "", email: "", entreprise: "" };
+    try {
+      const savedContact = sessionStorage.getItem("webinar_contact");
+      if (savedContact) contact = JSON.parse(savedContact);
+    } catch { /* ignore malformed value */ }
+    const consent = sessionStorage.getItem("webinar_consent") === "true";
+    setFunnelSeed({ contact, submissionId: saved, consent, welcomeBack: false });
+  }, [router.isReady]);
 
-  const aboutText    = lang === "en" ? meta?.about_en : meta?.about_fr;
-  const webinarTitle = meta?.title       ?? "";
-  const webinarDesc  = meta?.description ?? "";
+  const handleRegistered = useCallback((submissionId: string, contact: WebinarContact, isReturning: boolean) => {
+    setFunnelSeed({ contact, submissionId, consent: true, welcomeBack: isReturning });
+  }, []);
+
+  const backToLanding = useCallback(() => setFunnelSeed(null), []);
+
+  const showLangSwitch = webinar?.lang === "both";
+  const toggleLang = useCallback(() => {
+    const next = lang === "fr" ? "en" : "fr";
+    router.push({ query: { ...router.query, lang: next } }, undefined, { shallow: true });
+  }, [lang, router]);
 
   return (
     <>
-      <Head>
-        <title>Talent AI — Webinaire gratuit : L'IA en recrutement</title>
-        <meta name="description" content="Rejoignez notre webinaire gratuit et découvrez comment l'IA transforme le recrutement. Session live de 60 minutes avec cas concrets et Q&A en direct." />
-        <link rel="canonical" href={CANONICAL} />
-        <meta property="og:type" content="website" />
-        <meta property="og:url" content={CANONICAL} />
-        <meta property="og:title" content="Talent AI — Webinaire gratuit : L'IA en recrutement" />
-        <meta property="og:description" content="Session live gratuite de 60 min. Cas concrets, Q&A en direct. Inscrivez-vous maintenant." />
-        <meta property="og:image" content={OG_IMAGE} />
-        <meta name="twitter:card" content="summary_large_image" />
-        <meta name="twitter:title" content="Talent AI — Webinaire gratuit : L'IA en recrutement" />
-        <meta name="twitter:image" content={OG_IMAGE} />
-      </Head>
+      <div className={`${fraunces.variable} min-h-screen flex flex-col bg-white`}>
+        <WebinarHeader
+          ctaTargetId={inFunnel ? undefined : "webinar-register"}
+          onBack={inFunnel ? backToLanding : undefined}
+          backLabel={t("page.backToLanding")}
+          lang={lang}
+          onToggleLang={showLangSwitch ? toggleLang : undefined}
+        />
 
-      <LandingPageLayout>
+        <div className="flex-1 flex flex-col">
+          {inFunnel ? (
+            loading ? (
+              <div className="flex-1 flex items-center justify-center">
+                <div className="w-10 h-10 border-2 border-[#6AD39C]/30 border-t-[#10453F] rounded-full animate-spin" />
+              </div>
+            ) : !webinar || webinar.questions.length === 0 ? (
+              <div className="flex-1 flex items-center justify-center">
+                <p className="text-[14px] text-slate-400">{t("page.notFound")}</p>
+              </div>
+            ) : (
+              <WebinarFunnel
+                webinar={webinar} lang={lang}
+                initialContact={funnelSeed.contact}
+                initialSubmissionId={funnelSeed.submissionId}
+                initialConsent={funnelSeed.consent}
+                welcomeBack={funnelSeed.welcomeBack}
+              />
+            )
+          ) : loading ? (
+            <LoadingScreen title={t("page.loading")} />
+          ) : (
+            <>
+              <WebinarHero
+                lang={lang}
+                title={webinarTitle}
+                desc={webinarDesc}
+                formattedDate={formattedDate}
+                formattedEndTime={formattedEndTime}
+                durationLabel={durationLabel}
+                questionsCount={webinar?.questions.length ?? 0}
+                registrations={webinar?.stats?.total_registrations ?? 0}
+                webinarLink={webinar?.webinar_link}
+              />
 
-        {/* ── HERO BAND ── */}
-        <div className="bg-gradient-to-br from-teal-700 via-teal-600 to-emerald-500 text-white">
-          <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-16 md:py-24">
-            <motion.div
-              initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.6, ease: EASE }}
-              className="max-w-[640px]"
-            >
-              <span className="inline-block px-3 py-1 rounded-full bg-white/15 text-[11px] font-bold uppercase tracking-widest mb-5 border border-white/20">
-                {lang === "en" ? "Free · Live · AI-powered" : "Gratuit · Live · IA"}
-              </span>
-              <h1 className="text-[2.6rem] md:text-[3.4rem] font-black leading-[1.07] tracking-tight mb-5">
-                {webinarTitle || (lang === "en"
-                  ? "The free webinar that reveals your AI recruitment readiness"
-                  : "Le webinar gratuit qui révèle votre maturité IA en recrutement")}
-              </h1>
-              {webinarDesc && (
-                <p className="text-[17px] text-white/80 leading-relaxed max-w-[520px]">
-                  {webinarDesc}
-                </p>
-              )}
-            </motion.div>
-          </div>
-        </div>
-
-        {/* ── MAIN CONTENT + STICKY CARD ── */}
-        <div className="bg-slate-50">
-          <div className="max-w-[1200px] mx-auto px-6 md:px-12 py-14 md:py-20">
-            <div className="grid md:grid-cols-[1fr_380px] gap-12 md:gap-16 items-start">
-
-              {/* LEFT — editorial content */}
-              <div>
-
-                {/* What is it — only shown when admin has filled in the text */}
-                {aboutText && (
-                  <motion.section
-                    initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                    viewport={VP} transition={{ duration: 0.5, ease: EASE }}
-                    className="mb-14"
-                  >
-                    <h2 className="text-[1.5rem] font-black text-slate-900 tracking-tight mb-4">
-                      {lang === "en" ? "What is this webinar?" : "C'est quoi ce webinar ?"}
-                    </h2>
-                    <div className="text-[15px] text-slate-600 leading-relaxed whitespace-pre-line">
-                      {aboutText}
-                    </div>
-                  </motion.section>
-                )}
-
-                {/* How it works */}
-                <motion.section
-                  initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }}
-                  viewport={VP} transition={{ duration: 0.5, ease: EASE }}
-                  className="mb-14"
-                >
-                  <h2 className="text-[1.5rem] font-black text-slate-900 tracking-tight mb-6">
-                    {lang === "en" ? "How does it work?" : "Comment ça marche ?"}
-                  </h2>
-                  <div className="space-y-0">
-                    {steps.map((s, i) => (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -12 }} whileInView={{ opacity: 1, x: 0 }}
-                        viewport={VP} transition={{ duration: 0.4, ease: EASE, delay: i * 0.07 }}
-                        className="flex gap-5 pb-7 relative"
-                      >
-                        {i < steps.length - 1 && (
-                          <div className="absolute left-[18px] top-10 bottom-0 w-px bg-teal-100" />
-                        )}
-                        <div className="shrink-0 w-9 h-9 rounded-full bg-teal-600 text-white text-[13px] font-black flex items-center justify-center z-10">
-                          {s.n}
-                        </div>
-                        <div className="pt-1 min-w-0">
-                          <h3 className="text-[15px] font-bold text-slate-900 mb-1">{s.title}</h3>
-                          <p className="text-[13px] text-slate-500 leading-relaxed">{s.desc}</p>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </div>
-                </motion.section>
-
+              {/* ══ Lower content — light canvas, left-aligned with the header/hero ══ */}
+              <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 py-16 md:py-24">
+                <WebinarAbout lang={lang} aboutText={aboutText} highlights={webinar?.highlights} />
+                <WebinarHowItWorks lang={lang} />
+                {/* <WebinarFAQ lang={lang} /> */}
               </div>
 
-              {/* RIGHT — sticky registration card */}
-              <div className="md:sticky md:top-8">
-                <WebinarSection previewId={previewId} routerReady={router.isReady} />
-              </div>
-
-            </div>
-          </div>
+              <WebinarFinalCta webinarId={webinar?._id} lang={lang} loading={loading} onRegistered={handleRegistered} />
+            </>
+          )}
         </div>
 
-      </LandingPageLayout>
+        <WebinarFooter />
+      </div>
     </>
   );
 };

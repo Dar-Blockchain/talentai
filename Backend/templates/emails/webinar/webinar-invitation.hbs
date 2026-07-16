@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{webinarTitle}} — {{#if isEn}}You're invited{{else}}Vous êtes invité(e){{/if}}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#eef2f7;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#eef2f7;padding:40px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:20px;overflow:hidden;box-shadow:0 8px 32px rgba(15,23,42,0.10);">
+
+          <!-- Logo header -->
+          <tr>
+            <td style="background-color:#ffffff;padding:20px 28px;border-bottom:1px solid #E5E7EB;">
+              <img src="cid:logo" alt="TalentAI" height="28" style="display:block;border:0;outline:none;">
+            </td>
+          </tr>
+
+          <!-- Green accent bar -->
+          <tr>
+            <td height="4" bgcolor="#0D9488" style="height:4px;background-color:#0D9488;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <!-- Hero -->
+          <tr>
+            <td style="padding:44px 40px 8px 40px;">
+              <table cellpadding="0" cellspacing="0" style="margin-bottom:16px;">
+                <tr>
+                  <td bgcolor="#ECFDF5" style="background-color:#ECFDF5;border-radius:999px;padding:6px 14px;">
+                    <span style="font-size:11px;font-weight:800;color:#059669;text-transform:uppercase;letter-spacing:1.5px;">
+                      {{#if isEn}}✦ You're invited{{else}}✦ Vous êtes invité(e){{/if}}
+                    </span>
+                  </td>
+                </tr>
+              </table>
+              <h1 style="margin:0 0 14px 0;font-size:28px;font-weight:800;color:#0F172A;line-height:1.25;">
+                {{webinarTitle}}
+              </h1>
+              <p style="margin:0;font-size:15px;color:#64748B;line-height:1.65;">
+                {{#if isEn}}
+                  We'd love to have you join us
+                  {{#if webinarDate}} on <strong style="color:#0F172A;">{{webinarDate}}</strong>{{/if}}.
+                  {{#if meetingUrl}}View the full event page below, or jump straight into the meeting once it starts.{{else}}Reserve your spot below — it only takes a minute.{{/if}}
+                {{else}}
+                  On serait ravis de vous compter parmi nous
+                  {{#if webinarDate}} le <strong style="color:#0F172A;">{{webinarDate}}</strong>{{/if}}.
+                  {{#if meetingUrl}}Consultez la page complète de l'événement ci-dessous, ou accédez directement à la réunion une fois qu'elle commence.{{else}}Réservez votre place ci-dessous — ça prend une minute.{{/if}}
+                {{/if}}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Schedule card -->
+          <tr>
+            <td style="padding:28px 40px 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:14px;">
+                <tr>
+                  <td style="padding:20px 24px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td>
+                          <p style="margin:0;font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:1.2px;">
+                            {{#if isEn}}Date{{else}}Date{{/if}}
+                          </p>
+                          <p style="margin:5px 0 0 0;font-size:15px;font-weight:700;color:#0F172A;">
+                            {{#if webinarDate}}{{webinarDate}}{{else}}—{{/if}}
+                          </p>
+                        </td>
+                        <td align="right">
+                          <p style="margin:0;font-size:10px;font-weight:800;color:#94A3B8;text-transform:uppercase;letter-spacing:1.2px;">
+                            {{#if isEn}}Time{{else}}Heure{{/if}}
+                          </p>
+                          <p style="margin:5px 0 0 0;font-size:15px;font-weight:700;color:#0D9488;white-space:nowrap;">
+                            {{#if webinarTime}}
+                              {{webinarTime}}{{#if webinarEndTime}} – {{webinarEndTime}}{{/if}}
+                            {{else}}
+                              —
+                            {{/if}}
+                          </p>
+                          {{#if webinarDuration}}
+                          <p style="margin:3px 0 0 0;font-size:11px;font-weight:600;color:#94A3B8;">
+                            {{#if isEn}}Duration: {{webinarDuration}}{{else}}Durée : {{webinarDuration}}{{/if}}
+                          </p>
+                          {{/if}}
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTAs — table + bgcolor attribute (not just CSS) so the buttons
+               survive email clients that strip style attributes/gradients -->
+          <tr>
+            <td style="padding:32px 40px 0 40px;">
+              <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="{{#if meetingUrl}}52%{{else}}100%{{/if}}" bgcolor="#0D9488" align="center" style="background-color:#0D9488;border-radius:12px;{{#if meetingUrl}}padding-right:6px;{{/if}}">
+                    <a href="{{#if meetingUrl}}{{meetingUrl}}{{else}}{{registerUrl}}{{/if}}" style="display:block;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:16px 8px;letter-spacing:0.2px;font-family:'Segoe UI',Arial,sans-serif;">
+                      {{#if meetingUrl}}{{#if isEn}}Join meeting{{else}}Rejoindre{{/if}}{{else}}{{#if isEn}}View event page →{{else}}Voir la page de l'événement →{{/if}}{{/if}}
+                    </a>
+                  </td>
+                  {{#if meetingUrl}}
+                  <td width="4%">&nbsp;</td>
+                  <td width="44%" bgcolor="#ffffff" align="center" style="background-color:#ffffff;border:2px solid #0D9488;border-radius:12px;">
+                    <a href="{{registerUrl}}" style="display:block;color:#0D9488;text-decoration:none;font-size:15px;font-weight:700;padding:14px 8px;letter-spacing:0.2px;font-family:'Segoe UI',Arial,sans-serif;">
+                      {{#if isEn}}Event page{{else}}Page événement{{/if}}
+                    </a>
+                  </td>
+                  {{/if}}
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          {{#if meetingUrl}}
+          <!-- Meeting link fallback (touch targets can wrap on small clients) -->
+          <tr>
+            <td style="padding:14px 40px 0 40px;text-align:center;">
+              <p style="margin:0;font-size:11.5px;color:#94A3B8;word-break:break-all;">
+                {{#if isEn}}Direct meeting link:{{else}}Lien direct de la réunion :{{/if}}
+                <a href="{{meetingUrl}}" style="color:#0D9488;text-decoration:underline;">{{meetingUrl}}</a>
+              </p>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- Note -->
+          <tr>
+            <td style="padding:20px 40px 0 40px;text-align:center;">
+              <p style="margin:0;font-size:12px;color:#94A3B8;line-height:1.5;">
+                {{#if meetingUrl}}
+                  {{#if isEn}}The event page has the full agenda and reminders — the meeting link only becomes active at the scheduled time.{{else}}La page de l'événement contient l'agenda complet et les rappels — le lien de réunion ne s'active qu'à l'heure prévue.{{/if}}
+                {{else}}
+                  {{#if isEn}}Registration takes less than a minute — no cost, no obligation.{{else}}L'inscription prend moins d'une minute — gratuit, sans engagement.{{/if}}
+                {{/if}}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Divider -->
+          <tr>
+            <td style="padding:32px 40px 0 40px;">
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr><td height="1" bgcolor="#F1F5F9" style="height:1px;background-color:#F1F5F9;font-size:0;line-height:0;">&nbsp;</td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:24px 40px 32px 40px;text-align:center;">
+              <p style="margin:0 0 4px 0;font-size:12px;color:#94A3B8;">{{#if isEn}}TalentAI · Confidential data · No spam{{else}}TalentAI · Données confidentielles · Aucun spam{{/if}}</p>
+              <p style="margin:0;font-size:11px;color:#CBD5E1;">{{#if isEn}}© {{year}} TalentAI. All rights reserved.{{else}}© {{year}} TalentAI. Tous droits réservés.{{/if}}</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

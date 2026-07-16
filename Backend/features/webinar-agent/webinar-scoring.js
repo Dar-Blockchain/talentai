@@ -46,20 +46,25 @@ async function buildQABlock(webinarId, rawAnswers, lang = "fr") {
       .sort((a, b) => a.order - b.order)
       .flatMap(q => {
         const raw = rawAnswers[q.key];
-        if (raw === undefined || raw === null || raw === "") return [];
+        const isEmptyArray = Array.isArray(raw) && raw.length === 0;
+        if (raw === undefined || raw === null || raw === "" || isEmptyArray) return [];
 
         const label = (lang === "en" ? q.label_en : q.label_fr) || q.label_fr || q.label_en;
+
+        const labelForKey = (key) => {
+          const opt = q.options?.find(o => o.key === key);
+          return opt ? `${lang === "en" ? opt.label_en : opt.label_fr} [key: ${key}]` : String(key);
+        };
 
         let answer;
         if (q.type === "scale") {
           answer = `${raw}/5`;
         } else if (q.type === "text") {
           answer = String(raw).trim().slice(0, 600);
+        } else if (Array.isArray(raw)) {
+          answer = raw.map(labelForKey).join(", ");
         } else {
-          const opt = q.options?.find(o => o.key === raw);
-          answer = opt
-            ? `${lang === "en" ? opt.label_en : opt.label_fr} [key: ${raw}]`
-            : String(raw);
+          answer = labelForKey(raw);
         }
 
         return [`• ${label}\n  → ${answer}`];

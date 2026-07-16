@@ -26,6 +26,7 @@ const BrandLeftPanel: React.FC<Props> = ({ tKey, flex = "0 0 45%" }) => {
             width={148}
             height={36}
             className="h-9 w-auto object-contain"
+            priority
           />
         </NextLink>
       </div>

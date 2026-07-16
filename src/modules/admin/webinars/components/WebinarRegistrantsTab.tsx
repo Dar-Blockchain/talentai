@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Dialog, DialogContent, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -17,26 +17,28 @@ import {
 import { useWebinarSubmissionsQuery } from "../queries";
 import type { WebinarSubmission, Webinar } from "../types";
 import { ADMIN_ACCENT } from "@/modules/admin/shared";
+import { formatAnswerDisplay } from "../utils/formatAnswer";
 
-// ── Tier badge ────────────────────────────────────────────────────────────────
+// The admin dashboard is English-only, independent of whatever language the
+// webinar itself was authored in — these labels are display-only chrome.
 const TIER_META: Record<string, { bg: string; text: string; border: string; label: string }> = {
-  A: { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0", label: "Tier A — Priorité haute" },
-  B: { bg: "#EEF2FF", text: "#4338CA", border: "#C7D2FE", label: "Tier B — Bon prospect" },
-  C: { bg: "#FFFBEB", text: "#B45309", border: "#FDE68A", label: "Tier C — À nurturer" },
-  D: { bg: "#F8FAFC", text: "#64748B", border: "#E2E8F0", label: "Tier D — Hors cible" },
+  A: { bg: "#F0FDF4", text: "#15803D", border: "#BBF7D0", label: "Tier A — High priority" },
+  B: { bg: "#EEF2FF", text: "#4338CA", border: "#C7D2FE", label: "Tier B — Good prospect" },
+  C: { bg: "#FFFBEB", text: "#B45309", border: "#FDE68A", label: "Tier C — To nurture" },
+  D: { bg: "#F8FAFC", text: "#64748B", border: "#E2E8F0", label: "Tier D — Out of scope" },
 };
 
 const ICP_META: Record<string, { label: string; color: string }> = {
-  ok:     { label: "ICP ✓",    color: "#15803D" },
-  faible: { label: "ICP ~",    color: "#B45309" },
-  hors:   { label: "Hors ICP", color: "#DC2626" },
+  ok: { label: "ICP ✓", color: "#15803D" },
+  faible: { label: "ICP ~", color: "#B45309" },
+  hors: { label: "Off ICP", color: "#DC2626" },
 };
 
 const THESE_META: Record<string, string> = {
-  v1:          "Vitesse & efficacité",
-  v2:          "Qualité & précision",
-  v3:          "Confiance & preuve",
-  indetermine: "Indéterminé",
+  v1: "Speed & efficiency",
+  v2: "Quality & precision",
+  v3: "Trust & proof",
+  indetermine: "Undetermined",
 };
 
 function TierBadge({ tier }: { tier?: string }) {
@@ -64,15 +66,17 @@ function ScoreBar({ value, color, label }: { value: number; color: string; label
   );
 }
 
-// ── Row detail drawer ─────────────────────────────────────────────────────────
+// ── Row + detail popup ─────────────────────────────────────────────────────────
+const LOCALE = "en-GB";
+
 function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webinar }) {
   const [open, setOpen] = useState(false);
   const nom    = sub.contact?.nom   || "—";
   const email  = sub.contact?.email || "—";
   const co     = sub.contact?.entreprise;
   const d      = new Date(sub.createdAt);
-  const date   = d.toLocaleDateString("fr-FR",  { day: "numeric", month: "short", year: "numeric" });
-  const time   = d.toLocaleTimeString("fr-FR",  { hour: "2-digit", minute: "2-digit" });
+  const date   = d.toLocaleDateString(LOCALE, { day: "numeric", month: "short", year: "numeric" });
+  const time   = d.toLocaleTimeString(LOCALE, { hour: "2-digit", minute: "2-digit" });
   const mia    = sub.scoring?.maturite_ia;
   const pain   = sub.scoring?.intensite_pain;
   const ready  = sub.scoring?.readiness_score;
@@ -139,10 +143,11 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
         </div>
       </div>
 
-      {/* Detail dialog */}
+      {/* Detail popup — contact + AI scoring + their actual answers, together */}
       <Dialog open={open} onOpenChange={(next) => { if (!next) setOpen(false); }}>
       <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden" style={{ borderRadius: "16px" }}>
         <div className="flex items-center justify-between px-5 pb-2.5 pt-4 border-b border-slate-100 font-bold text-[0.95rem]">
+          <DialogTitle asChild>
           <span className="flex items-center gap-2 flex-wrap">
             <span>{nom}</span>
             {sub.scoring?.tier && <TierBadge tier={sub.scoring.tier} />}
@@ -155,6 +160,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
               ? <Badge className="h-[18px] rounded-full border-transparent bg-emerald-50 px-2 text-[10px] font-bold text-emerald-700">Completed</Badge>
               : <Badge variant="outline" className="h-[18px] rounded-full border-transparent bg-slate-100 px-2 text-[10px] font-bold text-slate-500">In progress</Badge>}
           </span>
+          </DialogTitle>
           <Button variant="ghost" onClick={() => setOpen(false)} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
             <CloseIcon size={18} />
           </Button>
@@ -165,9 +171,9 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
           <div className="px-5 py-4 space-y-1 border-b border-slate-100">
             <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-2">Contact</p>
             <p className="text-[13px] text-slate-700"><span className="text-slate-400 w-24 inline-block">Email</span>{email}</p>
-            {co && <p className="text-[13px] text-slate-700"><span className="text-slate-400 w-24 inline-block">Entreprise</span>{co}</p>}
-            <p className="text-[13px] text-slate-700"><span className="text-slate-400 w-24 inline-block">Langue</span>{sub.lang?.toUpperCase()}</p>
-            <p className="text-[13px] text-slate-700"><span className="text-slate-400 w-24 inline-block">Inscrit le</span>{date} à {time}</p>
+            {co && <p className="text-[13px] text-slate-700"><span className="text-slate-400 w-24 inline-block">Company</span>{co}</p>}
+            <p className="text-[13px] text-slate-700"><span className="text-slate-400 w-24 inline-block">Language</span>{sub.lang?.toUpperCase()}</p>
+            <p className="text-[13px] text-slate-700"><span className="text-slate-400 w-24 inline-block">Registered on</span>{date} at {time}</p>
             {sub.source?.utm_source && (
               <p className="text-[13px] text-slate-700"><span className="text-slate-400 w-24 inline-block">Source</span>{sub.source.utm_source}</p>
             )}
@@ -176,7 +182,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
           {/* Scores */}
           {sub.scoring && (
             <div className="px-5 py-4 border-b border-slate-100">
-              <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-3">Scores IA</p>
+              <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-3">AI Scores</p>
 
               {/* Tags row */}
               <div className="flex flex-wrap gap-2 mb-4">
@@ -193,9 +199,9 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
               </div>
 
               <div className="space-y-3">
-                {mia   != null && <ScoreBar value={mia}   color={mColor}    label="Connaissance / Maturité" />}
-                {pain  != null && <ScoreBar value={pain}  color="#6366F1"   label="Intensité Pain / Engagement" />}
-                {ready != null && <ScoreBar value={ready} color="#0D9488"   label="Readiness — Disposition à agir" />}
+                {mia   != null && <ScoreBar value={mia}   color={mColor}    label="Knowledge / Maturity" />}
+                {pain  != null && <ScoreBar value={pain}  color="#6366F1"   label="Pain intensity / Engagement" />}
+                {ready != null && <ScoreBar value={ready} color="#0D9488"   label="Readiness — Willingness to act" />}
               </div>
             </div>
           )}
@@ -203,13 +209,13 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
           {/* AI insights */}
           {(sub.scoring?.key_insight || sub.scoring?.main_pain || sub.scoring?.recommended_action) && (
             <div className="px-5 py-4 border-b border-slate-100 space-y-3">
-              <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400">Analyse IA</p>
+              <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400">AI Analysis</p>
 
               {sub.scoring?.key_insight && (
                 <div className="flex gap-2.5">
                   <InsightIcon size={16} color={ADMIN_ACCENT} className="mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Insight clé</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Key insight</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed">{sub.scoring.key_insight}</p>
                   </div>
                 </div>
@@ -219,7 +225,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                 <div className="flex gap-2.5">
                   <BlockerIcon size={16} color="#EF4444" className="mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Douleur principale</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Main pain point</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed">{sub.scoring.main_pain}</p>
                   </div>
                 </div>
@@ -229,7 +235,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                 <div className="flex gap-2.5">
                   <ReadinessIcon size={16} color="#0D9488" className="mt-0.5 shrink-0" />
                   <div>
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Action recommandée</p>
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-0.5">Recommended action</p>
                     <p className="text-[13px] text-slate-700 leading-relaxed font-medium">{sub.scoring.recommended_action}</p>
                   </div>
                 </div>
@@ -245,7 +251,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <StrengthIcon size={13} color="#10B981" />
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Points forts</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Strengths</p>
                     </div>
                     <ul className="space-y-1.5">
                       {sub.scoring!.strengths!.map((s, i) => (
@@ -261,7 +267,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                   <div>
                     <div className="flex items-center gap-1.5 mb-2">
                       <BlockerIcon size={13} color="#F59E0B" />
-                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Freins</p>
+                      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Blockers</p>
                     </div>
                     <ul className="space-y-1.5">
                       {sub.scoring!.blockers!.map((b, i) => (
@@ -277,10 +283,11 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
             </div>
           )}
 
-          {/* Answers */}
+          {/* Answers — the admin dashboard is English-only, so these show in
+              English regardless of the language the webinar was authored in. */}
           {sub.answers && Object.keys(sub.answers).length > 0 && (
             <div className="px-5 py-4">
-              <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-3">Réponses</p>
+              <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-3">Answers</p>
               <div className="space-y-2.5">
                 {webinar.questions
                   .slice()
@@ -288,17 +295,13 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
                   .filter(q => (sub.answers as Record<string, unknown>)[q.key] !== undefined)
                   .map((q, i) => {
                     const raw = (sub.answers as Record<string, unknown>)[q.key];
-                    const opt = q.options.find(o => o.key === raw);
-                    const display = q.type === "scale"
-                      ? `${raw}/5`
-                      : opt
-                        ? opt.label_fr
-                        : String(raw ?? "").slice(0, 120);
+                    const qLabel  = q.label_en || q.label_fr;
+                    const display = formatAnswerDisplay(q, raw).slice(0, 120);
                     return (
                       <div key={q.key} className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2 flex-1 min-w-0">
                           <span className="mt-0.5 w-4 h-4 rounded text-[9px] font-black flex items-center justify-center shrink-0 bg-teal-50 text-teal-600">{i + 1}</span>
-                          <p className="text-[12px] text-slate-500 leading-snug">{q.label_fr}</p>
+                          <p className="text-[12px] text-slate-500 leading-snug">{qLabel}</p>
                         </div>
                         <span className="shrink-0 px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 text-[11px] font-semibold max-w-[160px] text-right leading-snug">
                           {display}
@@ -316,36 +319,31 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
   );
 }
 
-// ── Main dialog ───────────────────────────────────────────────────────────────
-interface Props { webinar: Webinar | null; open: boolean; onClose: () => void; }
+// ── Tab body ─────────────────────────────────────────────────────────────────
+const FILTER_LABELS: Record<"all" | "completed" | "pending", string> = {
+  all: "All",
+  completed: "✓ Completed",
+  pending: "⌛ In progress",
+};
 
-const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) => {
+export function WebinarRegistrantsTab({ webinar }: { webinar: Webinar }) {
   const [filter, setFilter] = useState<"all" | "completed" | "pending">("all");
 
   const completed = filter === "all" ? undefined : filter === "completed";
-  const { data, isLoading } = useWebinarSubmissionsQuery(
-    webinar?._id ?? "",
-    { limit: 200, completed },
-  );
+  const { data, isLoading } = useWebinarSubmissionsQuery(webinar._id, { limit: 200, completed });
 
   const submissions = data?.data ?? [];
   const total = data?.total ?? 0;
 
-  if (!webinar) return null;
-
   return (
-    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
-    <DialogContent showCloseButton={false} className="sm:max-w-2xl p-0 gap-0 flex flex-col max-h-[90vh] overflow-hidden" style={{ borderRadius: "16px" }}>
-      <div className="flex items-center justify-between px-5 pb-1.5 pt-4 border-b border-slate-100 font-bold text-base">
-        <div className="flex items-center gap-3">
-          <span>Registrants — {webinar.title}</span>
+    <div className="rounded-xl border border-slate-100 bg-white overflow-hidden">
+      <div className="flex items-center justify-between px-5 py-3 border-b border-slate-100">
+        <span className="flex items-center gap-2 font-bold text-[0.95rem] text-slate-900">
+          Registrants
           <span className="px-2.5 py-0.5 rounded-full bg-teal-50 text-teal-700 text-[12px] font-bold border border-teal-100">
             {total}
           </span>
-        </div>
-        <Button variant="ghost" onClick={onClose} className="p-1 h-auto rounded-lg hover:bg-slate-100 text-slate-400">
-          <CloseIcon size={18} />
-        </Button>
+        </span>
       </div>
 
       {/* Filter tabs */}
@@ -356,7 +354,7 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
               ${filter === f
                 ? "bg-teal-600 text-white border-teal-600"
                 : "bg-white text-slate-600 border-slate-200 hover:border-teal-300"}`}>
-            {f === "all" ? "Tous" : f === "completed" ? "✓ Complétés" : "⌛ En cours"}
+            {FILTER_LABELS[f]}
           </button>
         ))}
       </div>
@@ -365,14 +363,14 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
       <div className="grid grid-cols-[1fr_140px_80px_80px_60px] gap-3 items-center px-5 py-2 bg-slate-50 border-b border-slate-100">
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">Contact</span>
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 text-right">Date</span>
-        <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">Maîtrise</span>
+        <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">Mastery</span>
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400">Pain</span>
         <span className="text-[11px] font-bold uppercase tracking-[1.2px] text-slate-400 text-right">
           <ScoreIcon size={13} />
         </span>
       </div>
 
-      <div className="overflow-y-auto flex-1">
+      <div>
         {isLoading ? (
           <div className="flex justify-center py-16">
             <Spinner className="size-7" style={{ color: ADMIN_ACCENT }} />
@@ -388,9 +386,8 @@ const WebinarSubmissionsDialog: React.FC<Props> = ({ webinar, open, onClose }) =
           ))
         )}
       </div>
-    </DialogContent>
-    </Dialog>
+    </div>
   );
-};
+}
 
-export default WebinarSubmissionsDialog;
+export default WebinarRegistrantsTab;

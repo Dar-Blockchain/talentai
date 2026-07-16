@@ -48,13 +48,15 @@ import subscriptionEn from '../../public/locales/en/modules/company/subscription
 import subscriptionFr from '../../public/locales/fr/modules/company/subscription.json';
 import candidateEn from '../../public/locales/en/modules/candidates/candidate.json';
 import candidateFr from '../../public/locales/fr/modules/candidates/candidate.json';
+import webinarEn from '../../public/locales/en/modules/webinar/webinar.json';
+import webinarFr from '../../public/locales/fr/modules/webinar/webinar.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 export const LANGUAGE_COOKIE = 'talentai_lang';
 
-export const NAMESPACES = ['common', 'auth', 'dashboard', 'posts', 'interview', 'home', 'legal'] as const;
+export const NAMESPACES = ['common', 'auth', 'dashboard', 'posts', 'interview', 'home', 'legal', 'webinar'] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
 // RTL languages — extend this list when Arabic is added: ['ar']
@@ -130,6 +132,7 @@ const resources: InitOptions['resources'] = {
     'modules/interview/apply': interviewApplyEn,
     'modules/interview/skill-interview': skillInterviewEn,
     'modules/interview/campaign-interview': campaignInterviewEn,
+    webinar: webinarEn,
     dashboard: mergeDashboardPageBundles(
       dashboardEn as any,
       employeesEn,
@@ -156,6 +159,7 @@ const resources: InitOptions['resources'] = {
     'modules/interview/apply': interviewApplyFr,
     'modules/interview/skill-interview': skillInterviewFr,
     'modules/interview/campaign-interview': campaignInterviewFr,
+    webinar: webinarFr,
     dashboard: mergeDashboardPageBundles(
       dashboardFr as any,
       employeesFr,
