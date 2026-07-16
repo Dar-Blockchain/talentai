@@ -1,6 +1,6 @@
 import React, { memo, useMemo } from "react";
 import { useDashboard } from "@/modules/company/dashboard/hooks/useDashboard";
-import KpiStatCards         from "@/modules/company/dashboard/components/KpiStatCards";
+import HiringStatCards      from "@/modules/company/dashboard/components/HiringStatCards";
 import KpiFiltersBar        from "@/modules/company/dashboard/components/KpiFiltersBar";
 import KpiActionsToTake     from "@/modules/company/dashboard/components/KpiActionsToTake";
 import KpiPostsOverview     from "@/modules/company/dashboard/components/KpiPostsOverview";
@@ -13,7 +13,7 @@ import type { NextPageWithLayout } from "@/pages/_app";
 
 const EMPTY_POSTS: never[] = [];
 
-const CompanyDashboardContent = memo(() => {
+const HiringDashboardContent = memo(() => {
 
   const {
     postId, activeDays,
@@ -28,7 +28,7 @@ const CompanyDashboardContent = memo(() => {
 
   return (
       <div className="max-w-[1440px] mx-auto">
-        <KpiStatCards />
+        <HiringStatCards />
         <KpiFiltersBar
           postId={postId}
           activeDays={activeDays}
@@ -65,9 +65,9 @@ const CompanyDashboardContent = memo(() => {
       </div>
   );
 });
-CompanyDashboardContent.displayName = "CompanyDashboardContent";
+HiringDashboardContent.displayName = "HiringDashboardContent";
 
-const CompanyDashboard: NextPageWithLayout = () => <CompanyDashboardContent />;
-CompanyDashboard.getLayout = getDashboardLayout;
+const HiringDashboard: NextPageWithLayout = () => <HiringDashboardContent />;
+HiringDashboard.getLayout = getDashboardLayout;
 
-export default CompanyDashboard;
+export default HiringDashboard;
