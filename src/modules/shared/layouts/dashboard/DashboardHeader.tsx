@@ -44,7 +44,8 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen }) => {
               alt="TalentAI"
               width={130}
               height={36}
-              className="object-contain"
+              className="h-9 w-auto object-contain"
+              priority
             />
           </Link>
         )}

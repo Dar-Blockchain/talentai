@@ -32,7 +32,7 @@ import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
-import { validateEmail, emailKeyDownGuard } from "@/lib/validation/email";
+import { validateEmail } from "@/lib/validation/email";
 
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
@@ -496,7 +496,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
                           setRoleError("");
                           setApiError("");
                         }}
-                        onKeyDown={emailKeyDownGuard}
                         aria-invalid={!!signinEmailError}
                         className={cn(
                           "pl-9 h-10 text-sm font-sans",
@@ -613,7 +612,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
                       value={reg.email}
                       disabled={loading}
                       onChange={updateReg("email")}
-                      onKeyDown={emailKeyDownGuard}
                       aria-invalid={!!regErrors.email}
                       className={cn(
                         "pl-9 h-10 text-sm font-sans",

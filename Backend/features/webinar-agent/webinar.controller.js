@@ -48,11 +48,6 @@ exports.verify = handle(async (req, res) => {
   res.json({ success: true, data: doc });
 }, 400);
 
-exports.archive = handle(async (req, res) => {
-  const doc = await service.archiveWebinar(req.params.id);
-  res.json({ success: true, data: doc });
-}, 400);
-
 exports.listSubmissions = handle(async (req, res) => {
   const { page = 1, limit = 50, completed } = req.query;
   const result = await service.listSubmissions({
@@ -68,7 +63,7 @@ exports.sendLinkReminder = handle(async (req, res) => {
   res.json({ success: true, data: result });
 }, 400);
 
-exports.refreshStats = handle(async (req, res) => {
-  const doc = await service.refreshStats(req.params.id);
-  res.json({ success: true, data: doc });
+exports.invite = handle(async (req, res) => {
+  const result = await service.inviteToWebinar(req.params.id, req.body.emails);
+  res.json({ success: true, data: result });
 }, 400);

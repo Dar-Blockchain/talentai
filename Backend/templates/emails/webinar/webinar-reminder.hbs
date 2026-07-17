@@ -20,7 +20,7 @@
 
           <!-- Green accent bar -->
           <tr>
-            <td style="height:4px;background:linear-gradient(90deg,#0D9488,#6AD39C);"></td>
+            <td height="4" bgcolor="#0D9488" style="height:4px;background-color:#0D9488;font-size:0;line-height:0;">&nbsp;</td>
           </tr>
 
           <!-- Hero -->
@@ -71,7 +71,14 @@
                           <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">
                             {{#if isEn}}Time{{else}}Heure{{/if}}
                           </p>
-                          <p style="margin:4px 0 0 0;font-size:20px;font-weight:900;color:#0D9488;">{{webinarTime}}</p>
+                          <p style="margin:4px 0 0 0;font-size:20px;font-weight:900;color:#0D9488;white-space:nowrap;">
+                            {{webinarTime}}{{#if webinarEndTime}} – {{webinarEndTime}}{{/if}}
+                          </p>
+                          {{#if webinarDuration}}
+                          <p style="margin:3px 0 0 0;font-size:11px;font-weight:600;color:#94A3B8;">
+                            {{#if isEn}}Duration: {{webinarDuration}}{{else}}Durée : {{webinarDuration}}{{/if}}
+                          </p>
+                          {{/if}}
                         </td>
                         {{/if}}
                       </tr>
@@ -82,29 +89,39 @@
             </td>
           </tr>
 
-          <!-- CTA -->
+          <!-- CTA — only shown once the admin has set the meeting link. Table
+               + bgcolor attribute (not just CSS) so the button survives email
+               clients that strip style attributes/gradients -->
+          {{#if webinarUrl}}
           <tr>
             <td style="padding:32px 36px 0 36px;text-align:center;">
-              <a href="{{webinarUrl}}" style="display:inline-block;background:linear-gradient(135deg,#0D9488,#6AD39C);color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:16px 40px;border-radius:12px;letter-spacing:0.3px;">
-                {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
-              </a>
+              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+                <tr>
+                  <td bgcolor="#0D9488" align="center" style="background-color:#0D9488;border-radius:12px;">
+                    <a href="{{webinarUrl}}" style="display:inline-block;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:16px 40px;letter-spacing:0.3px;font-family:'Segoe UI',Arial,sans-serif;">
+                      {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
+                    </a>
+                  </td>
+                </tr>
+              </table>
             </td>
           </tr>
 
           <!-- Note -->
           <tr>
-            <td style="padding:16px 36px 0 36px;text-align:center;">
+            <td style="padding:16px 36px 24px 36px;text-align:center;">
               <p style="margin:0;font-size:12px;color:#94A3B8;">
                 {{#if isEn}}Keep this link handy — it gives you direct access to the live session.{{else}}Gardez ce lien à portée — il vous donne accès direct à la session en direct.{{/if}}
               </p>
             </td>
           </tr>
+          {{/if}}
 
           <!-- Footer -->
           <tr>
             <td style="padding:32px 36px;text-align:center;border-top:1px solid #F1F5F9;margin-top:28px;">
-              <p style="margin:0 0 4px 0;font-size:12px;color:#94A3B8;">TalentAI · Données confidentielles · Aucun spam</p>
-              <p style="margin:0;font-size:11px;color:#CBD5E1;">© {{year}} TalentAI. Tous droits réservés.</p>
+              <p style="margin:0 0 4px 0;font-size:12px;color:#94A3B8;">{{#if isEn}}TalentAI · Confidential data · No spam{{else}}TalentAI · Données confidentielles · Aucun spam{{/if}}</p>
+              <p style="margin:0;font-size:11px;color:#CBD5E1;">{{#if isEn}}© {{year}} TalentAI. All rights reserved.{{else}}© {{year}} TalentAI. Tous droits réservés.{{/if}}</p>
             </td>
           </tr>
 

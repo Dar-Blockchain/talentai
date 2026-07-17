@@ -10,7 +10,7 @@ const { sendCompanyInvitation } = require("../../utils/email.service");
 // Constants
 const INVITATION_EXPIRATION_TIME = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
 const INVITATION_EXPIRATION_SECONDS = 2 * 24 * 60 * 60; // 2 days in seconds for JWT
-const FRONTEND_BASE_URL = process.env.FRONTEND_URL || "https://app.talentai.bid";
+const FRONTEND_BASE_URL = process.env.BASE_URL || "https://app.talentai.bid";
 const JWT_SECRET = process.env.INVITATION_JWT_SECRET || "your-secret-key-change-in-production";
 
 /**

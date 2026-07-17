@@ -311,13 +311,6 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
   const existingApp = await JobApplication.findOne({ profile: candidateProfile._id, post: postId }).select("isWithdrawn").lean();
   if (existingApp?.isWithdrawn) return { status: "withdrawn", meta: { jobTitle: post.jobDetails?.title || "" } };
 
-  // Record visit as a job application (idempotent — 409 on repeat visits is expected)
-  jobApplicationService.createJobApplication({
-    profile: candidateProfile._id,
-    post: postId,
-    company: post.user,
-  }).catch(() => {});
-
   const completed = await PostInterviewAssessment.exists({ candidate: candidateId, post: postId, completed: true });
   if (completed) return { status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } };
 

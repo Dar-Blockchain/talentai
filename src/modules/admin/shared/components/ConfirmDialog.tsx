@@ -1,5 +1,5 @@
 import React from 'react';
-import { Dialog, DialogContent } from '@/modules/shared/ui/shadcn/dialog';
+import { Dialog, DialogContent, DialogTitle } from '@/modules/shared/ui/shadcn/dialog';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import { AlertTriangle } from 'lucide-react';
 import { ADMIN_ACCENT, ADMIN_DANGER, ADMIN_RADIUS } from '../theme';
@@ -36,7 +36,9 @@ const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
             <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: tintBg }}>
               <AlertTriangle size={20} color={accent} />
             </div>
-            <h2 className="text-[1.05rem] font-semibold text-slate-900">{title}</h2>
+            <DialogTitle asChild>
+              <h2 className="text-[1.05rem] font-semibold text-slate-900">{title}</h2>
+            </DialogTitle>
           </div>
         </div>
 

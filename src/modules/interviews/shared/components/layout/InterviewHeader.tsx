@@ -23,7 +23,7 @@ const InterviewHeader: React.FC = () => {
           alt="TalentAI"
           width={130}
           height={34}
-          style={{ objectFit: 'contain' }}
+          style={{ objectFit: 'contain', height: 34, width: 'auto' }}
           priority
         />
       </Link>
