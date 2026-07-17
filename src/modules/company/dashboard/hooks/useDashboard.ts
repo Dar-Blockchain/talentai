@@ -4,8 +4,10 @@ import {
   useKpiSourcingQuery, useKpiRoiQuery, useKpiPostsQuery,
   useKpiPostsStatusQuery, useKpiStatCardsQuery, useKpiAppMetricsQuery,
 } from "../queries";
+import type { PostsSortColumn } from "../types";
 
-const PAGE_SIZE = 4;
+export const POSTS_PAGE_SIZE = 4;
+const PAGE_SIZE = POSTS_PAGE_SIZE;
 
 export const useDashboard = () => {
   const [postId,     setPostId]     = useState<string>("");
@@ -13,14 +15,24 @@ export const useDashboard = () => {
   const [activeDays, setActiveDays] = useState<number | null>(null);
   const [statusPage, setStatusPage] = useState(1);
 
+  // Posts Overview — clicking a column header cycles its sort (asc → desc →
+  // none). Only one column is ever sorted at a time.
+  const [sortBy,  setSortBy]  = useState<PostsSortColumn | "">("");
+  const [sortDir, setSortDir] = useState<"" | "asc" | "desc">("");
+
   const filterParams = useMemo(
     () => ({ ...(postId   ? { postId }   : {}), ...(dateFrom ? { dateFrom } : {}) }),
     [postId, dateFrom],
   );
 
   const statusParams = useMemo(
-    () => ({ ...filterParams, page: statusPage, limit: PAGE_SIZE }),
-    [filterParams, statusPage],
+    () => ({
+      ...filterParams,
+      page: statusPage,
+      limit: PAGE_SIZE,
+      ...(sortBy && sortDir ? { sortBy, sortDir } : {}),
+    }),
+    [filterParams, statusPage, sortBy, sortDir],
   );
 
   const historyQ     = useKpiHistoryQuery(filterParams);
@@ -51,13 +63,31 @@ export const useDashboard = () => {
 
   const handleStatusPageChange = useCallback((page: number) => setStatusPage(page), []);
 
+  // Cycle: unsorted → asc → desc → unsorted. Switching to a different column
+  // always starts fresh at asc.
+  const handleSortChange = useCallback((column: PostsSortColumn) => {
+    if (sortBy !== column) {
+      setSortBy(column);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortBy("");
+      setSortDir("");
+    }
+    setStatusPage(1);
+  }, [sortBy, sortDir]);
+
   return {
     postId,
     activeDays,
     statusPage,
+    sortBy,
+    sortDir,
     handlePostChange,
     handlePeriodChange,
     handleStatusPageChange,
+    handleSortChange,
     historyQ,
     funnelQ,
     sourcingQ,

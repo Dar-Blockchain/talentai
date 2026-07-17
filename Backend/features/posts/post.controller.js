@@ -603,12 +603,15 @@ exports.getPostsInAlertKPI = async (req, res) => {
 
 exports.getPostsStatusKPI = async (req, res) => {
   try {
-    const userId = req.user._id;
-    const page   = Math.max(1, parseInt(req.query.page)  || 1);
-    const limit  = Math.max(1, parseInt(req.query.limit) || 4);
-    const postId = req.query.postId || null;
+    const userId   = req.user._id;
+    const page     = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit    = Math.max(1, parseInt(req.query.limit) || 4);
+    const postId   = req.query.postId || null;
+    const dateFrom = req.query.dateFrom || null;
+    const sortBy   = req.query.sortBy  || null;
+    const sortDir  = req.query.sortDir || null;
 
-    const result = await postService.getPostsStatusKPI(userId, page, limit, postId);
+    const result = await postService.getPostsStatusKPI(userId, page, limit, postId, dateFrom, sortBy, sortDir);
 
     res.status(200).json({
       success: true,

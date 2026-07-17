@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 interface Props {
-  stats:       { avgInterviewScore?: number; activeJobPosts?: number } | undefined;
+  stats:       { interviewsCount?: number; activeJobPosts?: number } | undefined;
   appMetrics:  { totalApplicants?: number } | undefined;
   loadingStats:      boolean;
   loadingAppMetrics: boolean;
@@ -18,17 +18,13 @@ interface Props {
 const HiringStatCards = memo<Props>(({ stats, appMetrics: appMet, loadingStats: l0, loadingAppMetrics: l1 }) => {
   const { t } = useTranslation("dashboard");
 
-  const avgScore = stats?.avgInterviewScore != null
-    ? `${stats.avgInterviewScore}%`
-    : "—";
-
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
       <StatCard
         icon={PsychologyOutlined}
         color="#3B82F6" bg="#EFF6FF"
-        loading={l0} value={avgScore}
-        label={t("overview.stat.avg_interview_score")}
+        loading={l0} value={stats?.interviewsCount ?? 0}
+        label={t("overview.stat.interviews_count", "Interviews Completed")}
       />
       <StatCard
         icon={WorkOutlined}

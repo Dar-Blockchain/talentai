@@ -36,10 +36,10 @@ const KpiRoiSavings = memo<Props>(({ data, loading }) => {
   return (
     <>
       <ZoneHeading icon={SavingsOutlined} label={t("pages.kpi.zone7_title")} color="#7C3AED" />
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 sm:gap-6">
 
         <div className="md:col-span-1 flex flex-col gap-4">
-          <div className="border border-teal-200 rounded-[18px] p-5 bg-gradient-to-br from-teal-50 to-emerald-50">
+          <div className="border border-teal-200 rounded-[14px] p-5 bg-gradient-to-br from-teal-50 to-emerald-50">
             <div className="text-[0.68rem] font-bold text-teal-600 uppercase tracking-[0.08em] mb-2">{t("pages.kpi.saved_hours_label")}</div>
             {loading
               ? <Skeleton className="h-12 w-20 rounded" />
@@ -49,7 +49,7 @@ const KpiRoiSavings = memo<Props>(({ data, loading }) => {
             </div>
           </div>
 
-          <div className="border border-slate-200 rounded-[18px] p-5 bg-white flex-1">
+          <div className="border border-slate-200 rounded-[14px] p-5 bg-white flex-1">
             <div className="font-bold text-[0.7rem] text-slate-400 uppercase tracking-[0.07em] mb-4">{t("pages.kpi.costs_label")}</div>
             {loading ? (
               <div className="space-y-2">

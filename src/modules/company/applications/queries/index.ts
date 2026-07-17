@@ -18,6 +18,7 @@ export interface ApplicationListParams {
   sort?: string;
   page?: number;
   limit?: number;
+  actionFilter?: string;
 }
 
 export interface PostPickerParams {

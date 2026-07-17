@@ -10,16 +10,6 @@ export interface KpiPostOption {
   title: string;
 }
 
-// ── Actions ────────────────────────────────────────────────────────────────────
-
-export interface KpiActionsData {
-  pendingShortlists: number;
-  unreviewed:        number;
-  unreviewedUrgent:  number;
-  noshows:           number;
-  postsInAlert:      number;
-}
-
 // ── Application history ───────────────────────────────────────────────────────
 
 export interface ApplicationHistoryItem {
@@ -29,6 +19,7 @@ export interface ApplicationHistoryItem {
   postTitle:            string;
   status:               "applied" | "invited" | "completed" | "shortlisted" | "rejected" | "not_matched";
   matchScore:           number | null;
+  matchThreshold:       number;
   interviewScore:       number | null;
   date:                 string;
 }
@@ -50,9 +41,13 @@ export interface PostStatusRow {
   deadline:            number | null;
 }
 
+export type PostsSortColumn = "jobStatus" | "matched" | "completed" | "decision" | "deadline";
+
 export interface PostsStatusParams extends KpiFilterParams {
-  page?:  number;
-  limit?: number;
+  page?:    number;
+  limit?:   number;
+  sortBy?:  PostsSortColumn;
+  sortDir?: "asc" | "desc";
 }
 
 export interface PostsStatusResult {

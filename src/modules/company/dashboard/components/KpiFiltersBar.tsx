@@ -4,14 +4,14 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/modules/shared/ui/shadcn/select";
 import { cn } from "@/lib/utils";
-import { ListFilter as FilterListOutlined, Briefcase as WorkOutlined, Calendar as CalendarTodayOutlined } from "lucide-react";
+import { Calendar as CalendarTodayOutlined, Briefcase as WorkOutlined, SlidersHorizontal as SlidersOutlined } from "lucide-react";
 import type { KpiPostOption } from "../types";
 
 const PERIODS = [
-  { label: "7d",  days: 7,    hint: "Last 7 days"  },
-  { label: "30d", days: 30,   hint: "Last 30 days" },
-  { label: "90d", days: 90,   hint: "Last 90 days" },
-  { label: "All", days: null, hint: "All time"     },
+  { label: "7d",  days: 7    },
+  { label: "30d", days: 30   },
+  { label: "90d", days: 90   },
+  { label: "All", days: null },
 ] as const;
 
 interface Props {
@@ -30,81 +30,57 @@ const KpiFiltersBar = memo<Props>(({ postId, activeDays, availablePosts, onPostC
     [onPostChange],
   );
 
-  const activePeriod = PERIODS.find(p => p.days === activeDays) ?? PERIODS[3];
-  const activePost   = availablePosts.find(p => p.id === postId);
-
   return (
-    <div className="rounded-2xl border border-slate-100 bg-white shadow-sm mb-6 overflow-hidden">
-
-      {/* header strip */}
-      <div className="flex items-center gap-2 px-5 py-3 border-b border-slate-100 bg-slate-50/60">
-        <div className="w-7 h-7 rounded-lg bg-teal-50 flex items-center justify-center shrink-0">
-          <FilterListOutlined size={15} color="#0D9488" />
+    <div className="flex flex-wrap items-center gap-3 rounded-2xl border border-teal-100 bg-white shadow-sm px-4 py-2.5">
+      <div className="flex items-center gap-2 shrink-0 pr-3 border-r border-slate-100">
+        <div className="w-6 h-6 rounded-full flex items-center justify-center shrink-0" style={{ background: "#0D948814" }}>
+          <SlidersOutlined size={12} color="#0D9488" />
         </div>
-        <span className="font-bold text-[13px] text-slate-700 tracking-wide uppercase">
-          {t("pages.kpi.filters", "Dashboard Filters")}
-        </span>
-        <span className="ml-auto text-[11px] text-slate-400 font-medium">
-          Showing: <span className="text-slate-600 font-semibold">{activePost?.title ?? "All Jobs"}</span>
-          {" · "}
-          <span className="text-slate-600 font-semibold">{activePeriod.hint}</span>
+        <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wide hidden sm:inline">
+          {t("pages.kpi.filters", "Filters")}
         </span>
       </div>
 
-      {/* controls */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center px-5 py-4">
-
-        {/* period label + buttons */}
-        <div className="flex items-center gap-3 flex-wrap">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <CalendarTodayOutlined size={14} color="#94A3B8" />
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Time Period</span>
-          </div>
-          <div className="flex items-center gap-1">
-            {PERIODS.map((p) => {
-              const isActive = p.days === activeDays;
-              return (
-                <Button
-                  key={p.label}
-                  size="xs"
-                  variant={isActive ? "default" : "ghost"}
-                  onClick={() => onPeriodChange(p.days)}
-                  className={cn(
-                    "rounded-full h-7 px-3.5 text-[12px] font-semibold transition-all duration-150",
-                    !isActive && "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
-                  )}
-                >
-                  {p.label}
-                </Button>
-              );
-            })}
-          </div>
+      <div className="flex items-center gap-1 shrink-0">
+        <CalendarTodayOutlined size={13} color="#94A3B8" />
+        <div className="flex items-center gap-0.5 ml-1">
+          {PERIODS.map((p) => {
+            const isActive = p.days === activeDays;
+            return (
+              <Button
+                key={p.label}
+                size="xs"
+                variant={isActive ? "default" : "ghost"}
+                onClick={() => onPeriodChange(p.days)}
+                className={cn(
+                  "rounded-full h-6 px-2.5 text-[11px] font-semibold transition-all duration-150",
+                  !isActive && "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
+                )}
+              >
+                {p.label}
+              </Button>
+            );
+          })}
         </div>
+      </div>
 
-        {/* divider */}
-        <div className="hidden sm:block w-px h-6 bg-slate-200 shrink-0 mx-1" />
+      <div className="w-px h-5 bg-slate-200 shrink-0" />
 
-        {/* job post selector */}
-        <div className="flex items-center gap-3 sm:ml-auto w-full sm:w-auto">
-          <div className="flex items-center gap-1.5 shrink-0">
-            <WorkOutlined size={14} color="#94A3B8" />
-            <span className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Job Post</span>
-          </div>
-          <Select value={postId || "__all__"} onValueChange={handlePost}>
-            <SelectTrigger size="sm" className="w-full sm:w-57.5 rounded-xl border-slate-200 bg-slate-50 hover:bg-white transition-colors">
-              <SelectValue placeholder={t("pages.kpi.all_posts", "All job posts")} />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="__all__">
-                <span className="font-medium">All job posts</span>
-              </SelectItem>
-              {availablePosts.map((p) => (
-                <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
+      <div className="flex items-center gap-1.5 min-w-0">
+        <WorkOutlined size={13} color="#94A3B8" className="shrink-0" />
+        <Select value={postId || "__all__"} onValueChange={handlePost}>
+          <SelectTrigger size="sm" className="h-7 min-w-40 max-w-60 rounded-lg border-slate-200 bg-slate-50 hover:bg-white transition-colors text-[12px]">
+            <SelectValue placeholder={t("pages.kpi.all_posts", "All job posts")} />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">
+              <span className="font-medium">All job posts</span>
+            </SelectItem>
+            {availablePosts.map((p) => (
+              <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
     </div>
   );

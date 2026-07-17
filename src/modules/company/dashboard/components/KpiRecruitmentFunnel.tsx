@@ -3,7 +3,7 @@ import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { TrendingUp as TrendingUpOutlined } from "lucide-react";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Legend, ResponsiveContainer } from "recharts";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { ZoneHeading, KpiCard, Delta } from "./KpiAtoms";
 import { ChartTooltip, GRAY, T } from "../utils/kpiTokens";
 import type { KpiFunnelData } from "../types";
@@ -56,7 +56,7 @@ const KpiRecruitmentFunnel = memo<Props>(({ data, loading }) => {
   return (
     <>
       <ZoneHeading icon={TrendingUpOutlined} label={t("pages.kpi.zone3_title")} color="#10B981" />
-      <KpiCard className="mb-4">
+      <KpiCard className="flex-1">
         <div className="flex gap-3 sm:gap-4 mb-6 flex-wrap md:flex-nowrap">
           {loading
             ? STEP_KEYS.map((k) => <StepSkeleton key={k} />)
@@ -95,18 +95,35 @@ const KpiRecruitmentFunnel = memo<Props>(({ data, loading }) => {
         {loading ? (
           <Skeleton className="w-full h-[190px] rounded-[10px]" />
         ) : (
-          <ResponsiveContainer width="100%" height={190}>
-            <BarChart data={trend} barGap={4}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
-              <XAxis dataKey="month" tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
-              <YAxis tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} allowDecimals={false} />
-              <RechartsTooltip {...ChartTooltip} formatter={(v: any, key: any) => [v, seriesLabel(key)]} />
-              <Legend formatter={(key: string) => seriesLabel(key)} wrapperStyle={{ fontFamily: "Poppins", fontSize: 11 }} />
+          <>
+            <ResponsiveContainer width="100%" height={190}>
+              <BarChart data={trend} barGap={4}>
+                <defs>
+                  {TREND_KEYS.map((key) => (
+                    <linearGradient key={key} id={`funnelGrad-${key}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%"   stopColor={SERIES_COLORS[key]} stopOpacity={1} />
+                      <stop offset="100%" stopColor={SERIES_COLORS[key]} stopOpacity={0.55} />
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
+                <XAxis dataKey="month" tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} allowDecimals={false} />
+                <RechartsTooltip {...ChartTooltip} formatter={(v: any, key: any) => [v, seriesLabel(key)]} cursor={{ fill: "#F8FAFC" }} />
+                {TREND_KEYS.map((key) => (
+                  <Bar key={key} dataKey={key} name={key} radius={[5, 5, 0, 0]} fill={`url(#funnelGrad-${key})`} maxBarSize={22} />
+                ))}
+              </BarChart>
+            </ResponsiveContainer>
+            <div className="flex gap-5 mt-3 flex-wrap">
               {TREND_KEYS.map((key) => (
-                <Bar key={key} dataKey={key} name={key} radius={[4, 4, 0, 0]} fill={SERIES_COLORS[key]} />
+                <div key={key} className="flex items-center gap-1.5">
+                  <span className="w-2.5 h-2.5 rounded-full shrink-0" style={{ background: SERIES_COLORS[key] }} />
+                  <span className="text-[0.72rem] text-slate-500 font-medium">{seriesLabel(key)}</span>
+                </div>
               ))}
-            </BarChart>
-          </ResponsiveContainer>
+            </div>
+          </>
         )}
       </KpiCard>
     </>

@@ -223,9 +223,10 @@ module.exports.getApplicationsByCompany = async (req, res) => {
       });
     }
 
-    const { scoreMin, scoreMax, dateFrom, dateTo } = req.query;
+    const { scoreMin, scoreMax, dateFrom, dateTo, actionFilter } = req.query;
 
     const filters = {};
+    if (status) filters.status = status;
     if (post || postId) filters.post = post || postId;
     if (search) filters.search = search;
     if (candidateName) filters.candidateName = candidateName;
@@ -235,6 +236,7 @@ module.exports.getApplicationsByCompany = async (req, res) => {
     if (scoreMax !== undefined) filters.scoreMax = parseFloat(scoreMax);
     if (dateFrom) filters.dateFrom = dateFrom;
     if (dateTo) filters.dateTo = dateTo;
+    if (actionFilter) filters.actionFilter = actionFilter;
 
     const result = await jobApplicationService.getApplicationsByCompany(
       companyId,
@@ -545,7 +547,7 @@ module.exports.getApplicationsSummaryByCompany = async (req, res) => {
       status, search, postId,
       matchScoreMin, matchScoreMax,
       interviewScoreMin, interviewScoreMax,
-      dateFrom, dateTo, sort,
+      dateFrom, dateTo, sort, actionFilter,
       page = 1, limit = 20,
     } = req.query;
 
@@ -556,6 +558,7 @@ module.exports.getApplicationsSummaryByCompany = async (req, res) => {
     if (sort)     filters.sort     = sort;
     if (dateFrom) filters.dateFrom = dateFrom;
     if (dateTo)   filters.dateTo   = dateTo;
+    if (actionFilter) filters.actionFilter = actionFilter;
     if (matchScoreMin !== undefined)     filters.matchScoreMin     = parseFloat(matchScoreMin);
     if (matchScoreMax !== undefined)     filters.matchScoreMax     = parseFloat(matchScoreMax);
     if (interviewScoreMin !== undefined) filters.interviewScoreMin = parseFloat(interviewScoreMin);

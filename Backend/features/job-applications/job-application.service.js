@@ -528,6 +528,37 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
     if (filters.post) query.post = filters.post;
     if (filters.isArchived !== undefined) query.isArchived = filters.isArchived;
 
+    // "Take Action" deep-links from the dashboard — same definitions as the
+    // Zone 1 KPI counts (getPendingShortlistsKPI / getNoshowsKPI / getUnreviewedInterviewsOver48Hours).
+    if (filters.actionFilter === 'pending_shortlist') {
+      query.matchScore = { $gte: 60 };
+      query.recruiterDecision = null;
+    } else if (filters.actionFilter === 'no_show') {
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      query.firstInvitationSentAt = { $lt: fiveDaysAgo, $ne: null };
+      query.status = 'visited';
+      query.recruiterDecision = null;
+    } else if (filters.actionFilter === 'unreviewed') {
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      const assessmentMatch = { company: companyId, completed: true, recruiterFeedback: null, createdAt: { $lte: cutoff } };
+      if (filters.post) assessmentMatch.post = filters.post;
+
+      const assessments = await PostInterviewAssessment.find(assessmentMatch).select('post candidate').lean();
+      const profiles = await Profile.find({ userId: { $in: assessments.map((a) => a.candidate) } }).select('_id userId').lean();
+      const userIdToProfileId = {};
+      profiles.forEach((p) => { userIdToProfileId[String(p.userId)] = String(p._id); });
+
+      const pairs = assessments
+        .map((a) => ({ post: a.post, profile: userIdToProfileId[String(a.candidate)] }))
+        .filter((p) => p.profile);
+
+      if (pairs.length === 0) {
+        query._id = null; // no candidates match — force an empty result set
+      } else {
+        query.$or = pairs.map((p) => ({ post: p.post, profile: p.profile }));
+      }
+    }
+
     // Score range filter
     if (filters.scoreMin !== undefined || filters.scoreMax !== undefined) {
       query.matchScore = {};
@@ -659,7 +690,7 @@ module.exports.getApplicationMetrics = async (companyId, postId = null, dateFrom
     const ObjectId = require("mongoose").Types.ObjectId;
     const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
 
-    const appFilter = { company: new ObjectId(companyId) };
+    const appFilter = { company: new ObjectId(companyId), isArchived: false, isWithdrawn: false };
     if (postId) appFilter.post = new ObjectId(postId);
     if (dateFrom) appFilter.appliedAt = { $gte: new Date(dateFrom) };
 
@@ -856,6 +887,18 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
     if (filters.status) query.status = filters.status;
     if (filters.postId) query.post = new ObjectId(filters.postId);
 
+    // "Take Action" deep-links from the dashboard — same definitions as the
+    // Zone 1 KPI counts (getPendingShortlistsKPI / getNoshowsKPI / getUnreviewedInterviewsOver48Hours).
+    if (filters.actionFilter === 'pending_shortlist') {
+      query.matchScore = { $gte: 60 };
+      query.recruiterDecision = null;
+    } else if (filters.actionFilter === 'no_show') {
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      query.firstInvitationSentAt = { $lt: fiveDaysAgo, $ne: null };
+      query.status = 'visited';
+      query.recruiterDecision = null;
+    }
+
     if (filters.matchScoreMin !== undefined || filters.matchScoreMax !== undefined) {
       query.matchScore = {};
       if (filters.matchScoreMin !== undefined) query.matchScore.$gte = filters.matchScoreMin;
@@ -893,7 +936,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
 
     const postIds = [...new Set(applications.map((a) => a.post?._id).filter(Boolean).map(String))];
     const assessments = await PostInterviewAssessment.find({ post: { $in: postIds }, completed: true })
-      .select("candidate post interviewData.finalReport.scores.overall createdAt")
+      .select("candidate post interviewData.finalReport.scores.overall createdAt recruiterFeedback")
       .lean();
 
     const assessmentMap = new Map();
@@ -931,6 +974,14 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
       rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore >= filters.interviewScoreMin);
     if (filters.interviewScoreMax !== undefined)
       rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore <= filters.interviewScoreMax);
+
+    if (filters.actionFilter === 'unreviewed') {
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      rows = rows.filter((r) => {
+        const assessment = assessmentMap.get(`${r.postId}:${r.candidateUserId}`);
+        return assessment && assessment.recruiterFeedback == null && new Date(assessment.createdAt) <= cutoff;
+      });
+    }
 
     const sortMap = {
       appliedAt_desc:      (a, b) => new Date(b.appliedAt) - new Date(a.appliedAt),
@@ -1059,6 +1110,8 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
     // PostInterviewAssessment: candidate â†’ User (userId matches Profile.userId)
     const appFilter = {
       company: companyId,
+      isArchived: false,
+      isWithdrawn: false,
       $or: [
         { status: 'interview_completed' },
         { recruiterDecision: 'shortlisted' },
@@ -1303,7 +1356,7 @@ module.exports.getRoiKPI = async (companyId, postId = null, dateFrom = null) => 
     const Payment      = require('../billing/payments/payment.model');
     const Profile      = require('../users/profile.model');
 
-    const base = { company: companyId, isArchived: false };
+    const base = { company: companyId, isArchived: false, isWithdrawn: false };
     if (postId) base.post = new mongoose.Types.ObjectId(postId);
     if (dateFrom) base.appliedAt = { $gte: new Date(dateFrom) };
 
@@ -1402,7 +1455,7 @@ module.exports.getRoiKPI = async (companyId, postId = null, dateFrom = null) => 
 // Applied â†’ Invited â†’ Completed â†’ Shortlisted
 module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
-    const match = { company: companyId, isArchived: false };
+    const match = { company: companyId, isArchived: false, isWithdrawn: false };
     if (postId)   match.post      = postId;
     if (dateFrom) match.appliedAt = { $gte: new Date(dateFrom) };
 
@@ -1430,7 +1483,7 @@ module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) 
       months.push({ year: d.getFullYear(), month: d.getMonth() + 1, label: d.toLocaleString('en', { month: 'short' }) });
     }
 
-    const trendMatch = { company: companyId, isArchived: false };
+    const trendMatch = { company: companyId, isArchived: false, isWithdrawn: false };
     if (postId) trendMatch.post = postId;
 
     const apps = await JobApplication.find(trendMatch)
@@ -1538,14 +1591,15 @@ module.exports.getApplicationHistoryKPI = async (companyId, postId = null, dateF
       const interviewScore = status === 'completed' ? (scoreMap[scoreKey] ?? null) : null;
 
       return {
-        id:         String(a._id),
-        firstName:  a.profile?.firstName || 'â€”',
-        lastName:   a.profile?.lastName  || '',
-        postTitle:  a.post?.jobDetails?.title || 'â€”',
+        id:              String(a._id),
+        firstName:       a.profile?.firstName || 'â€”',
+        lastName:        a.profile?.lastName  || '',
+        postTitle:       a.post?.jobDetails?.title || 'â€”',
         status,
-        matchScore: a.matchScore ?? null,
+        matchScore:      a.matchScore ?? null,
+        matchThreshold:  threshold,
         interviewScore,
-        date:       a.updatedAt,
+        date:            a.updatedAt,
       };
     });
   } catch (error) {

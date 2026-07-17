@@ -16,7 +16,8 @@ const HiringDashboardContent = memo(() => {
 
   const {
     postId, activeDays,
-    statusPage, handlePostChange, handlePeriodChange, handleStatusPageChange,
+    statusPage, sortBy, sortDir,
+    handlePostChange, handlePeriodChange, handleStatusPageChange, handleSortChange,
     historyQ, funnelQ, sourcingQ, roiQ, postsQ, postsStatusQ,
     statCardsQ, appMetricsQ,
   } = useDashboard();
@@ -27,42 +28,59 @@ const HiringDashboardContent = memo(() => {
   );
 
   return (
-      <div className="max-w-[1440px] mx-auto">
-        <HiringStatCards
-          stats={statCardsQ.data}
-          appMetrics={appMetricsQ.data}
-          loadingStats={statCardsQ.isLoading}
-          loadingAppMetrics={appMetricsQ.isLoading}
-        />
-        <KpiFiltersBar
-          postId={postId}
-          activeDays={activeDays}
-          availablePosts={availablePosts}
-          onPostChange={handlePostChange}
-          onPeriodChange={handlePeriodChange}
-        />
-        <KpiApplicationHistory
-          data={historyQ.data}
-          loading={historyQ.isLoading}
-        />
-        <KpiPostsOverview
-          data={postsStatusQ.data}
-          loading={postsStatusQ.isLoading}
-          page={statusPage}
-          onPageChange={handleStatusPageChange}
-        />
-        <KpiRecruitmentFunnel
-          data={funnelQ.data}
-          loading={funnelQ.isLoading}
-        />
-        <KpiCandidateQuality
-          data={sourcingQ.data}
-          loading={sourcingQ.isLoading}
-        />
-        <KpiRoiSavings
-          data={roiQ.data}
-          loading={roiQ.isLoading}
-        />
+      <div className="max-w-[1440px] mx-auto flex flex-col gap-4 sm:gap-6">
+        <div className="flex flex-col gap-3">
+          <KpiFiltersBar
+            postId={postId}
+            activeDays={activeDays}
+            availablePosts={availablePosts}
+            onPostChange={handlePostChange}
+            onPeriodChange={handlePeriodChange}
+          />
+          <HiringStatCards
+            stats={statCardsQ.data}
+            appMetrics={appMetricsQ.data}
+            loadingStats={statCardsQ.isLoading}
+            loadingAppMetrics={appMetricsQ.isLoading}
+          />
+        </div>
+        <div>
+          <KpiPostsOverview
+            data={postsStatusQ.data}
+            loading={postsStatusQ.isLoading}
+            page={statusPage}
+            onPageChange={handleStatusPageChange}
+            sortBy={sortBy}
+            sortDir={sortDir}
+            onSortChange={handleSortChange}
+          />
+        </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 items-stretch">
+          <div className="flex flex-col">
+            <KpiApplicationHistory
+              data={historyQ.data}
+              loading={historyQ.isLoading}
+            />
+          </div>
+          <div className="flex flex-col">
+            <KpiCandidateQuality
+              data={sourcingQ.data}
+              loading={sourcingQ.isLoading}
+            />
+          </div>
+        </div>
+        <div>
+          <KpiRecruitmentFunnel
+            data={funnelQ.data}
+            loading={funnelQ.isLoading}
+          />
+        </div>
+        <div>
+          <KpiRoiSavings
+            data={roiQ.data}
+            loading={roiQ.isLoading}
+          />
+        </div>
       </div>
   );
 });
