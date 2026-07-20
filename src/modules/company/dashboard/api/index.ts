@@ -3,7 +3,7 @@ import type {
   KpiFilterParams, KpiFunnelData,
   KpiSourcingData, KpiRoiData,
   PostsStatusParams, PostsStatusResult, KpiPostOption,
-  ApplicationHistoryData,
+  ApplicationHistoryData, KpiDepartmentData,
 } from "../types";
 
 const qs = (p: object) => {
@@ -51,3 +51,6 @@ export const fetchDashboardStats = (params: KpiFilterParams) =>
 
 export const fetchAppMetrics = (params: KpiFilterParams) =>
   axiosInstance.get(`job-applications/company/my/metrics${qs(params)}`).then(sel);
+
+export const fetchKpiJobsByDepartment = (): Promise<KpiDepartmentData> =>
+  axiosInstance.get("post/kpi/by-department").then(sel);

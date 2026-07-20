@@ -4,7 +4,7 @@ import {
   fetchKpiFunnel,
   fetchKpiSourcing, fetchKpiRoi, fetchKpiPostsForFilter,
   fetchKpiPostsStatus, fetchDashboardStats, fetchAppMetrics,
-  fetchKpiHistory,
+  fetchKpiHistory, fetchKpiJobsByDepartment,
 } from "../api";
 
 // ─── Query key factory ────────────────────────────────────────────────────────
@@ -19,6 +19,7 @@ export const KPI_KEYS = {
   postsStatus: (p: PostsStatusParams)   => ["kpi", "postsStatus", p] as const,
   statCards:   (p: KpiFilterParams)     => ["kpi", "statCards", p]   as const,
   appMetrics:  (p: KpiFilterParams)     => ["kpi", "appMetrics", p]  as const,
+  byDepartment: ()                      => ["kpi", "byDepartment"]   as const,
 };
 
 // ─── React Query hooks ────────────────────────────────────────────────────────
@@ -78,4 +79,12 @@ export const useKpiPostsStatusQuery = (params: PostsStatusParams) =>
     queryFn:       () => fetchKpiPostsStatus(params),
     staleTime:     60_000,
     placeholderData: keepPreviousData,
+  });
+
+export const useKpiJobsByDepartmentQuery = (enabled: boolean) =>
+  useQuery({
+    queryKey:  KPI_KEYS.byDepartment(),
+    queryFn:   fetchKpiJobsByDepartment,
+    staleTime: 60_000,
+    enabled,
   });

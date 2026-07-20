@@ -1,10 +1,11 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined, Mic as MicOutlined } from "lucide-react";
+import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined, Mic as MicOutlined, Building2 as DepartmentOutlined } from "lucide-react";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { LANG_META } from "@/modules/shared/constants/languages";
 import { formatSalary } from '@/modules/company/posts/utils/postHelpers';
 import { formatDate } from "@/utils/functions";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 import SectionTitle from "./SectionTitle";
 
 interface Props {
@@ -15,6 +16,10 @@ interface Props {
 
 const OverviewCard: React.FC<Props> = ({ jd, createdAt, interviewLanguages }) => {
   const { t } = useTranslation("posts");
+  const { departments } = useDepartmentList();
+  const departmentName = jd.department
+    ? departments.find((d) => d._id === jd.department)?.name
+    : null;
 
   return (
     <Card className="p-6 gap-0">
@@ -32,6 +37,12 @@ const OverviewCard: React.FC<Props> = ({ jd, createdAt, interviewLanguages }) =>
           <div className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5" style={{ backgroundColor: "#F5F3FF", borderColor: "#DDD6FE" }}>
             <WorkOutlined size={14} color="#7C3AED" />
             <span className="text-[12px] font-semibold" style={{ color: "#7C3AED" }}>{jd.employmentType}</span>
+          </div>
+        )}
+        {departmentName && (
+          <div className="flex items-center gap-1.5 rounded-lg border px-3 py-1.5" style={{ backgroundColor: "#ECFEFF", borderColor: "#A5F3FC" }}>
+            <DepartmentOutlined size={14} color="#0891B2" />
+            <span className="text-[12px] font-semibold" style={{ color: "#0891B2" }}>{departmentName}</span>
           </div>
         )}
         {jd.salary && (

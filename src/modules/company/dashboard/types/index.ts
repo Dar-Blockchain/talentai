@@ -72,6 +72,16 @@ export interface KpiFunnelData {
   trend:       FunnelTrendPoint[];
 }
 
+// ── Jobs by department ────────────────────────────────────────────────────────
+
+export interface KpiDepartmentRow {
+  departmentId: string;
+  name:         string;
+  count:        number;
+}
+
+export type KpiDepartmentData = KpiDepartmentRow[];
+
 // ── Sourcing / Candidate quality ───────────────────────────────────────────────
 
 export interface SourcingCandidate {

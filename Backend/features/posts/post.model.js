@@ -53,6 +53,12 @@ const jobDetailsSchema = new mongoose.Schema({
   employmentType: String,
   workMode: String,
   experienceLevel: String,
+  department: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Department",
+    required: false,
+    default: null,
+  },
   salary: {
     type: salarySchema,
     required: false,

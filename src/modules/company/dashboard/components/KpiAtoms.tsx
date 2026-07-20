@@ -37,8 +37,8 @@ export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?
 );
 ZoneHeading.displayName = "ZoneHeading";
 
-export const KpiCard = memo<{ title?: string; subtitle?: string; children: React.ReactNode; className?: string }>(
-  ({ title, subtitle, children, className }) => (
+export const KpiCard = memo<{ title?: string; subtitle?: string; children: React.ReactNode; className?: string; contentClassName?: string }>(
+  ({ title, subtitle, children, className, contentClassName }) => (
     <Card className={cn("rounded-2xl", className)}>
       {title && (
         <CardHeader className="pb-0">
@@ -46,7 +46,7 @@ export const KpiCard = memo<{ title?: string; subtitle?: string; children: React
           {subtitle && <CardDescription className="text-[13px] text-slate-500">{subtitle}</CardDescription>}
         </CardHeader>
       )}
-      <CardContent className={cn(!title && "pt-6")}>{children}</CardContent>
+      <CardContent className={cn(!title && "pt-6", contentClassName)}>{children}</CardContent>
     </Card>
   ),
 );

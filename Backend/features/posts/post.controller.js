@@ -601,6 +601,21 @@ exports.getPostsInAlertKPI = async (req, res) => {
   }
 };
 
+exports.getPostsByDepartmentKPI = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const data = await postService.getPostsByDepartmentKPI(userId);
+
+    res.status(200).json({
+      success: true,
+      message: "Posts by department KPI retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    handleError(res, error, 500);
+  }
+};
+
 exports.getPostsStatusKPI = async (req, res) => {
   try {
     const userId   = req.user._id;

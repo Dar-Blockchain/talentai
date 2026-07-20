@@ -34,6 +34,7 @@ router.post("/save-post", checkScope(['write:posts']), resolveCompanyActor, post
 router.get("/my-posts", resolveCompanyActor, postController.getUserPosts);
 router.get("/metrics", resolveCompanyActor, postController.getPostMetrics);
 router.get("/kpi/status-by-post", postController.getPostsStatusKPI);
+router.get("/kpi/by-department", postController.getPostsByDepartmentKPI);
 router.put("/updatePost/:id", checkScope(['write:posts']), resolveCompanyActor, postController.updatePost);
 router.patch("/updatePostStatus/:id", checkScope(['write:posts']), resolveCompanyActor, postController.updatePostStatus);
 router.delete("/deletePost/:id", checkScope(['delete:posts']), resolveCompanyActor, postController.deletePost);

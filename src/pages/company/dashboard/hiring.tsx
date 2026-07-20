@@ -5,8 +5,10 @@ import KpiFiltersBar        from "@/modules/company/dashboard/components/KpiFilt
 import KpiApplicationHistory from "@/modules/company/dashboard/components/KpiApplicationHistory";
 import KpiPostsOverview     from "@/modules/company/dashboard/components/KpiPostsOverview";
 import KpiRecruitmentFunnel from "@/modules/company/dashboard/components/KpiRecruitmentFunnel";
+import KpiJobsByDepartment  from "@/modules/company/dashboard/components/KpiJobsByDepartment";
 import KpiCandidateQuality  from "@/modules/company/dashboard/components/KpiCandidateQuality";
 import KpiRoiSavings        from "@/modules/company/dashboard/components/KpiRoiSavings";
+import { useIsHR } from "@/modules/company/dashboard/hooks/useIsHR";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
 
@@ -21,6 +23,8 @@ const HiringDashboardContent = memo(() => {
     historyQ, funnelQ, sourcingQ, roiQ, postsQ, postsStatusQ,
     statCardsQ, appMetricsQ,
   } = useDashboard();
+
+  const isHR = useIsHR();
 
   const availablePosts = useMemo(
     () => (Array.isArray(postsQ.data) ? postsQ.data : EMPTY_POSTS),
@@ -44,6 +48,26 @@ const HiringDashboardContent = memo(() => {
             loadingAppMetrics={appMetricsQ.isLoading}
           />
         </div>
+        {isHR ? (
+          <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 sm:gap-6 items-stretch">
+            <div className="flex flex-col">
+              <KpiRecruitmentFunnel
+                data={funnelQ.data}
+                loading={funnelQ.isLoading}
+              />
+            </div>
+            <div className="flex flex-col">
+              <KpiJobsByDepartment />
+            </div>
+          </div>
+        ) : (
+          <div>
+            <KpiRecruitmentFunnel
+              data={funnelQ.data}
+              loading={funnelQ.isLoading}
+            />
+          </div>
+        )}
         <div>
           <KpiPostsOverview
             data={postsStatusQ.data}
@@ -68,12 +92,6 @@ const HiringDashboardContent = memo(() => {
               loading={sourcingQ.isLoading}
             />
           </div>
-        </div>
-        <div>
-          <KpiRecruitmentFunnel
-            data={funnelQ.data}
-            loading={funnelQ.isLoading}
-          />
         </div>
         <div>
           <KpiRoiSavings

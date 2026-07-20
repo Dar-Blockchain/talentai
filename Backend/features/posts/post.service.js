@@ -588,6 +588,32 @@ module.exports.getPostMetrics = async (userId) => {
   }
 };
 
+module.exports.getPostsByDepartmentKPI = async (userId) => {
+  try {
+    const Department = require("../departments/department.model");
+
+    // Start from every department the company has, then left-join job
+    // counts — so departments with zero posts still show up (as 0),
+    // not just the ones referenced by an existing post.
+    const departments = await Department.find({ companyId: userId })
+      .select("name")
+      .sort({ name: 1 })
+      .lean();
+
+    const rows = await Post.aggregate([
+      { $match: { user: userId, archived: { $ne: true }, "jobDetails.department": { $ne: null } } },
+      { $group: { _id: "$jobDetails.department", count: { $sum: 1 } } },
+    ]);
+    const countById = new Map(rows.map((r) => [String(r._id), r.count]));
+
+    return departments
+      .map((d) => ({ departmentId: String(d._id), name: d.name, count: countById.get(String(d._id)) ?? 0 }))
+      .sort((a, b) => b.count - a.count);
+  } catch (error) {
+    throw new Error(`Error getting posts by department KPI: ${error.message}`);
+  }
+};
+
 module.exports.getPostsInAlertKPI = async (userId) => {
   try {
     const now = new Date();

@@ -6,6 +6,7 @@ import CardFooter from "./cards/CardFooter";
 import CardDraftBanner from "./cards/CardDraftBanner";
 import CardQrDialog from "./cards/CardQrDialog";
 import { getDaysLeft, getPostShareLink } from "../utils";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 
 interface JobPostCardProps {
   job: any;
@@ -21,8 +22,10 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const [copied, setCopied]         = useState(false);
   const [qrOpen, setQrOpen]         = useState(false);
 
+  const { departments } = useDepartmentList();
   const jd        = job.jobDetails || {};
   const isDraft   = job.status === "draft";
+  const departmentName = jd.department ? departments.find((d) => d._id === jd.department)?.name : undefined;
   const daysLeft  = getDaysLeft(job.expirationDate);
   const isExpired = daysLeft !== null && daysLeft <= 0;
   const statusKey = isDraft ? "draft" : isExpired ? "expired" : job.status === "closed" ? "closed" : "active";
@@ -70,6 +73,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             location={jd.location}
             employmentType={jd.employmentType}
             workMode={jd.workMode}
+            department={departmentName}
           />
 
           <CardFooter
