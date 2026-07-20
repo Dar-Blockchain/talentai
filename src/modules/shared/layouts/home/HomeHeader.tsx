@@ -11,7 +11,7 @@ import HamburgerButton from "@/modules/shared/layouts/home/HamburgerButton";
 import HeaderNavMenu from "@/modules/shared/layouts/home/HeaderNavMenu";
 import HeaderPrimaryActions from "@/modules/shared/layouts/home/HeaderPrimaryActions";
 import HeaderMessagesDropdown from "@/modules/shared/layouts/home/HeaderMessagesDropdown";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import LanguageSwitcher from "@/modules/shared/layouts/shared/LanguageSwitcher";
 import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
 import { cn } from "@/lib/utils";

@@ -1,60 +1,34 @@
 "use client";
 
 import React from "react";
-import { Box, Typography, SxProps, Theme } from "@mui/material";
+import { cn } from "@/lib/utils";
 
 interface AppUserInfoProps {
   name: string;
   subtitle?: string;
   icon?: React.ReactNode;
   iconBgColor?: string;
-  sx?: SxProps<Theme>;
+  className?: string;
 }
 
-const AppUserInfo: React.FC<AppUserInfoProps> = ({ name, subtitle, icon, iconBgColor = "#F0FDFA", sx }) => {
+const AppUserInfo: React.FC<AppUserInfoProps> = ({ name, subtitle, icon, iconBgColor = "#F0FDFA", className }) => {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, ...sx }}>
+    <div className={cn("flex items-center gap-3", className)}>
       {icon && (
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 2,
-            bgcolor: iconBgColor,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            flexShrink: 0,
-          }}
+        <div
+          className="flex size-10 shrink-0 items-center justify-center rounded-lg"
+          style={{ backgroundColor: iconBgColor }}
         >
           {icon}
-        </Box>
+        </div>
       )}
-      <Box sx={{ display: "flex", flexDirection: "column" }}>
-        <Typography
-          sx={{
-            fontSize: 18,
-            fontWeight: 700,
-            color: "#111827",
-            lineHeight: 1.3,
-          }}
-        >
-          {name}
-        </Typography>
+      <div className="flex flex-col">
+        <p className="text-[18px] font-bold leading-[1.3] text-gray-900">{name}</p>
         {subtitle && (
-          <Typography
-            sx={{
-              fontSize: 12,
-              fontWeight: 400,
-              color: "#9CA3AF",
-              lineHeight: 1.4,
-            }}
-          >
-            {subtitle}
-          </Typography>
+          <p className="text-xs font-normal leading-[1.4] text-gray-400">{subtitle}</p>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

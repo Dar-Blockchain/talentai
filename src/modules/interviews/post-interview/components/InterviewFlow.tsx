@@ -7,7 +7,7 @@ import { useInterviewSession } from "../hooks/useInterviewSession";
 import InterviewScreen from "../../shared/components/session/InterviewScreen";
 import JobPreviewPanel from "./job-preview/JobInterviewPanel";
 import InterviewLoadingScreen from "../../shared/components/layout/InterviewLoadingScreen";
-import LoadingState from "@/components/ui/LoadingState";
+import LoadingState from "@/modules/shared/ui/LoadingState";
 import { useTranslation } from "react-i18next";
 
 interface InterviewFlowProps {

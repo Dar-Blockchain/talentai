@@ -1,0 +1,143 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{webinarTitle}} — {{#if isEn}}Your TalentAI results{{else}}Vos résultats TalentAI{{/if}}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Logo header -->
+          <tr>
+            <td style="background-color:#ffffff;padding:20px 28px;border-bottom:1px solid #E5E7EB;">
+              <img src="cid:logo" alt="TalentAI" height="28" style="display:block;border:0;outline:none;">
+            </td>
+          </tr>
+
+          <!-- Green accent bar -->
+          <tr>
+            <td height="4" bgcolor="#0D9488" style="height:4px;background-color:#0D9488;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <!-- Hero -->
+          <tr>
+            <td style="padding:40px 36px 8px 36px;">
+              <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;color:#6AD39C;text-transform:uppercase;letter-spacing:1.5px;">{{webinarTitle}}</p>
+              <h1 style="margin:0 0 12px 0;font-size:26px;font-weight:800;color:#0F172A;line-height:1.2;">
+                {{#if isEn}}{{nom}}, here is your AI analysis 🎯{{else}}{{nom}}, voici votre analyse IA 🎯{{/if}}
+              </h1>
+              <p style="margin:0;font-size:15px;color:#64748B;line-height:1.6;">
+                {{#if isEn}}Thanks for taking part. Here's a personalised summary of your answers and your AI maturity profile.{{else}}Merci d'avoir participé. Voici un résumé personnalisé de vos réponses et de votre profil de maturité IA.{{/if}}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Webinar info bar -->
+          <tr>
+            <td style="padding:20px 36px 0 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-right:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">Webinar</p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">{{webinarTitle}}</p>
+                        </td>
+                        {{#if webinarDate}}
+                        <td style="padding-right:28px;border-left:1px solid #E2E8F0;padding-left:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">Date</p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">{{webinarDate}}</p>
+                        </td>
+                        {{/if}}
+                        <td style="border-left:1px solid #E2E8F0;padding-left:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">
+                            {{#if isEn}}Format{{else}}Format{{/if}}
+                          </p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">
+                            {{#if isEn}}Live session · Free{{else}}Live session · Gratuit{{/if}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Score cards -->
+          <tr>
+            <td style="padding:28px 36px 0 36px;">
+              <p style="margin:0 0 14px 0;font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1.2px;">{{#if isEn}}Your scores{{else}}Vos scores{{/if}}</p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                <tr>
+                  <td width="33%" style="padding-right:8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF9;border:1px solid #CCFBEE;border-radius:12px;">
+                      <tr><td style="padding:16px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:900;color:#0D9488;">{{maturite_ia}}</p>
+                        <p style="margin:2px 0 0 0;font-size:10px;font-weight:700;color:#0D9488;text-transform:uppercase;letter-spacing:0.8px;">/100</p>
+                        <p style="margin:8px 0 0 0;font-size:11px;color:#64748B;font-weight:600;">{{#if isEn}}AI Maturity{{else}}Maturité IA{{/if}}</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding-right:8px;padding-left:8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFF7ED;border:1px solid #FED7AA;border-radius:12px;">
+                      <tr><td style="padding:16px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:900;color:#EA580C;">{{intensite_pain}}</p>
+                        <p style="margin:2px 0 0 0;font-size:10px;font-weight:700;color:#EA580C;text-transform:uppercase;letter-spacing:0.8px;">/100</p>
+                        <p style="margin:8px 0 0 0;font-size:11px;color:#64748B;font-weight:600;">{{#if isEn}}Recruitment Pain{{else}}Douleur recrutement{{/if}}</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                  <td width="33%" style="padding-left:8px;">
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background:#EFF6FF;border:1px solid #BFDBFE;border-radius:12px;">
+                      <tr><td style="padding:16px;text-align:center;">
+                        <p style="margin:0;font-size:28px;font-weight:900;color:#2563EB;">{{readiness_score}}</p>
+                        <p style="margin:2px 0 0 0;font-size:10px;font-weight:700;color:#2563EB;text-transform:uppercase;letter-spacing:0.8px;">/100</p>
+                        <p style="margin:8px 0 0 0;font-size:11px;color:#64748B;font-weight:600;">Readiness</p>
+                      </td></tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- CTA — only shown if admin set a webinar link. Table + bgcolor
+               attribute (not just CSS) so the button survives email clients
+               that strip style attributes/gradients -->
+          {{#if webinarLink}}
+          <tr>
+            <td style="padding:28px 36px 0 36px;text-align:center;">
+              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+                <tr>
+                  <td bgcolor="#0D9488" align="center" style="background-color:#0D9488;border-radius:12px;">
+                    <a href="{{webinarLink}}" style="display:inline-block;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 32px;letter-spacing:0.3px;font-family:'Segoe UI',Arial,sans-serif;">
+                      {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:32px 36px;text-align:center;border-top:1px solid #F1F5F9;margin-top:28px;">
+              <p style="margin:0 0 4px 0;font-size:12px;color:#94A3B8;">{{#if isEn}}TalentAI · Confidential data · No spam{{else}}TalentAI · Données confidentielles · Aucun spam{{/if}}</p>
+              <p style="margin:0;font-size:11px;color:#CBD5E1;">{{#if isEn}}© {{year}} TalentAI. All rights reserved.{{else}}© {{year}} TalentAI. Tous droits réservés.{{/if}}</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

@@ -56,27 +56,27 @@ const InviteToInterviewModal = memo<Props>(({ open, target, onClose, onSuccess }
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.14)] p-0">
+      <DialogContent showCloseButton={false} className="block max-w-sm w-full rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.14)] p-0">
 
         {/* Header */}
-        <div className="px-5 pt-5 pb-0 flex items-start justify-between">
-          <div className="flex items-center gap-3">
+        <div className="px-5 pt-5 pb-0 flex items-start justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-10 h-10 rounded-[11px] flex items-center justify-center shrink-0 bg-secondary-light">
               <Mail size={20} className="text-secondary-dark" />
             </div>
-            <div>
-              <div className="text-[15px] font-bold text-gray-900 leading-tight">
+            <div className="min-w-0">
+              <div className="text-[15px] font-bold text-gray-900 leading-tight truncate">
                 {t("pages.applications.invite_modal.title")}
               </div>
               {target && (
-                <div className="text-[12px] text-gray-500 mt-0.5">
+                <div className="text-[12px] text-gray-500 mt-0.5 truncate">
                   {t("pages.applications.invite_modal.to_label")} <strong className="text-gray-700">{target.name}</strong>
                   {target.postTitle ? <> · <span className="text-gray-400">{target.postTitle}</span></> : null}
                 </div>
               )}
             </div>
           </div>
-          <Button type="button" variant="ghost" size="icon-sm" className="mt-0.5 text-gray-500" onClick={onClose}>
+          <Button type="button" variant="ghost" size="icon-sm" className="mt-0.5 text-gray-500 shrink-0" onClick={onClose}>
             <X size={18} />
           </Button>
         </div>
@@ -94,15 +94,15 @@ const InviteToInterviewModal = memo<Props>(({ open, target, onClose, onSuccess }
               </p>
             </div>
           ) : (
-            <div className="flex flex-col gap-1.75">
-              <p className="text-[13px] text-gray-600 leading-relaxed">
+            <div className="flex flex-col gap-2 min-w-0">
+              <p className="text-[13px] text-gray-600 leading-relaxed wrap-break-word">
                 {t("pages.applications.invite_modal.body_pre")}
                 <strong className="text-gray-900">{target?.name}</strong>
                 {t("pages.applications.invite_modal.body_post")}
               </p>
-              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-[10px] px-3 py-2.5">
+              <div className="flex items-center gap-1.5 bg-gray-50 border border-gray-200 rounded-[10px] px-3 py-2.5 min-w-0">
                 <LinkIcon size={15} className="text-gray-400 shrink-0" />
-                <p className="text-[11px] text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">{interviewLink}</p>
+                <p className="min-w-0 flex-1 text-[11px] text-gray-500 overflow-hidden text-ellipsis whitespace-nowrap">{interviewLink}</p>
               </div>
             </div>
           )}

@@ -1,5 +1,4 @@
 import React from "react";
-import { Stack, Typography, Box } from "@mui/material";
 import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { defaultCurrencies } from "@/modules/company/posts/shared/constants";
@@ -43,20 +42,17 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
   const currencyCode = salaryRange.currency || null;
 
   return (
-    <Box sx={{ mt: 1 }}>
-      <Typography
-        variant="subtitle2"
-        sx={{ color: "rgba(136, 151, 170, 1)", mb: 1, display: "flex", alignItems: "center", gap: 1, fontSize: 13 }}
-      >
+    <div className="mt-2">
+      <p className="mb-2 flex items-center gap-1 text-[13px]" style={{ color: "rgba(136, 151, 170, 1)" }}>
         <Image src="/icons/money.svg" alt="" width={18} height={12} />
         {t("create.post_form.labels.salary_range")}
-      </Typography>
+      </p>
 
-      <Stack direction={{ xs: "column", sm: "row" }} spacing={2} alignItems="flex-start">
-        <Box sx={{ width: { xs: "100%", sm: "32%" } }}>
-          <Typography sx={{ fontSize: 12, mb: 0.5, color: "#475569", fontWeight: 500 }}>
+      <div className="flex flex-col items-start gap-4 sm:flex-row">
+        <div className="w-full sm:w-[32%]">
+          <p className="mb-1 text-xs font-medium text-[#475569]">
             {t("create.post_form.labels.currency")}
-          </Typography>
+          </p>
           <CurrencyDropdown
             currencies={currencies}
             value={salaryRange.currency}
@@ -64,9 +60,9 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
             placeholder={t("create.post_form.placeholders.select_currency")}
             error={errors.currency}
           />
-        </Box>
+        </div>
 
-        <Box sx={{ flex: 1 }}>
+        <div className="flex-1">
           <SalaryInput
             label={t("create.post_form.labels.minimum_salary")}
             value={salaryRange.min}
@@ -74,9 +70,9 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
             error={errors.min}
             onChange={handleChange("min")}
           />
-        </Box>
+        </div>
 
-        <Box sx={{ flex: 1 }}>
+        <div className="flex-1">
           <SalaryInput
             label={t("create.post_form.labels.maximum_salary")}
             value={salaryRange.max}
@@ -84,9 +80,9 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
             error={errors.max}
             onChange={handleChange("max")}
           />
-        </Box>
-      </Stack>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

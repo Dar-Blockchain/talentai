@@ -166,7 +166,7 @@ const HeroSection = () => {
           >
             {/* Main dashboard image */}
             <img
-              src="/images/home/HeroSectionLanding.png"
+              src="/images/home/landing-hero.png"
               alt="TalentAI Dashboard"
               className="w-full h-auto rounded-xl block"
             />

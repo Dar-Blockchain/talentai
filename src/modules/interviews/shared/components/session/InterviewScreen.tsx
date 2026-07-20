@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { type RootState } from '@/store/store';
 import { Progress } from '@/modules/shared/ui/shadcn/progress';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import QuestionPanel from './QuestionPanel';
 import CameraPreview from './CameraPreview';
 import InterviewControlsPanel from './InterviewControlsPanel';
@@ -42,12 +43,18 @@ interface InterviewScreenProps {
     jobData: any;
     interviewConfig: InterviewConfig | null;
   };
+  /** Overrides the header's computed job/assessment title (e.g. campaign title + module type for campaign interviews). */
+  titleOverride?: string;
+  /** Overrides the lobby's "Back to post details" label (e.g. "Back to campaign" for campaign interviews). */
+  backLabel?: string;
   onBack?: () => void;
 }
 
 export default function InterviewScreen({
   session,
   configData,
+  titleOverride,
+  backLabel,
   onBack,
 }: InterviewScreenProps) {
   const router = useRouter();
@@ -195,6 +202,7 @@ export default function InterviewScreen({
         <InterviewSessionHeader
           jobData={jobData}
           interviewConfig={interviewConfig}
+          titleOverride={titleOverride}
           isActive={isActive}
           elapsedTime={timer.elapsedTime}
           timeWarning={timer.timeWarning}
@@ -314,15 +322,15 @@ export default function InterviewScreen({
 
               <div className="w-full flex flex-col gap-2.5">
                 {reportPath && (
-                  <button onClick={() => router.push(reportPath)}
-                    className="w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white text-sm font-bold transition-all shadow-md shadow-violet-200 cursor-pointer">
+                  <Button variant="ghost" onClick={() => router.push(reportPath)}
+                    className="w-full h-auto py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white hover:text-white text-sm font-bold shadow-md shadow-violet-200">
                     View Report
-                  </button>
+                  </Button>
                 )}
-                <button onClick={() => router.push(dashboardPath)}
-                  className="w-full py-3 rounded-2xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 active:scale-95 transition-all cursor-pointer">
+                <Button variant="outline" onClick={() => router.push(dashboardPath)}
+                  className="w-full h-auto py-3 rounded-2xl text-gray-600 text-sm font-semibold active:scale-95">
                   Go to Dashboard
-                </button>
+                </Button>
               </div>
             </div>
           ) : isActive ? (
@@ -371,6 +379,7 @@ export default function InterviewScreen({
                   resultsReady={resultsReady}
                   onStartInterview={startInterview}
                   onBack={handleBack}
+                  backLabel={backLabel}
                   dashboardPath={dashboardPath}
                   reportPath={reportPath}
                   jobTitle={jobData?.jobDetails?.title || jobData?.title || ''}

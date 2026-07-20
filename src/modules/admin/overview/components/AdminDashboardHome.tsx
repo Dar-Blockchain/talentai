@@ -1,9 +1,7 @@
 import React, { useMemo, useState } from 'react';
 import dynamic from 'next/dynamic';
 import { Skeleton } from '@/modules/shared/ui/shadcn/skeleton';
-import BarChartIcon from '@mui/icons-material/BarChart';
-import InsightsIcon from '@mui/icons-material/Insights';
-import MonetizationOnIcon from '@mui/icons-material/MonetizationOn';
+import { BarChart3, LineChart, DollarSign } from 'lucide-react';
 import { getCountryName } from '@/utils/countryMappings';
 import { ZoneHeading, AdminQueryError } from '@/modules/admin/shared';
 import {
@@ -96,7 +94,7 @@ const AdminDashboardHome: React.FC = () => {
 
       {/* Business — revenue and plan breakdown */}
       <div className="mt-1">
-        <ZoneHeading icon={MonetizationOnIcon} label="Business" />
+        <ZoneHeading icon={DollarSign} label="Business" />
         {revenueError ? (
           <AdminQueryError message="Failed to load revenue summary." onRetry={() => refetchRevenue()} />
         ) : (
@@ -111,7 +109,7 @@ const AdminDashboardHome: React.FC = () => {
 
       {/* People & Growth — who's joining, where they are, and the trend over time */}
       <div className="mt-1">
-        <ZoneHeading icon={InsightsIcon} label="People & Growth" />
+        <ZoneHeading icon={LineChart} label="People & Growth" />
         <div className="flex flex-wrap gap-6">
           <div className="flex-[1_1_580px] min-w-0">
             <AdminGrowthAnalytics
@@ -136,7 +134,7 @@ const AdminDashboardHome: React.FC = () => {
 
       {/* Skills & Assessments — what candidates are bringing to the platform */}
       <div className="mt-1">
-        <ZoneHeading icon={BarChartIcon} label="Skills & Assessments" />
+        <ZoneHeading icon={BarChart3} label="Skills & Assessments" />
         <div className="flex flex-wrap gap-6">
           <div className="flex-[1_1_580px] min-w-0">
             <AdminSkillsBarChart skillsData={skillsData} />

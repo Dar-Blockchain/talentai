@@ -30,13 +30,6 @@ export {
   type ChatNamespaceSocketConfig,
 } from "@/modules/chat/shared/realtime/createNamespaceSocket";
 export {
-  chatModulePageSx,
-  chatDashboardShellSx,
-  chatDashboardShellFlexSx,
-} from "@/modules/chat/shared/styles/modulePage";
-export { companyChatSx } from "@/modules/chat/shared/styles/companyChat";
-export { chatSegmentedControlSx } from "@/modules/chat/shared/styles/segmentedControl";
-export {
   COMPANY_TEAM_CHAT_PATH,
   COMPANY_CANDIDATE_CHAT_PATH,
   getCompanyChatChannel,

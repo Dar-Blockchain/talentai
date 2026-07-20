@@ -1,33 +1,22 @@
 "use client";
 
-import React, { useCallback, useEffect, useRef } from "react";
-import {
-  Box,
-  Drawer,
-  IconButton,
-  Avatar,
-  Tooltip,
-  Typography,
-  Divider,
-  useMediaQuery,
-  useTheme,
-} from "@mui/material";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
+import React, { useCallback } from "react";
+import { X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useLogout } from "@/modules/auth/shared/hooks";
-import { navigation, employeeNavGroups, EmployeeNavItem } from "./navigation";
+import { navigation, employeeNavGroups } from "./navigation";
 import { selectCombinedDetails, fetchCombinedSubscriptionDetails } from "@/store/slices/paymentSlice";
-import { LogoutOutlined } from "@mui/icons-material";
 import { useRouter } from "next/router";
-import ChevronLeftOutlined from "@mui/icons-material/ChevronLeftOutlined";
-import ChevronRightOutlined from "@mui/icons-material/ChevronRightOutlined";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import ChatUnreadBadge from "@/modules/chat/shared/components/ChatUnreadBadge";
 import { useNotifications } from "@/modules/notifications/shared/context";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 
 interface SidebarProps {
   collapsed: boolean;
@@ -36,26 +25,10 @@ interface SidebarProps {
   onCloseMobile: () => void;
 }
 
-const DRAWER_WIDTH = 240;
-const COLLAPSED_WIDTH = 64;
-
 // Brand colors from logo
 const GREEN_DARK = "#10453f";   // dark forest green (logo text)
 const GREEN_MID  = "#6ad39c";   // mint green (logo circle accents)
 const GREEN_VIVID = "#52e899";  // bright green (logo "ai")
-
-// Light sidebar palette
-const BG      = "#ffffff";
-const BG_TOP  = "#F7FBF9";
-const BORDER  = "#E5E7EB";
-const ICO_CLR = "#6B7280";
-const TXT_CLR = "#374151";
-const HOVER_BG  = "rgba(106,211,156,0.10)";
-const HOVER_TXT = GREEN_DARK;
-const LABEL_C   = "#9CA3AF";
-const ACTIVE_BG  = "rgba(82,232,153,0.13)";
-const ACTIVE_TXT = GREEN_DARK;
-const ACTIVE_ICO = GREEN_DARK;
 
 const GROUPS = [
   { groupKey: "main", ids: ["dashboard", "messages", "notifications"] },
@@ -72,18 +45,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   onCloseMobile,
 }) => {
   const { t, i18n } = useTranslation("dashboard");
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const handleLogout = useLogout("/signin");
-
-const sidebarId = useRef(Math.random().toString(36).slice(2, 8));
-
-useEffect(() => {
-  return () => {
-  };
-}, []);
 
   const handleGoHome = useCallback(() => {
     if (router.pathname === "/") {
@@ -115,13 +79,9 @@ useEffect(() => {
   }, [combinedDetails, planLimits, t]);
 
   const isEmployee  = user?.role === "Employee";
-  const companyName = companyMembership?.company?.profile?.companyDetails?.name
-    || companyMembership?.company?.username
-    || null;
-
 
   // Keep plan badge up-to-date for company users
-  useEffect(() => {
+  React.useEffect(() => {
     if (!isEmployee && user?.role === "Company" && !combinedDetails) {
       dispatch(fetchCombinedSubscriptionDetails());
     }
@@ -157,7 +117,6 @@ useEffect(() => {
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${profile.user_image}`
     : null;
 
-  const drawerWidth  = collapsed ? COLLAPSED_WIDTH : DRAWER_WIDTH;
   const handleToggle = useCallback(() => setCollapsed((c) => !c), [setCollapsed]);
 
   const settingsHref = "/settings";
@@ -178,51 +137,50 @@ useEffect(() => {
       : router.pathname === item.href || router.pathname.startsWith(item.href + "/");
     const translatedLabel = t(`sidebar.nav.${item.id}`, { defaultValue: item.label });
     const btn = (
-      <Link key={item.id} href={item.href} passHref style={{ textDecoration: "none" }}>
-        <Box
-          data-tour={`nav-${item.id}`}
-          sx={{
-            display: "flex", alignItems: "center",
-            gap: isCollapsed ? 0 : 1.25,
-            px: isCollapsed ? 0 : 1.25,
-            py: isCollapsed ? 0 : 0.25,
-            height: isCollapsed ? 28 : "auto",
-            borderRadius: "9px",
-            justifyContent: isCollapsed ? "center" : "flex-start",
-            cursor: "pointer", transition: "all 0.12s", position: "relative",
-            bgcolor: isActive ? ACTIVE_BG : "transparent",
-            color: isActive ? ACTIVE_TXT : TXT_CLR,
-            "&:hover": {
-              bgcolor: isActive ? ACTIVE_BG : HOVER_BG,
-              color: isActive ? ACTIVE_TXT : HOVER_TXT,
-              "& .nav-icon": { color: isActive ? ACTIVE_ICO : HOVER_TXT },
-            },
-          }}
+      <Link
+        key={item.id}
+        href={item.href}
+        data-tour={`nav-${item.id}`}
+        className={cn(
+          "group relative flex items-center rounded-[9px] no-underline transition-all duration-100",
+          isCollapsed ? "h-7 justify-center gap-0 px-0 py-0" : "gap-[5px] justify-start px-2 py-[1px]",
+        )}
+        style={{
+          backgroundColor: isActive ? "rgba(82,232,153,0.13)" : "transparent",
+          color: isActive ? GREEN_DARK : "#374151",
+        }}
+      >
+        {isActive && (
+          <span
+            className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-[3px]"
+            style={{ backgroundColor: GREEN_VIVID }}
+          />
+        )}
+        <span
+          className={cn(
+            "nav-icon flex shrink-0 items-center justify-center rounded-lg transition-colors duration-100",
+            isCollapsed ? "size-[38px]" : "size-7",
+          )}
+          style={{ color: isActive ? GREEN_DARK : "#6B7280" }}
         >
-          {isActive && (
-            <Box sx={{ position: "absolute", left: 0, top: "20%", bottom: "20%", width: 3, borderRadius: "0 3px 3px 0", bgcolor: GREEN_VIVID }} />
-          )}
-          <Box className="nav-icon" sx={{
-            display: "flex", alignItems: "center", justifyContent: "center",
-            width: isCollapsed ? 38 : 28, height: isCollapsed ? 38 : 28,
-            borderRadius: "8px", flexShrink: 0,
-            color: isActive ? ACTIVE_ICO : ICO_CLR, transition: "color 0.12s",
-          }}>
-            <item.icon sx={{ fontSize: 20 }} />
-          </Box>
-          {!isCollapsed && (
-            <Typography sx={{ fontSize: "14px", fontWeight: isActive ? 700 : 600, color: "inherit", lineHeight: 1, flex: 1 }}>
-              {translatedLabel}
-            </Typography>
-          )}
-          {!isCollapsed && unreadCount > 0 && (
-            <ChatUnreadBadge count={unreadCount} />
-          )}
-        </Box>
+          <item.icon size={20} />
+        </span>
+        {!isCollapsed && (
+          <span
+            className="flex-1 text-sm leading-none"
+            style={{ fontWeight: isActive ? 700 : 600, color: "inherit" }}
+          >
+            {translatedLabel}
+          </span>
+        )}
+        {!isCollapsed && unreadCount > 0 && <ChatUnreadBadge count={unreadCount} />}
       </Link>
     );
     return isCollapsed ? (
-      <Tooltip key={item.id} title={translatedLabel} placement="right" arrow><span>{btn}</span></Tooltip>
+      <Tooltip key={item.id}>
+        <TooltipTrigger asChild><span>{btn}</span></TooltipTrigger>
+        <TooltipContent side="right">{translatedLabel}</TooltipContent>
+      </Tooltip>
     ) : btn;
   };
 
@@ -231,235 +189,145 @@ useEffect(() => {
     const planTooltipDateLocale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
 
     return (
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          height: "100%",
-          bgcolor: BG,
-        }}
-      >
+      <div className="flex h-full flex-col bg-white">
         {/* ── Logo bar ── */}
-        <Box
-          sx={{
-            height: 64,
-            px: isCollapsed ? 0 : 2,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: isCollapsed ? "center" : "space-between",
-            bgcolor: BG_TOP,
-            borderBottom: `1px solid ${BORDER}`,
-            flexShrink: 0,
-          }}
+        <div
+          className={cn(
+            "flex h-16 shrink-0 items-center border-b border-gray-200 bg-[#F7FBF9]",
+            isCollapsed ? "justify-center px-0" : "justify-between px-4",
+          )}
         >
           {/* Logo — only visible when expanded */}
           {!isCollapsed && (
-            <Box
-              component="img"
-              src="/images/home/logo.svg"
-              alt="TalentAI"
-              onClick={handleGoHome}
-              sx={{ height: 32, cursor: "pointer" }}
-            />
+            <img src="/logo.svg" alt="TalentAI" onClick={handleGoHome} className="h-8 cursor-pointer" />
           )}
 
           {/* Collapse toggle */}
           {!mobile && !isCollapsed && (
-            <Tooltip title={t("sidebar.collapse")} placement="right">
-              <IconButton
-                onClick={handleToggle}
-                size="small"
-                sx={{
-                  width: 26,
-                  height: 26,
-                  borderRadius: "7px",
-                  bgcolor: "#F3F4F6",
-                  color: ICO_CLR,
-                  border: `1px solid ${BORDER}`,
-                  "&:hover": { bgcolor: HOVER_BG, color: HOVER_TXT },
-                  transition: "all 0.15s",
-                }}
-              >
-                <ChevronLeftOutlined sx={{ fontSize: 14 }} />
-              </IconButton>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleToggle}
+                  className="flex size-[26px] items-center justify-center rounded-[7px] border border-gray-200 bg-gray-100 text-gray-500 transition-all duration-150 hover:bg-[rgba(106,211,156,0.10)]"
+                  style={{ color: "#6B7280" }}
+                >
+                  <ChevronLeft size={14} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{t("sidebar.collapse")}</TooltipContent>
             </Tooltip>
           )}
 
           {/* Expand float */}
           {!mobile && isCollapsed && (
-            <Tooltip title={t("sidebar.expand")} placement="right">
-              <IconButton
-                onClick={handleToggle}
-                size="small"
-                sx={{
-                  width: 28,
-                  height: 28,
-                  borderRadius: "8px",
-                  bgcolor: "#F3F4F6",
-                  color: ICO_CLR,
-                  border: `1px solid ${BORDER}`,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  "&:hover": {
-                    bgcolor: HOVER_BG,
-                    color: HOVER_TXT,
-                  },
-                  transition: "all 0.15s",
-                }}
-              >
-                <ChevronRightOutlined sx={{ fontSize: 16 }} />
-              </IconButton>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleToggle}
+                  className="flex size-7 items-center justify-center rounded-lg border border-gray-200 bg-gray-100 text-gray-500 transition-all duration-150 hover:bg-[rgba(106,211,156,0.10)]"
+                >
+                  <ChevronRight size={16} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent side="right">{t("sidebar.expand")}</TooltipContent>
             </Tooltip>
           )}
 
           {mobile && (
-            <IconButton
-              onClick={onCloseMobile}
-              size="small"
-              sx={{ color: ICO_CLR }}
-            >
-              <CloseOutlined sx={{ fontSize: 17 }} />
-            </IconButton>
+            <button onClick={onCloseMobile} className="flex size-7 items-center justify-center text-gray-500">
+              <X size={17} />
+            </button>
           )}
-        </Box>
+        </div>
 
         {/* ── Nav ── */}
-        <Box sx={{
-          flex: 1, overflowY: "auto", py: 2, px: 1,
-          scrollbarWidth: "thin",
-          scrollbarColor: `#D1D5DB transparent`,
-          "&::-webkit-scrollbar": { width: 4 },
-          "&::-webkit-scrollbar-track": { background: "transparent" },
-          "&::-webkit-scrollbar-thumb": { background: "#D1D5DB", borderRadius: 4, "&:hover": { background: "#9CA3AF" } },
-        }}>
-
+        <div className="flex-1 overflow-y-auto px-2.5 py-4 [scrollbar-color:#D1D5DB_transparent] [scrollbar-width:thin]">
           {/* ── Company nav ── */}
           {!isEmployee && GROUPS.map((group, gi) => {
             const items = navigation.filter((i) => group.ids.includes(i.id));
             if (items.length === 0) return null;
 
             return (
-              <Box key={group.groupKey || gi} sx={{ mb: 1.5 }}>
+              <div key={group.groupKey || gi} className="mb-3">
                 {!isCollapsed && (
-                  <Typography sx={{
-                    px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
-                    fontSize: "9px", fontWeight: 700, color: LABEL_C,
-                    textTransform: "uppercase", letterSpacing: "0.14em",
-                  }}>
+                  <p className={cn("px-2 pb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400", gi === 0 ? "pt-0" : "pt-1")}>
                     {t(`sidebar.groups.${group.groupKey}`)}
-                  </Typography>
+                  </p>
                 )}
                 {gi > 0 && isCollapsed && (
-                  <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: "#E5E7EB" }} />
+                  <div className="mx-auto mb-3 h-px w-6 bg-gray-200" />
                 )}
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+                <div className="flex flex-col gap-1">
                   {items.map((item) => renderNavItem(item, isCollapsed))}
-                </Box>
-              </Box>
+                </div>
+              </div>
             );
           })}
 
           {/* ── Employee nav ── */}
           {isEmployee && activeEmployeeGroups.map((group, gi) => (
-            <Box key={group.group || gi} sx={{ mb: 1.5 }}>
+            <div key={group.group || gi} className="mb-3">
               {group.group && !isCollapsed && (
-                <Typography sx={{
-                  px: 1.25, pt: gi === 0 ? 0 : 0.5, pb: 0.5,
-                  fontSize: "9px", fontWeight: 700, color: LABEL_C,
-                  textTransform: "uppercase", letterSpacing: "0.14em",
-                }}>
+                <p className={cn("px-2 pb-1 text-[9px] font-bold uppercase tracking-[0.14em] text-gray-400", gi === 0 ? "pt-0" : "pt-1")}>
                   {t(`sidebar.groups.${group.group.toLowerCase()}`, { defaultValue: group.group })}
-                </Typography>
+                </p>
               )}
               {gi > 0 && isCollapsed && (
-                <Box sx={{ mx: "auto", mb: 1.5, width: 24, height: "1px", bgcolor: "#E5E7EB" }} />
+                <div className="mx-auto mb-3 h-px w-6 bg-gray-200" />
               )}
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 0.25 }}>
+              <div className="flex flex-col gap-1">
                 {group.items.map((item) => renderNavItem(item, isCollapsed))}
-              </Box>
-            </Box>
+              </div>
+            </div>
           ))}
-
-        </Box>
+        </div>
 
         {/* ── Footer ── */}
-        <Box
-          sx={{
-            px: 1,
-            pb: 1.5,
-            pt: 1.25,
-            borderTop: `1px solid ${BORDER}`,
-            bgcolor: BG_TOP,
-            flexShrink: 0,
-          }}
-        >
-          <Box
+        <div className="shrink-0 border-t border-gray-200 bg-[#F7FBF9] px-2.5 pb-3 pt-2.5">
+          <div
             onClick={() => router.push(settingsHref)}
-            sx={{
-              display: "flex", alignItems: "center",
-              gap: isCollapsed ? 0 : 1,
-              px: isCollapsed ? 0 : 1, py: 0.75,
-              height: isCollapsed ? 42 : "auto",
-              borderRadius: "9px", cursor: "pointer",
-              justifyContent: isCollapsed ? "center" : "flex-start",
-              transition: "all 0.12s",
-              "&:hover": { bgcolor: HOVER_BG },
-            }}
+            className={cn(
+              "flex cursor-pointer items-center rounded-[9px] transition-all duration-100 hover:bg-[rgba(106,211,156,0.10)]",
+              isCollapsed ? "h-[42px] justify-center gap-0 px-0 py-0" : "justify-start gap-2 px-2 py-1.5",
+            )}
           >
-            <Avatar
-              src={avatarUrl ?? undefined}
-              sx={{ bgcolor: GREEN_DARK, width: 28, height: 28, fontSize: "11px", fontWeight: 700, flexShrink: 0 }}
-            >
-              {displayInitial}
+            <Avatar className="size-7 shrink-0" style={{ backgroundColor: GREEN_DARK }}>
+              {avatarUrl && <AvatarImage src={avatarUrl} />}
+              <AvatarFallback className="bg-transparent text-[11px] font-bold text-white">
+                {displayInitial}
+              </AvatarFallback>
             </Avatar>
 
             {!isCollapsed && (
-              <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 600, color: "#111827", lineHeight: 1.35, wordBreak: "break-word" }}>
+              <div className="min-w-0 flex-1">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="break-words text-[12.5px] font-semibold leading-[1.35] text-gray-900">
                     {displayName}
-                  </Typography>
+                  </span>
                   {activePlanLabel && (
-                    <Box
+                    <div
                       onClick={(e) => { e.stopPropagation(); router.push("/company/plans"); }}
-                      sx={{
-                        position: "relative", display: "inline-flex", flexShrink: 0,
-                        "& .plan-tooltip": { opacity: 0, pointerEvents: "none", transition: "opacity 0.15s" },
-                        "&:hover .plan-tooltip": { opacity: 1, pointerEvents: "auto" },
-                      }}
+                      className="group/plan relative inline-flex shrink-0"
                     >
                       {/* Badge */}
-                      <Box sx={{
-                        display: "inline-flex", alignItems: "center",
-                        px: 0.75, py: 0.15, borderRadius: "4px",
-                        bgcolor: `rgba(82,232,153,0.12)`, border: `1px solid rgba(82,232,153,0.35)`,
-                        cursor: "pointer", transition: "all 0.15s",
-                        "&:hover": { bgcolor: `rgba(82,232,153,0.22)`, border: `1px solid rgba(82,232,153,0.6)` },
-                      }}>
-                        <Typography sx={{ fontSize: "9px", fontWeight: 700, color: GREEN_DARK, letterSpacing: "0.04em", lineHeight: 1.4 }}>
+                      <div className="inline-flex items-center rounded px-1.5 py-[1px] transition-all duration-150 hover:bg-[rgba(82,232,153,0.22)]"
+                        style={{ backgroundColor: "rgba(82,232,153,0.12)", border: "1px solid rgba(82,232,153,0.35)" }}
+                      >
+                        <span className="text-[9px] font-bold leading-[1.4] tracking-[0.04em]" style={{ color: GREEN_DARK }}>
                           {activePlanLabel}
-                        </Typography>
-                      </Box>
+                        </span>
+                      </div>
 
                       {/* Pure-CSS tooltip — pb bridges the gap so hover doesn't drop */}
-                      <Box className="plan-tooltip" sx={{
-                        position: "absolute", bottom: "100%", left: 0,
-                        zIndex: 9999, pb: "8px",
-                      }}>
-                        <Box sx={{
-                          minWidth: 200,
-                          bgcolor: "#fff", border: `1px solid ${BORDER}`,
-                          borderRadius: "10px", overflow: "hidden",
-                          boxShadow: "0 8px 32px rgba(0,0,0,0.12)",
-                        }}>
-                          <Box sx={{ px: 1.75, pt: 1.25, pb: 0.75 }}>
-                            <Typography sx={{ fontSize: "9px", fontWeight: 700, color: "#6B7280", letterSpacing: "0.08em", textTransform: "uppercase" }}>
+                      <div className="plan-tooltip pointer-events-none absolute bottom-full left-0 z-[9999] pb-2 opacity-0 transition-opacity duration-150 group-hover/plan:pointer-events-auto group-hover/plan:opacity-100">
+                        <div className="min-w-[200px] overflow-hidden rounded-[10px] border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
+                          <div className="px-[14px] pb-1.5 pt-2.5">
+                            <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-gray-500">
                               {t("sidebar.plan.active_plans")}
-                            </Typography>
-                          </Box>
-                          <Divider sx={{ borderColor: BORDER }} />
-                          <Box sx={{ py: 0.75 }}>
+                            </span>
+                          </div>
+                          <hr className="border-gray-200" />
+                          <div className="py-1.5">
                             {combinedDetails?.subscriptions?.length
                               ? combinedDetails.subscriptions
                                   .filter((s) => s.planName !== "Trial")
@@ -467,113 +335,87 @@ useEffect(() => {
                                     const col = ({ Standard: "#0D9488", Gold: "#7C3AED", Platinum: "#0891B2", Diamond: "#D97706" } as Record<string, string>)[s.planName] ?? GREEN_MID;
                                     const exp = new Date(s.endDate).toLocaleDateString(planTooltipDateLocale, { month: "short", day: "numeric", year: "numeric" });
                                     return (
-                                      <Box key={s.id} sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.75, py: 0.6 }}>
-                                        <Box sx={{ width: 7, height: 7, borderRadius: "50%", bgcolor: col, flexShrink: 0 }} />
-                                        <Box sx={{ flex: 1, minWidth: 0 }}>
-                                          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: "#111827", lineHeight: 1.3 }}>
-                                            {s.planName}
-                                          </Typography>
-                                          <Typography sx={{ fontSize: "9.5px", color: "#6B7280", lineHeight: 1.3 }}>
+                                      <div key={s.id} className="flex items-center gap-2 px-[14px] py-[5px]">
+                                        <span className="size-[7px] shrink-0 rounded-full" style={{ backgroundColor: col }} />
+                                        <div className="min-w-0 flex-1">
+                                          <p className="text-[11px] font-bold leading-[1.3] text-gray-900">{s.planName}</p>
+                                          <p className="text-[9.5px] leading-[1.3] text-gray-500">
                                             {t("sidebar.plan.expires", { date: exp })}
-                                          </Typography>
-                                        </Box>
-                                      </Box>
+                                          </p>
+                                        </div>
+                                      </div>
                                     );
                                   })
                               : (
-                                <Box sx={{ px: 1.75, py: 0.6 }}>
-                                  <Typography sx={{ fontSize: "11px", color: "#6B7280" }}>{t("sidebar.plan.trial")}</Typography>
-                                </Box>
+                                <div className="px-[14px] py-[5px]">
+                                  <p className="text-[11px] text-gray-500">{t("sidebar.plan.trial")}</p>
+                                </div>
                               )
                             }
-                          </Box>
-                          <Divider sx={{ borderColor: BORDER }} />
-                          <Box sx={{ px: 1.75, py: 1 }}>
-                            <Typography sx={{ fontSize: "10px", fontWeight: 600, color: GREEN_DARK }}>
+                          </div>
+                          <hr className="border-gray-200" />
+                          <div className="px-[14px] py-2">
+                            <p className="text-[10px] font-semibold" style={{ color: GREEN_DARK }}>
                               {t("sidebar.plan.view_all")}
-                            </Typography>
-                          </Box>
-                        </Box>
-                      </Box>
-                    </Box>
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
-                </Box>
+                </div>
                 {displayEmail && (
-                  <Typography sx={{ fontSize: "10px", color: TXT_CLR, lineHeight: 1.3, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  <p className="overflow-hidden text-ellipsis whitespace-nowrap text-[10px] leading-[1.3] text-gray-700">
                     {displayEmail}
-                  </Typography>
+                  </p>
                 )}
-              </Box>
+              </div>
             )}
 
             {!isCollapsed && (
-              <Tooltip title={t("sidebar.sign_out")}>
-                <IconButton
-                  size="small"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleLogout();
-                  }}
-                  sx={{
-                    color: ICO_CLR,
-                    width: 32,
-                    height: 32,
-                    borderRadius: "8px",
-                    flexShrink: 0,
-                    "&:hover": {
-                      bgcolor: "rgba(239,68,68,0.15)",
-                      color: "#F87171",
-                    },
-                    transition: "all 0.15s",
-                  }}
-                >
-                  <LogoutOutlined sx={{ fontSize: 18 }} />
-                </IconButton>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleLogout();
+                    }}
+                    className="flex size-8 shrink-0 items-center justify-center rounded-lg text-gray-500 transition-all duration-150 hover:bg-red-500/15 hover:text-red-400"
+                  >
+                    <LogOut size={18} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>{t("sidebar.sign_out")}</TooltipContent>
               </Tooltip>
             )}
-          </Box>
-        </Box>
-      </Box>
+          </div>
+        </div>
+      </div>
     );
   };
 
   return (
-    <>
-      {/* Permanent sidebar — hidden on mobile via width:0, always present on tablet+ */}
-      <Drawer
-        variant="permanent"
-        sx={{
-          width: isMobile ? 0 : drawerWidth,
-          flexShrink: 0,
-          "& .MuiDrawer-paper": {
-            width: isMobile ? 0 : drawerWidth,
-            transition: "width 0.22s cubic-bezier(0.4,0,0.2,1)",
-            overflowX: "hidden",
-            borderRight: isMobile ? "none" : `1px solid ${BORDER}`,
-            boxShadow: isMobile ? "none" : "2px 0 12px rgba(0,0,0,0.06)",
-            bgcolor: BG,
-          },
-        }}
+    <TooltipProvider>
+      {/* Permanent sidebar — hidden on mobile, always present on tablet+ */}
+      <aside
+        className={cn(
+          "hidden shrink-0 overflow-hidden border-r border-gray-200 bg-white shadow-[2px_0_12px_rgba(0,0,0,0.06)] transition-[width] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)] md:flex md:flex-col",
+          collapsed ? "md:w-16" : "md:w-60",
+        )}
       >
         {content(false)}
-      </Drawer>
+      </aside>
 
       {/* Overlay drawer — opens on hamburger tap for mobile + tablet */}
-      <Drawer
-        open={mobileOpen}
-        onClose={onCloseMobile}
-        sx={{
-          "& .MuiDrawer-paper": {
-            width: DRAWER_WIDTH,
-            overflowX: "hidden",
-            borderRight: `1px solid ${BORDER}`,
-            bgcolor: BG,
-          },
-        }}
-      >
-        {content(true)}
-      </Drawer>
-    </>
+      {mobileOpen && (
+        <>
+          <div className="fixed inset-0 z-40 bg-black/30 md:hidden" onClick={onCloseMobile} />
+          <aside className="fixed inset-y-0 left-0 z-50 flex w-60 flex-col overflow-hidden border-r border-gray-200 bg-white shadow-xl md:hidden">
+            {content(true)}
+          </aside>
+        </>
+      )}
+    </TooltipProvider>
   );
 };
 

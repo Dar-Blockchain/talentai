@@ -1,17 +1,17 @@
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import { Users, Star, TrendingUp, Briefcase } from "lucide-react";
+import { Users, TrendingUp, Trophy, Briefcase } from "lucide-react";
 
 interface Props {
-  metrics: { totalApplicants: number; totalJobPosts: number; avgCVScore: number; topCVScore: number } | null;
+  metrics: { totalApplicants: number; totalJobPosts: number; avgCVScore: number; topCVScore: number; topInterviewScore: number } | null;
 }
 
 const STAT_DEFS = [
-  { key: "totalApplicants", Icon: Users,      i18nKey: "pages.applications.metrics.total_applicants", color: "#0D9488", bg: "#F0FDFA", fmt: (v: number) => v },
-  { key: "totalJobPosts",   Icon: Briefcase,  i18nKey: "pages.applications.metrics.job_posts",        color: "#10B981", bg: "#F0FDF4", fmt: (v: number) => v },
-  { key: "avgCVScore",      Icon: Star,       i18nKey: "pages.applications.metrics.avg_cv_score",     color: "#6366F1", bg: "#EEF2FF", fmt: (v: number) => v != null ? `${v}%` : "N/A" },
-  { key: "topCVScore",      Icon: TrendingUp, i18nKey: "pages.applications.metrics.top_cv_score",     color: "#6366F1", bg: "#EEF2FF", fmt: (v: number) => v != null ? `${v}%` : "N/A" },
+  { key: "totalApplicants",   Icon: Users,      i18nKey: "pages.applications.metrics.total_applicants",  color: "#0D9488", bg: "#F0FDFA", fmt: (v: number) => v },
+  { key: "totalJobPosts",     Icon: Briefcase,  i18nKey: "pages.applications.metrics.job_posts",          color: "#10B981", bg: "#F0FDF4", fmt: (v: number) => v },
+  { key: "topCVScore",        Icon: TrendingUp, i18nKey: "pages.applications.metrics.top_match_score",    color: "#6366F1", bg: "#EEF2FF", fmt: (v: number) => v != null ? `${v}%` : "N/A" },
+  { key: "topInterviewScore", Icon: Trophy,     i18nKey: "pages.applications.metrics.top_interview_score", color: "#D97706", bg: "#FEF3C7", fmt: (v: number) => v != null ? `${v}%` : "N/A" },
 ] as const;
 
 const ApplicationMetrics = memo<Props>(({ metrics }) => {

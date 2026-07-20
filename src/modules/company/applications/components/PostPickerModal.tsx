@@ -1,7 +1,7 @@
 import React, { memo, useCallback } from "react";
 import { Search, Briefcase, Layers, X, Check, CalendarDays } from "lucide-react";
-import LoadingState from "@/components/ui/LoadingState";
-import EmptyState   from "@/components/ui/EmptyState";
+import LoadingState from "@/modules/shared/ui/LoadingState";
+import EmptyState   from "@/modules/shared/ui/EmptyState";
 import { usePostPicker } from "../hooks/usePostPicker";
 import { PostPickerItem } from "../queries";
 import { TEAL } from "./constants";
@@ -12,6 +12,7 @@ import {
   DialogTitle,
 } from "@/modules/shared/ui/shadcn/dialog";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 
 // ─── PostRow ──────────────────────────────────────────────────────────────────
@@ -91,9 +92,9 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
 
   return (
     <Dialog open={open} onOpenChange={(o) => { if (!o) onClose(); }}>
-      <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.14)] p-0">
+      <DialogContent showCloseButton={false} className="max-w-xs w-full rounded-2xl overflow-hidden shadow-[0_24px_64px_rgba(0,0,0,0.14)] p-0 max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="px-5 pt-5 pb-3 flex items-center justify-between">
+        <div className="px-5 pt-5 pb-3 flex items-center justify-between shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: `${TEAL}12` }}>
               <Briefcase size={16} style={{ color: TEAL }} />
@@ -103,17 +104,17 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
               <div className="text-[11px] text-slate-400">Select a job to filter applications</div>
             </div>
           </div>
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-500 hover:bg-slate-100 transition-colors"
+            className="w-8 h-8 p-0 rounded-lg text-slate-500 hover:bg-slate-100"
           >
             <X size={18} />
-          </button>
+          </Button>
         </div>
 
-        {/* Body */}
-        <div className="px-5 pb-5">
-          {/* Search */}
+        {/* Search */}
+        <div className="px-5 shrink-0">
           <div className="flex items-center bg-slate-50 border border-slate-200 rounded-lg px-3 h-9 mb-3 transition-colors focus-within:border-teal-500">
             <Search size={15} className="text-gray-400" />
             <input
@@ -138,7 +139,10 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
           />
 
           <div className="border-t border-slate-100 mb-2" />
+        </div>
 
+        {/* Scrollable list */}
+        <div className="px-5 overflow-y-auto flex-1 min-h-30">
           {isLoading ? (
             <LoadingState message="" color={TEAL} />
           ) : posts.length === 0 ? (
@@ -166,11 +170,13 @@ const PostPickerModal = memo<Props>(({ open, selectedId, onSelect, onClose }) =>
               })}
             </div>
           )}
-
-          {totalPages > 1 && (
-            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
-          )}
         </div>
+
+        {totalPages > 1 && (
+          <div className="px-5 py-3 shrink-0 border-t border-slate-100">
+            <Pagination page={page} totalPages={totalPages} onPageChange={setPage} size="sm" />
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   );

@@ -7,6 +7,7 @@ import {
   Sparkles, Target, BarChart3, ChevronRight,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import { useInterviewReportQuery } from '../queries/useInterviewsQuery';
 
 // ── Color helpers ─────────────────────────────────────────────────────────────
@@ -154,11 +155,11 @@ export default function SkillInterviewReport({ interviewId }: { interviewId: str
                       <p className="text-white/50 text-sm mt-1">{data.category}</p>
                     )}
                   </div>
-                  <button onClick={() => window.print()}
-                    className="flex items-center gap-2 px-4 py-2.5 rounded-xl text-[0.8rem] font-bold bg-white/10 hover:bg-white/20 text-white border border-white/20 transition-colors shrink-0">
+                  <Button variant="outline" onClick={() => window.print()}
+                    className="px-4 py-2.5 h-auto rounded-xl text-[0.8rem] font-bold bg-white/10 hover:bg-white/20 text-white border-white/20 hover:text-white shrink-0">
                     <Download size={14} />
                     {t('report.download_pdf')}
-                  </button>
+                  </Button>
                 </div>
 
                 <div className="flex flex-col md:flex-row gap-8 items-center md:items-start">

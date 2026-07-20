@@ -1,7 +1,10 @@
-import { Box, Typography, TextField, Autocomplete, Chip } from "@mui/material";
+"use client";
+
+import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { Popover, PopoverAnchor, PopoverContent } from "@/modules/shared/ui/shadcn/popover";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { ALL_SKILLS, SOFT_SKILLS } from "@/modules/shared/constants/skills";
-import { inputStyle, labelSx } from "./styles";
 
 interface SkillOption {
   label: string;
@@ -16,61 +19,68 @@ interface Props {
 
 const SkillNameField = ({ skillType, value, onChange }: Props) => {
   const { t } = useTranslation("posts");
+  const [open, setOpen] = useState(false);
   const baseOptions: SkillOption[] = skillType === "hard" ? ALL_SKILLS : SOFT_SKILLS;
 
+  const filtered = useMemo(() => {
+    const q = value.toLowerCase().trim();
+    return q ? baseOptions.filter((o) => o.label.toLowerCase().includes(q)) : baseOptions;
+  }, [baseOptions, value]);
+
+  const handleSelect = (option: SkillOption) => {
+    onChange(option.label);
+    setOpen(false);
+  };
+
   return (
-    <Box sx={{ flex: 1, mb: 1 }}>
-      <Typography sx={labelSx}>{t("create.post_form.labels.skill_name")}</Typography>
-      <Autocomplete
-        disableClearable
-        freeSolo
-        options={baseOptions}
-        inputValue={value}
-        value={baseOptions.find((o) => o.label === value) ?? null}
-        getOptionLabel={(opt) => (typeof opt === "string" ? opt : opt.label)}
-        filterOptions={(options, { inputValue }) => {
-          const q = inputValue.toLowerCase().trim();
-          return q ? options.filter((o) => o.label.toLowerCase().includes(q)) : options;
-        }}
-        onInputChange={(_, newValue) => onChange(newValue)}
-        onChange={(_, newValue) => {
-          if (!newValue) { onChange(""); return; }
-          onChange(typeof newValue === "string" ? newValue : newValue.label);
-        }}
-        renderOption={(props, option) => {
-          // MUI v5.14+: key must be extracted manually from renderOption props
-          const { key, ...rest } = props as any;
-          return (
-            <Box
-              key={key}
-              component="li"
-              {...rest}
-              sx={{
-                display: "flex", alignItems: "center", gap: 1,
-                px: 2, py: 1, cursor: "pointer",
-                "&:hover": { bgcolor: "#F9FAFB" },
-              }}
-            >
-              <Chip
-                label={option.category}
-                size="small"
-                sx={{ fontSize: "9px", height: 16, bgcolor: "#F3F4F6", color: "#6B7280", borderRadius: "4px" }}
-              />
-              <Typography sx={{ fontSize: "12.5px", color: "#111827" }}>{option.label}</Typography>
-            </Box>
-          );
-        }}
-        renderInput={(params) => (
-          <TextField
-            {...params}
-            fullWidth
-            variant="outlined"
-            sx={inputStyle}
+    <div className="mb-2 flex-1">
+      <label className="block leading-[42px] text-[12px] font-medium text-[rgba(84,98,116,0.53)]">
+        {t("create.post_form.labels.skill_name")}
+      </label>
+      <Popover open={open} onOpenChange={setOpen}>
+        <PopoverAnchor asChild>
+          <input
+            value={value}
+            onChange={(e) => { onChange(e.target.value); setOpen(true); }}
+            onClick={() => setOpen(true)}
             placeholder={t("create.post_form.placeholders.skill_autocomplete")}
+            className="flex h-10 w-full cursor-pointer rounded-md border border-input bg-transparent px-3 py-1 text-[12px] font-medium shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
           />
-        )}
-      />
-    </Box>
+        </PopoverAnchor>
+        <PopoverContent
+          align="start"
+          sideOffset={4}
+          onOpenAutoFocus={(e) => e.preventDefault()}
+          onWheel={(e) => {
+            e.currentTarget.scrollTop += e.deltaY;
+            e.stopPropagation();
+          }}
+          className="w-(--radix-popover-trigger-width) max-h-56 overflow-y-auto overscroll-contain p-1.5"
+        >
+          {filtered.length === 0 ? (
+            <p className="py-4 text-center text-[12px] text-gray-400">No options found</p>
+          ) : (
+            filtered.map((option) => (
+              <button
+                key={option.label}
+                type="button"
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => handleSelect(option)}
+                className="group flex w-full cursor-pointer items-center gap-2 rounded-lg px-2 py-1.5 text-left transition-colors duration-100 hover:bg-primary/[0.07]"
+              >
+                <Badge
+                  variant="outline"
+                  className="h-4 rounded border-transparent bg-[#F3F4F6] px-1.5 text-[9px] font-normal text-[#6B7280] transition-colors duration-100 group-hover:bg-primary/15 group-hover:text-primary"
+                >
+                  {option.category}
+                </Badge>
+                <span className="text-[12.5px] text-[#111827] transition-colors duration-100 group-hover:text-primary">{option.label}</span>
+              </button>
+            ))
+          )}
+        </PopoverContent>
+      </Popover>
+    </div>
   );
 };
 

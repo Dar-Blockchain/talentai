@@ -1,8 +1,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Chip } from "@mui/material";
-import CodeOutlined from "@mui/icons-material/CodeOutlined";
-import SectionCard from "@/components/ui/SectionCard";
+import { Code2 as CodeOutlined } from "lucide-react";
+import { Card } from "@/modules/shared/ui/shadcn/card";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { getLevelFromNumber, getSoftSkillLevelLabel, Skill } from '@/modules/company/posts/utils/postHelpers';
 import SectionTitle from "./SectionTitle";
 
@@ -19,20 +19,26 @@ const SkillsCard: React.FC<Props> = ({ skills }) => {
   if (!skills.length) return null;
 
   return (
-    <SectionCard>
-      <SectionTitle icon={<CodeOutlined sx={{ fontSize: 15 }} />} title={t("detail.details.skills")} />
-      <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1 }}>
+    <Card className="p-6 gap-0">
+      <SectionTitle icon={<CodeOutlined size={15} />} title={t("detail.details.skills")} />
+      <div className="flex flex-wrap gap-2">
         {skills.map((skill, i) => {
           const level = skill.type === "soft"
             ? getSoftSkillLevelLabel(Number(skill.level) || 1)
             : getLevelFromNumber(skill.level || 1);
           return (
-            <Chip key={i} label={`${skill.name} · ${level}`} size="small"
-              sx={{ fontSize: "11px", fontWeight: 600, height: 24, bgcolor: TEAL_BG, color: TEAL, border: `1px solid ${TEAL_BORDER}` }} />
+            <Badge
+              key={i}
+              variant="outline"
+              className="h-6 rounded-full text-[11px] font-semibold"
+              style={{ backgroundColor: TEAL_BG, color: TEAL, borderColor: TEAL_BORDER }}
+            >
+              {skill.name} · {level}
+            </Badge>
           );
         })}
-      </Box>
-    </SectionCard>
+      </div>
+    </Card>
   );
 };
 

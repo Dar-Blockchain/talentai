@@ -4,7 +4,7 @@ import {
   Search, ArrowDownUp, Users, Briefcase, CalendarDays,
   Star, BrainCircuit, ArrowDownAZ, X, Download, type LucideIcon,
 } from "lucide-react";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { TEAL } from "./constants";
 import {
   DropdownMenu,
@@ -13,6 +13,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -97,7 +98,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
   );
 
   const handleStatusChange = useCallback(
-    (e: React.ChangeEvent<HTMLSelectElement>) => onStatusChange(e.target.value),
+    (v: string) => onStatusChange(v === "all" ? "" : v),
     [onStatusChange],
   );
 
@@ -108,10 +109,10 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
 
   return (
     <div className="mb-6 bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-sm" style={{ borderTop: "3px solid #E5E7EB" }}>
-      <div className="px-6 py-5 flex items-center justify-between flex-wrap gap-4">
+      <div className="px-6 py-5 flex items-center justify-between flex-nowrap gap-4 overflow-x-auto">
 
         {/* Title */}
-        <div className="flex items-center gap-3">
+        <div className="flex shrink-0 items-center gap-3">
           <div className="w-10 h-10 rounded-[10px] flex items-center justify-center" style={{ backgroundColor: `${TEAL}12` }}>
             <Users size={20} style={{ color: TEAL }} />
           </div>
@@ -126,7 +127,7 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
         </div>
 
         {/* Controls */}
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex shrink-0 items-center gap-2 flex-nowrap">
 
           {/* Search */}
           <div
@@ -142,21 +143,23 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
           </div>
 
           {/* Status filter */}
-          <select
-            value={status}
-            onChange={handleStatusChange}
-            className="h-[34px] text-[13px] bg-slate-50 border border-slate-200 rounded-lg px-2 pr-6 outline-none focus:border-teal-500 transition-colors cursor-pointer appearance-none"
-          >
-            <option value="">{t("pages.applications.status.all")}</option>
-            {STATUS_VALUES.map(({ value, i18nKey }) => (
-              <option key={value} value={value}>{t(i18nKey)}</option>
-            ))}
-          </select>
+          <Select value={status || "all"} onValueChange={handleStatusChange}>
+            <SelectTrigger size="sm" className="h-[34px] min-w-[130px] bg-slate-50 text-[13px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">{t("pages.applications.status.all")}</SelectItem>
+              {STATUS_VALUES.map(({ value, i18nKey }) => (
+                <SelectItem key={value} value={value}>{t(i18nKey)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
 
           {/* Post picker */}
-          <button
+          <Button
+            variant="outline"
             onClick={onPostPickerOpen}
-            className="flex items-center gap-1.5 h-[34px] px-3 rounded-lg border min-w-[130px] max-w-[200px] transition-all duration-150 cursor-pointer"
+            className="h-[34px] px-3 min-w-[130px] max-w-[200px]"
             style={{
               backgroundColor: postId ? `${TEAL}0D` : "#F9FAFB",
               borderColor: postId ? TEAL : "#E5E7EB",
@@ -174,14 +177,14 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
                 <X size={13} style={{ color: TEAL }} />
               </span>
             )}
-          </button>
+          </Button>
 
           {/* Sort dropdown */}
           <DropdownMenu open={sortOpen} onOpenChange={setSortOpen}>
             <DropdownMenuTrigger asChild>
-              <button className="flex items-center gap-1.5 h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] text-slate-700 outline-none hover:border-slate-300 transition-colors min-w-[120px]">
-                <ArrowDownUp size={14} className="text-gray-400" />
-                <span className="flex-1 text-left truncate">
+              <button className="flex items-center gap-1.5 h-[34px] px-3 bg-slate-50 border border-slate-200 rounded-lg text-[13px] text-slate-700 outline-none hover:border-slate-300 transition-colors shrink-0">
+                <ArrowDownUp size={14} className="text-gray-400 shrink-0" />
+                <span className="text-left whitespace-nowrap">
                   {currentSortLabel ? t(currentSortLabel) : t("pages.common.sort")}
                 </span>
               </button>
@@ -223,20 +226,18 @@ const ApplicationsToolbar: React.FC<Props> = memo(({
 
           {/* Download */}
           <div title={totalCount === 0 ? t("pages.applications.no_candidates_download") : t("pages.applications.download_cvs_tooltip", { count: totalCount })}>
-            <AppButton
-              label={downloading ? t("pages.applications.preparing") : t("pages.applications.download_cvs")}
-              variant="outlined"
-              size="small"
+            <Button
+              variant="outline"
+              size="sm"
               loading={downloading}
               disabled={totalCount === 0}
-              startIcon={<Download size={15} />}
               onClick={onDownload}
-              sx={{
-                borderColor: `${TEAL}40`, color: TEAL, bgcolor: `${TEAL}08`,
-                "&:hover": { bgcolor: `${TEAL}14`, borderColor: TEAL },
-                borderRadius: "8px", height: 34,
-              }}
-            />
+              className="h-[34px]"
+              style={{ borderColor: `${TEAL}40`, color: TEAL, backgroundColor: `${TEAL}08` }}
+            >
+              <Download size={15} />
+              {downloading ? t("pages.applications.preparing") : t("pages.applications.download_cvs")}
+            </Button>
           </div>
         </div>
       </div>

@@ -1,6 +1,3 @@
-import { alpha } from "@mui/material/styles";
-import type { Theme } from "@mui/material/styles";
-
 export interface Participant {
   _id: string;
   firstName?: string;
@@ -80,30 +77,6 @@ export const messageDayKey = (iso: string) => {
 /** Shared 3-dot context menus (message delete + sidebar conversation delete). */
 export const CHAT_CONTEXT_MENU_EASE = "cubic-bezier(0.4, 0, 0.2, 1)";
 
-export const chatContextMenuPaperSlotProps = {
-  elevation: 8 as const,
-  sx: {
-    borderRadius: 2,
-    minWidth: 200,
-    mt: 0.5,
-    overflow: "hidden",
-    border: "1px solid",
-    borderColor: (theme: Theme) =>
-      alpha(theme.palette.divider, theme.palette.mode === "dark" ? 0.45 : 0.14),
-    boxShadow: (theme: Theme) =>
-      theme.palette.mode === "dark"
-        ? `0 12px 40px ${alpha("#000", 0.55)}`
-        : `0 12px 36px ${alpha("#0f172a", 0.09)}`,
-  },
-};
+export const chatContextMenuContentCn = "min-w-[200px] mt-1 overflow-hidden rounded-lg border border-[rgba(15,23,42,0.14)] shadow-[0_12px_36px_rgba(15,23,42,0.09)]";
 
-export const chatContextMenuItemSx = {
-  borderRadius: 1,
-  mx: 0.5,
-  py: 0.75,
-  transition: `background-color 0.18s ${CHAT_CONTEXT_MENU_EASE}, padding-left 0.18s ${CHAT_CONTEXT_MENU_EASE}`,
-  "&:hover": {
-    pl: 1.25,
-    bgcolor: "action.hover",
-  },
-};
+export const chatContextMenuItemCn = "rounded-md mx-1 py-1.5 transition-[background-color,padding-left] duration-[180ms] hover:pl-2.5";

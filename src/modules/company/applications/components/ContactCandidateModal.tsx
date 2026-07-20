@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { Mail, MessageCircle, X, Send, CheckCircle2 } from "lucide-react";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import axiosInstance from "@/utils/axiosInstance";
 import { RootState } from "@/store/store";
 import {
@@ -158,13 +159,14 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
             <div className="text-[11px] text-slate-400 truncate">{target.email}</div>
           </div>
 
-          <button
+          <Button
+            variant="ghost"
             onClick={onClose}
             disabled={isBusy}
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700 disabled:opacity-50 transition-colors"
+            className="w-8 h-8 p-0 rounded-lg text-slate-400 hover:bg-slate-100 hover:text-slate-700"
           >
             <X size={16} />
-          </button>
+          </Button>
         </div>
 
         {/* Body */}
@@ -273,17 +275,19 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
 
               {/* Actions */}
               <div className="flex justify-end gap-3">
-                <button
+                <Button
+                  variant="outline"
                   onClick={onClose}
                   disabled={isBusy}
-                  className="h-10 px-4 rounded-[10px] border border-slate-200 text-[13px] font-semibold text-slate-500 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50 transition-colors"
+                  className="h-10 px-4 rounded-[10px] text-[13px] font-semibold text-slate-500"
                 >
                   {t("pages.applications.contact_modal.cancel")}
-                </button>
-                <button
+                </Button>
+                <Button
+                  variant="ghost"
                   onClick={mode === "email" ? handleSendEmail : handleSendChat}
                   disabled={!isValid || isBusy}
-                  className="h-10 px-5 rounded-[10px] text-[13px] font-semibold text-white flex items-center gap-2 min-w-[130px] justify-center transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="h-10 px-5 rounded-[10px] text-[13px] font-semibold text-white hover:text-white min-w-[130px]"
                   style={{ backgroundColor: cfg.color }}
                 >
                   {isBusy ? <Spinner className="size-3.5" /> : <Send size={14} />}
@@ -292,7 +296,7 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
                     : mode === "email"
                       ? t("pages.applications.contact_modal.send_email")
                       : t("pages.applications.contact_modal.send_message")}
-                </button>
+                </Button>
               </div>
             </div>
           )}

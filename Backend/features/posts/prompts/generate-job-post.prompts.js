@@ -333,7 +333,11 @@ function normalizeSkillAnalysis(result) {
   if (!isInternship && result.jobDetails) {
     const llmExpNumeric  = EXP_TO_LEVEL[result.jobDetails.experienceLevel] ?? 2;
     const maxSkillLevel  = requiredSkills.reduce((max, s) => Math.max(max, s.level), 2);
-    const effectiveLevel = Math.max(llmExpNumeric, maxSkillLevel);
+    // Skill levels are the more reliable signal — allow the LLM's overall role
+    // assessment to exceed them by at most one tier (e.g. leadership scope not
+    // tied to a specific skill), but never let it run away unbounded (e.g.
+    // "Expert" role with only Junior-level skills).
+    const effectiveLevel = Math.min(Math.max(llmExpNumeric, maxSkillLevel), maxSkillLevel + 1);
     result.jobDetails.experienceLevel = LEVEL_TO_EXP[effectiveLevel] ?? result.jobDetails.experienceLevel;
   }
 

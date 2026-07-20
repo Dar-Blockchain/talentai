@@ -6,6 +6,7 @@ import {
   Bell, Circle,
 } from 'lucide-react';
 import { PopoverContent } from '@/modules/shared/ui/shadcn/popover';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import { cn } from '@/lib/utils';
 import { getNotifTypeStyle } from '../api/notificationApi';
 import type { NotificationItem } from '../api/notificationApi';
@@ -64,30 +65,33 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
         </div>
         <div className="flex items-center gap-0.5">
           {unreadCount > 0 && (
-            <button
+            <Button
+              variant="ghost"
               title={s('tooltip_mark_all_read')}
               onClick={onMarkAllAsRead}
-              className="size-7 rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-teal-50 hover:text-teal-600 transition-colors"
+              className="size-7 p-0 rounded-[8px] text-gray-400 hover:bg-teal-50 hover:text-teal-600"
             >
               <MailCheck className="size-4" />
-            </button>
+            </Button>
           )}
           {notifications.length > 0 && (
-            <button
+            <Button
+              variant="ghost"
               title={s('tooltip_archive_all')}
               onClick={onArchiveAll}
-              className="size-7 rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+              className="size-7 p-0 rounded-[8px] text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             >
               <Archive className="size-4" />
-            </button>
+            </Button>
           )}
-          <button
+          <Button
+            variant="ghost"
             title={s('tooltip_settings')}
             onClick={() => { onClose(); onViewAll(); }}
-            className="size-7 rounded-[8px] flex items-center justify-center text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors"
+            className="size-7 p-0 rounded-[8px] text-gray-400 hover:bg-gray-100 hover:text-gray-600"
           >
             <Settings className="size-4" />
-          </button>
+          </Button>
         </div>
       </div>
 
@@ -147,20 +151,22 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
 
                   {/* Row actions (visible on hover) */}
                   <div className="flex flex-col gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-150 flex-shrink-0">
-                    <button
+                    <Button
+                      variant="ghost"
                       title={s('tooltip_archive')}
                       onClick={(e) => { e.stopPropagation(); onArchive(n.id); }}
-                      className="size-6 rounded-[6px] flex items-center justify-center text-gray-400 hover:bg-slate-100 hover:text-gray-600"
+                      className="size-6 p-0 rounded-[6px] text-gray-400 hover:bg-slate-100 hover:text-gray-600"
                     >
                       <Archive className="size-3.5" />
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
                       title={s('tooltip_delete')}
                       onClick={(e) => { e.stopPropagation(); onDelete(n.id); }}
-                      className="size-6 rounded-[6px] flex items-center justify-center text-gray-400 hover:bg-red-50 hover:text-red-500"
+                      className="size-6 p-0 rounded-[6px] text-gray-400 hover:bg-red-50 hover:text-red-500"
                     >
                       <Trash2 className="size-3.5" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
                 {i < displayed.length - 1 && (
@@ -175,12 +181,13 @@ const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
       {/* Footer */}
       {displayed.length > 0 && (
         <div className="flex-shrink-0 px-3 py-2 border-t border-[#F1F5F9] bg-gray-50/60">
-          <button
+          <Button
+            variant="ghost"
             onClick={() => { onClose(); onViewAll(); }}
-            className="w-full text-[13px] font-semibold text-teal-600 rounded-[10px] py-1.5 hover:bg-teal-50 transition-colors"
+            className="w-full h-auto text-[13px] font-semibold text-teal-600 rounded-[10px] py-1.5 hover:bg-teal-50"
           >
             {hasMore ? s('view_all_count', { count: notifications.length }) : s('view_all')}
-          </button>
+          </Button>
         </div>
       )}
     </PopoverContent>

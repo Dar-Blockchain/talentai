@@ -1,6 +1,5 @@
 import React from "react";
-import CheckCircleOutlined from "@mui/icons-material/CheckCircleOutlined";
-import CancelOutlined      from "@mui/icons-material/CancelOutlined";
+import { CheckCircle2 as CheckCircleOutlined, XCircle as CancelOutlined } from "lucide-react";
 import { PostAssessmentData } from "../../types";
 
 interface Props {
@@ -35,8 +34,8 @@ const RequiredSkillsCard: React.FC<Props> = ({ requiredSkills }) => {
               }`}
             >
               {ismet
-                ? <CheckCircleOutlined style={{ fontSize: 11, color: "#10B981" }} />
-                : <CancelOutlined     style={{ fontSize: 11, color: "#EF4444" }} />}
+                ? <CheckCircleOutlined size={11} color="#10B981" />
+                : <CancelOutlined     size={11} color="#EF4444" />}
               {skill}
             </span>
           );

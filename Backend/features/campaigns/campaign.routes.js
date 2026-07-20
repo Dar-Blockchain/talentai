@@ -31,6 +31,7 @@ router.use(requireAuth, controledAcces(["Company", "Employee"]), authLogMiddlewa
 router.post("/", campaignController.createInternalCampaign);
 router.get("/", campaignController.getCompanyCampaigns);
 router.get("/:campaignId/sessions", campaignController.getSessions);
+router.get("/:campaignId/participants/:participantId/results", campaignController.getParticipantResultsForCompany);
 router.get("/:campaignId/non-participants", campaignController.getNonParticipants);
 router.patch("/:campaignId/status", campaignController.updateCampaignStatus);
 router.put("/:campaignId", campaignController.updateInternalCampaign);

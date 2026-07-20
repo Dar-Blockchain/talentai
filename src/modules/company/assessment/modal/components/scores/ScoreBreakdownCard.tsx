@@ -1,8 +1,5 @@
 import React from "react";
-import EmojiEventsOutlined     from "@mui/icons-material/EmojiEventsOutlined";
-import PsychologyOutlined      from "@mui/icons-material/PsychologyOutlined";
-import RecordVoiceOverOutlined from "@mui/icons-material/RecordVoiceOverOutlined";
-import SpeedOutlined           from "@mui/icons-material/SpeedOutlined";
+import { Trophy as EmojiEventsOutlined, Brain as PsychologyOutlined, Mic2 as RecordVoiceOverOutlined, Gauge as SpeedOutlined } from "lucide-react";
 import { PostAssessmentData } from "../../types";
 import { ScoreBar, scoreTheme } from "../ui";
 
@@ -36,7 +33,7 @@ const ScoreBreakdownCard: React.FC<Props> = ({ scores, scoreBreakdownLabel }) =>
               <div className="flex justify-between items-center mb-2">
                 <div className="flex items-center gap-1.5">
                   <div className={`w-[22px] h-[22px] rounded-md flex items-center justify-center ${iconBgCls}`}>
-                    <Icon style={{ fontSize: 13, color }} />
+                    <Icon size={13} color={color} />
                   </div>
                   <span className="text-sm font-semibold text-slate-700">{label}</span>
                 </div>

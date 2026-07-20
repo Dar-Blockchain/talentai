@@ -2,10 +2,7 @@
 import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import SpeedOutlined        from "@mui/icons-material/SpeedOutlined";
-import TrendingDownOutlined from "@mui/icons-material/TrendingDownOutlined";
-import TrendingUpOutlined   from "@mui/icons-material/TrendingUpOutlined";
-import RemoveOutlined       from "@mui/icons-material/RemoveOutlined";
+import { Gauge as SpeedOutlined, TrendingDown as TrendingDownOutlined, TrendingUp as TrendingUpOutlined, Minus as RemoveOutlined } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { ZoneHeading, KpiCard } from "./KpiAtoms";
 import { ChartTooltip, GRAY, GRAY2, T } from "../utils/kpiTokens";
@@ -58,7 +55,7 @@ const VelocityCard = memo<VelocityCardProps>(({ title, subtitle, value, delta, d
           )}
         </div>
         <div className="text-center px-4 py-3 rounded-xl" style={{ background: bgColor }}>
-          {loading ? <Skeleton className="w-7 h-7 rounded-full" /> : <TrendIcon style={{ fontSize: 28, color: iconColor }} />}
+          {loading ? <Skeleton className="w-7 h-7 rounded-full" /> : <TrendIcon size={28} color={iconColor} />}
           {loading ? <Skeleton className="h-3 w-10 rounded mt-1" /> : (
             <div className="text-[0.65rem] font-semibold mt-0.5" style={{ color: trendColor }}>{trendLabel}</div>
           )}

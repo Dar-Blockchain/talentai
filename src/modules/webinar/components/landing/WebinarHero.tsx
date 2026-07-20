@@ -1,0 +1,156 @@
+import { motion } from "framer-motion";
+import {
+  ChevronDown,
+  Calendar,
+  Clock,
+  MessageSquare,
+  Video,
+} from "lucide-react";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { scrollToRegister } from "@/modules/webinar/utils/scrollToRegister";
+import i18n from "@/i18n/config";
+
+const EASE = [0.22, 1, 0.36, 1] as const;
+
+export function WebinarHero({
+  lang,
+  title,
+  desc,
+  formattedDate,
+  formattedEndTime,
+  durationLabel,
+  questionsCount,
+  registrations,
+  webinarLink,
+}: {
+  lang: "fr" | "en";
+  title: string;
+  desc: string;
+  formattedDate: string | null;
+  formattedEndTime?: string | null;
+  durationLabel?: string | null;
+  questionsCount: number;
+  registrations: number;
+  webinarLink?: string;
+}) {
+  const t = i18n.getFixedT(lang, "webinar");
+
+  return (
+    <section
+      className="relative overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(120% 100% at 50% 0%, #EAF6F0 0%, #FBFBF9 60%)",
+      }}
+    >
+      <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 py-20 md:py-28">
+        <motion.div
+          initial={{ opacity: 0, y: 18 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="max-w-[640px] mx-auto text-center"
+        >
+          <div className="flex items-center justify-center gap-3 mb-7">
+            <span className="w-6 h-px bg-[#6AD39C]" />
+            <span
+              className="text-[11px] font-semibold uppercase text-[#10453F]"
+              style={{ letterSpacing: "0.16em" }}
+            >
+              {t("hero.badge")}
+            </span>
+          </div>
+
+          <h1
+            className="text-[#10453F] mb-6"
+            style={{
+              fontFamily: "var(--font-fraunces)",
+              fontWeight: 600,
+              fontSize: "clamp(2rem, 4vw + 1rem, 4.375rem)",
+              lineHeight: 1.08,
+              letterSpacing: "-0.015em",
+            }}
+          >
+            {title || (
+              <>
+                {t("hero.titleLine1")}
+                <br />
+                {t("hero.titleLine2")}
+              </>
+            )}
+          </h1>
+
+          <p
+            className="text-[1.125rem] md:text-[1.25rem] max-w-[480px] mx-auto mb-9"
+            style={{ color: "#5B6B65", lineHeight: 1.55, fontWeight: 400 }}
+          >
+            {desc || t("hero.desc")}
+          </p>
+
+          <div
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[13.5px] mb-8"
+            style={{ color: "#6B7A74" }}
+          >
+            {formattedDate && (
+              <span className="inline-flex items-center gap-1.5">
+                <Calendar size={13} />
+                {formattedDate}
+                {formattedEndTime ? ` – ${formattedEndTime}` : ""}
+              </span>
+            )}
+            {formattedDate && <span aria-hidden>·</span>}
+            <span className="inline-flex items-center gap-1.5">
+              <Clock size={13} />
+              {durationLabel || t("hero.durationDefault")}
+            </span>
+            <span aria-hidden>·</span>
+            <span className="inline-flex items-center gap-1.5">
+              <MessageSquare size={13} />
+              {questionsCount} {t("hero.questions")}
+            </span>
+          </div>
+
+          <div
+            className="flex items-center justify-center gap-2 text-[13px] mb-8"
+            style={{ color: "#6B7A74" }}
+          >
+            <span className="relative flex h-1.5 w-1.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-[#6AD39C] opacity-60" />
+              <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-[#6AD39C]" />
+            </span>
+            {t("hero.registrations", { count: registrations })}
+          </div>
+
+          <div className="flex flex-wrap items-center justify-center gap-3.5">
+            <Button
+              asChild
+              size="lg"
+              className="group rounded-2xl bg-[#0F9D73] font-sans text-[15px] leading-none font-medium tracking-[-0.01em] text-white px-8 shadow-[0_10px_30px_rgba(15,157,115,0.22)] ring-1 ring-inset ring-white/20 transition-all hover:bg-[#0C8A64] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+            >
+              <a href="#webinar-register" onClick={scrollToRegister}>
+                {t("header.cta")}
+                <ChevronDown
+                  size={16}
+                  className="transition-transform group-hover:translate-y-0.5"
+                />
+              </a>
+            </Button>
+
+            {webinarLink && (
+              <Button
+                asChild
+                size="lg"
+                variant="outline"
+                className="rounded-xl font-sans text-[15px] leading-none font-medium tracking-[-0.01em] px-7 border-2 border-[#10453F]/15 text-[#10453F] bg-white/60 backdrop-blur-sm transition-all hover:border-[#6AD39C] hover:bg-[#6AD39C]/10 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+              >
+                <a href={webinarLink} target="_blank" rel="noopener noreferrer">
+                  <Video size={16} />
+                  {t("hero.joinWebinar")}
+                </a>
+              </Button>
+            )}
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  );
+}

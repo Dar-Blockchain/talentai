@@ -32,6 +32,7 @@ import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
+import { validateEmail } from "@/lib/validation/email";
 
 const CODE_LENGTH = 6;
 const CODE_TTL = 300;
@@ -43,7 +44,7 @@ const CODE_EXPIRY_KEY = "job_apply_code_expires_at";
 type Step = "email" | "register" | "otp";
 
 function isValidEmail(v: string) {
-  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+  return validateEmail(v) === true;
 }
 
 export interface OnboardingModalProps {
@@ -433,7 +434,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
             {/* logo */}
             <div className="flex justify-center mb-3">
               <img
-                src="/images/home/logo.svg"
+                src="/logo.svg"
                 alt="TalentAI"
                 style={{ height: 26, objectFit: "contain", cursor: "pointer" }}
                 onClick={() => router.push("/")}

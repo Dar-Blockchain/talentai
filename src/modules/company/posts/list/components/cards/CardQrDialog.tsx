@@ -1,8 +1,8 @@
 import React, { useRef } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Dialog, DialogContent, DialogTitle, Typography } from "@mui/material";
-import DownloadOutlined from "@mui/icons-material/DownloadOutlined";
-import AppButton from "@/components/ui/AppButton";
+import { Download as DownloadOutlined } from "lucide-react";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { QRCodeCanvas } from "qrcode.react";
 
 interface Props {
@@ -26,24 +26,23 @@ const CardQrDialog: React.FC<Props> = ({ open, jobId, shareLink, onClose }) => {
   };
 
   return (
-    <Dialog open={open} onClose={(e: any) => { e.stopPropagation?.(); onClose(); }} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: "14px", p: 0.5 } }}>
-      <DialogTitle sx={{ fontSize: "16px", fontWeight: 700, pb: 1.25 }}>{t("card.qr.title")}</DialogTitle>
-      <DialogContent>
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5, pb: 1 }}>
-          <Box sx={{ p: 1.5, border: "1px solid #E5E7EB", borderRadius: "12px", bgcolor: "#fff" }}>
-            <Box ref={qrCanvasRef}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="rounded-2xl p-4 sm:max-w-xs" onClick={(e) => e.stopPropagation()}>
+        <DialogHeader>
+          <DialogTitle className="text-base font-bold">{t("card.qr.title")}</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col items-center gap-3 pb-1">
+          <div className="rounded-xl border border-[#E5E7EB] bg-white p-3">
+            <div ref={qrCanvasRef}>
               <QRCodeCanvas value={shareLink} size={220} />
-            </Box>
-          </Box>
-          <Typography sx={{ fontSize: "12px", color: "#6B7280", textAlign: "center" }}>{t("card.qr.scan_hint")}</Typography>
-          <AppButton
-            label={t("card.qr.download")}
-            variant="outlined"
-            startIcon={<DownloadOutlined sx={{ fontSize: 16 }} />}
-            onClick={handleDownload}
-            sx={{ borderRadius: "10px" }}
-          />
-        </Box>
+            </div>
+          </div>
+          <p className="text-center text-xs text-[#6B7280]">{t("card.qr.scan_hint")}</p>
+          <Button variant="outline" onClick={handleDownload}>
+            <DownloadOutlined size={16} />
+            {t("card.qr.download")}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );

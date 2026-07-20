@@ -53,6 +53,8 @@
   "card": {
     "untitled": "Untitled Position",
     "copied": "Copied!",
+    "applications_one": "{{count}} application",
+    "applications_other": "{{count}} applications",
     "days_left": "{{count}}d left",
     "expired_badge": "Expired",
     "status": {

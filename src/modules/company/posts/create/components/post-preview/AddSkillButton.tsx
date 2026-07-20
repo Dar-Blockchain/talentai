@@ -1,7 +1,6 @@
-import { Button } from "@mui/material";
-import AddOutlined from "@mui/icons-material/AddOutlined";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Plus as AddOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TEAL, TEAL_BG } from "./styles";
 
 interface Props {
   skillType: "hard" | "soft";
@@ -12,17 +11,11 @@ const AddSkillButton: React.FC<Props> = ({ skillType, onClick }) => {
   const { t } = useTranslation("posts");
   return (
     <Button
-      variant="outlined"
-      startIcon={<AddOutlined sx={{ fontSize: 14 }} />}
+      variant="outline"
       onClick={onClick}
-      sx={{
-        height: 30, fontSize: "12px", fontWeight: 600, textTransform: "none",
-        borderRadius: "15px", px: 1.5,
-        border: "1px dashed #D1D5DB",
-        color: "#6B7280", bgcolor: "#F9FAFB",
-        "&:hover": { borderColor: TEAL, color: TEAL, bgcolor: TEAL_BG },
-      }}
+      className="h-[30px] rounded-2xl border-dashed border-gray-300 bg-gray-50 px-3 text-xs font-semibold text-gray-500 hover:bg-teal-50 hover:text-teal-600"
     >
+      <AddOutlined size={14} />
       {t(skillType === "hard" ? "create.preview.btn_add_hard_skill" : "create.preview.btn_add_soft_skill")}
     </Button>
   );

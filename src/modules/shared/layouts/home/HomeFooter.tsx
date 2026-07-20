@@ -49,11 +49,11 @@ const Footer: React.FC = () => {
         <div className="mb-5">
           <div className="mb-2 cursor-pointer inline-block" onClick={goHome}>
             <Image
-              src="/images/home/logo.svg"
+              src="/logo.svg"
               alt="TalentAI"
               width={130}
               height={36}
-              style={{ objectFit: "contain" }}
+              className="h-9 w-auto object-contain"
             />
           </div>
           <p className="text-[11px] text-gray-500 leading-[1.5] mb-1">

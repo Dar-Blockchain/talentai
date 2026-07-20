@@ -15,8 +15,8 @@ const DEFAULT_LIMIT = 6;
 
 export function useCampaignsList() {
   const user     = useSelector((s: RootState) => s.user.connectedUser.user);
-  const { data: empPerms } = usePermissionsQuery(user?._id);
   const isEmp    = user?.role === "Employee";
+  const { data: empPerms } = usePermissionsQuery(user?._id, isEmp);
   const canEdit    = !isEmp || empPerms === null || !!empPerms?.canEditCampaign || !!empPerms?.canCreateCampaign;
   const canDelete  = !isEmp || !!empPerms?.canDeleteCampaign;
   const canPublish = !isEmp || !!empPerms?.canPublishCampaign;

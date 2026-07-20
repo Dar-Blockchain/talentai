@@ -33,7 +33,14 @@ export interface Campaign {
   targetEmployeeCount?: number;
   deadline?: string;
   participantCount?: number;
+  completedCount?: number;
   sessionCount?: number;
+  statusBreakdown?: {
+    invited: number;
+    inProgress: number;
+    completed: number;
+    dropped: number;
+  };
   participantStatus?: ParticipantStatus;
   targetDepartment?: string | null;
   progress?: number;
@@ -95,16 +102,16 @@ export interface Question {
   question: string;
   type: QuestionType;
   options?: string[];
+  /** Indexes into `options` that are correct. SINGLE_CHOICE: 0-1 entries, MULTIPLE_CHOICE: 0-N entries. Absent/empty falls back to AI grading. */
+  correctOptionIndexes?: number[];
 }
 
 export interface QuestionnaireModule {
   type: "QUESTIONNAIRE";
   config: {
-    questions: {
-      question: string;
-      type: QuestionType;
-      options?: string[];
-    }[];
+    questions: Question[];
+    aiScoringEnabled?: boolean;
+    showResultsToParticipants?: boolean;
   } | null;
 }
 
@@ -112,6 +119,7 @@ export interface AIInterviewModule {
   type: "AI_INTERVIEW";
   config: {
     agentPrompt: string;
+    showResultsToParticipants?: boolean;
   } | null;
 }
 
@@ -119,6 +127,7 @@ export interface SkillTestModule {
   type: "SKILL_TEST";
   config: {
     skill: string;
+    showResultsToParticipants?: boolean;
   } | null;
 }
 
@@ -195,4 +204,36 @@ export interface CampaignSession {
   startedAt?: string;
   completedAt?: string;
   score?: number;
+}
+
+// ─── Participant results ───────────────────────────────────────────────────────
+
+export interface CampaignResponseAnswer {
+  questionId: string;
+  answer: string | number | string[];
+  score?: number;
+}
+
+export interface CampaignResponse {
+  _id: string;
+  moduleType: ModuleType;
+  answers?: CampaignResponseAnswer[];
+  interviewTranscript?: { role: string; message: string; timestamp?: string }[];
+  testResults?: { score?: number; maxScore?: number; breakdown?: { area: string; label: string; score: number }[] };
+  aiScore?: number | null;
+  aiSummary?: string | null;
+  aiReport?: {
+    strengths?: string[];
+    areasForImprovement?: string[];
+    recommendation?: "strong_hire" | "hire" | "consider" | "reject" | null;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ParticipantResults {
+  campaign: { _id: string; title: string; type?: CampaignType; module: CampaignModule };
+  participant: { _id: string; status: ParticipantStatus; completedAt?: string; score?: number | null };
+  response: CampaignResponse | null;
+  resultsHidden?: boolean;
 }

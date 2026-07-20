@@ -215,6 +215,8 @@ export interface UseInterviewSessionOptions {
   notify: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
   /** Socket.IO namespace to connect to. Defaults to '/interview'. */
   namespace?: string;
+  /** Overrides the computed candidateId (e.g. an anonymous/link token for unauthenticated campaign participants). */
+  candidateIdOverride?: string | null;
 }
 
 // ─── useSecurityMonitoring ─────────────────────────────────────────────────────

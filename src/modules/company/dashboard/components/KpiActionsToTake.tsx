@@ -3,10 +3,7 @@ import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
-import AssignmentOutlined   from "@mui/icons-material/AssignmentOutlined";
-import AccessTimeOutlined   from "@mui/icons-material/AccessTimeOutlined";
-import PersonOffOutlined    from "@mui/icons-material/PersonOffOutlined";
-import WarningAmberOutlined from "@mui/icons-material/WarningAmberOutlined";
+import { ClipboardList as AssignmentOutlined, Clock as AccessTimeOutlined, UserX as PersonOffOutlined, AlertTriangle as WarningAmberOutlined } from "lucide-react";
 import { ActionCard, ZoneHeading } from "./KpiAtoms";
 import type { KpiActionsData } from "../types";
 

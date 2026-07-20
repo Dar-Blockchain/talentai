@@ -21,11 +21,12 @@ const AuthRightPanel: React.FC<Props> = ({ children, footerTKey, maxWidthClass =
         <div className="lg:hidden flex justify-center shrink-0 mb-5">
           <NextLink href="/" className="inline-flex transition-opacity duration-200 hover:opacity-80">
             <Image
-              src="/images/home/logo.svg"
+              src="/logo.svg"
               alt="TalentAI"
               width={148}
               height={36}
               className="h-9 w-auto object-contain"
+              priority
             />
           </NextLink>
         </div>

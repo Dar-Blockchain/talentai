@@ -1,27 +1,35 @@
 'use client';
 
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { Textarea } from '@/modules/shared/ui/shadcn/textarea';
+import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
+import { Alert, AlertDescription } from '@/modules/shared/ui/shadcn/alert';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import {
-  Box, Typography, Button, TextField, Radio, Checkbox,
-  LinearProgress, Chip, CircularProgress, Alert,
-} from '@mui/material';
-import CheckCircleRounded    from '@mui/icons-material/CheckCircleRounded';
-import ArrowForwardRounded   from '@mui/icons-material/ArrowForwardRounded';
-import ArrowBackRounded      from '@mui/icons-material/ArrowBackRounded';
-import AssignmentOutlined    from '@mui/icons-material/AssignmentOutlined';
-import SendRounded           from '@mui/icons-material/SendRounded';
-import StarRounded           from '@mui/icons-material/StarRounded';
-import StarBorderRounded     from '@mui/icons-material/StarBorderRounded';
-import SaveOutlined          from '@mui/icons-material/SaveOutlined';
+  CheckCircle2 as CheckCircleRounded,
+  ArrowRight as ArrowForwardRounded,
+  ArrowLeft as ArrowBackRounded,
+  ClipboardList as AssignmentOutlined,
+  Send as SendRounded,
+  Star as StarRounded,
+  Star as StarBorderRounded,
+  Save as SaveOutlined,
+  X as CloseIcon,
+} from 'lucide-react';
 import { Question, QuestionType } from '@/modules/company/campaigns/types/campaign';
 import axiosInstance from '@/utils/axiosInstance';
+import { QuestionnaireResultsPanel } from './QuestionnaireResultsPanel';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Props {
   campaignId:    string;
+  campaignTitle?: string;
   participantId: string;
   questions:     Question[];
+  showResults?:  boolean;
+  isLoggedIn?:   boolean;
   onComplete:    () => void;
   onBack:        () => void;
 }
@@ -36,27 +44,28 @@ const DRAFT_KEY = (campaignId: string, participantId: string) =>
 const StarRating: React.FC<{ value: number; onChange: (v: number) => void }> = ({ value, onChange }) => {
   const [hovered, setHovered] = useState(0);
   return (
-    <Box sx={{ display: 'flex', gap: 0.5, mt: 1 }}>
+    <div className="mt-2 flex gap-1">
       {[1, 2, 3, 4, 5].map((star) => (
-        <Box
+        <div
           key={star}
           onClick={() => onChange(star)}
           onMouseEnter={() => setHovered(star)}
           onMouseLeave={() => setHovered(0)}
-          sx={{ cursor: 'pointer', color: star <= (hovered || value) ? '#F59E0B' : '#D1D5DB', transition: 'color 0.15s', lineHeight: 0 }}
+          className="cursor-pointer leading-none transition-colors"
+          style={{ color: star <= (hovered || value) ? '#F59E0B' : '#D1D5DB' }}
         >
           {star <= (hovered || value)
-            ? <StarRounded sx={{ fontSize: 36 }} />
-            : <StarBorderRounded sx={{ fontSize: 36 }} />
+            ? <StarRounded size={36} fill="currentColor" />
+            : <StarBorderRounded size={36} />
           }
-        </Box>
+        </div>
       ))}
       {value > 0 && (
-        <Typography sx={{ ml: 1.5, alignSelf: 'center', fontSize: 14, fontWeight: 700, color: '#F59E0B' }}>
+        <span className="ml-3 self-center text-sm font-bold text-[#F59E0B]">
           {value} / 5
-        </Typography>
+        </span>
       )}
-    </Box>
+    </div>
   );
 };
 
@@ -77,80 +86,64 @@ const QuestionCard: React.FC<{
   };
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+    <div className="flex flex-col gap-6">
 
       {/* Question meta */}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
-        <Box sx={{
-          width: 32, height: 32, borderRadius: '50%',
-          background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-          display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-        }}>
-          <Typography sx={{ fontSize: 13, fontWeight: 800, color: '#fff' }}>{index + 1}</Typography>
-        </Box>
-        <Chip
-          label={typeLabel[question.type]}
-          size="small"
-          sx={{ fontSize: 10, fontWeight: 700, height: 20, bgcolor: '#F5F3FF', color: '#7C3AED', border: 'none' }}
-        />
-        <Typography sx={{ ml: 'auto', fontSize: 11, color: '#9CA3AF' }}>
+      <div className="flex items-center gap-3">
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+          <span className="text-[13px] font-extrabold text-white">{index + 1}</span>
+        </div>
+        <Badge className="h-5 rounded-full border-transparent bg-[#F5F3FF] text-[10px] font-bold text-[#7C3AED]">
+          {typeLabel[question.type]}
+        </Badge>
+        <span className="ml-auto text-[11px] text-[#9CA3AF]">
           {index + 1} of {total}
-        </Typography>
-      </Box>
+        </span>
+      </div>
 
       {/* Question text */}
-      <Typography sx={{ fontSize: 17, fontWeight: 600, color: '#111827', lineHeight: 1.55 }}>
+      <p className="text-[17px] font-semibold leading-[1.55] text-[#111827]">
         {question.question}
-      </Typography>
+      </p>
 
       {/* Answer input */}
       {question.type === 'TEXT' && (
-        <TextField
-          multiline
-          minRows={4}
-          maxRows={8}
+        <Textarea
+          rows={4}
           placeholder="Type your answer here…"
-          value={answer ?? ''}
+          value={(answer as string) ?? ''}
           onChange={(e) => onChange(e.target.value)}
-          fullWidth
-          sx={{
-            '& .MuiOutlinedInput-root': {
-              borderRadius: 2.5, fontSize: 14, bgcolor: '#FAFAFA',
-              '&.Mui-focused fieldset': { borderColor: '#8B5CF6' },
-            },
-          }}
+          className="rounded-xl bg-[#FAFAFA] text-sm focus-visible:border-[#8B5CF6] focus-visible:ring-[#8B5CF6]/30"
         />
       )}
 
       {question.type === 'SINGLE_CHOICE' && question.options && (
-        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+        <div className="flex flex-col gap-2">
           {question.options.map((opt, i) => (
-            <Box
+            <div
               key={i}
               onClick={() => onChange(opt)}
-              sx={{
-                display: 'flex', alignItems: 'center',
-                px: 2, py: 1.25, borderRadius: 2.5, cursor: 'pointer',
+              className="flex cursor-pointer items-center rounded-xl px-4 py-2.5 transition-all hover:border-[#8B5CF6] hover:bg-[#F5F3FF]"
+              style={{
                 border: `1.5px solid ${answer === opt ? '#8B5CF6' : '#E5E7EB'}`,
-                bgcolor: answer === opt ? '#F5F3FF' : '#FAFAFA',
-                transition: 'all 0.15s',
-                '&:hover': { borderColor: '#8B5CF6', bgcolor: '#F5F3FF' },
+                backgroundColor: answer === opt ? '#F5F3FF' : '#FAFAFA',
               }}
             >
-              <Radio
-                checked={answer === opt}
-                size="small"
-                sx={{ color: '#D1D5DB', '&.Mui-checked': { color: '#8B5CF6' }, p: 0.5, mr: 1, pointerEvents: 'none' }}
-              />
-              <Typography sx={{ fontSize: 14, color: '#374151', fontWeight: answer === opt ? 600 : 400, flex: 1 }}>
+              <span
+                className="mr-2.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full border-2"
+                style={{ borderColor: answer === opt ? '#8B5CF6' : '#D1D5DB' }}
+              >
+                {answer === opt && <span className="h-2 w-2 rounded-full bg-[#8B5CF6]" />}
+              </span>
+              <span className={`flex-1 text-sm text-[#374151] ${answer === opt ? 'font-semibold' : 'font-normal'}`}>
                 {opt}
-              </Typography>
+              </span>
               {answer === opt && (
-                <CheckCircleRounded sx={{ fontSize: 18, color: '#8B5CF6', ml: 1 }} />
+                <CheckCircleRounded size={18} color='#8B5CF6' className="ml-2" />
               )}
-            </Box>
+            </div>
           ))}
-        </Box>
+        </div>
       )}
 
       {question.type === 'MULTIPLE_CHOICE' && question.options && (() => {
@@ -160,84 +153,87 @@ const QuestionCard: React.FC<{
           onChange(next);
         };
         return (
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+          <div className="flex flex-col gap-2">
             {question.options.map((opt, i) => {
               const checked = selected.includes(opt);
               return (
-                <Box
+                <div
                   key={i}
                   onClick={() => toggle(opt)}
-                  sx={{
-                    display: 'flex', alignItems: 'center',
-                    px: 2, py: 1.25, borderRadius: 2.5, cursor: 'pointer',
+                  className="flex cursor-pointer items-center rounded-xl px-4 py-2.5 transition-all hover:border-[#8B5CF6] hover:bg-[#F5F3FF]"
+                  style={{
                     border: `1.5px solid ${checked ? '#8B5CF6' : '#E5E7EB'}`,
-                    bgcolor: checked ? '#F5F3FF' : '#FAFAFA',
-                    transition: 'all 0.15s',
-                    '&:hover': { borderColor: '#8B5CF6', bgcolor: '#F5F3FF' },
+                    backgroundColor: checked ? '#F5F3FF' : '#FAFAFA',
                   }}
                 >
-                  <Checkbox
-                    checked={checked}
-                    size="small"
-                    sx={{ color: '#D1D5DB', '&.Mui-checked': { color: '#8B5CF6' }, p: 0.5, mr: 1, pointerEvents: 'none' }}
-                  />
-                  <Typography sx={{ fontSize: 14, color: '#374151', fontWeight: checked ? 600 : 400, flex: 1 }}>
+                  <span
+                    className="mr-2.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[5px] border-2"
+                    style={{ borderColor: checked ? '#8B5CF6' : '#D1D5DB', backgroundColor: checked ? '#8B5CF6' : 'transparent' }}
+                  >
+                    {checked && <CheckCircleRounded size={11} color="#fff" fill="#8B5CF6" />}
+                  </span>
+                  <span className={`flex-1 text-sm text-[#374151] ${checked ? 'font-semibold' : 'font-normal'}`}>
                     {opt}
-                  </Typography>
+                  </span>
                   {checked && (
-                    <CheckCircleRounded sx={{ fontSize: 18, color: '#8B5CF6', ml: 1 }} />
+                    <CheckCircleRounded size={18} color='#8B5CF6' className="ml-2" />
                   )}
-                </Box>
+                </div>
               );
             })}
-          </Box>
+          </div>
         );
       })()}
 
       {question.type === 'RATING' && (
         <StarRating value={Number(answer) || 0} onChange={onChange} />
       )}
-    </Box>
+    </div>
   );
 };
 
 // ─── Completed screen ─────────────────────────────────────────────────────────
 
-const CompletedScreen: React.FC<{ onBack: () => void }> = ({ onBack }) => (
-  <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', py: 6, gap: 2.5 }}>
-    <Box sx={{
-      width: 80, height: 80, borderRadius: '50%',
-      background: 'linear-gradient(135deg, #10B981, #059669)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      boxShadow: '0 8px 32px rgba(16,185,129,0.35)',
-    }}>
-      <CheckCircleRounded sx={{ fontSize: 44, color: '#fff' }} />
-    </Box>
-    <Box>
-      <Typography sx={{ fontSize: 24, fontWeight: 800, color: '#111827', letterSpacing: '-0.02em', mb: 0.5 }}>
-        Questionnaire Submitted!
-      </Typography>
-      <Typography sx={{ fontSize: 14, color: '#6B7280', lineHeight: 1.7, maxWidth: 360 }}>
-        Your answers have been recorded. Thank you for completing this assessment.
-      </Typography>
-    </Box>
-    <Button
-      variant="outlined"
-      onClick={onBack}
-      sx={{
-        mt: 1, textTransform: 'none', fontWeight: 600, borderRadius: 2.5,
-        borderColor: '#E5E7EB', color: '#374151', px: 4, py: 1.25,
-        '&:hover': { borderColor: '#10B981', color: '#059669', bgcolor: '#ECFDF5' },
-      }}
+const CompletedScreen: React.FC<{
+  campaignId: string;
+  campaignTitle?: string;
+  participantId: string;
+  questions: Question[];
+  showResults?: boolean;
+  isLoggedIn?: boolean;
+  onDone: () => void;
+}> = ({ campaignId, campaignTitle, participantId, questions, showResults, isLoggedIn, onDone }) => (
+  <div className="flex flex-col items-center gap-5 px-6 py-12 text-center">
+    <div
+      className="flex h-20 w-20 items-center justify-center rounded-full"
+      style={{ background: 'linear-gradient(135deg, #10B981, #059669)', boxShadow: '0 8px 32px rgba(16,185,129,0.35)' }}
     >
-      Back to Campaign
-    </Button>
-  </Box>
+      <CheckCircleRounded size={44} color='#fff' />
+    </div>
+    <div>
+      <p className="mb-1 text-2xl font-extrabold tracking-[-0.02em] text-[#111827]">
+        Thank you!
+      </p>
+      <p className="max-w-[360px] text-sm leading-[1.7] text-[#6B7280]">
+        You have completed {campaignTitle ? `"${campaignTitle}"` : 'this questionnaire'}. Your answers have been recorded.
+      </p>
+    </div>
+
+    {showResults && (
+      <QuestionnaireResultsPanel campaignId={campaignId} participantId={participantId} questions={questions} />
+    )}
+
+    {isLoggedIn && (
+      <Button variant="outline" onClick={onDone} className="mt-1 rounded-[20px] px-8 py-5 font-semibold">
+        Back to Dashboard
+      </Button>
+    )}
+  </div>
 );
 
 // ─── Main Component ───────────────────────────────────────────────────────────
 
-const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questions, onComplete, onBack }) => {
+const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, participantId, questions, showResults, isLoggedIn, onComplete, onBack }) => {
   const draftKey = DRAFT_KEY(campaignId, participantId);
 
   // Load draft from localStorage on first render
@@ -334,7 +330,6 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
       // Clear draft from localStorage on successful submit
       try { localStorage.removeItem(draftKey); } catch {}
       setDone(true);
-      onComplete();
     } catch (err: any) {
       setError(err?.response?.data?.error ?? 'Submission failed. Please try again.');
     } finally {
@@ -348,97 +343,106 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
   const allAnswered = answeredCount === total;
   const isLast      = current === total - 1;
 
-  if (done) return <CompletedScreen onBack={onBack} />;
+  if (done) return (
+    <CompletedScreen
+      campaignId={campaignId}
+      campaignTitle={campaignTitle}
+      participantId={participantId}
+      questions={questions}
+      showResults={showResults}
+      isLoggedIn={isLoggedIn}
+      onDone={onComplete}
+    />
+  );
 
   if (total === 0) return (
-    <Box sx={{ textAlign: 'center', py: 8 }}>
-      <AssignmentOutlined sx={{ fontSize: 48, color: '#E5E7EB', mb: 2 }} />
-      <Typography sx={{ fontSize: 15, color: '#6B7280' }}>No questions configured for this questionnaire.</Typography>
-    </Box>
+    <div className="py-16 text-center">
+      <AssignmentOutlined size={48} color='#E5E7EB' className="mb-4" />
+      <p className="text-[15px] text-[#6B7280]">No questions configured for this questionnaire.</p>
+    </div>
   );
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0, height: '100%' }}>
+    <div className="flex h-full flex-col gap-0">
 
       {/* Header */}
-      <Box sx={{
-        px: 3, pt: 2.5, pb: 2,
-        borderBottom: '1px solid #F3F4F6',
-        display: 'flex', alignItems: 'center', gap: 1.5,
-      }}>
-        <Box sx={{
-          p: 1, borderRadius: 2,
-          background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-          display: 'flex', alignItems: 'center',
-        }}>
-          <AssignmentOutlined sx={{ fontSize: 18, color: '#fff' }} />
-        </Box>
-        <Box sx={{ flex: 1 }}>
-          <Typography sx={{ fontSize: 15, fontWeight: 700, color: '#111827', lineHeight: 1.2 }}>
-            Questionnaire
-          </Typography>
-          <Typography sx={{ fontSize: 11, color: '#9CA3AF' }}>
+      <div className="flex items-center gap-3 border-b border-[#F3F4F6] px-6 pb-4 pt-5">
+        <button
+          onClick={onBack}
+          className="-ml-2 rounded-md p-1.5 text-[#94A3B8] hover:bg-black/[0.04] hover:text-[#0F172A]"
+        >
+          <ArrowBackRounded size={18} />
+        </button>
+        <div className="flex items-center rounded-lg p-2" style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}>
+          <AssignmentOutlined size={18} color='#fff' />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-bold leading-tight text-[#111827]">
+            {campaignTitle || 'Questionnaire'}
+          </p>
+          <p className="text-[11px] text-[#9CA3AF]">
             {answeredCount} of {total} answered
-          </Typography>
-        </Box>
+          </p>
+        </div>
 
         {/* Auto-save indicator */}
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75 }}>
+        <div className="flex items-center gap-2">
           {saveStatus === 'saving' && (
             <>
-              <CircularProgress size={11} sx={{ color: '#9CA3AF' }} />
-              <Typography sx={{ fontSize: 11, color: '#9CA3AF' }}>Saving…</Typography>
+              <Spinner className="size-[11px]" style={{ color: '#9CA3AF' }} />
+              <span className="text-[11px] text-[#9CA3AF]">Saving…</span>
             </>
           )}
           {saveStatus === 'saved' && (
             <>
-              <SaveOutlined sx={{ fontSize: 13, color: '#10B981' }} />
-              <Typography sx={{ fontSize: 11, color: '#10B981', fontWeight: 600 }}>Saved</Typography>
+              <SaveOutlined size={13} color='#10B981' />
+              <span className="text-[11px] font-semibold text-[#10B981]">Saved</span>
             </>
           )}
-        </Box>
+        </div>
 
-        <Chip
-          label={`${Math.round((answeredCount / total) * 100)}%`}
-          size="small"
-          sx={{
-            fontWeight: 700, fontSize: 11, height: 22,
-            bgcolor: allAnswered ? '#ECFDF5' : '#F5F3FF',
+        <Badge
+          className="h-[22px] rounded-full border-transparent text-[11px] font-bold"
+          style={{
+            backgroundColor: allAnswered ? '#ECFDF5' : '#F5F3FF',
             color: allAnswered ? '#059669' : '#7C3AED',
           }}
-        />
-      </Box>
+        >
+          {Math.round((answeredCount / total) * 100)}%
+        </Badge>
+      </div>
 
       {/* Progress bar */}
-      <LinearProgress
-        variant="determinate"
-        value={progress}
-        sx={{
-          height: 3, bgcolor: '#F3F4F6', flexShrink: 0,
-          '& .MuiLinearProgress-bar': {
-            background: 'linear-gradient(90deg, #6366F1, #8B5CF6)',
-            borderRadius: 2,
-          },
-        }}
-      />
+      <div className="h-[3px] shrink-0 bg-[#F3F4F6]">
+        <div
+          className="h-full rounded-r transition-[width] duration-200"
+          style={{ width: `${progress}%`, background: 'linear-gradient(90deg, #6366F1, #8B5CF6)' }}
+        />
+      </div>
 
       {/* Question area */}
-      <Box sx={{ flex: 1, overflow: 'auto', px: 3, py: 3 }}>
+      <div className="flex-1 overflow-auto px-6 py-6">
         {/* Resume banner */}
         {resumed && (
-          <Alert
-            severity="info"
-            icon={<SaveOutlined sx={{ fontSize: 16 }} />}
-            onClose={() => setResumed(false)}
-            sx={{ mb: 2, borderRadius: 2, fontSize: 13, '& .MuiAlert-message': { fontWeight: 500 } }}
-          >
-            Your previous progress has been restored.
+          <Alert className="mb-4 rounded-lg border-blue-200 bg-blue-50 text-blue-700 [&>svg]:text-blue-600">
+            <SaveOutlined size={16} />
+            <AlertDescription className="flex flex-1 items-center justify-between font-medium text-blue-700">
+              Your previous progress has been restored.
+              <button onClick={() => setResumed(false)} className="ml-2 rounded p-0.5 hover:bg-blue-100">
+                <CloseIcon size={14} />
+              </button>
+            </AlertDescription>
           </Alert>
         )}
 
         {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: 2 }} onClose={() => setError(null)}>
-            {error}
+          <Alert variant="destructive" className="mb-4 rounded-lg">
+            <AlertDescription className="flex flex-1 items-center justify-between">
+              {error}
+              <button onClick={() => setError(null)} className="ml-2 rounded p-0.5 hover:bg-destructive/10">
+                <CloseIcon size={14} />
+              </button>
+            </AlertDescription>
           </Alert>
         )}
         <QuestionCard
@@ -448,85 +452,62 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, participantId, questio
           answer={currentAns}
           onChange={setAnswer}
         />
-      </Box>
+      </div>
 
       {/* Navigation footer */}
-      <Box sx={{
-        px: 3, py: 2,
-        borderTop: '1px solid #F3F4F6',
-        display: 'flex', alignItems: 'center', gap: 1.5, flexShrink: 0,
-      }}>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackRounded />}
-          onClick={goPrev}
-          disabled={current === 0}
-          sx={{
-            textTransform: 'none', fontWeight: 600, borderRadius: 2,
-            borderColor: '#E5E7EB', color: '#374151', px: 2,
-            '&:hover': { borderColor: '#6366F1', color: '#6366F1', bgcolor: '#F5F3FF' },
-            '&.Mui-disabled': { borderColor: '#F3F4F6' },
-          }}
-        >
+      <div className="flex shrink-0 items-center gap-3 border-t border-[#F3F4F6] px-6 py-4">
+        <Button variant="outline" onClick={goPrev} disabled={current === 0} className="rounded-lg px-4 font-semibold">
+          <ArrowBackRounded />
           Back
         </Button>
 
         {/* Dot indicators */}
-        <Box sx={{ flex: 1, display: 'flex', justifyContent: 'center', gap: 0.75, flexWrap: 'wrap' }}>
+        <div className="flex flex-1 flex-wrap justify-center gap-1.5">
           {questions.map((_, i) => {
             const answered = Array.isArray(answers[i])
               ? (answers[i] as string[]).length > 0
               : answers[i] !== undefined && answers[i] !== '';
             const active   = i === current;
             return (
-              <Box
+              <div
                 key={i}
                 onClick={() => { setCurrent(i); persistDraft(answers, i); }}
-                sx={{
-                  width: active ? 20 : 8, height: 8, borderRadius: 4, cursor: 'pointer',
-                  bgcolor: active ? '#8B5CF6' : answered ? '#10B981' : '#E5E7EB',
-                  transition: 'all 0.2s',
+                className="h-2 cursor-pointer rounded-full transition-all"
+                style={{
+                  width: active ? 20 : 8,
+                  backgroundColor: active ? '#8B5CF6' : answered ? '#10B981' : '#E5E7EB',
                 }}
               />
             );
           })}
-        </Box>
+        </div>
 
         {isLast ? (
           <Button
-            variant="contained"
-            endIcon={submitting ? <CircularProgress size={14} sx={{ color: '#fff' }} /> : <SendRounded sx={{ fontSize: 16 }} />}
+            variant="default"
             onClick={handleSubmit}
             disabled={submitting || !allAnswered}
-            sx={{
-              textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5, color: '#fff',
-              background: 'linear-gradient(135deg, #10B981, #059669)',
-              boxShadow: '0 4px 14px rgba(16,185,129,0.3)',
-              '&:hover': { boxShadow: '0 6px 20px rgba(16,185,129,0.4)' },
-              '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF', boxShadow: 'none' },
-            }}
+            loading={submitting}
+            className="rounded-lg px-5 font-bold text-white shadow-[0_4px_14px_rgba(16,185,129,0.3)]"
+            style={{ background: 'linear-gradient(135deg, #10B981, #059669)' }}
           >
             {submitting ? 'Submitting…' : 'Submit'}
+            {!submitting && <SendRounded size={16} />}
           </Button>
         ) : (
           <Button
-            variant="contained"
-            endIcon={<ArrowForwardRounded />}
+            variant="default"
             onClick={goNext}
             disabled={!isAnswered}
-            sx={{
-              textTransform: 'none', fontWeight: 700, borderRadius: 2, px: 2.5, color: '#fff',
-              background: 'linear-gradient(135deg, #6366F1, #8B5CF6)',
-              boxShadow: '0 4px 14px rgba(99,102,241,0.25)',
-              '&:hover': { boxShadow: '0 6px 20px rgba(99,102,241,0.35)' },
-              '&.Mui-disabled': { bgcolor: '#E5E7EB', color: '#9CA3AF', boxShadow: 'none' },
-            }}
+            className="rounded-lg px-5 font-bold text-white shadow-[0_4px_14px_rgba(99,102,241,0.25)]"
+            style={{ background: 'linear-gradient(135deg, #6366F1, #8B5CF6)' }}
           >
             Next
+            <ArrowForwardRounded />
           </Button>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

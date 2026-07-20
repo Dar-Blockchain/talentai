@@ -19,6 +19,7 @@ const NAV_ICON_MAP: Record<string, React.ElementType> = {
   howitworks: ListChecks,
   contact:    Mail,
   "/posts/":  Briefcase,
+
 };
 
 interface HeaderNavMenuProps {
@@ -37,7 +38,7 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
       { label: t("nav.how_it_works"), id: "howitworks" },
     ];
     if (userType === "candidate") return [
-      { label: t("nav.find_jobs"),    href: "/posts/"   },
+      { label: t("nav.find_jobs"),    href: "/posts/"  },
       { label: t("nav.how_it_works"), id: "howitworks" },
     ];
     return [

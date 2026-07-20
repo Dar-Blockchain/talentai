@@ -1,9 +1,4 @@
-import PeopleIcon from '@mui/icons-material/People';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import WorkIcon from '@mui/icons-material/Work';
-import ShowChartIcon from '@mui/icons-material/ShowChart';
-import WorkOutlineIcon from '@mui/icons-material/WorkOutline';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import { Users as PeopleIcon, ClipboardList as AssessmentIcon, Code2 as WorkIcon, LineChart as ShowChartIcon, Briefcase as WorkOutlineIcon, CheckCircle2 as CheckCircleIcon } from 'lucide-react';
 import { Skeleton } from '@/modules/shared/ui/shadcn/skeleton';
 import { AdminDashboardStats } from '../types';
 
@@ -89,7 +84,7 @@ const AdminStatsCards = ({ stats, loading = false }: AdminStatsCardsProps) => (
           className="bg-white rounded-xl border border-slate-100 p-3.5 flex flex-col gap-1 hover:-translate-y-0.5 transition-transform duration-150 hover:shadow-[0_4px_16px_-4px_rgba(15,23,42,0.08)]"
         >
           <div className="w-7 h-7 rounded-lg flex items-center justify-center mb-0.5" style={{ background: card.bg }}>
-            <Icon style={{ fontSize: 15, color: card.color }} />
+            <Icon size={15} color={card.color} />
           </div>
           <div className="text-[1.25rem] font-bold text-slate-900 leading-none tabular-nums tracking-tight">
             {card.value(stats)}

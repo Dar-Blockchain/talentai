@@ -32,8 +32,9 @@ const DepartmentsPage: NextPageWithLayout = () => {
   useCompanyAccess("canViewDepartments");
 
   const user      = useSelector((state: RootState) => state.user.connectedUser.user);
-  const { data: empPerms } = usePermissionsQuery(user?._id);
-  const canManage = user?.role !== "Employee" || !!empPerms?.canCreateDepartment;
+  const isEmp     = user?.role === "Employee";
+  const { data: empPerms } = usePermissionsQuery(user?._id, isEmp);
+  const canManage = !isEmp || !!empPerms?.canCreateDepartment;
 
   const { departments, total, loading, error, search, onSearch } = useDepartmentList();
 

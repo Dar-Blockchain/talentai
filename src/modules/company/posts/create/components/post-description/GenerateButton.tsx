@@ -1,7 +1,6 @@
-import { Box, Button, CircularProgress } from "@mui/material";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Sparkles as AutoAwesomeOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { TEAL } from "./styles";
 
 interface Props {
   loading: boolean;
@@ -11,22 +10,17 @@ interface Props {
 const GenerateButton = ({ loading, onClick }: Props) => {
   const { t } = useTranslation("posts");
   return (
-    <Box sx={{ px: 2.5, pt: 2, pb: 2.5 }}>
+    <div className="px-5 pt-4 pb-5">
       <Button
-        variant="contained" fullWidth onClick={onClick} disabled={loading}
-        startIcon={loading ? <CircularProgress size={15} sx={{ color: "#fff" }} /> : <AutoAwesomeOutlined sx={{ fontSize: 17 }} />}
-        sx={{
-          textTransform: "none", fontWeight: 700, fontSize: "13.5px",
-          borderRadius: "10px", height: 44,
-          bgcolor: TEAL, color: "#fff", boxShadow: "none",
-          "&:hover": { bgcolor: "#0F766E", boxShadow: "0 4px 14px rgba(13,148,136,0.28)" },
-          "&.Mui-disabled": { bgcolor: TEAL, opacity: 0.65, color: "#fff" },
-          transition: "all 0.2s",
-        }}
+        className="h-11 w-full rounded-[10px] text-[13.5px] font-bold shadow-none transition-all"
+        onClick={onClick}
+        disabled={loading}
+        loading={loading}
       >
+        {!loading && <AutoAwesomeOutlined size={17} />}
         {loading ? t("create.form.btn_generating") : t("create.form.btn_generate")}
       </Button>
-    </Box>
+    </div>
   );
 };
 

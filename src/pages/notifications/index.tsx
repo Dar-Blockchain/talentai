@@ -2,7 +2,7 @@ import type { ReactElement } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
-import LoadingScreen from "@/components/ui/LoadingScreen";
+import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { CandidateNotificationsPanel } from "@/modules/notifications/candidate";
 import { CandidateWorkspaceLayout, DashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";

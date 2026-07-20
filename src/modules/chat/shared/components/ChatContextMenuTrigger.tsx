@@ -1,8 +1,6 @@
 import React, { memo } from "react";
-import { IconButton, Tooltip, useTheme } from "@mui/material";
-import { alpha } from "@mui/material/styles";
-import { CHAT_CONTEXT_MENU_EASE } from "./helpers";
-import { safeAlpha } from "@/utils/safeMuiAlpha";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import { cn } from "@/lib/utils";
 
 export type ChatContextMenuTriggerVisibility = "always" | "fadeOnRowHover";
 
@@ -31,69 +29,34 @@ const ChatContextMenuTrigger = memo(function ChatContextMenuTrigger({
   tooltipTitle,
   children,
 }: ChatContextMenuTriggerProps) {
-  const theme = useTheme();
-  const isDark = theme.palette.mode === "dark";
-  const primary = theme.palette.primary.main;
-
-  const surfaceSx = {
-    width: 36,
-    height: 36,
-    borderRadius: "50%",
-    p: 0,
-    bgcolor: isDark ? safeAlpha(theme.palette.common.white, 0.08) : safeAlpha(theme.palette.common.white, 0.95),
-    border: `1px solid ${alpha(theme.palette.divider, isDark ? 0.42 : 0.2)}`,
-    color: isDark ? safeAlpha(theme.palette.common.white, 0.88) : alpha(theme.palette.text.secondary, 1),
-    boxShadow: isDark
-      ? `0 1px 5px ${alpha("#000", 0.4)}`
-      : `0 1px 3px ${alpha("#0f172a", 0.07)}`,
-    transition: `opacity 0.22s ${CHAT_CONTEXT_MENU_EASE}, transform 0.2s ${CHAT_CONTEXT_MENU_EASE}, background-color 0.2s ${CHAT_CONTEXT_MENU_EASE}, border-color 0.2s ${CHAT_CONTEXT_MENU_EASE}, box-shadow 0.2s ${CHAT_CONTEXT_MENU_EASE}`,
-    "@media (hover: hover)": {
-      "&:hover": {
-        bgcolor: isDark ? alpha(primary, 0.24) : alpha(primary, 0.12),
-        borderColor: alpha(primary, isDark ? 0.55 : 0.42),
-        color: primary,
-        transform: "scale(1.06)",
-        boxShadow: isDark
-          ? `0 4px 16px ${alpha(primary, 0.35)}`
-          : `0 4px 14px ${alpha(primary, 0.24)}`,
-      },
-    },
-    ...(menuOpen
-      ? {
-          bgcolor: isDark ? alpha(primary, 0.22) : alpha(primary, 0.11),
-          borderColor: alpha(primary, isDark ? 0.5 : 0.4),
-          color: primary,
-        }
-      : {}),
-  };
-
-  const visibilitySx =
-    visibility === "fadeOnRowHover"
-      ? {
-          opacity: menuOpen ? 1 : 0,
-        }
-      : {
-          opacity: 1,
-        };
-
   const button = (
-    <IconButton
-      size="small"
-      className={className}
+    <button
+      type="button"
       onClick={onClick}
       aria-label={ariaLabel}
       aria-expanded={menuOpen ? true : undefined}
-      sx={{
-        ...visibilitySx,
-        ...surfaceSx,
-      }}
+      className={cn(
+        "flex h-9 w-9 items-center justify-center rounded-full border border-[rgba(15,23,42,0.2)] bg-white/95 p-0 text-[#6B7280] shadow-[0_1px_3px_rgba(15,23,42,0.07)]",
+        "transition-[opacity,transform,background-color,border-color,box-shadow] duration-200",
+        "hover:scale-[1.06] hover:border-[#0D948866] hover:bg-[#0D948820] hover:text-[#0D9488] hover:shadow-[0_4px_14px_rgba(13,148,136,0.24)]",
+        menuOpen && "border-[#0D948866] bg-[#0D94881c] text-[#0D9488]",
+        visibility === "fadeOnRowHover" ? (menuOpen ? "opacity-100" : "opacity-0") : "opacity-100",
+        className,
+      )}
     >
       {children}
-    </IconButton>
+    </button>
   );
 
   if (tooltipTitle) {
-    return <Tooltip title={tooltipTitle}>{button}</Tooltip>;
+    return (
+      <TooltipProvider>
+        <Tooltip>
+          <TooltipTrigger asChild>{button}</TooltipTrigger>
+          <TooltipContent>{tooltipTitle}</TooltipContent>
+        </Tooltip>
+      </TooltipProvider>
+    );
   }
 
   return button;

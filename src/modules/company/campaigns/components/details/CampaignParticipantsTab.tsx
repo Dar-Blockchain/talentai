@@ -3,20 +3,41 @@
 import React, { memo, useState, useRef, useCallback, useMemo } from "react";
 import { useRouter } from "next/router";
 import {
-  Box, Typography, Avatar, Skeleton, Alert, IconButton, Tooltip,
-  LinearProgress, CircularProgress, Dialog, Select, MenuItem,
-} from "@mui/material";
-import SearchOutlined              from "@mui/icons-material/SearchOutlined";
-import CloseOutlined               from "@mui/icons-material/CloseOutlined";
-import PeopleAltOutlined           from "@mui/icons-material/PeopleAltOutlined";
-import BusinessOutlined            from "@mui/icons-material/BusinessOutlined";
-import CheckCircleOutlined         from "@mui/icons-material/CheckCircleOutlined";
-import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUncheckedOutlined";
-import AccessTimeOutlined          from "@mui/icons-material/AccessTimeOutlined";
-import EmailOutlined               from "@mui/icons-material/EmailOutlined";
-import PersonAddOutlined           from "@mui/icons-material/PersonAddOutlined";
-import DeleteOutlineOutlined       from "@mui/icons-material/DeleteOutlineOutlined";
-import AddOutlined                 from "@mui/icons-material/AddOutlined";
+  Search,
+  X,
+  Users,
+  Building2,
+  CircleCheck,
+  Circle,
+  Clock,
+  Mail,
+  UserPlus,
+  Trash2,
+  Plus,
+} from "lucide-react";
+import { Avatar, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogDescription,
+} from "@/modules/shared/ui/shadcn/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/shared/ui/shadcn/select";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/modules/shared/ui/shadcn/tooltip";
 import {
   useCampaignParticipantsQuery,
   useNonParticipantsQuery,
@@ -24,15 +45,18 @@ import {
   useRemoveParticipantMutation,
 } from "../../queries";
 import { useDepartmentsQuery } from "@/modules/company/employees/queries";
-import { CampaignParticipant, NonParticipant, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
+import {
+  CampaignParticipant,
+  NonParticipant,
+  ParticipantStatus,
+} from "@/modules/company/campaigns/types/campaign";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { ROLES } from "@/modules/shared/constants/employee";
 import { useTranslation } from "react-i18next";
 
 // ─── Constants ────────────────────────────────────────────────────────────────
 
-const PURPLE    = "#8310FF";
-const PAGE_SIZE = 10;
+const PAGE_SIZE = 9;
 const PICKER_PAGE_SIZE = 8;
 
 const AVATAR_GRADIENTS = [
@@ -49,296 +73,242 @@ function pickGradient(str: string) {
   return AVATAR_GRADIENTS[Math.abs(h) % AVATAR_GRADIENTS.length];
 }
 
-const PARTICIPANT_STATUS_META: Record<ParticipantStatus, { color: string; bg: string; border: string; icon: React.ElementType }> = {
-  IN_PROGRESS: { color: "#D97706", bg: "#FFFBEB", border: "#FDE68A", icon: AccessTimeOutlined },
-  COMPLETED:   { color: "#16A34A", bg: "#F0FDF4", border: "#BBF7D0", icon: CheckCircleOutlined },
-  INVITED:     { color: "#0891B2", bg: "#ECFDF5", border: "#A5F3FC", icon: RadioButtonUncheckedOutlined },
-  DROPPED:     { color: "#EF4444", bg: "#FEF2F2", border: "#FECACA", icon: RadioButtonUncheckedOutlined },
+const PARTICIPANT_STATUS_META: Record<
+  ParticipantStatus,
+  { color: string; bg: string; border: string; icon: React.ElementType }
+> = {
+  IN_PROGRESS: {
+    color: "#D97706",
+    bg: "#FFFBEB",
+    border: "#FDE68A",
+    icon: Clock,
+  },
+  COMPLETED: {
+    color: "#16A34A",
+    bg: "#F0FDF4",
+    border: "#BBF7D0",
+    icon: CircleCheck,
+  },
+  INVITED: { color: "#0891B2", bg: "#ECFDF5", border: "#A5F3FC", icon: Circle },
+  DROPPED: { color: "#EF4444", bg: "#FEF2F2", border: "#FECACA", icon: Circle },
 };
 
-const ROW_SKELETON_GRID_COMPANY  = "44px 1fr 140px 120px 110px" as const;
-const ROW_SKELETON_GRID_EMPLOYEE = "44px 1fr 140px 120px" as const;
+const SKELETON_CARDS = Array.from({ length: 6 });
+const SKELETON_ROWS_8 = Array.from({ length: PICKER_PAGE_SIZE });
 
-const SKELETON_ROWS_5  = Array.from({ length: 5 });
-const SKELETON_ROWS_8  = Array.from({ length: PICKER_PAGE_SIZE });
+// ─── Card skeleton ────────────────────────────────────────────────────────────
 
-const FILTER_CHIP_SX = {
-  display: "inline-flex", alignItems: "center", gap: 0.5,
-  px: 1, py: "3px", borderRadius: "999px",
-  bgcolor: `${PURPLE}10`, border: `1px solid ${PURPLE}25`,
-  cursor: "pointer", "&:hover": { bgcolor: `${PURPLE}18` }, transition: "all 0.15s",
-} as const;
-
-const TOOLBAR_TOTAL_SX = {
-  display: "flex", alignItems: "center", gap: 0.625,
-  px: 1.25, py: 0.5, borderRadius: "10px",
-  bgcolor: "#F8FAFC", border: "1px solid #E2E8F0",
-} as const;
-
-const SEARCH_BOX_SX = {
-  display: "flex", alignItems: "center",
-  bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px",
-  px: 1.5, py: 0.6, minWidth: 220,
-  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-  "&:focus-within": { borderColor: PURPLE, boxShadow: `0 0 0 3px ${PURPLE}12` },
-  transition: "all 0.18s",
-} as const;
-
-const ADD_BTN_SX = {
-  display: "flex", alignItems: "center", gap: 0.625,
-  px: 1.5, py: 0.75, borderRadius: "10px", cursor: "pointer",
-  bgcolor: PURPLE, boxShadow: `0 3px 10px ${PURPLE}38`,
-  transition: "all 0.15s", "&:hover": { opacity: 0.9, boxShadow: `0 4px 14px ${PURPLE}50` },
-} as const;
-
-const TABLE_CARD_SX = {
-  bgcolor: "#fff", border: "1px solid #E5E7EB",
-  borderRadius: 3, overflow: "hidden",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-} as const;
-
-const PROGRESS_SX = { height: 2, "& .MuiLinearProgress-bar": { bgcolor: PURPLE } } as const;
-
-const EMPTY_STATE_ICON_SX = {
-  width: 56, height: 56, borderRadius: "16px",
-  bgcolor: "#F3F4F6", display: "flex",
-  alignItems: "center", justifyContent: "center",
-  mx: "auto", mb: 2,
-} as const;
-
-const COL_HEADER_SX_BASE = {
-  fontSize: "10px", fontWeight: 800, color: "#94A3B8",
-  textTransform: "uppercase", letterSpacing: "0.08em",
-} as const;
-
-const DIALOG_HEADER_BG = `linear-gradient(135deg, ${PURPLE}06 0%, transparent 70%)` as const;
-
-const DIALOG_ICON_BOX_SX = {
-  width: 40, height: 40, borderRadius: "12px",
-  background: `linear-gradient(135deg, ${PURPLE}18, ${PURPLE}08)`,
-  border: `1px solid ${PURPLE}22`,
-  display: "flex", alignItems: "center", justifyContent: "center",
-  boxShadow: `0 4px 12px ${PURPLE}18`,
-} as const;
-
-const DIALOG_CLOSE_BTN_SX = {
-  width: 30, height: 30, borderRadius: "8px",
-  color: "#94A3B8", bgcolor: "#F8FAFC", border: "1px solid #E2E8F0",
-  "&:hover": { bgcolor: "#F1F5F9", color: "#64748B" },
-} as const;
-
-const PICKER_EMPTY_ICON_SX = {
-  width: 56, height: 56, borderRadius: "16px",
-  background: "linear-gradient(135deg, #F3F4F6, #E9ECEF)",
-  display: "flex", alignItems: "center", justifyContent: "center",
-  mx: "auto", mb: 2, boxShadow: "0 2px 8px rgba(0,0,0,0.06)",
-} as const;
-
-const DONE_BTN_SX = {
-  display: "inline-flex", alignItems: "center",
-  px: 2.5, py: 1, borderRadius: "11px",
-  bgcolor: PURPLE, cursor: "pointer",
-  boxShadow: `0 4px 14px ${PURPLE}38`,
-  "&:hover": { bgcolor: "#6D0FD6", boxShadow: `0 6px 18px ${PURPLE}45` },
-  transition: "all 0.18s",
-} as const;
-
-const CLEAR_FILTERS_BTN_SX = {
-  display: "inline-flex", alignItems: "center", gap: 0.5,
-  mt: 2, px: 1.5, py: 0.75, borderRadius: "9px",
-  bgcolor: `${PURPLE}10`, border: `1px solid ${PURPLE}25`,
-  cursor: "pointer", "&:hover": { bgcolor: `${PURPLE}18` }, transition: "all 0.15s",
-} as const;
-
-// ─── Skeleton rows ─────────────────────────────────────────────────────────────
-
-const RowSkeleton = memo<{ showActions?: boolean }>(({ showActions }) => (
-  <Box sx={{
-    display: "grid",
-    gridTemplateColumns: showActions ? ROW_SKELETON_GRID_COMPANY : ROW_SKELETON_GRID_EMPLOYEE,
-    alignItems: "center", gap: 2, px: 3, py: 1.875, borderBottom: "1px solid #F3F4F6",
-  }}>
-    <Skeleton variant="rounded" width={22} height={18} sx={{ borderRadius: "6px" }} />
-    <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-      <Skeleton variant="circular" width={40} height={40} sx={{ flexShrink: 0 }} />
-      <Box sx={{ flex: 1 }}>
-        <Skeleton variant="text" width="45%" height={14} />
-        <Skeleton variant="text" width="62%" height={12} sx={{ mt: 0.5 }} />
-      </Box>
-    </Box>
-    <Box sx={{ display: "flex", justifyContent: "center" }}><Skeleton variant="rounded" width={100} height={24} sx={{ borderRadius: "999px" }} /></Box>
-    <Box sx={{ display: "flex", justifyContent: "center" }}><Skeleton variant="rounded" width={90} height={24} sx={{ borderRadius: "999px" }} /></Box>
-    {showActions && <Box sx={{ display: "flex", justifyContent: "center", gap: 0.75 }}><Skeleton variant="circular" width={28} height={28} /><Skeleton variant="circular" width={28} height={28} /></Box>}
-  </Box>
+const CardSkeleton = memo(() => (
+  <div className="bg-background border border-border rounded-2xl p-4 flex flex-col gap-3.5">
+    <div className="flex items-start justify-between gap-2">
+      <div className="flex items-center gap-3 flex-1">
+        <Skeleton className="size-10 rounded-full shrink-0" />
+        <div className="flex-1">
+          <Skeleton className="h-[15px] w-[60%]" />
+          <Skeleton className="h-[13px] w-[75%] mt-1.5" />
+        </div>
+      </div>
+      <Skeleton className="size-7 rounded-full shrink-0" />
+    </div>
+    <div className="flex items-center justify-between">
+      <Skeleton className="h-[22px] w-24 rounded-full" />
+      <Skeleton className="h-[22px] w-20 rounded-full" />
+    </div>
+  </div>
 ));
-RowSkeleton.displayName = "RowSkeleton";
+CardSkeleton.displayName = "ParticipantCardSkeleton";
 
 const PickerRowSkeleton = memo(() => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 2, px: 3, py: 1.625, borderBottom: "1px solid #F3F4F6" }}>
-    <Skeleton variant="circular" width={38} height={38} sx={{ flexShrink: 0 }} />
-    <Box sx={{ flex: 1 }}>
-      <Skeleton variant="text" width="38%" height={14} />
-      <Skeleton variant="text" width="55%" height={11} sx={{ mt: 0.5 }} />
-    </Box>
-    <Skeleton variant="rounded" width={84} height={24} sx={{ borderRadius: "999px" }} />
-    <Skeleton variant="rounded" width={72} height={32} sx={{ borderRadius: "9px" }} />
-  </Box>
+  <div className="flex items-center gap-4 px-5 py-3 border-b border-border/60">
+    <Skeleton className="size-[38px] rounded-full shrink-0" />
+    <div className="flex-1">
+      <Skeleton className="h-3.5 w-[38%]" />
+      <Skeleton className="h-[11px] w-[55%] mt-1" />
+    </div>
+    <Skeleton className="h-6 w-21 rounded-full" />
+    <Skeleton className="h-8 w-[72px] rounded-lg" />
+  </div>
 ));
 PickerRowSkeleton.displayName = "PickerRowSkeleton";
 
-// ─── Participant row ──────────────────────────────────────────────────────────
+// ─── Participant card ─────────────────────────────────────────────────────────
 
-interface ParticipantRowProps {
+interface ParticipantCardProps {
   participant: CampaignParticipant;
-  index: number;
-  total: number;
-  campaignId: string;
   onRemove?: (id: string) => void;
   removing?: boolean;
+  hideStatus?: boolean;
 }
 
-const ParticipantRow = memo<ParticipantRowProps>(({ participant: p, index, total, campaignId, onRemove, removing }) => {
-  const router = useRouter();
-  const { t } = useTranslation("dashboard");
-  const pp = "pages.campaigns.detail.participants";
-  const du = "pages.campaigns.detail";
+const ParticipantCard = memo<ParticipantCardProps>(
+  ({ participant: p, onRemove, removing, hideStatus }) => {
+    const router = useRouter();
+    const { t } = useTranslation("dashboard");
+    const pp = "pages.campaigns.detail.participants";
+    const du = "pages.campaigns.detail";
 
-  const name      = useMemo(() => (p.firstName && p.lastName) ? `${p.firstName} ${p.lastName}` : p.firstName || p.lastName || t(`${du}.unknown_user`), [p.firstName, p.lastName, t, du]);
-  const email     = useMemo(() => p.email ?? "", [p.email]);
-  const letter    = useMemo(() => name[0]?.toUpperCase() || "U", [name]);
-  const dept      = useMemo(() => p.department?.name ?? null, [p.department]);
-  const roleStr   = useMemo(() => (p.role ?? "") as string, [p.role]);
-  const roleEntry = useMemo(() => ROLES.find((r) => r.value === roleStr || r.value === roleStr.toLowerCase()), [roleStr]);
-  const roleColor = useMemo(() => roleEntry?.color ?? "#6B7280", [roleEntry]);
-  const roleLabel = useMemo(() => roleEntry?.label || roleStr || "—", [roleEntry, roleStr]);
-  const RoleIcon  = useMemo(() => roleEntry?.icon ?? null, [roleEntry]);
-  const status    = useMemo(() => p.status as ParticipantStatus | undefined, [p.status]);
-  const sc        = useMemo(() => status ? PARTICIPANT_STATUS_META[status] : null, [status]);
-  const StatusIcon = useMemo(() => sc?.icon ?? null, [sc]);
-  const isLast    = useMemo(() => index === total - 1, [index, total]);
-  const gradient  = useMemo(() => pickGradient(email || name), [email, name]);
+    const name =
+      p.firstName && p.lastName
+        ? `${p.firstName} ${p.lastName}`
+        : p.firstName || p.lastName || t(`${du}.unknown_user`);
+    const email = p.email ?? "";
+    const letter = name[0]?.toUpperCase() || "U";
+    const dept = p.department?.name ?? null;
+    const roleStr = (p.role ?? "") as string;
+    const roleEntry = ROLES.find(
+      (r) => r.value === roleStr || r.value === roleStr.toLowerCase(),
+    );
+    const roleColor = roleEntry?.color ?? "#6B7280";
+    const roleLabel = roleEntry?.label || roleStr || "—";
+    const RoleIcon = roleEntry?.icon ?? null;
+    const status = p.status as ParticipantStatus | undefined;
+    const sc = status ? PARTICIPANT_STATUS_META[status] : null;
+    const StatusIcon = sc?.icon ?? null;
+    const gradient = pickGradient(email || name);
 
-  const rowSx = useMemo(() => ({
-    display: "grid",
-    gridTemplateColumns: onRemove ? ROW_SKELETON_GRID_COMPANY : ROW_SKELETON_GRID_EMPLOYEE,
-    alignItems: "center", gap: 2, px: 3, py: 1.75,
-    borderBottom: isLast ? "none" : "1px solid #F3F4F6",
-    transition: "background-color 0.15s",
-    "&:hover": { bgcolor: "#FAFBFF" },
-  }), [onRemove, isLast]);
+    const handleNavigateEmployee = useCallback(() => {
+      if (p.employeeId) router.push(`/company/employees/${p.employeeId}`);
+    }, [p.employeeId, router]);
 
-  const avatarSx = useMemo(() => ({
-    width: 38, height: 38, fontSize: "0.85rem", fontWeight: 800, color: "#fff",
-    background: `linear-gradient(${gradient})`,
-    flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.10)",
-  }), [gradient]);
+    const handleNavigateDept = useCallback(
+      (e: React.MouseEvent) => {
+        if (p.department?.id) {
+          e.stopPropagation();
+          router.push(`/company/departments/${p.department.id}`);
+        }
+      },
+      [p.department?.id, router],
+    );
 
-  const statusBadgeSx = useMemo(() => sc ? ({
-    display: "inline-flex", alignItems: "center", gap: 0.5,
-    px: 1.125, py: "4px", borderRadius: "999px",
-    bgcolor: sc.bg, border: `1px solid ${sc.border}`,
-  }) : null, [sc]);
+    const handleRemove = useCallback(
+      () => onRemove?.(p._id),
+      [onRemove, p._id],
+    );
 
-  const roleBadgeSx = useMemo(() => ({
-    display: "inline-flex", alignItems: "center", gap: 0.5,
-    px: 1.125, py: "4px", borderRadius: "999px",
-    bgcolor: `${roleColor}0F`, border: `1px solid ${roleColor}28`,
-  }), [roleColor]);
+    return (
+      <div className="bg-background border border-border rounded-2xl p-4 flex flex-col gap-3.5 transition-shadow hover:shadow-[0_8px_24px_rgba(0,0,0,0.06)]">
+        <div className="flex items-start justify-between gap-2">
+          <div
+            onClick={handleNavigateEmployee}
+            className={`group/card flex items-center gap-3 min-w-0 ${p.employeeId ? "cursor-pointer" : ""}`}
+          >
+            <Avatar className="shrink-0 shadow">
+              <AvatarFallback
+                className="text-white font-extrabold text-[0.85rem]"
+                style={{ background: `linear-gradient(${gradient})` }}
+              >
+                {letter}
+              </AvatarFallback>
+            </Avatar>
+            <div className="min-w-0">
+              <p
+                className={`text-[13px] font-bold text-foreground leading-tight truncate transition-colors ${p.employeeId ? "group-hover/card:text-primary" : ""}`}
+              >
+                {name}
+              </p>
+              {email && (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className="flex items-center gap-1 min-w-0 mt-0.5">
+                      <Mail className="size-2.5 text-slate-300 shrink-0" />
+                      <span className="text-[11px] text-muted-foreground truncate max-w-[180px]">
+                        {email}
+                      </span>
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent>{email}</TooltipContent>
+                </Tooltip>
+              )}
+            </div>
+          </div>
 
-  const handleNavigateEmployee = useCallback(() => {
-    if (p.employeeId) router.push(`/company/employees/${p.employeeId}`);
-  }, [p.employeeId, router]);
+          {onRemove && (
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="icon-sm"
+                  onClick={handleRemove}
+                  disabled={removing}
+                  className="shrink-0 text-destructive bg-destructive/5 border border-destructive/20 hover:bg-destructive/10"
+                >
+                  {removing ? (
+                    <Spinner className="size-3" />
+                  ) : (
+                    <Trash2 className="size-3.5" />
+                  )}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>{t(`${pp}.tooltip_remove`)}</TooltipContent>
+            </Tooltip>
+          )}
+        </div>
 
-  const handleNavigateDept = useCallback((e: React.MouseEvent) => {
-    if (p.department?.id) { e.stopPropagation(); router.push(`/company/departments/${p.department.id}`); }
-  }, [p.department?.id, router]);
+        <span
+          onClick={dept ? handleNavigateDept : undefined}
+          className={`group/dept self-start flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-slate-100 transition-colors ${p.department?.id ? "cursor-pointer hover:bg-primary/10" : ""}`}
+        >
+          <Building2 className="size-2.5 text-slate-400" />
+          <span
+            className={`text-[10px] font-semibold whitespace-nowrap transition-colors ${
+              dept
+                ? "text-slate-500 group-hover/dept:text-primary"
+                : "italic text-slate-400"
+            }`}
+          >
+            {dept ?? t(`${pp}.no_department`)}
+          </span>
+        </span>
 
-  const handleRemove = useCallback(() => onRemove?.(p._id), [onRemove, p._id]);
-
-  const infoBoxSx = useMemo(() => ({
-    display: "flex", alignItems: "center", gap: 1.5, minWidth: 0,
-    cursor: p.employeeId ? "pointer" : "default",
-    "&:hover .participant-name": p.employeeId ? { color: PURPLE } : {},
-  }), [p.employeeId]);
-
-  const deptBoxSx = useMemo(() => ({
-    display: "flex", alignItems: "center", gap: 0.35, flexShrink: 0,
-    px: 0.75, py: "2px", borderRadius: "6px", bgcolor: "#F1F5F9",
-    cursor: p.department?.id ? "pointer" : "default",
-    transition: "all 0.15s",
-    ...(p.department?.id && { "&:hover": { bgcolor: "#EEF2FF", "& .dept-text": { color: PURPLE } } }),
-  }), [p.department?.id]);
-
-  return (
-    <Box sx={rowSx}>
-      <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#CBD5E1", textAlign: "center" }}>
-        {index + 1}
-      </Typography>
-
-      <Box onClick={handleNavigateEmployee} sx={infoBoxSx}>
-        <Avatar sx={avatarSx}>{letter}</Avatar>
-        <Box sx={{ minWidth: 0 }}>
-          <Typography className="participant-name" sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", lineHeight: 1.3, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", transition: "color 0.15s" }}>
-            {name}
-          </Typography>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.25, flexWrap: "nowrap", minWidth: 0 }}>
-            {email && (
-              <Tooltip title={email} placement="top" arrow>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, minWidth: 0 }}>
-                  <EmailOutlined sx={{ fontSize: 10, color: "#CBD5E1", flexShrink: 0 }} />
-                  <Typography sx={{ fontSize: "11px", color: "#9CA3AF", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 160 }}>
-                    {email}
-                  </Typography>
-                </Box>
-              </Tooltip>
-            )}
-            {dept && (
-              <>
-                <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "#E2E8F0", flexShrink: 0 }} />
-                <Box onClick={handleNavigateDept} sx={deptBoxSx}>
-                  <BusinessOutlined sx={{ fontSize: 9, color: "#64748B" }} />
-                  <Typography className="dept-text" sx={{ fontSize: "10px", fontWeight: 600, color: "#64748B", whiteSpace: "nowrap", transition: "color 0.15s" }}>{dept}</Typography>
-                </Box>
-              </>
-            )}
-          </Box>
-        </Box>
-      </Box>
-
-      <Box sx={{ display: "flex", justifyContent: "center" }}>
-        {statusBadgeSx ? (
-          <Box sx={statusBadgeSx}>
-            {StatusIcon && <StatusIcon sx={{ fontSize: 11, color: sc!.color }} />}
-            <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc!.color, whiteSpace: "nowrap" }}>{status && t(`${pp}.participant_status.${status}`)}</Typography>
-          </Box>
-        ) : (
-          <Typography sx={{ fontSize: "11px", color: "#CBD5E1" }}>—</Typography>
-        )}
-      </Box>
-
-      <Box sx={{ display: "flex", justifyContent: "center" }}>
-        <Box sx={roleBadgeSx}>
-          {RoleIcon && <Box sx={{ color: roleColor, display: "flex", alignItems: "center", "& svg": { fontSize: 11 } }}><RoleIcon /></Box>}
-          <Typography sx={{ fontSize: "11px", fontWeight: 700, color: roleColor, whiteSpace: "nowrap" }}>{roleLabel}</Typography>
-        </Box>
-      </Box>
-
-      {onRemove && (
-        <Box sx={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 0.75 }}>
-          <Tooltip title={t(`${pp}.tooltip_remove`)} placement="top" arrow>
-            <IconButton
-              size="small" onClick={handleRemove} disabled={removing}
-              sx={{ width: 28, height: 28, color: "#EF4444", bgcolor: "#FEF2F2", border: "1px solid #FECACA", "&:hover": { bgcolor: "#FEE2E2" }, "&:disabled": { opacity: 0.5 } }}
+        <div className="flex items-center justify-between gap-2">
+          {hideStatus ? (
+            <span />
+          ) : sc ? (
+            <span
+              className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border"
+              style={{ background: sc.bg, borderColor: sc.border }}
             >
-              {removing ? <CircularProgress size={12} sx={{ color: "#EF4444" }} /> : <DeleteOutlineOutlined sx={{ fontSize: 14 }} />}
-            </IconButton>
-          </Tooltip>
-        </Box>
-      )}
-    </Box>
-  );
-});
-ParticipantRow.displayName = "ParticipantRow";
+              {StatusIcon && (
+                <StatusIcon
+                  className="size-[11px]"
+                  style={{ color: sc.color }}
+                />
+              )}
+              <span
+                className="text-[11px] font-bold whitespace-nowrap"
+                style={{ color: sc.color }}
+              >
+                {status && t(`${pp}.participant_status.${status}`)}
+              </span>
+            </span>
+          ) : (
+            <span className="text-[11px] text-slate-300">—</span>
+          )}
+
+          <span
+            className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border"
+            style={{
+              background: `${roleColor}0F`,
+              borderColor: `${roleColor}28`,
+            }}
+          >
+            {RoleIcon && (
+              <RoleIcon className="!size-[11px]" style={{ color: roleColor }} />
+            )}
+            <span
+              className="text-[11px] font-bold whitespace-nowrap"
+              style={{ color: roleColor }}
+            >
+              {roleLabel}
+            </span>
+          </span>
+        </div>
+      </div>
+    );
+  },
+);
+ParticipantCard.displayName = "ParticipantCard";
 
 // ─── Employee picker row ──────────────────────────────────────────────────────
 
@@ -350,100 +320,105 @@ interface EmployeePickerRowProps {
   disabled: boolean;
 }
 
-const EmployeePickerRow = memo<EmployeePickerRowProps>(({ employee: e, isLast, onAdd, adding, disabled }) => {
-  const { t } = useTranslation("dashboard");
-  const pp = "pages.campaigns.detail.participants";
-  const du = "pages.campaigns.detail";
+const EmployeePickerRow = memo<EmployeePickerRowProps>(
+  ({ employee: e, isLast, onAdd, adding, disabled }) => {
+    const { t } = useTranslation("dashboard");
+    const pp = "pages.campaigns.detail.participants";
+    const du = "pages.campaigns.detail";
 
-  const name      = useMemo(() => (e.firstName && e.lastName) ? `${e.firstName} ${e.lastName}` : e.firstName || e.username || t(`${du}.unknown_user`), [e.firstName, e.lastName, e.username, t, du]);
-  const email     = useMemo(() => e.email ?? "", [e.email]);
-  const letter    = useMemo(() => name[0]?.toUpperCase() || "U", [name]);
-  const roleEntry = useMemo(() => ROLES.find((r) => r.value === e.role || r.value === (e.role ?? "").toLowerCase()), [e.role]);
-  const roleColor = useMemo(() => roleEntry?.color ?? "#6B7280", [roleEntry]);
-  const roleLabel = useMemo(() => roleEntry?.label || e.role || "—", [roleEntry, e.role]);
-  const RoleIcon  = useMemo(() => roleEntry?.icon ?? null, [roleEntry]);
-  const gradient  = useMemo(() => pickGradient(email || name), [email, name]);
+    const name =
+      e.firstName && e.lastName
+        ? `${e.firstName} ${e.lastName}`
+        : e.firstName || e.username || t(`${du}.unknown_user`);
+    const email = e.email ?? "";
+    const letter = name[0]?.toUpperCase() || "U";
+    const roleEntry = ROLES.find(
+      (r) => r.value === e.role || r.value === (e.role ?? "").toLowerCase(),
+    );
+    const roleColor = roleEntry?.color ?? "#6B7280";
+    const roleLabel = roleEntry?.label || e.role || "—";
+    const RoleIcon = roleEntry?.icon ?? null;
+    const gradient = pickGradient(email || name);
 
-  const rowSx = useMemo(() => ({
-    display: "flex", alignItems: "center", gap: 2,
-    px: 3, py: 1.625,
-    borderBottom: isLast ? "none" : "1px solid #F3F4F6",
-    transition: "background-color 0.15s",
-    "&:hover": { bgcolor: "#F8F9FF" },
-  }), [isLast]);
+    const handleAdd = useCallback(() => {
+      if (!adding && !disabled) onAdd(e._id);
+    }, [adding, disabled, onAdd, e._id]);
 
-  const avatarSx = useMemo(() => ({
-    width: 38, height: 38, fontSize: "0.85rem", fontWeight: 800, color: "#fff",
-    background: `linear-gradient(${gradient})`,
-    flexShrink: 0, boxShadow: "0 2px 8px rgba(0,0,0,0.12)",
-  }), [gradient]);
+    return (
+      <div
+        className={`flex items-center gap-4 px-5 py-3 transition-colors hover:bg-primary/[0.02] ${isLast ? "" : "border-b border-border/60"}`}
+      >
+        <Avatar className="shrink-0 shadow">
+          <AvatarFallback
+            className="text-white font-extrabold text-[0.85rem]"
+            style={{ background: `linear-gradient(${gradient})` }}
+          >
+            {letter}
+          </AvatarFallback>
+        </Avatar>
 
-  const roleBadgeSx = useMemo(() => ({
-    display: "inline-flex", alignItems: "center", gap: 0.5,
-    px: 1.125, py: "4px", borderRadius: "999px",
-    bgcolor: `${roleColor}0D`, border: `1px solid ${roleColor}28`,
-    flexShrink: 0,
-  }), [roleColor]);
+        <div className="flex-1 min-w-0">
+          <p className="text-[13px] font-bold text-foreground leading-tight truncate">
+            {name}
+          </p>
+          <div className="flex items-center gap-1.5 mt-0.5 min-w-0">
+            {email && (
+              <span className="flex items-center gap-1 min-w-0">
+                <Mail className="size-2.5 text-slate-300 shrink-0" />
+                <span className="text-[11px] text-muted-foreground truncate max-w-[200px]">
+                  {email}
+                </span>
+              </span>
+            )}
+            {e.department && (
+              <>
+                <span className="size-[3px] rounded-full bg-border shrink-0" />
+                <span className="flex items-center gap-1 shrink-0 px-1.5 py-0.5 rounded-md bg-slate-100 border border-border">
+                  <Building2 className="size-2.5 text-slate-500" />
+                  <span className="text-[10px] font-semibold text-slate-500 whitespace-nowrap">
+                    {e.department.name}
+                  </span>
+                </span>
+              </>
+            )}
+          </div>
+        </div>
 
-  const addBtnSx = useMemo(() => ({
-    display: "flex", alignItems: "center", gap: 0.625,
-    px: 1.5, py: 0.75, borderRadius: "9px",
-    cursor: adding || disabled ? "default" : "pointer",
-    bgcolor: adding ? `${PURPLE}0A` : `${PURPLE}12`,
-    border: `1.5px solid ${PURPLE}${adding ? "18" : "30"}`,
-    opacity: disabled && !adding ? 0.4 : 1,
-    transition: "all 0.15s",
-    "&:hover": (!adding && !disabled) ? { bgcolor: `${PURPLE}1E`, borderColor: `${PURPLE}50`, boxShadow: `0 2px 8px ${PURPLE}20` } : {},
-    flexShrink: 0, minWidth: 72, justifyContent: "center",
-  }), [adding, disabled]);
-
-  const handleAdd = useCallback(() => {
-    if (!adding && !disabled) onAdd(e._id);
-  }, [adding, disabled, onAdd, e._id]);
-
-  return (
-    <Box sx={rowSx}>
-      <Avatar sx={avatarSx}>{letter}</Avatar>
-
-      <Box sx={{ flex: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0F172A", lineHeight: 1.35, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-          {name}
-        </Typography>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 0.3, flexWrap: "nowrap", minWidth: 0 }}>
-          {email && (
-            <Box sx={{ display: "flex", alignItems: "center", gap: 0.4, minWidth: 0 }}>
-              <EmailOutlined sx={{ fontSize: 10, color: "#CBD5E1", flexShrink: 0 }} />
-              <Typography sx={{ fontSize: "11px", color: "#94A3B8", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis", maxWidth: 200 }}>{email}</Typography>
-            </Box>
+        <span
+          className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full border shrink-0"
+          style={{
+            background: `${roleColor}0D`,
+            borderColor: `${roleColor}28`,
+          }}
+        >
+          {RoleIcon && (
+            <RoleIcon className="!size-2.5" style={{ color: roleColor }} />
           )}
-          {e.department && (
-            <>
-              <Box sx={{ width: 3, height: 3, borderRadius: "50%", bgcolor: "#E2E8F0", flexShrink: 0 }} />
-              <Box sx={{ display: "flex", alignItems: "center", gap: 0.35, flexShrink: 0, px: 0.75, py: "2px", borderRadius: "6px", bgcolor: "#F1F5F9", border: "1px solid #E2E8F0" }}>
-                <BusinessOutlined sx={{ fontSize: 9, color: "#64748B" }} />
-                <Typography sx={{ fontSize: "10px", fontWeight: 600, color: "#64748B", whiteSpace: "nowrap" }}>{e.department.name}</Typography>
-              </Box>
-            </>
+          <span
+            className="text-[11px] font-bold whitespace-nowrap"
+            style={{ color: roleColor }}
+          >
+            {roleLabel}
+          </span>
+        </span>
+
+        <Button
+          type="button"
+          onClick={handleAdd}
+          disabled={adding || disabled}
+          className="shrink-0 min-w-[72px] justify-center bg-primary/10 text-primary border border-primary/25 hover:bg-primary/15 shadow-none"
+        >
+          {adding ? (
+            <Spinner className="size-3" />
+          ) : (
+            <Plus className="size-3.5" />
           )}
-        </Box>
-      </Box>
-
-      <Box sx={roleBadgeSx}>
-        {RoleIcon && <Box sx={{ color: roleColor, display: "flex", alignItems: "center", "& svg": { fontSize: 10 } }}><RoleIcon /></Box>}
-        <Typography sx={{ fontSize: "11px", fontWeight: 700, color: roleColor, whiteSpace: "nowrap" }}>{roleLabel}</Typography>
-      </Box>
-
-      <Box onClick={handleAdd} sx={addBtnSx}>
-        {adding
-          ? <CircularProgress size={12} sx={{ color: PURPLE }} />
-          : <AddOutlined sx={{ fontSize: 13, color: PURPLE }} />}
-        <Typography sx={{ fontSize: "12px", fontWeight: 700, color: PURPLE, lineHeight: 1 }}>
           {adding ? t(`${pp}.adding`) : t(`${pp}.add_button`)}
-        </Typography>
-      </Box>
-    </Box>
-  );
-});
+        </Button>
+      </div>
+    );
+  },
+);
 EmployeePickerRow.displayName = "EmployeePickerRow";
 
 // ─── Add Participant Dialog ───────────────────────────────────────────────────
@@ -454,460 +429,600 @@ interface AddDialogProps {
   onClose: () => void;
 }
 
-const AddParticipantDialog = memo<AddDialogProps>(({ open, campaignId, onClose }) => {
-  const { t } = useTranslation("dashboard");
-  const pp = "pages.campaigns.detail.participants";
+const AddParticipantDialog = memo<AddDialogProps>(
+  ({ open, campaignId, onClose }) => {
+    const { t } = useTranslation("dashboard");
+    const pp = "pages.campaigns.detail.participants";
 
-  const [search,          setSearch]          = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [department,      setDepartment]      = useState("");
-  const [role,            setRole]            = useState("");
-  const [page,            setPage]            = useState(1);
-  const [addingId,        setAddingId]        = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [department, setDepartment] = useState("");
+    const [role, setRole] = useState("");
+    const [page, setPage] = useState(1);
+    const [addingId, setAddingId] = useState<string | null>(null);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const nonParticipantParams = useMemo(() => ({
-    campaignId,
-    search:     debouncedSearch || undefined,
-    department: department      || undefined,
-    role:       role            || undefined,
-    page,
-    limit: PICKER_PAGE_SIZE,
-  }), [campaignId, debouncedSearch, department, role, page]);
+    const nonParticipantParams = useMemo(
+      () => ({
+        campaignId,
+        search: debouncedSearch || undefined,
+        department: department || undefined,
+        role: role || undefined,
+        page,
+        limit: PICKER_PAGE_SIZE,
+      }),
+      [campaignId, debouncedSearch, department, role, page],
+    );
 
-  const { data: nonParticipantsRaw, isLoading: loading, error: queryError } = useNonParticipantsQuery(
-    open ? nonParticipantParams : { campaignId: "", page: 1 },
-  );
-  const { data: deptsRaw } = useDepartmentsQuery();
-  const addMut = useAddParticipantMutation(campaignId);
+    const {
+      data: nonParticipantsRaw,
+      isLoading: loading,
+      error: queryError,
+    } = useNonParticipantsQuery(
+      open ? nonParticipantParams : { campaignId: "", page: 1 },
+    );
+    const { data: deptsRaw } = useDepartmentsQuery();
+    const addMut = useAddParticipantMutation(campaignId);
 
-  const nonParticipantsData = (nonParticipantsRaw as any)?.data ?? nonParticipantsRaw;
-  const employees   = nonParticipantsData?.employees ?? nonParticipantsData?.members ?? nonParticipantsData ?? [];
-  const total       = nonParticipantsData?.total ?? 0;
-  const error       = queryError ? String(queryError) : null;
-  const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
+    const nonParticipantsData =
+      (nonParticipantsRaw as any)?.data ?? nonParticipantsRaw;
+    const employees =
+      nonParticipantsData?.employees ??
+      nonParticipantsData?.members ??
+      nonParticipantsData ??
+      [];
+    const total = nonParticipantsData?.total ?? 0;
+    const error = queryError ? String(queryError) : null;
+    const departments =
+      (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
-    clearTimeout(debounceRef.current!);
-    debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
-  }, []);
+    const handleSearchChange = useCallback((value: string) => {
+      setSearch(value);
+      clearTimeout(debounceRef.current!);
+      debounceRef.current = setTimeout(() => {
+        setDebouncedSearch(value);
+        setPage(1);
+      }, 300);
+    }, []);
 
-  const handleAdd = useCallback(async (employeeId: string) => {
-    setAddingId(employeeId);
-    addMut.mutate(employeeId, {
-      onSettled: () => setAddingId(null),
-    });
-  }, [addMut]);
+    const handleAdd = useCallback(
+      async (employeeId: string) => {
+        setAddingId(employeeId);
+        addMut.mutate(employeeId, {
+          onSettled: () => setAddingId(null),
+        });
+      },
+      [addMut],
+    );
 
-  const clearAllFilters = useCallback(() => {
-    setSearch(""); setDebouncedSearch(""); setDepartment(""); setRole("");
-  }, []);
+    const clearAllFilters = useCallback(() => {
+      setSearch("");
+      setDebouncedSearch("");
+      setDepartment("");
+      setRole("");
+    }, []);
 
-  const clearDept = useCallback(() => setDepartment(""), []);
-  const clearRole = useCallback(() => setRole(""), []);
+    const hasFilters = !!debouncedSearch || !!department || !!role;
+    const activeDeptLabel = department
+      ? (departments as any[]).find((d) => d._id === department)?.name
+      : null;
+    const activeRoleLabel = role
+      ? ROLES.find((r) => r.value === role)?.label
+      : null;
 
-  const hasFilters = useMemo(() => !!debouncedSearch || !!department || !!role, [debouncedSearch, department, role]);
-  const activeDeptLabel = useMemo(() => department ? (departments as any[]).find((d) => d._id === department)?.name : null, [department, departments]);
-  const activeRoleLabel = useMemo(() => role ? ROLES.find((r) => r.value === role)?.label : null, [role]);
+    const subtitleText = loading
+      ? t(`${pp}.add_loading_hint`)
+      : total === 0
+        ? t(`${pp}.add_none_available`)
+        : t(`${pp}.add_available`, { count: total });
 
-  const deptSelectSx = useMemo(() => ({
-    fontSize: "12px", fontWeight: 600, minWidth: 140,
-    bgcolor: department ? `${PURPLE}08` : "#fff",
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: department ? `${PURPLE}40` : "#E5E7EB",
-      borderRadius: "11px", borderWidth: "1.5px",
-    },
-    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: department ? `${PURPLE}60` : "#D1D5DB" },
-    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: PURPLE },
-    "& .MuiSelect-select": { py: "7px", px: 1.5, color: department ? PURPLE : "#6B7280" },
-    "& .MuiSelect-icon": { color: department ? PURPLE : "#9CA3AF" },
-  }), [department]);
+    const paginationText =
+      total > 0
+        ? t(`${pp}.pagination_showing`, {
+            from: Math.min((page - 1) * PICKER_PAGE_SIZE + 1, total),
+            to: Math.min(page * PICKER_PAGE_SIZE, total),
+            total,
+          })
+        : "";
 
-  const roleSelectSx = useMemo(() => ({
-    fontSize: "12px", fontWeight: 600, minWidth: 130,
-    bgcolor: role ? `${PURPLE}08` : "#fff",
-    "& .MuiOutlinedInput-notchedOutline": {
-      borderColor: role ? `${PURPLE}40` : "#E5E7EB",
-      borderRadius: "11px", borderWidth: "1.5px",
-    },
-    "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: role ? `${PURPLE}60` : "#D1D5DB" },
-    "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: PURPLE },
-    "& .MuiSelect-select": { py: "7px", px: 1.5, color: role ? PURPLE : "#6B7280" },
-    "& .MuiSelect-icon": { color: role ? PURPLE : "#9CA3AF" },
-  }), [role]);
+    return (
+      <Dialog
+        open={open}
+        onOpenChange={(next) => {
+          if (!next) onClose();
+        }}
+      >
+        <DialogContent className="p-0 gap-0 overflow-hidden rounded-2xl sm:max-w-2xl max-h-[90vh] flex flex-col shadow-2xl">
+          {/* Header */}
+          <div className="flex items-center gap-3 pl-6 pr-10 pt-6 pb-4 bg-gradient-to-br from-primary/5 to-transparent shrink-0">
+            <div className="flex items-center justify-center size-10 rounded-xl shrink-0 bg-primary/10 border border-primary/20">
+              <UserPlus className="size-[19px] text-primary" />
+            </div>
+            <div className="min-w-0">
+              <DialogTitle className="text-[15px] font-extrabold text-foreground">
+                {t(`${pp}.add_dialog_title`)}
+              </DialogTitle>
+              <DialogDescription className="text-xs mt-0.5">
+                {subtitleText}
+              </DialogDescription>
+            </div>
+          </div>
 
-  const subtitleText = useMemo(() => loading
-    ? t(`${pp}.add_loading_hint`)
-    : total === 0
-      ? t(`${pp}.add_none_available`)
-      : t(`${pp}.add_available`, { count: total }), [loading, total, t, pp]);
+          {/* Filters */}
+          <div className="px-6 py-3 border-b border-border bg-muted/20 shrink-0">
+            <div className="flex items-center gap-2.5 flex-wrap">
+              <div className="flex-1 min-w-[190px] flex items-center border border-border rounded-xl px-3 py-1.5 bg-background shadow-sm focus-within:border-primary focus-within:ring-2 focus-within:ring-primary/15">
+                <Search className="size-[15px] text-muted-foreground shrink-0 mr-2" />
+                <input
+                  type="text"
+                  placeholder={t(`${pp}.search_placeholder`)}
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  autoFocus
+                  className="border-none outline-none bg-transparent text-[13px] text-foreground w-full font-[inherit]"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={() => handleSearchChange("")}
+                    className="p-0.5 ml-1 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
 
-  const paginationText = useMemo(() => total > 0 ? t(`${pp}.pagination_showing`, {
-    from: Math.min((page - 1) * PICKER_PAGE_SIZE + 1, total),
-    to: Math.min(page * PICKER_PAGE_SIZE, total),
-    total,
-  }) : "", [total, page, t, pp]);
+              <Select
+                value={department || "__all__"}
+                onValueChange={(v) => setDepartment(v === "__all__" ? "" : v)}
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="min-w-[140px] bg-background"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">
+                    {t(`${pp}.all_departments`)}
+                  </SelectItem>
+                  {(departments as any[]).map((d) => (
+                    <SelectItem key={d._id} value={d._id}>
+                      {d.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
 
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      PaperProps={{
-        sx: {
-          borderRadius: "20px",
-          width: 660,
-          maxWidth: "96vw",
-          maxHeight: "90vh",
-          display: "flex",
-          flexDirection: "column",
-          overflow: "hidden",
-          boxShadow: "0 24px 60px rgba(0,0,0,0.14)",
-        },
-      }}
-    >
-      {/* ── Header ── */}
-      <Box sx={{
-        px: 3, pt: 3, pb: 2.5,
-        borderBottom: "1px solid #F1F3F6",
-        background: DIALOG_HEADER_BG,
-        display: "flex", alignItems: "flex-start", justifyContent: "space-between",
-        flexShrink: 0,
-      }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={DIALOG_ICON_BOX_SX}>
-            <PersonAddOutlined sx={{ fontSize: 19, color: PURPLE }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: "15px", color: "#0F172A", lineHeight: 1.25 }}>
-              {t(`${pp}.add_dialog_title`)}
-            </Typography>
-            <Typography sx={{ fontSize: "12px", color: "#94A3B8", mt: 0.3, fontWeight: 500 }}>
-              {subtitleText}
-            </Typography>
-          </Box>
-        </Box>
-        <IconButton onClick={onClose} size="small" sx={DIALOG_CLOSE_BTN_SX}>
-          <CloseOutlined sx={{ fontSize: 16 }} />
-        </IconButton>
-      </Box>
+              <Select
+                value={role || "__all__"}
+                onValueChange={(v) => setRole(v === "__all__" ? "" : v)}
+              >
+                <SelectTrigger
+                  size="sm"
+                  className="min-w-[130px] bg-background"
+                >
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__all__">
+                    {t(`${pp}.all_roles`)}
+                  </SelectItem>
+                  {ROLES.map((r) => (
+                    <SelectItem key={r.value} value={r.value}>
+                      {r.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
 
-      {/* ── Filters ── */}
-      <Box sx={{ px: 3, py: 2, borderBottom: "1px solid #F1F3F6", bgcolor: "#FAFBFC", flexShrink: 0 }}>
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25, flexWrap: "wrap" }}>
-          <Box sx={{
-            flex: 1, minWidth: 190, display: "flex", alignItems: "center",
-            border: "1.5px solid #E5E7EB", borderRadius: "11px", px: 1.5, py: "7px",
-            bgcolor: "#fff", boxShadow: "0 1px 3px rgba(0,0,0,0.04)",
-            "&:focus-within": { borderColor: PURPLE, boxShadow: `0 0 0 3px ${PURPLE}12` },
-            transition: "all 0.18s",
-          }}>
-            <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", flexShrink: 0, mr: 0.875 }} />
-            <input
-              type="text"
-              placeholder={t(`${pp}.search_placeholder`)}
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              autoFocus
-              style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: 0 }}
-            />
-            {search && (
-              <IconButton size="small" onClick={() => handleSearchChange("")} sx={{ p: 0.25, ml: 0.5, color: "#9CA3AF", "&:hover": { color: "#64748B" } }}>
-                <CloseOutlined sx={{ fontSize: 13 }} />
-              </IconButton>
+            {(activeDeptLabel || activeRoleLabel) && (
+              <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide mr-0.5">
+                  {t(`${pp}.filters_label`)}
+                </span>
+                {activeDeptLabel && (
+                  <button
+                    type="button"
+                    onClick={() => setDepartment("")}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/25 hover:bg-primary/15 cursor-pointer"
+                  >
+                    <span className="text-[11px] font-bold text-primary">
+                      {activeDeptLabel}
+                    </span>
+                    <X className="size-2.5 text-primary" />
+                  </button>
+                )}
+                {activeRoleLabel && (
+                  <button
+                    type="button"
+                    onClick={() => setRole("")}
+                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-primary/10 border border-primary/25 hover:bg-primary/15 cursor-pointer"
+                  >
+                    <span className="text-[11px] font-bold text-primary">
+                      {activeRoleLabel}
+                    </span>
+                    <X className="size-2.5 text-primary" />
+                  </button>
+                )}
+              </div>
             )}
-          </Box>
+          </div>
 
-          <Select
-            size="small" displayEmpty value={department}
-            onChange={(e) => setDepartment(e.target.value)}
-            renderValue={(v) => v ? ((departments as any[]).find((d) => d._id === v)?.name ?? t(`${pp}.department_filter`)) : t(`${pp}.department_filter`)}
-            sx={deptSelectSx}
-          >
-            <MenuItem value="" sx={{ fontSize: "12px", color: "#6B7280" }}>{t(`${pp}.all_departments`)}</MenuItem>
-            {(departments as any[]).map((d) => (
-              <MenuItem key={d._id} value={d._id} sx={{ fontSize: "12px" }}>{d.name}</MenuItem>
-            ))}
-          </Select>
-
-          <Select
-            size="small" displayEmpty value={role}
-            onChange={(e) => setRole(e.target.value)}
-            renderValue={(v) => v ? (ROLES.find((r) => r.value === v)?.label ?? t(`${pp}.role_filter`)) : t(`${pp}.role_filter`)}
-            sx={roleSelectSx}
-          >
-            <MenuItem value="" sx={{ fontSize: "12px", color: "#6B7280" }}>{t(`${pp}.all_roles`)}</MenuItem>
-            {ROLES.map((r) => (
-              <MenuItem key={r.value} value={r.value} sx={{ fontSize: "12px" }}>{r.label}</MenuItem>
-            ))}
-          </Select>
-        </Box>
-
-        {(activeDeptLabel || activeRoleLabel) && (
-          <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, mt: 1.25, flexWrap: "wrap" }}>
-            <Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: "0.06em", mr: 0.25 }}>
-              {t(`${pp}.filters_label`)}
-            </Typography>
-            {activeDeptLabel && (
-              <Box onClick={clearDept} sx={FILTER_CHIP_SX}>
-                <Typography sx={{ fontSize: "11px", fontWeight: 700, color: PURPLE }}>{activeDeptLabel}</Typography>
-                <CloseOutlined sx={{ fontSize: 11, color: PURPLE }} />
-              </Box>
+          {/* Employee list */}
+          <div className="flex-1 overflow-y-auto min-h-0 bg-background">
+            {error ? (
+              <div className="m-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+                {error}
+              </div>
+            ) : loading && (employees as any[]).length === 0 ? (
+              <div className="py-1">
+                {SKELETON_ROWS_8.map((_, i) => (
+                  <PickerRowSkeleton key={i} />
+                ))}
+              </div>
+            ) : (employees as any[]).length === 0 ? (
+              <div className="text-center py-14 px-6">
+                <div className="flex items-center justify-center size-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 mx-auto mb-3">
+                  <Users className="size-6 text-muted-foreground" />
+                </div>
+                <p className="text-sm font-bold text-slate-700 mb-1">
+                  {hasFilters
+                    ? t(`${pp}.empty_filtered_title`)
+                    : t(`${pp}.empty_all_added_title`)}
+                </p>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  {hasFilters
+                    ? t(`${pp}.empty_filtered_hint`)
+                    : t(`${pp}.empty_all_added_hint`)}
+                </p>
+                {hasFilters && (
+                  <button
+                    type="button"
+                    onClick={clearAllFilters}
+                    className="inline-flex items-center gap-1.5 mt-4 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/25 hover:bg-primary/15 cursor-pointer"
+                  >
+                    <X className="size-3.5 text-primary" />
+                    <span className="text-xs font-bold text-primary">
+                      {t(`${pp}.clear_all_filters`)}
+                    </span>
+                  </button>
+                )}
+              </div>
+            ) : (
+              <div className="py-0.5">
+                {(employees as NonParticipant[]).map((emp, i) => (
+                  <EmployeePickerRow
+                    key={emp._id}
+                    employee={emp}
+                    isLast={i === (employees as any[]).length - 1}
+                    onAdd={handleAdd}
+                    adding={addingId === emp._id}
+                    disabled={!!(addMut.isPending && addingId !== emp._id)}
+                  />
+                ))}
+              </div>
             )}
-            {activeRoleLabel && (
-              <Box onClick={clearRole} sx={FILTER_CHIP_SX}>
-                <Typography sx={{ fontSize: "11px", fontWeight: 700, color: PURPLE }}>{activeRoleLabel}</Typography>
-                <CloseOutlined sx={{ fontSize: 11, color: PURPLE }} />
-              </Box>
-            )}
-          </Box>
-        )}
-      </Box>
+          </div>
 
-      {/* ── Employee list ── */}
-      <Box sx={{ flex: 1, overflowY: "auto", minHeight: 0, bgcolor: "#fff" }}>
-        {loading && <LinearProgress sx={PROGRESS_SX} />}
-
-        {error ? (
-          <Alert severity="error" sx={{ m: 2.5, borderRadius: "12px", fontSize: "13px" }}>{error}</Alert>
-        ) : loading && (employees as any[]).length === 0 ? (
-          <Box sx={{ py: 1 }}>
-            {SKELETON_ROWS_8.map((_, i) => <PickerRowSkeleton key={i} />)}
-          </Box>
-        ) : (employees as any[]).length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 8, px: 3 }}>
-            <Box sx={PICKER_EMPTY_ICON_SX}>
-              <PeopleAltOutlined sx={{ fontSize: 25, color: "#9CA3AF" }} />
-            </Box>
-            <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#374151", mb: 0.75 }}>
-              {hasFilters ? t(`${pp}.empty_filtered_title`) : t(`${pp}.empty_all_added_title`)}
-            </Typography>
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF", lineHeight: 1.6 }}>
-              {hasFilters ? t(`${pp}.empty_filtered_hint`) : t(`${pp}.empty_all_added_hint`)}
-            </Typography>
-            {hasFilters && (
-              <Box onClick={clearAllFilters} sx={CLEAR_FILTERS_BTN_SX}>
-                <CloseOutlined sx={{ fontSize: 13, color: PURPLE }} />
-                <Typography sx={{ fontSize: "12px", fontWeight: 700, color: PURPLE }}>{t(`${pp}.clear_all_filters`)}</Typography>
-              </Box>
-            )}
-          </Box>
-        ) : (
-          <Box sx={{ py: 0.5 }}>
-            {(employees as NonParticipant[]).map((emp, i) => (
-              <EmployeePickerRow
-                key={emp._id}
-                employee={emp}
-                isLast={i === (employees as any[]).length - 1}
-                onAdd={handleAdd}
-                adding={addingId === emp._id}
-                disabled={!!(addMut.isPending && addingId !== emp._id)}
+          {/* Footer */}
+          <div className="px-6 pt-3 pb-5 border-t border-border bg-muted/20 shrink-0 flex flex-col gap-2.5">
+            {!loading && total > PICKER_PAGE_SIZE && (
+              <Pagination
+                page={page}
+                totalPages={Math.ceil(total / PICKER_PAGE_SIZE)}
+                onPageChange={setPage}
               />
-            ))}
-          </Box>
-        )}
-      </Box>
-
-      {/* ── Footer ── */}
-      <Box sx={{
-        px: 3, pt: 2, pb: 3,
-        borderTop: "1px solid #F1F3F6",
-        bgcolor: "#FAFBFC",
-        flexShrink: 0,
-        display: "flex", flexDirection: "column", gap: 1.5,
-      }}>
-        {!loading && total > PICKER_PAGE_SIZE && (
-          <Pagination page={page} totalPages={Math.ceil(total / PICKER_PAGE_SIZE)} onPageChange={setPage} />
-        )}
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>{paginationText}</Typography>
-          <Box onClick={onClose} sx={DONE_BTN_SX}>
-            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#fff" }}>{t(`${pp}.done`)}</Typography>
-          </Box>
-        </Box>
-      </Box>
-    </Dialog>
-  );
-});
+            )}
+            <div className="flex items-center justify-between">
+              <p className="text-xs text-muted-foreground">{paginationText}</p>
+              <Button type="button" onClick={onClose}>
+                {t(`${pp}.done`)}
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
+    );
+  },
+);
 AddParticipantDialog.displayName = "AddParticipantDialog";
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-interface Props { campaignId: string; mode?: "company" | "employee"; anonymityMode?: string }
+interface Props {
+  campaignId: string;
+  mode?: "company" | "employee";
+  anonymityMode?: string;
+}
 
-const CampaignParticipantsTab = memo<Props>(({ campaignId, mode = "company" }) => {
-  const { t } = useTranslation("dashboard");
-  const pp = "pages.campaigns.detail.participants";
+const CampaignParticipantsTab = memo<Props>(
+  ({ campaignId, mode = "company", anonymityMode }) => {
+    const { t } = useTranslation("dashboard");
+    const pp = "pages.campaigns.detail.participants";
 
-  const isCompany = mode === "company";
+    const isCompany = mode === "company";
+    const isAnonymous = anonymityMode === "ANONYMOUS";
 
-  const [search,          setSearch]          = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [page,            setPage]            = useState(1);
-  const [addDialogOpen,   setAddDialogOpen]   = useState(false);
-  const [removingId,      setRemovingId]      = useState<string | null>(null);
-  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+    const [search, setSearch] = useState("");
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+    const [statusFilter, setStatusFilter] = useState<ParticipantStatus | "">(
+      "",
+    );
+    const [page, setPage] = useState(1);
+    const [addDialogOpen, setAddDialogOpen] = useState(false);
+    const [removingId, setRemovingId] = useState<string | null>(null);
+    const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const participantParams = useMemo(() => ({
-    campaignId,
-    search: debouncedSearch || undefined,
-    page,
-    limit: PAGE_SIZE,
-  }), [campaignId, debouncedSearch, page]);
+    const participantParams = useMemo(
+      () => ({
+        campaignId,
+        search: debouncedSearch || undefined,
+        status: statusFilter || undefined,
+        page,
+        limit: PAGE_SIZE,
+      }),
+      [campaignId, debouncedSearch, statusFilter, page],
+    );
 
-  const { data: participantsRaw, isLoading: loading, error: queryError } = useCampaignParticipantsQuery(participantParams);
-  const removeMut = useRemoveParticipantMutation(campaignId);
+    const {
+      data: participantsRaw,
+      isLoading: loading,
+      error: queryError,
+    } = useCampaignParticipantsQuery(participantParams);
+    const removeMut = useRemoveParticipantMutation(campaignId);
 
-  const participantsData = (participantsRaw as any)?.data ?? participantsRaw;
-  const participants     = participantsData?.participants ?? participantsData?.data ?? participantsData ?? [];
-  const total            = participantsData?.total ?? 0;
-  const error            = queryError ? String(queryError) : null;
+    const participants = participantsRaw?.data ?? [];
+    const total = participantsRaw?.total ?? 0;
+    const statusCounts = participantsRaw?.statusCounts;
+    const error = queryError ? String(queryError) : null;
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
-    clearTimeout(debounceRef.current!);
-    debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
-  }, []);
+    const handleSearchChange = useCallback((value: string) => {
+      setSearch(value);
+      clearTimeout(debounceRef.current!);
+      debounceRef.current = setTimeout(() => {
+        setDebouncedSearch(value);
+        setPage(1);
+      }, 300);
+    }, []);
 
-  const handleRemoveParticipant = useCallback((participantId: string) => {
-    setRemovingId(participantId);
-    removeMut.mutate(participantId, {
-      onSettled: () => setRemovingId(null),
-    });
-  }, [removeMut]);
+    const toggleStatusFilter = useCallback((s: ParticipantStatus) => {
+      setStatusFilter((prev) => (prev === s ? "" : s));
+      setPage(1);
+    }, []);
 
-  const openAddDialog  = useCallback(() => setAddDialogOpen(true), []);
-  const closeAddDialog = useCallback(() => setAddDialogOpen(false), []);
-  const clearSearch    = useCallback(() => handleSearchChange(""), [handleSearchChange]);
+    const clearStatusFilter = useCallback(() => {
+      setStatusFilter("");
+      setPage(1);
+    }, []);
+    const selectStatusFilter = useCallback((s: ParticipantStatus | "") => {
+      setStatusFilter(s);
+      setPage(1);
+    }, []);
 
-  const tableHeaderCols = useMemo(() => [
-    t(`${pp}.col_hash`),
-    t(`${pp}.col_participant`),
-    t(`${pp}.col_status`),
-    t(`${pp}.col_role`),
-    ...(isCompany ? [t(`${pp}.col_actions`)] : []),
-  ], [t, pp, isCompany]);
+    const handleRemoveParticipant = useCallback(
+      (participantId: string) => {
+        setRemovingId(participantId);
+        removeMut.mutate(participantId, {
+          onSettled: () => setRemovingId(null),
+        });
+      },
+      [removeMut],
+    );
 
-  const tableGridCols = isCompany ? ROW_SKELETON_GRID_COMPANY : ROW_SKELETON_GRID_EMPLOYEE;
+    const openAddDialog = useCallback(() => setAddDialogOpen(true), []);
+    const closeAddDialog = useCallback(() => setAddDialogOpen(false), []);
+    const clearSearch = useCallback(
+      () => handleSearchChange(""),
+      [handleSearchChange],
+    );
+    const hasActiveFilters = !!(debouncedSearch || statusFilter);
 
-  return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+    return (
+      <TooltipProvider delayDuration={200}>
+        <div className="flex flex-col gap-4">
+          {/* ── Toolbar ── */}
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2 flex-wrap">
+              {isAnonymous ? (
+                <span className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg border bg-muted/40 border-border">
+                  <Users className="size-[13px] text-muted-foreground" />
+                  <span className="text-xs font-bold text-foreground">
+                    {loading ? "…" : total}
+                  </span>
+                  <span className="text-[11px] text-muted-foreground">
+                    {t(`${pp}.toolbar_total`)}
+                  </span>
+                </span>
+              ) : (
+                <>
+                  <button
+                    type="button"
+                    onClick={clearStatusFilter}
+                    className={`flex items-center gap-1.5 px-2.5 py-1 rounded-lg border cursor-pointer transition-colors ${
+                      !statusFilter
+                        ? "bg-primary/10 border-primary/30"
+                        : "bg-muted/40 border-border hover:bg-muted/60"
+                    }`}
+                  >
+                    <Users className="size-[13px] text-muted-foreground" />
+                    <span className="text-xs font-bold text-foreground">
+                      {loading ? "…" : total}
+                    </span>
+                    <span className="text-[11px] text-muted-foreground">
+                      {t(`${pp}.toolbar_total`)}
+                    </span>
+                  </button>
+                  {(
+                    [
+                      "COMPLETED",
+                      "IN_PROGRESS",
+                      "INVITED",
+                      "DROPPED",
+                    ] as ParticipantStatus[]
+                  ).map((s) => {
+                    const count = statusCounts?.[s] ?? 0;
+                    if (!count && statusFilter !== s) return null;
+                    const sc = PARTICIPANT_STATUS_META[s];
+                    const active = statusFilter === s;
+                    return (
+                      <button
+                        key={s}
+                        type="button"
+                        onClick={() => toggleStatusFilter(s)}
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border cursor-pointer transition-all"
+                        style={{
+                          background: active ? sc.color : sc.bg,
+                          borderColor: active ? sc.color : sc.border,
+                          boxShadow: active
+                            ? `0 0 0 2px ${sc.color}30`
+                            : undefined,
+                        }}
+                      >
+                        <span
+                          className="size-1.5 rounded-full"
+                          style={{ background: active ? "#fff" : sc.color }}
+                        />
+                        <span
+                          className="text-[11px] font-bold"
+                          style={{ color: active ? "#fff" : sc.color }}
+                        >
+                          {count} {t(`${pp}.participant_status.${s}`)}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </>
+              )}
+            </div>
 
-      {/* ── Toolbar ── */}
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: 2, flexWrap: "wrap" }}>
+            <div className="flex items-center gap-2">
+              {!isAnonymous && (
+                <Select
+                  value={statusFilter || "__all__"}
+                  onValueChange={(v) =>
+                    selectStatusFilter(
+                      v === "__all__" ? "" : (v as ParticipantStatus),
+                    )
+                  }
+                >
+                  <SelectTrigger
+                    size="sm"
+                    className="min-w-[150px] bg-background"
+                  >
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__all__">
+                      {t(`${pp}.all_statuses`)}
+                    </SelectItem>
+                    {(
+                      [
+                        "INVITED",
+                        "IN_PROGRESS",
+                        "COMPLETED",
+                        "DROPPED",
+                      ] as ParticipantStatus[]
+                    ).map((s) => (
+                      <SelectItem key={s} value={s}>
+                        {t(`${pp}.participant_status.${s}`)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-          <Box sx={TOOLBAR_TOTAL_SX}>
-            <PeopleAltOutlined sx={{ fontSize: 13, color: "#64748B" }} />
-            <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#374151" }}>
-              {loading ? "…" : total}
-            </Typography>
-            <Typography sx={{ fontSize: "11px", color: "#94A3B8", fontWeight: 500 }}>{t(`${pp}.toolbar_total`)}</Typography>
-          </Box>
-          {!loading && (participants as CampaignParticipant[]).length > 0 && (
-            <>
-              {(["COMPLETED", "IN_PROGRESS", "INVITED"] as ParticipantStatus[]).map((s) => {
-                const count = (participants as CampaignParticipant[]).filter((p) => p.status === s).length;
-                if (!count) return null;
-                const sc = PARTICIPANT_STATUS_META[s];
-                return (
-                  <Box key={s} sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: sc.bg, border: `1px solid ${sc.border}` }}>
-                    <Box sx={{ width: 6, height: 6, borderRadius: "50%", bgcolor: sc.color }} />
-                    <Typography sx={{ fontSize: "11px", fontWeight: 700, color: sc.color }}>{count} {t(`${pp}.participant_status.${s}`)}</Typography>
-                  </Box>
-                );
-              })}
-            </>
+              <div className="flex items-center bg-background border border-border rounded-xl px-3 py-1.5 min-w-[220px] shadow-sm">
+                <Search className="size-[15px] text-muted-foreground shrink-0 mr-2" />
+                <input
+                  type="text"
+                  placeholder={t(`${pp}.search_participants_placeholder`)}
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  className="border-none outline-none bg-transparent text-[13px] text-foreground w-full font-[inherit]"
+                />
+                {search && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="p-0.5 text-muted-foreground hover:text-foreground cursor-pointer"
+                  >
+                    <X className="size-3.5" />
+                  </button>
+                )}
+              </div>
+
+              {isCompany && (
+                <Button type="button" onClick={openAddDialog}>
+                  <UserPlus className="size-[15px]" />
+                  {t(`${pp}.add_button`)}
+                </Button>
+              )}
+            </div>
+          </div>
+
+          {/* ── Participant cards ── */}
+          {error ? (
+            <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
+              {error}
+            </div>
+          ) : loading && (participants as any[]).length === 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+              {SKELETON_CARDS.map((_, i) => (
+                <CardSkeleton key={i} />
+              ))}
+            </div>
+          ) : (participants as any[]).length === 0 ? (
+            <div className="bg-background border border-border rounded-2xl text-center py-16">
+              <div className="flex items-center justify-center size-14 rounded-2xl bg-muted mx-auto mb-3">
+                <Users className="size-6 text-muted-foreground" />
+              </div>
+              <p className="text-sm font-bold text-slate-700">
+                {hasActiveFilters
+                  ? t(`${pp}.empty_search_title`)
+                  : t(`${pp}.empty_title`)}
+              </p>
+              <p className="text-xs text-muted-foreground mt-1">
+                {hasActiveFilters
+                  ? t(`${pp}.empty_search_hint`)
+                  : t(`${pp}.empty_hint`)}
+              </p>
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
+              {(participants as CampaignParticipant[]).map((p) => (
+                <ParticipantCard
+                  key={p._id}
+                  participant={p}
+                  onRemove={isCompany ? handleRemoveParticipant : undefined}
+                  removing={removingId === p._id}
+                  hideStatus={isAnonymous}
+                />
+              ))}
+            </div>
           )}
-        </Box>
 
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-          <Box sx={SEARCH_BOX_SX}>
-            <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", flexShrink: 0, mr: 1 }} />
-            <input
-              type="text" placeholder={t(`${pp}.search_participants_placeholder`)} value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
-              style={{ border: "none", outline: "none", background: "transparent", fontSize: "13px", color: "#111827", width: "100%", fontFamily: "inherit", padding: "2px 0" }}
+          {!loading && total > PAGE_SIZE && (
+            <Pagination
+              page={page}
+              totalPages={Math.ceil(total / PAGE_SIZE)}
+              onPageChange={setPage}
             />
-            {search && (
-              <IconButton size="small" onClick={clearSearch} sx={{ p: 0.25, color: "#9CA3AF" }}>
-                <CloseOutlined sx={{ fontSize: 13 }} />
-              </IconButton>
-            )}
-          </Box>
+          )}
 
           {isCompany && (
-            <Box onClick={openAddDialog} sx={ADD_BTN_SX}>
-              <PersonAddOutlined sx={{ fontSize: 15, color: "#fff" }} />
-              <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: "#fff" }}>{t(`${pp}.add_button`)}</Typography>
-            </Box>
-          )}
-        </Box>
-      </Box>
-
-      {/* ── Table card ── */}
-      <Box sx={TABLE_CARD_SX}>
-        {loading && <LinearProgress sx={PROGRESS_SX} />}
-
-        <Box sx={{
-          display: "grid",
-          gridTemplateColumns: tableGridCols,
-          alignItems: "center", gap: 2, px: 3, py: 1.5,
-          background: "linear-gradient(135deg, #F8F9FB 0%, #F3F4F8 100%)",
-          borderBottom: "1px solid #E5E7EB",
-        }}>
-          {tableHeaderCols.map((col, i) => (
-            <Typography
-              key={col}
-              sx={{ ...COL_HEADER_SX_BASE, textAlign: i === 1 ? "left" : "center" }}
-            >
-              {col}
-            </Typography>
-          ))}
-        </Box>
-
-        {error ? (
-          <Alert severity="error" sx={{ m: 2.5, borderRadius: 2 }}>{error}</Alert>
-        ) : loading && (participants as any[]).length === 0 ? (
-          <Box>{SKELETON_ROWS_5.map((_, i) => <RowSkeleton key={i} showActions={isCompany} />)}</Box>
-        ) : (participants as any[]).length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 9 }}>
-            <Box sx={EMPTY_STATE_ICON_SX}>
-              <PeopleAltOutlined sx={{ fontSize: 26, color: "#9CA3AF" }} />
-            </Box>
-            <Typography sx={{ fontSize: "14px", fontWeight: 700, color: "#374151" }}>
-              {debouncedSearch ? t(`${pp}.empty_search_title`) : t(`${pp}.empty_title`)}
-            </Typography>
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF", mt: 0.5 }}>
-              {debouncedSearch ? t(`${pp}.empty_search_hint`) : t(`${pp}.empty_hint`)}
-            </Typography>
-          </Box>
-        ) : (
-          (participants as CampaignParticipant[]).map((p, i) => (
-            <ParticipantRow
-              key={p._id} participant={p} index={i} total={(participants as any[]).length}
+            <AddParticipantDialog
+              open={addDialogOpen}
               campaignId={campaignId}
-              onRemove={isCompany ? handleRemoveParticipant : undefined}
-              removing={removingId === p._id}
+              onClose={closeAddDialog}
             />
-          ))
-        )}
-      </Box>
-
-      {!loading && total > PAGE_SIZE && (
-        <Pagination page={page} totalPages={Math.ceil(total / PAGE_SIZE)} onPageChange={setPage} />
-      )}
-
-      {isCompany && (
-        <AddParticipantDialog
-          open={addDialogOpen}
-          campaignId={campaignId}
-          onClose={closeAddDialog}
-        />
-      )}
-    </Box>
-  );
-});
+          )}
+        </div>
+      </TooltipProvider>
+    );
+  },
+);
 CampaignParticipantsTab.displayName = "CampaignParticipantsTab";
 
 export default CampaignParticipantsTab;
