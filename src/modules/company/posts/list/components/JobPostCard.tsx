@@ -1,11 +1,13 @@
 import { memo, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import CardHeader from "./cards/CardHeader";
 import CardMeta from "./cards/CardMeta";
 import CardFooter from "./cards/CardFooter";
 import CardDraftBanner from "./cards/CardDraftBanner";
 import CardQrDialog from "./cards/CardQrDialog";
-import { getDaysLeft, getPostShareLink } from "../utils";
+import { getDaysLeft, getPostShareLink, copyToClipboard } from "../utils";
+import { useToast } from "@/hooks/useToast";
 
 interface JobPostCardProps {
   job: any;
@@ -20,6 +22,8 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [copied, setCopied]         = useState(false);
   const [qrOpen, setQrOpen]         = useState(false);
+  const { showToast } = useToast();
+  const { t } = useTranslation("posts");
 
   const jd        = job.jobDetails || {};
   const isDraft   = job.status === "draft";
@@ -29,13 +33,17 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
 
   const shareLink = getPostShareLink(job._id, job.user?._id);
 
-  const handleCopyLink = (e: React.MouseEvent) => {
+  const handleCopyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setMenuAnchor(null);
-    navigator.clipboard.writeText(shareLink).then(() => {
+    const ok = await copyToClipboard(shareLink);
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+      showToast({ message: t("detail.toast.link_copied"), severity: "success" });
+    } else {
+      showToast({ message: t("detail.toast.link_copy_error"), severity: "error" });
+    }
   };
 
   return (
