@@ -85,7 +85,13 @@
     "mic_inactive": "Inactif",
     "speak_clearly": "Parlez clairement — votre voix est capturée",
     "start_to_record": "Démarrez l'entretien pour activer l'enregistrement",
-    "allow_access": "Autorisez l'accès à la caméra et au microphone pour commencer"
+    "allow_access": "Autorisez l'accès à la caméra et au microphone pour commencer",
+    "identity_preparing": "Préparation de la vérification…",
+    "identity_verifying": "Vérification en cours…",
+    "identity_verified": "Identité vérifiée",
+    "identity_ended": "Entretien terminé",
+    "identity_no_face": "Visage non détecté",
+    "identity_multiple": "Plusieurs visages détectés"
   },
   "question": {
     "label": "Question",

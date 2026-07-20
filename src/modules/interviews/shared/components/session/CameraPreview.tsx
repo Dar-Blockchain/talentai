@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { VideoOff, MicOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type CameraStatus, type InterviewStatus } from '../../types/interview';
+import type { UseIdentityGuardReturn } from '../../hooks/useIdentityGuard';
 
 const BAR_COUNT = 5;
 const BAR_MAX = 22;
@@ -16,6 +17,9 @@ interface CameraPreviewProps {
   audioContextRef?: React.MutableRefObject<AudioContext | null>;
   audioStreamRef?: React.MutableRefObject<MediaStream | null>;
   attachStream?: () => void;
+  /** Identity/face guard state — rendered as a quiet trust indicator on the video frame.
+   *  Loading and non-critical failures stay invisible; only "verifying/verified/ended" show. */
+  identityGuard?: UseIdentityGuardReturn;
 }
 
 const CameraPreview: React.FC<CameraPreviewProps> = ({
@@ -27,9 +31,34 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   audioContextRef,
   audioStreamRef,
   attachStream,
+  identityGuard,
 }) => {
   const { t } = useTranslation('interview');
   const isActive = interviewStatus === 'active';
+
+  // Collapse the guard's internal states into a small, honest trust signal —
+  // no raw ML distances, no error strings. Loading and non-critical failures
+  // (guard couldn't load, camera not ready yet) stay silent rather than
+  // alarming the candidate over something that doesn't block the interview.
+  // `enrolled` is a one-way flag (never resets once true), so it alone would
+  // keep claiming "verified" even while the camera currently sees no face —
+  // faceCount must always win over it to reflect what's true right now.
+  const identityBadge = (() => {
+    if (!identityGuard) return null;
+    if (identityGuard.status === 'terminated') {
+      return { label: t('camera.identity_ended'), dot: '#EF4444', pulse: false };
+    }
+    if (identityGuard.status !== 'watching') return null;
+    if (identityGuard.faceCount === 0) {
+      return { label: t('camera.identity_no_face'), dot: '#F59E0B', pulse: true };
+    }
+    if (identityGuard.faceCount > 1) {
+      return { label: t('camera.identity_multiple'), dot: '#F59E0B', pulse: true };
+    }
+    return identityGuard.enrolled
+      ? { label: t('camera.identity_verified'), dot: '#6AD39C', pulse: false }
+      : { label: t('camera.identity_verifying'), dot: '#F59E0B', pulse: true };
+  })();
 
   useEffect(() => {
     attachStream?.();
@@ -167,6 +196,27 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
               <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-black/52 backdrop-blur-[12px] px-2 py-1 rounded-[6px] border border-white/[0.07]">
                 <div className="w-1 h-1 rounded-full bg-[#6AD39C] shrink-0" />
                 <span className="font-sans font-bold text-[0.54rem] text-white/80 tracking-[0.12em]">PREVIEW</span>
+              </div>
+            )}
+
+            {/* Bottom-left: identity/face check trust indicator */}
+            {identityBadge && (
+              <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 bg-black/52 backdrop-blur-[12px] px-2 py-1 rounded-[6px] border border-white/[0.07]">
+                <span className="relative flex w-1.5 h-1.5 shrink-0">
+                  {identityBadge.pulse && (
+                    <span
+                      className="absolute inline-flex h-full w-full rounded-full animate-ping opacity-60"
+                      style={{ background: identityBadge.dot }}
+                    />
+                  )}
+                  <span
+                    className="relative inline-flex w-1.5 h-1.5 rounded-full"
+                    style={{ background: identityBadge.dot }}
+                  />
+                </span>
+                <span className="font-sans font-semibold text-[0.58rem] text-white/80 tracking-[0.04em]">
+                  {identityBadge.label}
+                </span>
               </div>
             )}
 

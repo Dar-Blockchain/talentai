@@ -81,27 +81,6 @@ export default function InterviewScreen({
     startInterview, endInterview, skipQuestion,
   } = session;
 
-  const guardBadge = (() => {
-    if (!identityGuard) return null;
-    const s = identityGuard.status;
-    const dist = identityGuard.identityDistance;
-    const idPart =
-      s === 'watching' && identityGuard.enrolled && dist !== null
-        ? ` · id ${dist.toFixed(2)}`
-        : s === 'watching' && !identityGuard.enrolled
-        ? ` · enrolling ${identityGuard.enrollmentProgress}/${identityGuard.enrollmentTarget}`
-        : '';
-    const colour =
-      s === 'watching'       ? { bg: '#DCFCE7', fg: '#166534', label: `Guard: watching · ${identityGuard.faceCount} face(s)${idPart}` } :
-      s === 'terminated'     ? { bg: '#FEE2E2', fg: '#991B1B', label: 'Guard: terminated' } :
-      s === 'failed'         ? { bg: '#FEE2E2', fg: '#991B1B', label: `Guard: failed${identityGuard.lastError ? ` — ${identityGuard.lastError.slice(0, 60)}` : ''}` } :
-      s === 'waiting-video'  ? { bg: '#FEF3C7', fg: '#92400E', label: 'Guard: waiting for camera' } :
-      s === 'loading-model'  ? { bg: '#DBEAFE', fg: '#1E40AF', label: 'Guard: loading model…' } :
-      s === 'loading-wasm'   ? { bg: '#DBEAFE', fg: '#1E40AF', label: 'Guard: loading engine…' } :
-                                 { bg: '#F3F4F6', fg: '#374151', label: 'Guard: idle' };
-    return colour;
-  })();
-
   const { jobData, interviewConfig } = configData;
 
   const SKILL_TYPES = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
@@ -168,29 +147,6 @@ export default function InterviewScreen({
 
   return (
     <div className={interviewScreenStyles.root}>
-      {/* Identity guard live status (temporary — for diagnosis) */}
-      {guardBadge && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 12,
-            right: 12,
-            zIndex: 60,
-            padding: '6px 10px',
-            borderRadius: 999,
-            background: guardBadge.bg,
-            color: guardBadge.fg,
-            fontSize: 12,
-            fontWeight: 600,
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            border: '1px solid rgba(0,0,0,0.06)',
-          }}
-        >
-          {guardBadge.label}
-        </div>
-      )}
-
       {/* Connection warning banner */}
       {socket.isHydrated && socket.connectionStatus !== 'connected' && (
         <InterviewConnectionBanner text={connectionBannerText} />
@@ -279,6 +235,7 @@ export default function InterviewScreen({
               audioContextRef={audio.audioContextRef}
               audioStreamRef={audio.audioStreamRef}
               attachStream={camera.attachStream}
+              identityGuard={identityGuard}
             />
           </div>
 

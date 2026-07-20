@@ -85,7 +85,13 @@
     "mic_inactive": "Inactive",
     "speak_clearly": "Speak clearly — your voice is being captured",
     "start_to_record": "Start the interview to enable recording",
-    "allow_access": "Allow camera & microphone access to begin"
+    "allow_access": "Allow camera & microphone access to begin",
+    "identity_preparing": "Preparing check…",
+    "identity_verifying": "Verifying it's you…",
+    "identity_verified": "Identity verified",
+    "identity_ended": "Interview ended",
+    "identity_no_face": "Face not visible",
+    "identity_multiple": "Multiple faces detected"
   },
   "question": {
     "label": "Question",

@@ -137,7 +137,7 @@ export const useIdentityGuard = ({
         ) {
           lastWarnRef.current.noFace = now;
           console.warn(LOG, 'no-face warning fired');
-          notifyRef.current('Please stay in view of the camera.', 'warning');
+          notifyRef.current("We can't see your face — please make sure you're facing the camera.", 'warning');
         }
       } else if (count > 1) {
         multiFaceTicksRef.current += 1;
@@ -147,7 +147,7 @@ export const useIdentityGuard = ({
           terminatedRef.current = true;
           setStatus('terminated');
           console.error(LOG, 'multi-face threshold reached → terminating');
-          notifyRef.current('Another person was detected in view — ending the interview.', 'error');
+          notifyRef.current('Interview ended — another person was detected in your camera view.', 'error');
           try { onTerminateRef.current?.(); } catch {}
           return;
         }
@@ -157,7 +157,7 @@ export const useIdentityGuard = ({
         ) {
           lastWarnRef.current.multiFace = now;
           console.warn(LOG, 'multi-face warning fired');
-          notifyRef.current('Only the interview candidate should be visible in the camera.', 'warning');
+          notifyRef.current('Someone else appears to be in view of your camera. Please make sure you are alone, or the interview may end automatically.', 'warning');
         }
       } else {
         noFaceTicksRef.current = 0;
@@ -224,7 +224,7 @@ export const useIdentityGuard = ({
             terminatedRef.current = true;
             setStatus('terminated');
             console.error(LOG, 'identity mismatch confirmed → terminating');
-            notifyRef.current('Different person detected — ending the interview.', 'error');
+            notifyRef.current('Interview ended — we could no longer verify it was you in the camera.', 'error');
             try { onTerminateRef.current?.(); } catch {}
             return;
           }
@@ -235,7 +235,7 @@ export const useIdentityGuard = ({
             now - lastWarnRef.current.identity > WARN_COOLDOWN_MS
           ) {
             lastWarnRef.current.identity = now;
-            notifyRef.current('Face check failed — please make sure only you are in front of the camera.', 'warning');
+            notifyRef.current("We're having trouble confirming it's you — please look at the camera in good lighting, or the interview may end automatically.", 'warning');
           }
         } else {
           identityMismatchTicksRef.current = 0;
