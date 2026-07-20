@@ -1,8 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { VideoOff, MicOff } from 'lucide-react';
+import { VideoOff, MicOff, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type CameraStatus, type InterviewStatus } from '../../types/interview';
 import type { UseIdentityGuardReturn } from '../../hooks/useIdentityGuard';
+import type { UseCameraGuardReturn } from '../../hooks/useCameraGuard';
 
 const BAR_COUNT = 5;
 const BAR_MAX = 22;
@@ -20,6 +21,9 @@ interface CameraPreviewProps {
   /** Identity/face guard state — rendered as a quiet trust indicator on the video frame.
    *  Loading and non-critical failures stay invisible; only "verifying/verified/ended" show. */
   identityGuard?: UseIdentityGuardReturn;
+  /** Camera-loss guard state — shown as a warning banner while the interview is
+   *  active and the camera track isn't live (strikes + final grace countdown). */
+  cameraGuard?: UseCameraGuardReturn;
 }
 
 const CameraPreview: React.FC<CameraPreviewProps> = ({
@@ -32,6 +36,7 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   audioStreamRef,
   attachStream,
   identityGuard,
+  cameraGuard,
 }) => {
   const { t } = useTranslation('interview');
   const isActive = interviewStatus === 'active';
@@ -190,6 +195,24 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
                 />
               );
             })}
+
+            {/* Camera-lost warning — strikes counting up, then a final grace countdown */}
+            {isActive && cameraGuard && !cameraGuard.cameraLive && (cameraGuard.strikes > 0 || cameraGuard.graceSecondsLeft !== null) && (
+              <div
+                className="absolute top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-2 backdrop-blur-[12px] px-3 py-1.5 rounded-[10px] border"
+                style={{
+                  background: cameraGuard.graceSecondsLeft !== null ? 'rgba(153,27,27,0.85)' : 'rgba(120,53,15,0.8)',
+                  borderColor: cameraGuard.graceSecondsLeft !== null ? 'rgba(248,113,113,0.5)' : 'rgba(245,158,11,0.4)',
+                }}
+              >
+                <AlertTriangle size={13} color="#fff" className="shrink-0" />
+                <span className="font-sans font-semibold text-[0.65rem] text-white">
+                  {cameraGuard.graceSecondsLeft !== null
+                    ? t('camera.lost_grace', { seconds: cameraGuard.graceSecondsLeft, defaultValue: `Ending in ${cameraGuard.graceSecondsLeft}s — turn camera back on` })
+                    : t('camera.lost_warning', { strike: cameraGuard.strikes, max: 3, defaultValue: `Camera off (${cameraGuard.strikes}/3)` })}
+                </span>
+              </div>
+            )}
 
             {/* PREVIEW badge */}
             {!isConnecting && !isActive && (

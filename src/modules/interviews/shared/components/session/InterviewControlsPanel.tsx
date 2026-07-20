@@ -16,6 +16,8 @@ interface InterviewControlsPanelProps {
   agentState: AgentState;
   currentTranscript?: string;
   canSubmit?: boolean;
+  cameraLive?: boolean;
+  cameraBlockedSubmit?: boolean;
   resultsReady: boolean;
   isVoiceActive: boolean;
   isInReadingTime?: boolean;
@@ -33,6 +35,8 @@ const InterviewControlsPanel: React.FC<InterviewControlsPanelProps> = ({
   agentState,
   currentTranscript,
   canSubmit,
+  cameraLive,
+  cameraBlockedSubmit,
   resultsReady,
   isVoiceActive,
   isInReadingTime,
@@ -58,6 +62,8 @@ const InterviewControlsPanel: React.FC<InterviewControlsPanelProps> = ({
       isVoiceActive={isVoiceActive}
       currentTranscript={currentTranscript}
       canSubmit={canSubmit}
+      cameraLive={cameraLive}
+      cameraBlockedSubmit={cameraBlockedSubmit}
       isInReadingTime={isInReadingTime}
       readingTimeLeft={readingTimeLeft}
       onSubmitAnswer={onSubmitAnswer}

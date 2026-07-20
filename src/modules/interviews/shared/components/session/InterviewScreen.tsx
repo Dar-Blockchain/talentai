@@ -7,6 +7,7 @@ import { Progress } from '@/modules/shared/ui/shadcn/progress';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import QuestionPanel from './QuestionPanel';
 import CameraPreview from './CameraPreview';
+import FaceAlertOverlay from './FaceAlertOverlay';
 import InterviewControlsPanel from './InterviewControlsPanel';
 import InterviewContainer from './InterviewContainer';
 import InterviewConnectionBanner from './InterviewConnectionBanner';
@@ -23,6 +24,7 @@ import { type UseInterviewTimerReturn } from '../../types/hooks';
 import { type UseCameraReturn } from '../../types/hooks';
 import { type UseSecurityMonitoringReturn } from '../../types/hooks';
 import type { UseIdentityGuardReturn } from '../../hooks/useIdentityGuard';
+import type { UseCameraGuardReturn } from '../../hooks/useCameraGuard';
 
 interface InterviewScreenProps {
   session: {
@@ -32,6 +34,7 @@ interface InterviewScreenProps {
     camera: UseCameraReturn;
     security: UseSecurityMonitoringReturn;
     identityGuard?: UseIdentityGuardReturn;
+    cameraGuard?: UseCameraGuardReturn;
     coverage: Coverage | null;
     resultsReady: boolean;
     assessmentId?: string | null;
@@ -76,12 +79,14 @@ export default function InterviewScreen({
   });
 
   const {
-    socket, audio, timer, camera, security, identityGuard,
+    socket, audio, timer, camera, security, identityGuard, cameraGuard,
     coverage, resultsReady, assessmentId,
     startInterview, endInterview, skipQuestion,
   } = session;
 
   const { jobData, interviewConfig } = configData;
+
+  const faceDetected = !!identityGuard && identityGuard.status === 'watching' && identityGuard.faceCount === 1;
 
   const SKILL_TYPES = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
   const isSkillInterview = !!interviewConfig && SKILL_TYPES.includes(interviewConfig.interviewType);
@@ -90,6 +95,12 @@ export default function InterviewScreen({
     : undefined;
 
   const isActive = socket.interviewStatus === 'active';
+
+  // Camera is on but no face is currently visible — blocks the whole screen
+  // (and, via the audio hook's cameraLive gate below, pauses mic/submit too)
+  // until the candidate is back in frame.
+  const noFaceBlocking = isActive && identityGuard?.status === 'watching' && identityGuard.faceCount === 0;
+  const canSpeak = (cameraGuard?.cameraLive ?? true) && !noFaceBlocking;
 
   // Confirm-leave + feedback modal
   const [confirmOpen,  setConfirmOpen]  = useState(false);
@@ -236,6 +247,7 @@ export default function InterviewScreen({
               audioStreamRef={audio.audioStreamRef}
               attachStream={camera.attachStream}
               identityGuard={identityGuard}
+              cameraGuard={cameraGuard}
             />
           </div>
 
@@ -299,6 +311,8 @@ export default function InterviewScreen({
               agentState={audio.agentState}
               currentTranscript={audio.currentTranscript}
               canSubmit={audio.canSubmit}
+              cameraLive={canSpeak}
+              cameraBlockedSubmit={audio.cameraBlockedSubmit}
               resultsReady={resultsReady}
               isVoiceActive={audio.isVoiceActive}
               isInReadingTime={audio.isInReadingTime}
@@ -318,6 +332,7 @@ export default function InterviewScreen({
                 agentState={audio.agentState}
                 currentTranscript={audio.currentTranscript}
                 resultsReady={false}
+                faceDetected={faceDetected}
                 onStartInterview={startInterview}
               />
             </div>
@@ -334,6 +349,7 @@ export default function InterviewScreen({
                   agentState={audio.agentState}
                   currentTranscript={audio.currentTranscript}
                   resultsReady={resultsReady}
+                  faceDetected={faceDetected}
                   onStartInterview={startInterview}
                   onBack={handleBack}
                   backLabel={backLabel}
@@ -353,6 +369,8 @@ export default function InterviewScreen({
           )}
         </div>
       </div>
+
+      <FaceAlertOverlay active={noFaceBlocking} onComplete={endInterview} />
 
       <ConfirmLeaveModal open={confirmOpen} onConfirm={handleConfirmLeave} onCancel={handleCancelLeave} />
 

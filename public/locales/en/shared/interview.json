@@ -46,6 +46,7 @@
   },
   "container": {
     "check_camera": "Camera access",
+    "check_face": "Face visible",
     "check_system": "System connected",
     "check_loaded": "Page loaded",
     "ready_title": "Ready to begin?",
@@ -54,6 +55,7 @@
     "check_ok": "OK",
     "check_waiting": "Waiting",
     "camera_warning": "Camera permission required",
+    "face_warning": "Position your face in the camera to continue",
     "back_to_post": "Back to post details",
     "starting_title": "Starting interview…",
     "starting_subtitle": "Please wait while we connect you to your AI interviewer.",
@@ -71,13 +73,20 @@
     "listening": "Listening…",
     "submit": "Submit & Continue",
     "skip_question": "Skip question",
-    "waiting_for_speech": "Speak your answer…"
+    "waiting_for_speech": "Speak your answer…",
+    "camera_required": "Turn on your camera to submit"
   },
   "camera": {
     "requesting": "Requesting camera access…",
     "denied": "Camera access denied",
     "unavailable": "Camera unavailable",
     "retry": "Retry",
+    "lost_warning": "Camera off ({{strike}}/{{max}})",
+    "lost_grace": "Ending in {{seconds}}s — turn camera back on",
+    "face_alert_title": "We can't see your face",
+    "face_alert_body": "Please face the camera and make sure your face is clearly visible to continue the interview.",
+    "face_alert_countdown": "Interview ends in {{seconds}}s",
+    "face_alert_attempt": "Attempt {{attempt}} of {{max}}",
     "connecting": "Connecting…",
     "rec": "REC",
     "microphone": "Microphone",
