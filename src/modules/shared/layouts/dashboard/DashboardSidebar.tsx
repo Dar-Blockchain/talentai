@@ -38,7 +38,7 @@ const GROUPS = [
   { groupKey: "account", ids: ["settings", "subscription"] },
 ];
 
-const DASHBOARD_DROPDOWN_IDS = ["hiring-dashboard", "team-dashboard"];
+const DASHBOARD_DROPDOWN_IDS = ["hiring-dashboard", "team-dashboard", "campaigns-dashboard"];
 
 const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
