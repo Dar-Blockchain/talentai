@@ -135,6 +135,11 @@
       "no_interviews_yet": "Aucun entretien",
       "no_posts_yet": "Aucune offre"
     },
+    "subscription": {
+      "remaining_label": "Restant ce cycle",
+      "posts_short": "offres",
+      "interviews_short": "entretiens"
+    },
     "interview_activity": {
       "title": "Activité des entretiens",
       "subtitle": "Entretiens menés ces 30 derniers jours",
@@ -376,7 +381,7 @@
       "zone_department_jobs": "Postes",
       "zone5_title": "Qualité des candidats",
       "top10_title": "Meilleurs candidats",
-      "top10_subtitle": "Classés par score d'entretien — présélectionnés ou complétés",
+      "top10_subtitle": "Top 5 — solides à la fois sur le CV et l'entretien",
       "top10_empty": "Aucun entretien terminé pour le moment",
       "top10_empty_sub": "Les meilleurs candidats apparaîtront ici une fois les entretiens terminés",
       "col_candidate": "Candidat",

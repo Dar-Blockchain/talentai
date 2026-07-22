@@ -5,7 +5,7 @@ import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
-import { KpiCard, toApiRange, formatTrendDateRange, type TrendRangeTab } from "./KpiAtoms";
+import { KpiCard, TrendRangeFilter, toApiRange, formatTrendDateRange, type TrendRangeTab } from "./KpiAtoms";
 import { ChartTooltip, GRAY, GRAY2, T, WHITE } from "../utils/kpiTokens";
 import { useKpiHoursComparisonQuery, useKpiCostComparisonQuery } from "../queries";
 import type { CostTrendPoint } from "../types";
@@ -18,7 +18,11 @@ const MANUAL_COLOR = GRAY2;
 const AI_COLOR      = T;
 const SAVED_COLOR   = "#10B981"; // same emerald as the Time Saved card
 
-interface Props { postId?: string; tab: TrendRangeTab; rangeValue: number }
+interface Props {
+  postId?: string; tab: TrendRangeTab; rangeValue: number;
+  onRangeChange: (tab: TrendRangeTab, value: number) => void;
+  createdAt?: string | null;
+}
 
 // Human-readable duration: "1h 20m", "45m", or "1h" — never a raw decimal like "0.83h".
 const formatDuration = (hours: number): string => {
@@ -120,7 +124,7 @@ const makeStackTotalLabel = (
     );
   };
 
-const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
+const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue, onRangeChange, createdAt }) => {
   const { t } = useTranslation("dashboard");
 
   const { data, isLoading: loading } = useKpiHoursComparisonQuery({ postId, ...toApiRange(tab, rangeValue) });
@@ -240,6 +244,7 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
     <KpiCard
       title={t("hoursComparison.title", "Time & cost saved: manual vs with TalentAI")}
       subtitle={dateRange || t("hoursComparison.subtitle_fallback", "Last months")}
+      headerFilter={<TrendRangeFilter tab={tab} value={rangeValue} onChange={onRangeChange} createdAt={createdAt} />}
     >
       <p className="text-[12px] text-slate-500 leading-snug mb-4">
         {t(

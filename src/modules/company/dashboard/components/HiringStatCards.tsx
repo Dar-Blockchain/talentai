@@ -6,7 +6,9 @@ import {
   Brain as PsychologyOutlined,
   Briefcase as WorkOutlined,
   Users as PeopleOutlined,
+  CreditCard as CreditCardOutlined,
 } from "lucide-react";
+import { useCombinedDetailsQuery } from "@/modules/company/billing/queries";
 
 interface Props {
   stats:       { interviewsCount?: number; activeJobPosts?: number } | undefined;
@@ -17,9 +19,12 @@ interface Props {
 
 const HiringStatCards = memo<Props>(({ stats, appMetrics: appMet, loadingStats: l0, loadingAppMetrics: l1 }) => {
   const { t } = useTranslation("dashboard");
+  const { data: combined, isLoading: l2 } = useCombinedDetailsQuery();
+  const c = combined?.combined;
+  const hasSub = !!c && (combined?.subscriptions?.length ?? 0) > 0;
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
       <StatCard
         icon={PsychologyOutlined}
         color="#3B82F6" bg="#EFF6FF"
@@ -40,6 +45,28 @@ const HiringStatCards = memo<Props>(({ stats, appMetrics: appMet, loadingStats: 
         label={t("overview.stat.applicants")}
         href="/company/applications"
       />
+      {(l2 || hasSub) && (
+        <StatCard
+          icon={CreditCardOutlined}
+          color="#DB2777" bg="#FDF2F8"
+          loading={l2}
+          value={
+            <div className="flex items-center gap-2.5">
+              <div>
+                <span className="tabular-nums">{c?.usage.posts.remaining ?? 0}</span>
+                <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.posts_short", "posts")}</span>
+              </div>
+              <div className="w-px h-5 bg-slate-200" />
+              <div>
+                <span className="tabular-nums">{c?.usage.monthlyInterviews.remaining ?? 0}</span>
+                <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.interviews_short", "interviews")}</span>
+              </div>
+            </div>
+          }
+          label={t("overview.subscription.remaining_label", "Remaining This Cycle")}
+          href="/company/plans"
+        />
+      )}
     </div>
   );
 });

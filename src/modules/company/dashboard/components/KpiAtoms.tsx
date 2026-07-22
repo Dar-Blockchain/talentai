@@ -1,5 +1,5 @@
 "use client";
-import React, { memo } from "react";
+import React, { memo, useMemo } from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { ArrowUp as ArrowUpwardOutlined, ArrowDown as ArrowDownwardOutlined, Minus as RemoveOutlined, ChevronRight as ArrowForwardIosRounded } from "lucide-react";
@@ -26,6 +26,24 @@ const TAB_OPTIONS: { tab: TrendRangeTab; labelKey: string; labelDefault: string;
 export const toApiRange = (tab: TrendRangeTab, value: number): { unit: TrendRangeUnit; value: number } =>
   tab === "year" ? { unit: "month", value: value * 12 } : { unit: tab, value };
 
+// Older accounts (created before this filter shipped) still show every option
+// fine, but an account created a week ago has no data behind a "12M"/"1Y"
+// bucket — that option would just render empty columns. Cap each tab's
+// options to what the account's age can actually cover, so nothing offered
+// points at a date range that predates the account's creation.
+const daysSinceCreation = (createdAt?: string | Date | null): number | null => {
+  if (!createdAt) return null;
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) return null;
+  return Math.floor((Date.now() - created.getTime()) / 86_400_000);
+};
+
+const fitsWithinAccountAge = (tab: TrendRangeTab, value: number, ageDays: number): boolean => {
+  if (tab === "day") return value <= Math.max(ageDays, 1);
+  if (tab === "month") return value * 30 <= Math.max(ageDays, 1);
+  return value * 365 <= Math.max(ageDays, 1); // year
+};
+
 // Shared "May – Jul 2026" / "Jul 2026" subtitle formatting for any trend array
 // with a `month` field — used by both the hours and cost cards so a synced
 // range filter reads identically on both.
@@ -45,13 +63,38 @@ export const TrendRangeFilter = memo<{
   tab: TrendRangeTab;
   value: number;
   onChange: (tab: TrendRangeTab, value: number) => void;
-}>(({ tab, value, onChange }) => {
+  createdAt?: string | Date | null;
+}>(({ tab, value, onChange, createdAt }) => {
   const { t } = useTranslation("dashboard");
-  const active = TAB_OPTIONS.find((o) => o.tab === tab) ?? TAB_OPTIONS[1];
+
+  const ageDays = daysSinceCreation(createdAt);
+  const tabOptions = useMemo(() => {
+    if (ageDays == null) return TAB_OPTIONS;
+    return TAB_OPTIONS
+      .map((opt) => {
+        const values = opt.values.filter((v, i) => i === 0 || fitsWithinAccountAge(opt.tab, v, ageDays));
+        return { ...opt, values };
+      })
+      .filter((opt) => opt.values.length > 0);
+  }, [ageDays]);
+
+  const active = tabOptions.find((o) => o.tab === tab) ?? tabOptions[0];
+
+  // If the account's age has just become known (or shrunk what's available)
+  // and the currently selected tab/value no longer exists, snap to the
+  // closest still-valid option instead of silently querying an empty range.
+  React.useEffect(() => {
+    if (!active) return;
+    if (active.tab !== tab || !active.values.includes(value)) {
+      onChange(active.tab, active.values[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, tab, value]);
+
   return (
     <div className="flex flex-wrap items-center gap-2">
       <div className="flex items-center gap-0.5">
-        {TAB_OPTIONS.map((opt) => (
+        {tabOptions.map((opt) => (
           <Button
             key={opt.tab}
             size="xs"
@@ -66,23 +109,27 @@ export const TrendRangeFilter = memo<{
           </Button>
         ))}
       </div>
-      <div className="w-px h-4 bg-slate-200 hidden sm:block" />
-      <div className="flex items-center gap-0.5">
-        {active.values.map((v) => (
-          <Button
-            key={v}
-            size="xs"
-            variant={value === v ? "default" : "ghost"}
-            onClick={() => onChange(tab, v)}
-            className={cn(
-              "rounded-full h-6 px-2 text-[11px] font-semibold transition-all duration-150",
-              value !== v && "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
-            )}
-          >
-            {v}{active.suffix}
-          </Button>
-        ))}
-      </div>
+      {active && (
+        <>
+          <div className="w-px h-4 bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-0.5">
+            {active.values.map((v) => (
+              <Button
+                key={v}
+                size="xs"
+                variant={value === v ? "default" : "ghost"}
+                onClick={() => onChange(active.tab, v)}
+                className={cn(
+                  "rounded-full h-6 px-2 text-[11px] font-semibold transition-all duration-150",
+                  value !== v && "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
+                )}
+              >
+                {v}{active.suffix}
+              </Button>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 });
@@ -118,12 +165,15 @@ export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?
 );
 ZoneHeading.displayName = "ZoneHeading";
 
-export const KpiCard = memo<{ title?: string; subtitle?: string; children: React.ReactNode; className?: string; contentClassName?: string }>(
-  ({ title, subtitle, children, className, contentClassName }) => (
+export const KpiCard = memo<{ title?: string; subtitle?: string; children: React.ReactNode; className?: string; contentClassName?: string; headerFilter?: React.ReactNode }>(
+  ({ title, subtitle, children, className, contentClassName, headerFilter }) => (
     <Card className={cn("rounded-2xl", className)}>
       {title && (
         <CardHeader className="pb-0">
-          <CardTitle className="font-semibold text-[15px] text-slate-900">{title}</CardTitle>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle className="font-semibold text-[15px] text-slate-900">{title}</CardTitle>
+            {headerFilter}
+          </div>
           {subtitle && <CardDescription className="text-[13px] text-slate-500">{subtitle}</CardDescription>}
         </CardHeader>
       )}

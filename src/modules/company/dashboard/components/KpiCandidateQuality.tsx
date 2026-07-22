@@ -1,11 +1,14 @@
 "use client";
-import React, { memo } from "react";
+import React, { memo, useCallback, useState } from "react";
 import { useTranslation } from "react-i18next";
+import Link from "next/link";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import { Users as PeopleOutlined, Star as StarOutlined, Trophy as TrophyOutlined, UserSearch as UserSearchOutlined } from "lucide-react";
+import { Users as PeopleOutlined, Star as StarOutlined, Trophy as TrophyOutlined, UserSearch as UserSearchOutlined, Briefcase as WorkOutlined } from "lucide-react";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/modules/shared/ui/shadcn/select";
 import { ZoneHeading, KpiCard } from "./KpiAtoms";
 import { T } from "../utils/kpiTokens";
-import type { KpiSourcingData, SourcingCandidate } from "../types";
+import { useKpiSourcingQuery, useKpiPostsQuery } from "../queries";
+import type { SourcingCandidate } from "../types";
 import { cn } from "@/lib/utils";
 
 const MEDAL_COLORS: Record<number, { bg: string; color: string }> = {
@@ -27,14 +30,17 @@ const RowSkeleton = () => (
   </div>
 );
 
-const CandidateRow = memo<{ c: SourcingCandidate; shortlistedLabel: string; completedLabel: string; cvMatchLabel: string; interviewScoreLabel: string; isLast: boolean }>(
-  ({ c, shortlistedLabel, completedLabel, cvMatchLabel, interviewScoreLabel, isLast }) => {
+const CandidateRow = memo<{ c: SourcingCandidate; shortlistedLabel: string; cvMatchLabel: string; interviewScoreLabel: string; isLast: boolean }>(
+  ({ c, shortlistedLabel, cvMatchLabel, interviewScoreLabel, isLast }) => {
     const isShort = c.status === "shortlisted";
     const medal   = MEDAL_COLORS[c.rank];
     const initials = `${c.firstName[0] ?? ""}${c.lastName[0] ?? ""}`.toUpperCase();
 
     return (
-      <div className={cn("flex items-center gap-3 py-3", !isLast && "border-b border-slate-100")}>
+      <Link
+        href={`/company/applications/${c.applicationId}/assessment`}
+        className={cn("flex items-center gap-3 py-3 cursor-pointer hover:bg-slate-50/80 transition-colors rounded-lg px-2 -mx-2", !isLast && "border-b border-slate-100")}
+      >
         <div
           className="w-7 h-7 rounded-full flex items-center justify-center shrink-0 font-bold text-[11px]"
           style={{ background: medal?.bg ?? "#F8FAFC", color: medal?.color ?? "#94A3B8" }}
@@ -55,43 +61,79 @@ const CandidateRow = memo<{ c: SourcingCandidate; shortlistedLabel: string; comp
         </div>
 
         <div className="flex items-center gap-2 shrink-0">
-          {(c.score !== null || c.matchScore !== null) && (
-            <div className="flex flex-col items-end leading-tight" title={c.score !== null ? interviewScoreLabel : cvMatchLabel}>
-              <span className="inline-flex items-center gap-1 font-bold text-[13px]" style={{ color: c.score !== null ? T : "#64748B" }}>
-                {c.score !== null && <StarOutlined size={12} color="#F59E0B" />}
-                {(c.score ?? c.matchScore)}%
+          {c.score !== null && (
+            <div className="flex flex-col items-end leading-tight" title={interviewScoreLabel}>
+              <span className="inline-flex items-center gap-1 font-bold text-[13px]" style={{ color: T }}>
+                <StarOutlined size={12} color="#F59E0B" />
+                {c.score}%
               </span>
-              <span className="text-[9.5px] text-slate-400">{c.score !== null ? interviewScoreLabel : cvMatchLabel}</span>
+              <span className="text-[9.5px] text-slate-400">{interviewScoreLabel}</span>
             </div>
           )}
-          <span
-            className="font-semibold text-[10.5px] px-2.5 py-1 rounded-full whitespace-nowrap"
-            style={isShort ? { background: `${T}12`, color: T } : { background: "#EFF6FF", color: "#2563EB" }}
-          >
-            {isShort ? shortlistedLabel : completedLabel}
-          </span>
+          {c.matchScore !== null && (
+            <div className="flex flex-col items-end leading-tight" title={cvMatchLabel}>
+              <span className="inline-flex items-center gap-1 font-bold text-[13px]" style={{ color: "#64748B" }}>
+                {c.matchScore}%
+              </span>
+              <span className="text-[9.5px] text-slate-400">{cvMatchLabel}</span>
+            </div>
+          )}
+          {isShort && (
+            <span
+              className="font-semibold text-[10.5px] px-2.5 py-1 rounded-full whitespace-nowrap"
+              style={{ background: `${T}12`, color: T }}
+            >
+              {shortlistedLabel}
+            </span>
+          )}
         </div>
-      </div>
+      </Link>
     );
   },
 );
 CandidateRow.displayName = "CandidateRow";
 
-interface Props { data: KpiSourcingData | undefined; loading: boolean }
-
-const KpiCandidateQuality = memo<Props>(({ data, loading }) => {
+const KpiCandidateQuality = memo(() => {
   const { t } = useTranslation("dashboard");
+
+  const [postId, setPostId] = useState<string>("");
+  const handlePost = useCallback(
+    (val: string) => setPostId(val === "__all__" ? "" : val),
+    [],
+  );
+
+  const postsQ    = useKpiPostsQuery();
+  const sourcingQ = useKpiSourcingQuery(postId ? { postId } : {});
+
+  const data    = sourcingQ.data;
+  const loading = sourcingQ.isLoading;
 
   const top10           = data?.top10  ?? [];
   const shortlisted     = t("pages.kpi.shortlisted_chip");
-  const completed       = t("pages.kpi.completed_chip");
   const cvMatch         = t("pages.kpi.cv_match");
   const interviewScore  = t("pages.kpi.interview_score_label", "Interview score");
+
+  const jobFilter = (
+    <Select value={postId || "__all__"} onValueChange={handlePost}>
+      <SelectTrigger size="sm" className="h-7 min-w-36 max-w-52 rounded-lg border-slate-200 bg-slate-50 hover:bg-white transition-colors text-[12px]">
+        <WorkOutlined size={12} color="#94A3B8" className="shrink-0" />
+        <SelectValue placeholder={t("pages.kpi.all_posts", "All job posts")} />
+      </SelectTrigger>
+      <SelectContent>
+        <SelectItem value="__all__">
+          <span className="font-medium">{t("pages.kpi.all_posts", "All job posts")}</span>
+        </SelectItem>
+        {(postsQ.data ?? []).map((p) => (
+          <SelectItem key={p.id} value={p.id}>{p.title}</SelectItem>
+        ))}
+      </SelectContent>
+    </Select>
+  );
 
   return (
     <>
       <ZoneHeading icon={PeopleOutlined} label={t("pages.kpi.zone5_title")} color="#D97706" />
-      <KpiCard title={t("pages.kpi.top10_title")} subtitle={t("pages.kpi.top10_subtitle")} className="flex-1">
+      <KpiCard title={t("pages.kpi.top10_title")} subtitle={t("pages.kpi.top10_subtitle")} headerFilter={jobFilter} className="flex-1">
         {loading ? (
           [0, 1, 2, 3, 4].map((i) => <RowSkeleton key={i} />)
         ) : top10.length === 0 ? (
@@ -110,7 +152,6 @@ const KpiCandidateQuality = memo<Props>(({ data, loading }) => {
               key={c.rank}
               c={c}
               shortlistedLabel={shortlisted}
-              completedLabel={completed}
               cvMatchLabel={cvMatch}
               interviewScoreLabel={interviewScore}
               isLast={idx === top10.length - 1}

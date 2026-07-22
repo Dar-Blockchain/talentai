@@ -38,11 +38,14 @@ async function persistInterviewResults(sessionId, result, candidateId, postId) {
           'interviewData.finalReport': result.finalReport,
           'interviewData.analytics': result.sessionAnalytics,
           'interviewData.conversation': result.conversation || [],
+          // Backfill in case the doc was created at interview-start time by
+          // onSessionStarted with a null `company` (e.g. a transient Post
+          // lookup failure) — self-heal it here now that we have a value.
+          ...(company ? { company } : {}),
         },
         $setOnInsert: {
           candidate: candidateId,
           post: postId,
-          company,
           'interviewData.sessionId': sessionId,
         },
       },

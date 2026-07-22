@@ -1137,52 +1137,67 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
     const userIds = Object.values(profileIdToUserId);
     const postIds = completedApps.map(a => a.post?._id).filter(Boolean);
 
-    // Fetch all assessments for these candidates+posts
+    // Fetch all assessments for these candidates+posts. Deliberately not
+    // filtering by `company` here — postIds are already scoped to this
+    // company via appFilter above, and the assessment's own `company` field
+    // can be stale/null if it was set from a failed post lookup at interview
+    // start time, which would otherwise hide a genuinely completed score.
     const assessments = await PostInterviewAssessment.find({
-      company:   companyId,
       candidate: { $in: userIds },
       post:      { $in: postIds },
     }).select('candidate post interviewData.finalReport.scores').lean();
 
-    // scoreMap key: postId_userId â€” only store entries with a real score > 0
+    // scoreMap key: postId_userId â€” a genuine 0 (e.g. candidate never
+    // responded) is a real score and must still win over the CV-match
+    // fallback below; only a missing assessment should fall back.
     const scoreMap = {};
     assessments.forEach(a => {
       const raw = a.interviewData?.finalReport?.scores?.overall;
-      if (raw != null && raw > 0) {
+      if (raw != null) {
         const key = `${String(a.post)}_${String(a.candidate)}`;
         scoreMap[key] = Math.round(raw);
       }
     });
 
     // Build ranked list â€” score is null if no assessment exists (not 0).
-    // matchScore is the CV/AI match score computed at application time, always
-    // available â€” it's surfaced as a fallback for candidates shortlisted
-    // straight from CV review, before/without ever completing an interview.
-    const ranked = completedApps.map(a => {
-      const userId    = profileIdToUserId[String(a.profile?._id)] || '';
-      const postIdStr = String(a.post?._id || '');
-      const key       = `${postIdStr}_${userId}`;
-      const score     = key in scoreMap ? scoreMap[key] : null;
-      return {
-        firstName:  a.profile?.firstName || 'â€”',
-        lastName:   a.profile?.lastName  || '',
-        postTitle:  a.post?.jobDetails?.title || 'â€”',
-        score,
-        matchScore: a.matchScore ?? null,
-        status: a.recruiterDecision === 'shortlisted' ? 'shortlisted' : 'completed',
-      };
-    });
+    // matchScore is the CV/AI match score computed at application time,
+    // shown alongside the interview score for context. Candidates who never
+    // completed an interview (score === null) are dropped below.
+    // Ranking key is min(interview score, CV match) â€” a candidate only
+    // ranks high if they're strong on BOTH, not just one of the two.
+    const ranked = completedApps
+      .map(a => {
+        const userId    = profileIdToUserId[String(a.profile?._id)] || '';
+        const postIdStr = String(a.post?._id || '');
+        const key       = `${postIdStr}_${userId}`;
+        const score     = key in scoreMap ? scoreMap[key] : null;
+        return {
+          applicationId: String(a._id),
+          firstName:  a.profile?.firstName || 'â€”',
+          lastName:   a.profile?.lastName  || '',
+          postTitle:  a.post?.jobDetails?.title || 'â€”',
+          score,
+          matchScore: a.matchScore ?? null,
+          status: a.recruiterDecision === 'shortlisted' ? 'shortlisted' : 'completed',
+        };
+      })
+      .filter(r => r.score !== null);
 
-    // Scored entries first (desc), then unscored entries after
+    // Primary: min(interview, match) â€” must be strong on both. Ties (e.g. two
+    // candidates both scoring 0 on the interview) fall back to whichever has
+    // the stronger CV match, then the stronger interview score.
     ranked.sort((a, b) => {
-      if (a.score !== null && b.score !== null) return b.score - a.score;
-      if (a.score !== null) return -1;
-      if (b.score !== null) return 1;
-      return 0;
+      const minB = Math.min(b.score, b.matchScore ?? 0);
+      const minA = Math.min(a.score, a.matchScore ?? 0);
+      if (minB !== minA) return minB - minA;
+      const matchB = b.matchScore ?? 0;
+      const matchA = a.matchScore ?? 0;
+      if (matchB !== matchA) return matchB - matchA;
+      return b.score - a.score;
     });
-    const top10 = ranked.slice(0, 10).map((r, i) => ({ rank: i + 1, ...r }));
+    const top10 = ranked.slice(0, 5).map((r, i) => ({ rank: i + 1, ...r }));
 
-    // â”€â”€ Avg score: all completed/shortlisted candidates, score=0 for those without interview â”€â”€
+    // â”€â”€ Avg score: across candidates who completed an interview only â”€â”€
     const avgCurrent = ranked.length
       ? Math.round(ranked.reduce((s, r) => s + (r.score ?? 0), 0) / ranked.length)
       : null;
@@ -1715,8 +1730,10 @@ module.exports.getApplicationHistoryKPI = async (companyId, postId = null, dateF
 
     const scoreMap = {};
     if (completedPostIds.length && completedUserIds.length) {
+      // Not filtering by `company` — completedPostIds is already scoped to
+      // this company via `match` above, and the assessment's own `company`
+      // field can be stale/null (see getSourcingKPI for why).
       const assessments = await PostInterviewAssessment.find({
-        company:   companyId,
         post:      { $in: completedPostIds },
         candidate: { $in: completedUserIds },
       }).select('post candidate interviewData.finalReport.scores.overall').lean();

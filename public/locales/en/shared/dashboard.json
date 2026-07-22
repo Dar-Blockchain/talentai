@@ -135,6 +135,11 @@
       "no_interviews_yet": "No interviews yet",
       "no_posts_yet": "No posts yet"
     },
+    "subscription": {
+      "remaining_label": "Remaining This Cycle",
+      "posts_short": "posts",
+      "interviews_short": "interviews"
+    },
     "interview_activity": {
       "title": "Interview Activity",
       "subtitle": "Interviews conducted over the last 30 days",
@@ -380,7 +385,7 @@
       "zone_department_jobs": "Jobs",
       "zone5_title": "Candidate Quality",
       "top10_title": "Top Candidates",
-      "top10_subtitle": "Ranked by interview score — shortlisted or completed",
+      "top10_subtitle": "Top 5 — strong on both CV match and interview score",
       "top10_empty": "No completed interviews yet",
       "top10_empty_sub": "Top-scoring candidates will show up here once interviews are completed",
       "col_candidate": "Candidate",

@@ -1,10 +1,11 @@
 "use client";
 import React, { memo } from "react";
 import { useTranslation } from "react-i18next";
+import { useRouter } from "next/router";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
-import { History as HistoryOutlined, UserPlus as UserPlusOutlined, Mail as MailOutlined, CheckCircle2 as CheckCircleOutlined, Award as AwardOutlined, XCircle as XCircleOutlined, SearchX as SearchXOutlined } from "lucide-react";
+import { History as HistoryOutlined, UserPlus as UserPlusOutlined, Mail as MailOutlined, CheckCircle2 as CheckCircleOutlined, Award as AwardOutlined, XCircle as XCircleOutlined, SearchX as SearchXOutlined, ChevronRight as ChevronRightOutlined } from "lucide-react";
 import { ZoneHeading } from "./KpiAtoms";
 import type { ApplicationHistoryData } from "../types";
 
@@ -41,8 +42,9 @@ const RowSkeleton = () => (
 interface Props { data: ApplicationHistoryData | undefined; loading: boolean }
 
 const KpiApplicationHistory = memo<Props>(({ data, loading }) => {
-  const { t } = useTranslation("dashboard");
-  const items = data ?? [];
+  const { t }    = useTranslation("dashboard");
+  const router   = useRouter();
+  const items    = data ?? [];
 
   return (
     <TooltipProvider>
@@ -120,6 +122,15 @@ const KpiApplicationHistory = memo<Props>(({ data, loading }) => {
               );
             })}
           </div>
+        )}
+        {!loading && items.length > 0 && (
+          <button
+            onClick={() => router.push("/company/applications")}
+            className="w-full flex items-center justify-center gap-1 py-2.5 border-t border-slate-100 text-[12px] font-semibold text-violet-600 hover:bg-slate-50/80 transition-colors"
+          >
+            {t("pages.kpi.history_view_all", "View all applications")}
+            <ChevronRightOutlined size={14} />
+          </button>
         )}
       </Card>
     </TooltipProvider>

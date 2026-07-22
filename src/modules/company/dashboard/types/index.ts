@@ -85,13 +85,14 @@ export type KpiDepartmentData = KpiDepartmentRow[];
 // ── Sourcing / Candidate quality ───────────────────────────────────────────────
 
 export interface SourcingCandidate {
-  rank:       number;
-  firstName:  string;
-  lastName:   string;
-  postTitle:  string;
-  score:      number | null;
-  matchScore: number | null;
-  status:     "shortlisted" | "completed";
+  rank:          number;
+  applicationId: string;
+  firstName:     string;
+  lastName:      string;
+  postTitle:     string;
+  score:         number | null;
+  matchScore:    number | null;
+  status:        "shortlisted" | "completed";
 }
 
 export interface SourcingByPost {
