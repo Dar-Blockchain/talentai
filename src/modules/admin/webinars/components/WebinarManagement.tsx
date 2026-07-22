@@ -6,7 +6,7 @@ import { Plus as AddIcon, Video as WebinarIcon } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { adminWebinarApi } from "../api";
 import { exportWebinarSubmissions } from "../utils/exportSubmissions";
-import { toFormValues } from "../utils/webinarForm";
+import { toFormValues, findInvalidQuestion, questionErrorMessage } from "../utils/webinarForm";
 import {
   AdminPageHeading,
   AdminQueryError,
@@ -101,11 +101,21 @@ const WebinarManagement: React.FC = () => {
     }
   };
 
-  const handleVerify = (w: Webinar) =>
+  const handleVerify = (w: Webinar) => {
+    if (w.questions.length === 0) {
+      toast.error("Add at least one question before publishing.");
+      return;
+    }
+    const invalid = findInvalidQuestion(w.questions);
+    if (invalid) {
+      toast.error(`${questionErrorMessage(invalid.reason)} Edit the webinar to fix it before publishing.`);
+      return;
+    }
     verifyMut.mutate(w._id, {
       onSuccess: () => toast.success(`"${w.title}" is now Published.`),
       onError: () => toast.error("Failed to publish webinar."),
     });
+  };
 
   const handleDelete = () => {
     if (!deleteTarget) return;

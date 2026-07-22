@@ -72,4 +72,12 @@ export const adminWebinarApi = {
       const { data } = await axiosInstance.get(`${BASE}/${id}/submissions`, { params });
       return data as WebinarSubmissionsResponse & { success: boolean };
     }, "Failed to load submissions."),
+
+  // Live-attendee count has no video-platform integration to derive it
+  // automatically — the organizer enters it manually on the overview.
+  updateLiveAttendees: (id: string, count: number) =>
+    apiCall(async () => {
+      const { data } = await axiosInstance.patch(`${BASE}/${id}`, { "stats.live_attendees": count });
+      return data.data as Webinar;
+    }, "Failed to update live attendee count."),
 };

@@ -40,6 +40,7 @@ import { ConfirmDialog, ADMIN_ACCENT, AdminStatCard } from "@/modules/admin/shar
 import { useAdminWebinarQuery } from "../queries";
 import { getWebinarStatusMeta } from "../constants";
 import { formatWebinarSchedule } from "../utils/formatSchedule";
+import { findInvalidQuestion, questionErrorMessage } from "../utils/webinarForm";
 import { useWebinarActions } from "../hooks/useWebinarActions";
 import { WebinarQuestionsList } from "./WebinarQuestionsList";
 import { WebinarRegistrantsTab } from "./WebinarRegistrantsTab";
@@ -85,6 +86,13 @@ export function WebinarDetailPage({ id }: { id: string }) {
   const statusMeta = getWebinarStatusMeta(webinar.status);
   const schedule = formatWebinarSchedule(webinar.date, webinar.end_date);
   const highlights = webinar.highlights.filter(Boolean);
+  const invalidQuestion = webinar.status === "draft" ? findInvalidQuestion(webinar.questions) : null;
+  const publishBlockedReason =
+    webinar.status === "draft" && webinar.questions.length === 0
+      ? "Add at least one question before publishing."
+      : invalidQuestion
+        ? questionErrorMessage(invalidQuestion.reason)
+        : null;
 
   return (
     <div>
@@ -152,7 +160,8 @@ export function WebinarDetailPage({ id }: { id: string }) {
                 <Button
                   variant="ghost"
                   onClick={handleVerify}
-                  disabled={verifyMut.isPending}
+                  disabled={verifyMut.isPending || !!publishBlockedReason}
+                  title={publishBlockedReason ?? undefined}
                   className="h-9 rounded-[10px] bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                 >
                   {verifyMut.isPending ? <Spinner className="size-3.5 text-white" /> : <VerifyIcon size={14} />}
@@ -234,7 +243,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
             <AdminStatCard
               icon={ScoreIcon}
               label="Avg score"
-              value={webinar.stats.avg_maturite_ia != null ? `${webinar.stats.avg_maturite_ia}/100` : "—"}
+              value={webinar.stats.avg_score != null ? `${webinar.stats.avg_score}/100` : "—"}
             />
           </div>
 

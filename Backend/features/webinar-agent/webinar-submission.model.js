@@ -6,9 +6,11 @@ const WebinarSubmissionSchema = new mongoose.Schema({
   consent:    { type: Boolean, default: false },
 
   contact: {
-    nom:        { type: String, default: null },
-    email:      { type: String, default: null, index: true, sparse: true },
-    entreprise: { type: String, default: null },
+    nom:          { type: String, default: null },
+    email:        { type: String, default: null, index: true, sparse: true },
+    entreprise:   { type: String, default: null },
+    // Drives Dashboard 2's lead segment/script routing — set once at registration.
+    profile_type: { type: String, enum: ["staffing_bpo", "enterprise_chro", "referrer"], default: null },
   },
 
   source: {
@@ -18,18 +20,42 @@ const WebinarSubmissionSchema = new mongoose.Schema({
 
   answers: { type: mongoose.Schema.Types.Mixed, default: {} },
 
+  // AI-maturity scoring: 4 sub-scores (/12 each, /48 total, /100 converted),
+  // a maturity level, one strength + one vigilance point pulled straight from
+  // the highest/lowest-scoring answered option, and organizer-only lead
+  // qualification/routing derived from it.
   scoring: {
-    maturite_ia:        { type: Number },
-    intensite_pain:     { type: Number },
-    readiness_score:    { type: Number },
-    icp_fit:            { type: String, enum: ["ok", "faible", "hors"] },
-    these:              { type: String, enum: ["v1", "v2", "v3", "indetermine"] },
-    tier:               { type: String, enum: ["A", "B", "C", "D"] },
+    subScores: {
+      adoption:   { type: Number, default: 0 },
+      governance: { type: Number, default: 0 },
+      quality:    { type: Number, default: 0 },
+      antifraud:  { type: Number, default: 0 },
+    },
+    total48:      { type: Number },
+    total100:     { type: Number },
+    maturityLevel: { type: String, enum: ["beginner", "explorer", "practitioner", "pioneer"] },
+    strength: {
+      questionLabel: { type: String, default: null },
+      optionLabel:   { type: String, default: null },
+      category:      { type: String, default: null },
+    },
+    vigilance: {
+      questionLabel: { type: String, default: null },
+      optionLabel:   { type: String, default: null },
+      category:      { type: String, default: null },
+    },
+    qualification: {
+      status:     { type: String, enum: ["hot", "warm", "cold"] },
+      painSignal: { type: Boolean, default: false },
+    },
+    routing: {
+      script:            { type: String, enum: ["v1", "v2", null], default: null },
+      recommend1on1:      { type: Boolean, default: true },
+      followUpTimeframe:  { type: String, default: null },
+    },
     key_insight:        { type: String, default: null },
     main_pain:          { type: String, default: null },
     recommended_action: { type: String, default: null },
-    strengths:          { type: [String], default: [] },
-    blockers:           { type: [String], default: [] },
   },
 
   // Fan-out status for observability and replay

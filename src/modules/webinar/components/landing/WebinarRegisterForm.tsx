@@ -10,9 +10,12 @@ import { Label } from "@/modules/shared/ui/shadcn/label";
 import { Checkbox } from "@/modules/shared/ui/shadcn/checkbox";
 import { Alert, AlertDescription } from "@/modules/shared/ui/shadcn/alert";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { WebinarSubmitButton } from "./WebinarSubmitButton";
 import i18n from "@/i18n/config";
-import type { WebinarContact } from "@/modules/webinar/types";
+import type { WebinarContact, WebinarProfileType } from "@/modules/webinar/types";
+
+const PROFILE_TYPES: WebinarProfileType[] = ["staffing_bpo", "enterprise_chro", "referrer"];
 
 const VP = { once: true, margin: "-40px" };
 const EASE = [0.22, 1, 0.36, 1] as const;
@@ -41,7 +44,9 @@ export function WebinarRegisterForm({
   const router = useRouter();
   const t = i18n.getFixedT(lang, "webinar");
 
-  const [form, setForm] = useState({ nom: "", email: "", entreprise: "" });
+  const [form, setForm] = useState<{ nom: string; email: string; entreprise: string; profile_type: WebinarProfileType | "" }>({
+    nom: "", email: "", entreprise: "", profile_type: "",
+  });
   const [consent, setConsent] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   // A returning visitor who already finished the questionnaire — re-registering
@@ -55,7 +60,7 @@ export function WebinarRegisterForm({
   const emailVal = form.email.trim();
   const validEmail = validateEmail(emailVal) === true;
   const showEmailError = emailVal.length > 0 && !validEmail;
-  const canSubmit = consent && form.nom.trim() !== "" && validEmail;
+  const canSubmit = consent && form.nom.trim() !== "" && validEmail && form.profile_type !== "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -186,6 +191,33 @@ export function WebinarRegisterForm({
                 placeholder={t("registerForm.companyPlaceholder")}
                 className="rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25"
               />
+            </div>
+            <div className="space-y-1.5">
+              <Label
+                htmlFor="profile_type"
+                className="text-[10.5px] font-semibold uppercase text-[#7E9089]"
+                style={{ letterSpacing: "0.08em" }}
+              >
+                {t("registerForm.profileType")} *
+              </Label>
+              <Select
+                value={form.profile_type}
+                onValueChange={(v) => setForm((f) => ({ ...f, profile_type: v as WebinarProfileType }))}
+              >
+                <SelectTrigger
+                  id="profile_type"
+                  className="w-full rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25"
+                >
+                  <SelectValue placeholder={t("registerForm.profileTypePlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFILE_TYPES.map((v) => (
+                    <SelectItem key={v} value={v}>
+                      {t(`registerForm.profileType${v === "staffing_bpo" ? "StaffingBpo" : v === "enterprise_chro" ? "EnterpriseChro" : "Referrer"}`)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label

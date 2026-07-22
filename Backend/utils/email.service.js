@@ -349,11 +349,20 @@ const sendJobMatchEmail = async (candidateEmail, { candidateName, jobTitle, comp
 };
 
 // ─── Send Webinar Results (to participant after completing the questionnaire) ──
-const TIER_LABELS = {
-  A: "Fortement aligné",
-  B: "Potentiel identifié",
-  C: "En cours de maturation",
-  D: "Hors cible",
+// Participant-facing copy: "a few numbers, not an audit" — no key_insight/
+// main_pain/recommended_action here, those stay organizer-only (Dashboard 2).
+const MATURITY_LABELS = {
+  beginner:     { fr: "Débutant",              en: "Beginner" },
+  explorer:     { fr: "Explorateur",           en: "Explorer" },
+  practitioner: { fr: "Praticien",             en: "Practitioner" },
+  pioneer:      { fr: "Pionnier",              en: "Pioneer" },
+};
+
+const CATEGORY_LABELS = {
+  adoption:   { fr: "Adoption & outils",             en: "Adoption & tools" },
+  governance: { fr: "Gouvernance & conformité",       en: "Governance & compliance" },
+  quality:    { fr: "Qualité & mesure",               en: "Quality & measurement" },
+  antifraud:  { fr: "Vigilance fraude / AI-washing",  en: "Anti-fraud / AI-washing vigilance" },
 };
 
 const sendWebinarResultsEmail = async (submission, webinar) => {
@@ -362,37 +371,41 @@ const sendWebinarResultsEmail = async (submission, webinar) => {
 
   const nom         = submission.contact?.nom || "Participant";
   const scoring     = submission.scoring || {};
+  const subScores   = scoring.subScores || {};
   // Follows the webinar's own language, not the registrant's pick — "both"
   // defaults to English so every email for that webinar reads consistently.
   const lang        = webinar.lang !== "fr" ? "en" : "fr";
-  const resultsUrl  = `${process.env.BASE_URL}/webinar?id=${webinar._id || webinar.id}&submission=${submission._id}&snapshot=1`;
+  const isEn        = lang === "en";
 
   const webinarDate = webinar.date
-    ? new Date(webinar.date).toLocaleDateString(lang === "en" ? "en-GB" : "fr-FR", {
+    ? new Date(webinar.date).toLocaleDateString(isEn ? "en-GB" : "fr-FR", {
         day: "numeric", month: "long", year: "numeric",
       })
     : null;
 
+  const subScoreRows = ["adoption", "governance", "quality", "antifraud"].map((cat) => ({
+    label: CATEGORY_LABELS[cat][lang],
+    value: subScores[cat] ?? 0,
+  }));
+
   const mailOptions = {
     from: FROM_ADDRESS,
     to: email,
-    subject: lang === "en"
-      ? `Your AI analysis is ready — ${webinar.title}`
-      : `Votre analyse IA est prête — ${webinar.title}`,
+    subject: isEn
+      ? `Your AI maturity results are ready — ${webinar.title}`
+      : `Vos résultats de maturité IA sont prêts — ${webinar.title}`,
     html: webinarResultsTemplate({
       nom,
-      isEn:               lang === "en",
-      webinarTitle:       webinar.title,
+      isEn,
+      webinarTitle:  webinar.title,
       webinarDate,
-      maturite_ia:        scoring.maturite_ia ?? "—",
-      intensite_pain:     scoring.intensite_pain ?? "—",
-      readiness_score:    scoring.readiness_score ?? "—",
-      tier:               scoring.tier ?? "—",
-      tierLabel:          TIER_LABELS[scoring.tier] || "",
-      key_insight:        scoring.key_insight || null,
-      main_pain:          scoring.main_pain || null,
-      recommended_action: scoring.recommended_action || null,
-      webinarLink:        webinar.webinar_link || null,
+      total100:      scoring.total100 ?? 0,
+      maturityLevel: MATURITY_LABELS[scoring.maturityLevel]?.[lang] || "—",
+      subScores:     subScoreRows,
+      strength:      scoring.strength  ? { ...scoring.strength }  : null,
+      vigilance:     scoring.vigilance ? { ...scoring.vigilance } : null,
+      webinarLink:   webinar.webinar_link || null,
+      bookingLink:   webinar.booking_link || null,
       year,
     }),
     attachments: [logoAttachment],

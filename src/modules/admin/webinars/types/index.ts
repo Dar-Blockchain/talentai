@@ -3,7 +3,7 @@ export interface WebinarQuestion {
   label_fr: string;
   label_en: string;
   type: "choice" | "scale" | "text" | "select" | "multiselect";
-  options: { key: string; label_fr: string; label_en: string }[];
+  options: { key: string; label_fr: string; label_en: string; score?: number }[];
   required: boolean;
   order: number;
 }
@@ -11,11 +11,20 @@ export interface WebinarQuestion {
 /** Draft is structurally identical to a saved question; alias avoids duplication. */
 export type WebinarQuestionDraft = WebinarQuestion;
 
+export type WebinarProfileType = "staffing_bpo" | "enterprise_chro" | "referrer";
+export type WebinarMaturityLevel = "beginner" | "explorer" | "practitioner" | "pioneer";
+export type WebinarScoreCategory = "adoption" | "governance" | "quality" | "antifraud";
+export type WebinarQualification = "hot" | "warm" | "cold";
+
 export interface WebinarStats {
   total_registrations: number;
   total_completions: number;
-  avg_maturite_ia: number | null;
-  tier_breakdown: Record<string, number>;
+  live_attendees: number;
+  avg_score: number | null;
+  maturity_breakdown: Record<string, number>;
+  qualification_breakdown: Record<string, number>;
+  segment_breakdown: Record<string, number>;
+  utm_breakdown: Record<string, number>;
 }
 
 export interface Webinar {
@@ -33,6 +42,9 @@ export interface Webinar {
   about_fr: string;
   about_en: string;
   webinar_link: string;
+  booking_link: string;
+  target_min: number;
+  target_max: number;
   highlights: string[];
   highlights_fr: string[];
   highlights_en: string[];
@@ -50,18 +62,24 @@ export interface WebinarListResponse {
   totalPages: number;
 }
 
+export interface WebinarScoringPoint {
+  questionLabel: string | null;
+  optionLabel: string | null;
+  category: WebinarScoreCategory | null;
+}
+
 export interface WebinarScoringResult {
-  maturite_ia: number;
-  intensite_pain: number;
-  readiness_score?: number;
-  tier: "A" | "B" | "C" | "D";
-  icp_fit: "ok" | "faible" | "hors";
-  these?: "v1" | "v2" | "v3" | "indetermine";
+  subScores: Record<WebinarScoreCategory, number>;
+  total48: number;
+  total100: number;
+  maturityLevel: WebinarMaturityLevel;
+  strength: WebinarScoringPoint | null;
+  vigilance: WebinarScoringPoint | null;
+  qualification: { status: WebinarQualification; painSignal: boolean };
+  routing: { script: "v1" | "v2" | null; recommend1on1: boolean; followUpTimeframe: string | null };
   key_insight?: string | null;
   main_pain?: string | null;
   recommended_action?: string | null;
-  strengths?: string[];
-  blockers?: string[];
 }
 
 export interface WebinarSubmission {
@@ -70,7 +88,7 @@ export interface WebinarSubmission {
   lang: string;
   consent: boolean;
   completed: boolean;
-  contact: { nom: string | null; email: string | null; entreprise: string | null };
+  contact: { nom: string | null; email: string | null; entreprise: string | null; profile_type: WebinarProfileType | null };
   answers: Record<string, unknown>;
   scoring?: WebinarScoringResult;
   source?: { utm_source: string | null; utm_campaign: string | null };
@@ -92,6 +110,12 @@ export interface WebinarFormValues {
   about_fr: string;
   about_en: string;
   webinar_link: string;
+  /** Optional Calendly-style booking link for the participant's "book a 1:1" CTA. */
+  booking_link: string;
+  /** Working registrant-count target range, shown as a pacing bar on the
+   * organizer overview. Defaults to 50–70. */
+  target_min: number;
+  target_max: number;
   /** Just the calendar day, "YYYY-MM-DD" — the actual start/end clock times
    * live in `start_time`/`end_time` below. */
   date: string;

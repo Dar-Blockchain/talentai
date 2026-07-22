@@ -54,6 +54,11 @@
     "company": "Company",
     "optional": "optional",
     "companyPlaceholder": "Acme Inc.",
+    "profileType": "Your profile",
+    "profileTypePlaceholder": "Select your profile",
+    "profileTypeStaffingBpo": "Staffing / BPO agency",
+    "profileTypeEnterpriseChro": "Enterprise / In-house HR",
+    "profileTypeReferrer": "Referrer / Other",
     "email": "Email",
     "emailPlaceholder": "you@company.com",
     "emailInvalid": "Please enter a valid email address",
@@ -89,16 +94,27 @@
     "absolutely": "Absolutely"
   },
   "snapshot": {
-    "aiReport": "AI Report",
+    "aiReport": "AI Maturity Report",
     "registeredTitle": "You're registered!",
-    "analysedBody": "Your profile has been analysed by our AI engine.",
-    "readinessScore": "Your readiness score",
-    "strongProfile": "Strong profile",
-    "goodPotential": "Good potential",
-    "keepGrowing": "Keep growing",
-    "knowledge": "Knowledge",
-    "engagement": "Engagement",
-    "emailNotice": "Your join link & full report are on their way to your inbox.",
+    "analysedBody": "Here's your personalised AI maturity snapshot.",
+    "yourScore": "Your AI maturity score",
+    "maturity": {
+      "beginner": "Beginner",
+      "explorer": "Explorer",
+      "practitioner": "Practitioner",
+      "pioneer": "Pioneer"
+    },
+    "category": {
+      "adoption": "Adoption & tools",
+      "governance": "Governance & compliance",
+      "quality": "Quality & measurement",
+      "antifraud": "Anti-fraud vigilance"
+    },
+    "strengthTitle": "Strength",
+    "vigilanceTitle": "Point of vigilance",
+    "ctaJoin": "Access the replay",
+    "ctaBooking": "Book a 1:1 conversation",
+    "emailNotice": "Your full report is on its way to your inbox.",
     "confidential": "Confidential · No spam"
   }
 }

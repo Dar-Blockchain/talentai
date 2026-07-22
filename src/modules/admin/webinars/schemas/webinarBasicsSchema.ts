@@ -17,6 +17,9 @@ export const webinarBasicsSchema = z
     // language, so the visitor must explicitly pick one before continuing.
     lang:            z.enum(["", "fr", "en", "both"]),
     webinar_link:    z.string().trim().min(1, "Join link is required").url("Enter a valid URL"),
+    booking_link:    z.union([z.string().trim().url("Enter a valid URL"), z.literal("")]),
+    target_min:      z.coerce.number().min(0, "Must be 0 or more"),
+    target_max:      z.coerce.number().min(0, "Must be 0 or more"),
   })
   .superRefine((values, ctx) => {
     if (!values.lang) {

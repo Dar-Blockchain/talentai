@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import { useVerifyWebinarMutation, useDeleteWebinarMutation } from "../queries";
 import { adminWebinarApi } from "../api";
 import { exportWebinarSubmissions } from "../utils/exportSubmissions";
+import { findInvalidQuestion, questionErrorMessage } from "../utils/webinarForm";
 import type { Webinar } from "../types";
 
 /** Single-webinar action set (copy link, export, publish, delete, send
@@ -46,6 +47,15 @@ export function useWebinarActions(webinar: Webinar | undefined) {
 
   const handleVerify = () => {
     if (!webinar) return;
+    if (webinar.questions.length === 0) {
+      toast.error("Add at least one question before publishing.");
+      return;
+    }
+    const invalid = findInvalidQuestion(webinar.questions);
+    if (invalid) {
+      toast.error(`${questionErrorMessage(invalid.reason)} Edit the webinar to fix it before publishing.`);
+      return;
+    }
     verifyMut.mutate(webinar._id, {
       onSuccess: () => toast.success(`"${webinar.title}" is now Published.`),
       onError: () => toast.error("Failed to publish webinar."),

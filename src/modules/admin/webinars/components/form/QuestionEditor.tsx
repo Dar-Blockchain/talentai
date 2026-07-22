@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/modules/shared/ui/shadcn/select";
-import { Plus as AddIcon, X as CloseIcon } from "lucide-react";
+import { Plus as AddIcon, X as CloseIcon, AlertTriangle as WarningIcon } from "lucide-react";
 import { QUESTION_TYPES } from "../../utils/webinarForm";
 import { LangBox } from "./LangBox";
 import type { WebinarFormValues, WebinarQuestionDraft } from "../../types";
@@ -41,13 +41,15 @@ export function QuestionEditor({
   // it's grouped with "choice"/"multiselect" here so editing an old question
   // doesn't show a blank type dropdown, and saving normalizes it away.
   const isChoiceGroup = q.type === "choice" || q.type === "select" || q.type === "multiselect";
+  const scoreTotal = q.options.reduce((sum, o) => sum + (o.score || 0), 0);
+  const scoreRemaining = 100 - scoreTotal;
 
   const addOption = () =>
     onChange({
       ...q,
       options: [
         ...q.options,
-        { key: `opt${q.options.length + 1}`, label_fr: "", label_en: "" },
+        { key: `opt${q.options.length + 1}`, label_fr: "", label_en: "", score: 0 },
       ],
     });
   const setOpt = (
@@ -59,6 +61,13 @@ export function QuestionEditor({
       ...q,
       options: q.options.map((o, j) => (j === i ? { ...o, [field]: val } : o)),
     });
+  const setOptScore = (i: number, val: string) => {
+    const parsed = val === "" ? 0 : Math.max(0, Math.min(100, Math.round(Number(val))));
+    onChange({
+      ...q,
+      options: q.options.map((o, j) => (j === i ? { ...o, score: Number.isNaN(parsed) ? 0 : parsed } : o)),
+    });
+  };
   // Single-language webinars only collect one label, but `label_fr` is treated
   // as the primary field everywhere else (previews, CSV export, funnel
   // fallback) — mirror it into both so those keep working either way.
@@ -285,6 +294,18 @@ export function QuestionEditor({
                       placeholder={`Option ${i + 1}`}
                     />
                   )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <input
+                      type="number"
+                      min={0}
+                      max={100}
+                      className={inp + " w-14 text-center px-1"}
+                      value={opt.score ?? 0}
+                      onChange={(e) => setOptScore(i, e.target.value)}
+                      title="Score for this option (%)"
+                    />
+                    <span className="text-[11px] font-semibold text-slate-400">%</span>
+                  </div>
                   <Button
                     variant="ghost"
                     onClick={() => delOpt(i)}
@@ -302,6 +323,24 @@ export function QuestionEditor({
               {q.options.length === 1 && (
                 <p className="text-[11px] text-amber-600 font-semibold">
                   Add at least one more option — 2 minimum
+                </p>
+              )}
+              {q.options.length > 0 && (
+                <p
+                  className={`flex items-center gap-1 text-[11px] font-semibold ${
+                    scoreRemaining === 0
+                      ? "text-teal-600"
+                      : scoreRemaining < 0
+                        ? "text-red-500"
+                        : "text-amber-600"
+                  }`}
+                >
+                  {scoreRemaining !== 0 && <WarningIcon size={12} />}
+                  {scoreRemaining < 0
+                    ? `Scores exceed 100 by ${-scoreRemaining} pts — adjust the options above`
+                    : scoreRemaining > 0
+                      ? `You still have ${scoreRemaining} pts out of 100 — scores must add up to 100`
+                      : "Scores add up to 100 ✓"}
                 </p>
               )}
             </div>

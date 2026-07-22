@@ -6,7 +6,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/modules/shared/ui/shadcn/d
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { X as CloseIcon } from "lucide-react";
 import { webinarBasicsSchema, type WebinarBasicsForm } from "../schemas/webinarBasicsSchema";
-import { EMPTY_FORM, STEPS, newQuestion } from "../utils/webinarForm";
+import { EMPTY_FORM, STEPS, newQuestion, findInvalidQuestion, questionErrorMessage } from "../utils/webinarForm";
 import { WebinarBasicsStep } from "./form/WebinarBasicsStep";
 import { WebinarContentStep } from "./form/WebinarContentStep";
 import { WebinarQuestionsStep } from "./form/WebinarQuestionsStep";
@@ -27,6 +27,9 @@ function basicsDefaults(f: WebinarFormValues) {
     end_time: f.end_time,
     lang: f.lang,
     webinar_link: f.webinar_link,
+    booking_link: f.booking_link,
+    target_min: f.target_min,
+    target_max: f.target_max,
   };
 }
 
@@ -105,13 +108,12 @@ export function WebinarFormDialog({
     set("questions", arr.map((q, i) => ({ ...q, order: i + 1 })));
   };
 
-  // Choice/select/multiselect questions need at least 2 options to make
-  // sense as a pick-one/pick-many prompt — a single option isn't a choice.
-  const invalidQuestion = form.questions.find((q) => {
-    const isChoiceGroup = q.type === "choice" || q.type === "select" || q.type === "multiselect";
-    return isChoiceGroup && q.options.length < 2;
-  });
-  const canSave = form.questions.length > 0 && !invalidQuestion;
+  const invalid = findInvalidQuestion(form.questions);
+  const invalidReason = invalid?.reason ?? null;
+  const canSave = form.questions.length > 0 && !invalid;
+  // Drafts otherwise only need a title, but a broken score split is never a
+  // valid work-in-progress state — block it even before the module is finished.
+  const hasScoreError = invalidReason === "score_total";
 
   return (
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
@@ -226,7 +228,7 @@ export function WebinarFormDialog({
                 onClick={async () => {
                   const fields =
                     step === 0
-                      ? (["date", "start_time", "end_time", "lang", "webinar_link"] as const)
+                      ? (["date", "start_time", "end_time", "lang", "webinar_link", "booking_link", "target_min", "target_max"] as const)
                       : CONTENT_FIELDS;
                   if (await triggerBasics(fields)) setStep((s) => s + 1);
                 }}
@@ -247,8 +249,15 @@ export function WebinarFormDialog({
                       toast.error("Add a title first.");
                       return;
                     }
+                    if (hasScoreError) {
+                      setStep(2);
+                      toast.error(questionErrorMessage("score_total"));
+                      return;
+                    }
                     onSave({ ...form, status: "draft" });
                   }}
+                  disabled={hasScoreError}
+                  title={hasScoreError ? questionErrorMessage("score_total") : undefined}
                   className="rounded-xl text-[13px] font-bold text-slate-600"
                 >
                   Save as Draft
@@ -266,8 +275,8 @@ export function WebinarFormDialog({
                   disabled={!canSave}
                   title={
                     !canSave
-                      ? invalidQuestion
-                        ? "Choice questions need at least 2 options"
+                      ? invalidReason
+                        ? questionErrorMessage(invalidReason)
                         : "Add at least one question"
                       : undefined
                   }

@@ -187,3 +187,9 @@ dist
 ./Backend/package-lock.json
 ./Backend/yarn.lock
 nul
+
+# Local agent-tool state — not shared with the team
+.wolf/
+.claude/commands/
+.claude/rules/
+CLAUDE.md

@@ -5,7 +5,7 @@ const QuestionSchema = new mongoose.Schema({
   label_fr:  { type: String, required: true },
   label_en:  { type: String, required: true },
   type:      { type: String, enum: ["choice", "scale", "text", "select", "multiselect"], default: "choice" },
-  options:   [{ key: String, label_fr: String, label_en: String }],
+  options:   [{ key: String, label_fr: String, label_en: String, score: { type: Number, default: 0 } }],
   required:  { type: Boolean, default: true },
   order:     { type: Number, default: 0 },
   ai_weight: { type: Number, default: 1 },       // scoring weight hint
@@ -46,15 +46,29 @@ const WebinarSchema = new mongoose.Schema({
 
   // External join link shown in emails (e.g. Zoom/Teams/Google Meet URL)
   webinar_link: { type: String, default: "" },
+  // Optional 1:1-conversation booking link (Calendly, etc.) — shown as a soft
+  // CTA on the participant snapshot/results email alongside the join link.
+  booking_link: { type: String, default: "" },
+
+  // Registrant-count target range shown as a pacing bar on the organizer's
+  // aggregated overview — a working range set by the campaign owner.
+  target_min: { type: Number, default: 50 },
+  target_max: { type: Number, default: 70 },
 
   questions:   [QuestionSchema],
 
-  // Stats snapshot (updated on each completion)
+  // Stats snapshot (updated on each completion via refreshStats)
   stats: {
-    total_registrations: { type: Number, default: 0 },
-    total_completions:   { type: Number, default: 0 },
-    avg_maturite_ia:     { type: Number, default: null },
-    tier_breakdown:      { type: Map, of: Number, default: {} },
+    total_registrations:     { type: Number, default: 0 },
+    total_completions:       { type: Number, default: 0 },
+    // Manually entered by the organizer — no video-platform integration exists
+    // to derive this automatically.
+    live_attendees:          { type: Number, default: 0 },
+    avg_score:               { type: Number, default: null },
+    maturity_breakdown:      { type: Map, of: Number, default: {} },
+    qualification_breakdown: { type: Map, of: Number, default: {} },
+    segment_breakdown:       { type: Map, of: Number, default: {} },
+    utm_breakdown:           { type: Map, of: Number, default: {} },
   },
 
   created_by:  { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

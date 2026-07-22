@@ -108,7 +108,7 @@ export function WebinarFunnel({ webinar, lang, initialContact, initialSubmission
 
   if (isSnapshot) {
     return scoring
-      ? <WebinarSnapshot scoring={scoring} lang={lang} />
+      ? <WebinarSnapshot scoring={scoring} lang={lang} webinarLink={webinar.webinar_link} bookingLink={webinar.booking_link} />
       : (
         <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4 text-slate-400">
           <div className="w-10 h-10 border-2 border-[#6AD39C]/30 border-t-[#10453F] rounded-full animate-spin" />

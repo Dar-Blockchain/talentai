@@ -1,5 +1,5 @@
 const WebinarSubmission   = require("./webinar-submission.model");
-const { deriverMarche, calculerScoreIA } = require("./webinar-scoring");
+const { deriverMarche, computeMaturityScoring } = require("./webinar-scoring");
 const { fanOut } = require("./webinar-fanout");
 const { refreshStats } = require("./webinar.service");
 
@@ -66,7 +66,7 @@ exports.complete = async (submissionId, finalAnswers) => {
     answers.marche = deriverMarche(answers.pays || answers.q4_pays);
   }
 
-  const scoring = await calculerScoreIA(answers, doc.webinar_id, doc.lang || "fr");
+  const scoring = await computeMaturityScoring(answers, doc.webinar_id, doc.lang || "fr", doc.contact?.profile_type || null);
 
   const completed = await WebinarSubmission.findByIdAndUpdate(
     submissionId,

@@ -140,6 +140,79 @@ export function WebinarBasicsStep({
         />
         {errors.webinar_link && <p className={errTxt}>{errors.webinar_link.message}</p>}
       </div>
+      <div>
+        <label className={lbl}>
+          Booking link{" "}
+          <span className="text-slate-400 font-normal text-[11px]">
+            (optional — Calendly-style link for the participant's "book a 1:1" CTA)
+          </span>
+        </label>
+        <Controller
+          name="booking_link"
+          control={control}
+          render={({ field }) => (
+            <input
+              {...field}
+              className={inp}
+              type="url"
+              onChange={(e) => {
+                field.onChange(e);
+                onFieldChange("booking_link", e.target.value);
+              }}
+              placeholder="https://cal.com/your-team/1on1"
+              aria-invalid={!!errors.booking_link}
+            />
+          )}
+        />
+        {errors.booking_link && <p className={errTxt}>{errors.booking_link.message}</p>}
+      </div>
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className={lbl}>
+            Registrant target — min{" "}
+            <span className="text-slate-400 font-normal text-[11px]">(pacing bar on the overview)</span>
+          </label>
+          <Controller
+            name="target_min"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                className={inp}
+                type="number"
+                min={0}
+                onChange={(e) => {
+                  field.onChange(e);
+                  onFieldChange("target_min", Number(e.target.value));
+                }}
+                aria-invalid={!!errors.target_min}
+              />
+            )}
+          />
+          {errors.target_min && <p className={errTxt}>{errors.target_min.message}</p>}
+        </div>
+        <div>
+          <label className={lbl}>Registrant target — max</label>
+          <Controller
+            name="target_max"
+            control={control}
+            render={({ field }) => (
+              <input
+                {...field}
+                className={inp}
+                type="number"
+                min={0}
+                onChange={(e) => {
+                  field.onChange(e);
+                  onFieldChange("target_max", Number(e.target.value));
+                }}
+                aria-invalid={!!errors.target_max}
+              />
+            )}
+          />
+          {errors.target_max && <p className={errTxt}>{errors.target_max.message}</p>}
+        </div>
+      </div>
     </div>
   );
 }

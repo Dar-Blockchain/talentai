@@ -46,7 +46,7 @@ exports.getWebinar = async (id) => {
   return doc;
 };
 
-const PUBLIC_FIELDS = "title title_fr title_en description description_fr description_en date end_date lang questions highlights stats about_fr about_en webinar_link";
+const PUBLIC_FIELDS = "title title_fr title_en description description_fr description_en date end_date lang questions highlights stats about_fr about_en webinar_link booking_link";
 
 exports.getActiveWebinar = async () => {
   return Webinar.findOne({ status: "active" })
@@ -145,7 +145,36 @@ exports.deleteWebinar = async (id) => {
   if (!doc) throw new Error("Webinar not found");
 };
 
-exports.verifyWebinar = (id) => setStatus(id, "active");
+// Mirrors the admin UI's question validation (webinarForm.ts) so publishing
+// via a direct API call can't bypass it: choice/select/multiselect questions
+// need at least 2 options, and their option scores must total exactly 100.
+function findInvalidQuestion(questions) {
+  for (const q of questions || []) {
+    const isChoiceGroup = q.type === "choice" || q.type === "select" || q.type === "multiselect";
+    if (!isChoiceGroup) continue;
+    if (!q.options || q.options.length < 2) return { question: q, reason: "min_options" };
+    const total = q.options.reduce((sum, o) => sum + (o.score || 0), 0);
+    if (total !== 100) return { question: q, reason: "score_total" };
+  }
+  return null;
+}
+
+exports.verifyWebinar = async (id) => {
+  const webinar = await Webinar.findById(id).lean();
+  if (!webinar) throw new Error("Webinar not found");
+  if (!webinar.questions || webinar.questions.length === 0) {
+    throw new Error("Add at least one question before publishing.");
+  }
+  const invalid = findInvalidQuestion(webinar.questions);
+  if (invalid) {
+    throw new Error(
+      invalid.reason === "min_options"
+        ? "Choice questions need at least 2 options."
+        : "Each choice question's option scores must add up to exactly 100.",
+    );
+  }
+  return setStatus(id, "active");
+};
 
 exports.listSubmissions = async ({ webinarId, page = 1, limit = 50, completed }) => {
   const filter = { webinar_id: webinarId };
@@ -206,26 +235,47 @@ exports.inviteToWebinar = async (id, emails) => {
 };
 
 exports.refreshStats = async (id) => {
-  const [total, completed, scoring] = await Promise.all([
+  const [total, completed, submissions] = await Promise.all([
     WebinarSubmission.countDocuments({ webinar_id: id }),
     WebinarSubmission.countDocuments({ webinar_id: id, completed: true }),
-    WebinarSubmission.find({ webinar_id: id, completed: true }, { "scoring.maturite_ia": 1, "scoring.tier": 1 }).lean(),
+    WebinarSubmission.find(
+      { webinar_id: id, completed: true },
+      { "scoring.total100": 1, "scoring.maturityLevel": 1, "scoring.qualification.status": 1, "contact.profile_type": 1, "source.utm_source": 1 },
+    ).lean(),
   ]);
 
-  const tierBreakdown = {};
-  let totalMaturite = 0;
-  for (const s of scoring) {
-    if (s.scoring?.tier)              tierBreakdown[s.scoring.tier] = (tierBreakdown[s.scoring.tier] || 0) + 1;
-    if (s.scoring?.maturite_ia != null) totalMaturite += s.scoring.maturite_ia;
+  const maturityBreakdown      = {};
+  const qualificationBreakdown = {};
+  const segmentBreakdown       = {};
+  const utmBreakdown           = {};
+  let totalScore = 0, scoredCount = 0;
+
+  for (const s of submissions) {
+    const level = s.scoring?.maturityLevel;
+    if (level) maturityBreakdown[level] = (maturityBreakdown[level] || 0) + 1;
+
+    const qual = s.scoring?.qualification?.status;
+    if (qual) qualificationBreakdown[qual] = (qualificationBreakdown[qual] || 0) + 1;
+
+    const segment = s.contact?.profile_type;
+    if (segment) segmentBreakdown[segment] = (segmentBreakdown[segment] || 0) + 1;
+
+    const utm = s.source?.utm_source;
+    if (utm) utmBreakdown[utm] = (utmBreakdown[utm] || 0) + 1;
+
+    if (s.scoring?.total100 != null) { totalScore += s.scoring.total100; scoredCount++; }
   }
 
   const doc = await Webinar.findByIdAndUpdate(
     id,
     { $set: {
-      "stats.total_registrations": total,
-      "stats.total_completions":   completed,
-      "stats.avg_maturite_ia":     scoring.length ? Math.round(totalMaturite / scoring.length) : null,
-      "stats.tier_breakdown":      tierBreakdown,
+      "stats.total_registrations":     total,
+      "stats.total_completions":       completed,
+      "stats.avg_score":               scoredCount ? Math.round(totalScore / scoredCount) : null,
+      "stats.maturity_breakdown":      maturityBreakdown,
+      "stats.qualification_breakdown": qualificationBreakdown,
+      "stats.segment_breakdown":       segmentBreakdown,
+      "stats.utm_breakdown":           utmBreakdown,
     }},
     { new: true },
   );

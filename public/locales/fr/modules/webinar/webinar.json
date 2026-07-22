@@ -54,6 +54,11 @@
     "company": "Entreprise",
     "optional": "optionnel",
     "companyPlaceholder": "Nom de la société",
+    "profileType": "Votre profil",
+    "profileTypePlaceholder": "Sélectionnez votre profil",
+    "profileTypeStaffingBpo": "Cabinet de staffing / BPO",
+    "profileTypeEnterpriseChro": "Entreprise / RH interne",
+    "profileTypeReferrer": "Apporteur d'affaires / Autre",
     "email": "Email",
     "emailPlaceholder": "vous@entreprise.com",
     "emailInvalid": "Veuillez entrer une adresse email valide",
@@ -89,16 +94,27 @@
     "absolutely": "Absolument"
   },
   "snapshot": {
-    "aiReport": "Rapport IA",
+    "aiReport": "Rapport de maturité IA",
     "registeredTitle": "Vous êtes inscrit !",
-    "analysedBody": "Votre profil a été analysé par notre moteur IA.",
-    "readinessScore": "Votre score de disposition",
-    "strongProfile": "Profil solide",
-    "goodPotential": "Bon potentiel",
-    "keepGrowing": "En progression",
-    "knowledge": "Maîtrise",
-    "engagement": "Engagement",
-    "emailNotice": "Votre lien de connexion et votre rapport complet arrivent dans votre boîte mail.",
+    "analysedBody": "Voici votre profil de maturité IA personnalisé.",
+    "yourScore": "Votre score de maturité IA",
+    "maturity": {
+      "beginner": "Débutant",
+      "explorer": "Explorateur",
+      "practitioner": "Praticien",
+      "pioneer": "Pionnier"
+    },
+    "category": {
+      "adoption": "Adoption & outils",
+      "governance": "Gouvernance & conformité",
+      "quality": "Qualité & mesure",
+      "antifraud": "Vigilance fraude"
+    },
+    "strengthTitle": "Point fort",
+    "vigilanceTitle": "Point de vigilance",
+    "ctaJoin": "Accéder au replay",
+    "ctaBooking": "Réserver un échange 1:1",
+    "emailNotice": "Votre rapport complet arrive dans votre boîte mail.",
     "confidential": "Données confidentielles · Aucun spam"
   }
 }

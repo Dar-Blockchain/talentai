@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { getWebinarStatusMeta } from "../constants";
 import { formatWebinarSchedule } from "../utils/formatSchedule";
+import { findInvalidQuestion, questionErrorMessage } from "../utils/webinarForm";
 import type { Webinar } from "../types";
 
 export function WebinarCard({
@@ -63,6 +64,13 @@ export function WebinarCard({
   const publicUrl = `/webinar?id=${w._id}`;
   const statusStyle = getWebinarStatusMeta(w.status);
   const schedule = formatWebinarSchedule(w.date, w.end_date);
+  const invalidQuestion = w.status === "draft" ? findInvalidQuestion(w.questions) : null;
+  const publishBlockedReason =
+    w.status === "draft" && w.questions.length === 0
+      ? "Add at least one question before publishing."
+      : invalidQuestion
+        ? questionErrorMessage(invalidQuestion.reason)
+        : null;
 
   const goToDetail = (tab?: "registrants") =>
     router.push(`/admin/webinars/${w._id}${tab ? `?tab=${tab}` : ""}`);
@@ -148,7 +156,8 @@ export function WebinarCard({
               {w.status === "draft" && (
                 <DropdownMenuItem
                   onClick={onVerify}
-                  disabled={verifyPending}
+                  disabled={verifyPending || !!publishBlockedReason}
+                  title={publishBlockedReason ?? undefined}
                   className="gap-2.5 rounded-lg py-[9px] px-[10px] focus:bg-[#ECFDF5]"
                 >
                   <div className="flex h-[26px] w-[26px] shrink-0 items-center justify-center rounded-[7px] bg-[#ECFDF5]">
@@ -159,7 +168,7 @@ export function WebinarCard({
                       Publish
                     </p>
                     <p className="text-[10px] leading-[1.2] text-[#9CA3AF]">
-                      Make this webinar live
+                      {publishBlockedReason ?? "Make this webinar live"}
                     </p>
                   </div>
                 </DropdownMenuItem>
@@ -318,11 +327,11 @@ export function WebinarCard({
         <TooltipProvider>
           <div className="mt-auto flex items-center justify-between border-t border-[#F3F4F6] pt-3">
             <div className="flex items-center gap-1.5">
-              {w.stats.avg_maturite_ia != null && (
+              {w.stats.avg_score != null && (
                 <span className="text-[11.5px] text-[#9CA3AF]">
                   avg{" "}
                   <strong className="text-[#111827]">
-                    {w.stats.avg_maturite_ia}
+                    {w.stats.avg_score}
                   </strong>
                   /100
                 </span>

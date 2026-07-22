@@ -54,3 +54,11 @@ export const useWebinarSubmissionsQuery = (id: string, params?: { page?: number;
     staleTime: 20_000,
     placeholderData: (prev) => prev,
   });
+
+export const useUpdateLiveAttendeesMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, count }: { id: string; count: number }) => adminWebinarApi.updateLiveAttendees(id, count),
+    onSuccess: () => invalidate(qc),
+  });
+};

@@ -8,6 +8,9 @@ export const EMPTY_FORM: WebinarFormValues = {
   about_fr: "",
   about_en: "",
   webinar_link: "",
+  booking_link: "",
+  target_min: 50,
+  target_max: 70,
   date: "",
   start_time: "09:00",
   end_time: "10:00",
@@ -40,6 +43,9 @@ export function toFormValues(w: Webinar): WebinarFormValues {
     about_fr: w.about_fr ?? "",
     about_en: w.about_en ?? "",
     webinar_link: w.webinar_link ?? "",
+    booking_link: w.booking_link ?? "",
+    target_min: w.target_min ?? 50,
+    target_max: w.target_max ?? 70,
     date: w.date ? w.date.slice(0, 10) : "",
     start_time: w.date ? w.date.slice(11, 16) : "09:00",
     end_time: w.end_date ? w.end_date.slice(11, 16) : "10:00",
@@ -69,4 +75,38 @@ export function newQuestion(order: number): WebinarQuestionDraft {
     required: true,
     order,
   };
+}
+
+// ─── Question validation ─────────────────────────────────────────────────────
+// Shared by the form dialog (create/edit) and the quick "Publish" actions on
+// the list/detail pages, so a draft can't go live with a broken choice
+// question either way.
+
+export type QuestionValidationError = "min_options" | "score_total";
+
+/** Choice/select/multiselect questions need at least 2 options to make sense
+ * as a pick-one/pick-many prompt, and their option scores must add up to
+ * exactly 100 so downstream scoring can treat them as a percentage split. */
+export function getQuestionError(q: WebinarQuestionDraft): QuestionValidationError | null {
+  const isChoiceGroup = q.type === "choice" || q.type === "select" || q.type === "multiselect";
+  if (!isChoiceGroup) return null;
+  if (q.options.length < 2) return "min_options";
+  const total = q.options.reduce((sum, o) => sum + (o.score || 0), 0);
+  return total === 100 ? null : "score_total";
+}
+
+export function findInvalidQuestion(
+  questions: WebinarQuestionDraft[],
+): { question: WebinarQuestionDraft; reason: QuestionValidationError } | null {
+  for (const question of questions) {
+    const reason = getQuestionError(question);
+    if (reason) return { question, reason };
+  }
+  return null;
+}
+
+export function questionErrorMessage(reason: QuestionValidationError): string {
+  return reason === "min_options"
+    ? "Choice questions need at least 2 options."
+    : "Each choice question's option scores must add up to exactly 100.";
 }

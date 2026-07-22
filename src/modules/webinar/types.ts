@@ -1,23 +1,32 @@
 export type Lang = "fr" | "en";
 
+export type WebinarProfileType = "staffing_bpo" | "enterprise_chro" | "referrer";
+
 export interface WebinarContact {
   nom: string;
   email: string;
   entreprise: string;
+  profile_type?: WebinarProfileType | "";
 }
 
+export type WebinarMaturityLevel = "beginner" | "explorer" | "practitioner" | "pioneer";
+export type WebinarScoreCategory = "adoption" | "governance" | "quality" | "antifraud";
+
+export interface WebinarScoringPoint {
+  questionLabel: string;
+  optionLabel: string;
+  category: WebinarScoreCategory;
+}
+
+/** Participant-facing subset only — "a few numbers, not an audit". The fuller
+ * organizer shape (qualification/routing/AI notes) lives in the admin module. */
 export interface WebinarScoring {
-  maturite_ia: number;
-  intensite_pain: number;
-  readiness_score?: number;
-  icp_fit: "ok" | "faible" | "hors";
-  these: "v1" | "v2" | "v3" | "indetermine";
-  tier: "A" | "B" | "C" | "D";
-  key_insight?: string | null;
-  main_pain?: string | null;
-  recommended_action?: string | null;
-  strengths?: string[];
-  blockers?: string[];
+  subScores: Record<WebinarScoreCategory, number>;
+  total48: number;
+  total100: number;
+  maturityLevel: WebinarMaturityLevel;
+  strength: WebinarScoringPoint | null;
+  vigilance: WebinarScoringPoint | null;
 }
 
 export interface WebinarSubmission {
@@ -66,5 +75,6 @@ export interface WebinarData {
   stats?: WebinarStats;
   highlights?: string[];
   webinar_link?: string;
+  booking_link?: string;
   status?: "draft" | "active";
 }
