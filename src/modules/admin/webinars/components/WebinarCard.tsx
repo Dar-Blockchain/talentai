@@ -8,14 +8,12 @@ import {
   TooltipProvider,
 } from "@/modules/shared/ui/shadcn/tooltip";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 import {
   Video as WebinarIcon,
   CheckCircle2 as VerifyIcon,
@@ -24,7 +22,6 @@ import {
   Send as SendIcon,
   Users as PeopleIcon,
   Download as DownloadIcon,
-  MoreVertical as MoreIcon,
   Pencil as EditIcon,
   Copy as CopyIcon,
   Check as CheckIcon,
@@ -131,22 +128,13 @@ export function WebinarCard({
             </div>
           </div>
 
-          <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon-xs"
-                onClick={(e) => e.stopPropagation()}
-                className="shrink-0 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-              >
-                <MoreIcon size={15} />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent
-              align="end"
-              onClick={(e) => e.stopPropagation()}
-              className="min-w-[188px] rounded-xl border border-[#E5E7EB] p-1.5 shadow-lg"
-            >
+          <MoreOptionsMenu
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            size="xs"
+            className="text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+            contentClassName="rounded-xl border border-[#E5E7EB] p-1.5 shadow-lg"
+          >
               <div className="px-1.5 pb-1 pt-0.5">
                 <p className="truncate text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
                   {w.title}
@@ -290,8 +278,7 @@ export function WebinarCard({
                   </p>
                 </div>
               </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          </MoreOptionsMenu>
         </div>
 
         {/* Meta */}

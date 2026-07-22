@@ -1,14 +1,13 @@
 import React, { useMemo } from "react";
 import { motion }         from "framer-motion";
 import { useTranslation } from "react-i18next";
-import { Building2, Pencil, Trash2, MoreVertical } from "lucide-react";
+import { Building2, Pencil, Trash2 } from "lucide-react";
 import { Department }     from "../../types";
-import { Button }         from "@/modules/shared/ui/shadcn/button";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent,
   DropdownMenuItem, DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 
@@ -59,17 +58,12 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({
             </div>
 
             {canManage && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button
-                    size="icon-xs" variant="ghost"
-                    className="text-muted-foreground/60 hover:text-foreground shrink-0"
-                    onClick={e => e.stopPropagation()}
-                  >
-                    <MoreVertical className="size-4" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-44" onClick={e => e.stopPropagation()}>
+              <MoreOptionsMenu
+                size="xs"
+                iconSize={16}
+                className="text-muted-foreground/60 hover:text-foreground"
+                contentClassName="w-44"
+              >
                   <DropdownMenuItem
                     onClick={e => { e.stopPropagation(); onEdit(department); }}
                     className="gap-2.5"
@@ -85,8 +79,7 @@ const DepartmentCard: React.FC<DepartmentCardProps> = ({
                     <Trash2 className="size-3.5" />
                     {t("pages.departments.card.menu_delete")}
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              </MoreOptionsMenu>
             )}
           </div>
         </Card>

@@ -2,19 +2,17 @@
 
 import React, { memo, useCallback, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Mail, BarChart3, FileText, Video, MoreVertical, Star, XCircle, Check } from "lucide-react";
+import { Mail, BarChart3, FileText, Video, Star, XCircle, Check } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { applicationsApi } from "@/modules/company/applications/api";
 import { ScoreCircle, DecisionButton } from "@/modules/shared/ui/shadcn/score-circle";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 
 const TEAL   = "#0D9488";
 const PURPLE = "#7C3AED";
@@ -208,19 +206,13 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
           contactLabel={t("pages.applications.actions.contact")}
         />
 
-        <DropdownMenu open={menuOpen} onOpenChange={(o) => { if (!o) onMenuClose(); }}>
-          <DropdownMenuTrigger asChild>
-            <button
-              onClick={onMenuOpen}
-              className="w-[30px] h-[30px] rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-100 transition-colors outline-none shrink-0"
-            >
-              <MoreVertical size={17} />
-            </button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent
-            align="end"
-            className="min-w-[210px] rounded-xl border border-slate-200 shadow-[0_12px_32px_rgba(0,0,0,0.12)] p-0 overflow-hidden"
-          >
+        <MoreOptionsMenu
+          open={menuOpen}
+          onOpenChange={(o) => { if (!o) onMenuClose(); }}
+          onTriggerClick={onMenuOpen}
+          className="text-slate-500"
+          contentClassName="min-w-[210px] rounded-xl border border-slate-200 shadow-[0_12px_32px_rgba(0,0,0,0.12)] p-0 overflow-hidden"
+        >
             <div className="px-3 py-2.5 border-b border-slate-100">
               <span className="text-[11px] font-bold text-slate-400 uppercase tracking-wide">{name}</span>
             </div>
@@ -254,8 +246,7 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
                 onClick={handleContactMenu}
               />
             </div>
-          </DropdownMenuContent>
-        </DropdownMenu>
+        </MoreOptionsMenu>
       </div>
     </>
   );

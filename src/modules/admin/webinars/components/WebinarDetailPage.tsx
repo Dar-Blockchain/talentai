@@ -6,7 +6,6 @@ import {
   Video as WebinarIcon,
   Copy as CopyIcon,
   Check as CheckIcon,
-  MoreVertical as MoreIcon,
   CheckCircle2 as VerifyIcon,
   Send as SendIcon,
   UserPlus as InviteIcon,
@@ -28,14 +27,12 @@ import {
 } from "@/modules/shared/ui/shadcn/breadcrumb";
 import { Tabs, TabsList, TabsTrigger } from "@/modules/shared/ui/shadcn/tabs";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 import { ConfirmDialog, ADMIN_ACCENT, AdminStatCard } from "@/modules/admin/shared";
 import { useAdminWebinarQuery } from "../queries";
 import { getWebinarStatusMeta } from "../constants";
@@ -178,13 +175,12 @@ export function WebinarDetailPage({ id }: { id: string }) {
                   {copied ? "Copied" : "Copy link"}
                 </Button>
               )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex h-9 w-9 items-center justify-center rounded-[10px] border border-[#E5E7EB] bg-white text-[#6B7280] hover:bg-[#F9FAFB]">
-                    <MoreIcon size={18} />
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="min-w-[188px] rounded-xl border border-[#E5E7EB] p-1.5 shadow-lg">
+              <MoreOptionsMenu
+                size="md"
+                bordered
+                label="More actions"
+                contentClassName="rounded-xl border border-[#E5E7EB] p-1.5 shadow-lg"
+              >
                   {webinar.status === "active" && (
                     <DropdownMenuItem onClick={() => setReminderOpen(true)} className="gap-2.5 rounded-lg py-[9px] px-[10px]">
                       <SendIcon size={14} color="#6B7280" /> Send link
@@ -213,8 +209,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
                   <DropdownMenuItem onClick={() => setDeleteOpen(true)} variant="destructive" className="gap-2.5 rounded-lg py-[9px] px-[10px]">
                     <DeleteIcon size={14} /> Delete
                   </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              </MoreOptionsMenu>
             </div>
           </div>
 

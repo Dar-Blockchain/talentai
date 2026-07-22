@@ -3,8 +3,9 @@ import { Dialog, DialogContent } from '@/modules/shared/ui/shadcn/dialog';
 import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/modules/shared/ui/shadcn/tooltip';
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuItem,
 } from '@/modules/shared/ui/shadcn/dropdown-menu';
+import { MoreOptionsMenu } from '@/modules/shared/ui/MoreOptionsMenu';
 import {
   Eye as VisibilityIcon,
   Trophy as ExcellentIcon,
@@ -228,13 +229,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                       </TooltipTrigger>
                       <TooltipContent>View Details</TooltipContent>
                     </Tooltip>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <button className="rounded-md p-1.5 hover:bg-slate-100" style={{ color: ADMIN_NEUTRAL }}>
-                          <MoreVertIcon size={18} />
-                        </button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
+                    <MoreOptionsMenu icon={MoreVertIcon} iconSize={18} className="rounded-md text-[#0D9488] hover:bg-slate-100">
                         <DropdownMenuItem onClick={() => handleArchiveToggle(a)} className="gap-2">
                           {a.archived ? <UnarchiveIcon size={18} /> : <ArchiveIcon size={18} />}
                           {a.archived ? 'Unarchive' : 'Archive'}
@@ -242,8 +237,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                         <DropdownMenuItem onClick={() => handleDeleteRequest(a)} variant="destructive" className="gap-2">
                           <DeleteForeverIcon size={18} /> Delete permanently
                         </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
+                    </MoreOptionsMenu>
                   </td>
                 </tr>
               ))}
