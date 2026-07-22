@@ -4,7 +4,7 @@ import type {
   KpiSourcingData, KpiRoiData, KpiHoursComparisonData, HoursComparisonParams,
   KpiCostComparisonData, CostComparisonParams,
   PostsStatusParams, PostsStatusResult, KpiPostOption,
-  ApplicationHistoryData, KpiDepartmentData,
+  ApplicationHistoryData, ApplicationHistoryParams, ApplicationHistoryResult, KpiDepartmentData,
 } from "../types";
 
 const qs = (p: object) => {
@@ -19,6 +19,14 @@ const sel = (res: { data: any }): any => res.data?.data ?? res.data;
 
 export const fetchKpiHistory = (params: KpiFilterParams): Promise<ApplicationHistoryData> =>
   axiosInstance.get(`job-applications/company/my/kpi/history${qs({ ...params, limit: 4 })}`).then(sel);
+
+export const fetchKpiHistoryPaged = async (params: ApplicationHistoryParams): Promise<ApplicationHistoryResult> => {
+  const res = await axiosInstance.get(`job-applications/company/my/kpi/history${qs({ page: 1, limit: 20, ...params })}`);
+  return {
+    data:       res.data?.data       ?? [],
+    pagination: res.data?.pagination ?? { currentPage: 1, totalPages: 1, totalCount: 0, limit: 20, hasNextPage: false, hasPrevPage: false },
+  };
+};
 
 export const fetchKpiFunnel = (params: KpiFilterParams): Promise<KpiFunnelData> =>
   axiosInstance.get(`job-applications/company/my/kpi/funnel${qs(params)}`).then(sel);

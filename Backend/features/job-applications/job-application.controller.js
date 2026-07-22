@@ -620,11 +620,12 @@ module.exports.getActionsKPI = async (req, res) => {
 module.exports.getApplicationHistoryKPI = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const { postId, dateFrom, limit } = req.query;
-    const data = await jobApplicationService.getApplicationHistoryKPI(
-      companyId, postId || null, dateFrom || null, limit ? parseInt(limit, 10) : 4,
+    const { postId, dateFrom, limit, page } = req.query;
+    const result = await jobApplicationService.getApplicationHistoryKPIPaged(
+      companyId, postId || null, dateFrom || null,
+      page ? parseInt(page, 10) : 1, limit ? parseInt(limit, 10) : 4,
     );
-    res.status(200).json({ success: true, data });
+    res.status(200).json({ success: true, data: result.data, pagination: result.pagination });
   } catch (error) {
     handleError(res, error);
   }

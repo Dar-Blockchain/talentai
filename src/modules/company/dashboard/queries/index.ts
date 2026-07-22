@@ -1,17 +1,20 @@
-import { useQuery, keepPreviousData } from "@tanstack/react-query";
+import { useQuery, useInfiniteQuery, keepPreviousData } from "@tanstack/react-query";
 import type { KpiFilterParams, PostsStatusParams, HoursComparisonParams, CostComparisonParams } from "../types";
 import {
   fetchKpiFunnel,
   fetchKpiSourcing, fetchKpiRoi, fetchKpiHoursComparison, fetchKpiCostComparison, fetchKpiPostsForFilter,
   fetchKpiPostsStatus, fetchDashboardStats, fetchAppMetrics,
-  fetchKpiHistory, fetchKpiJobsByDepartment,
+  fetchKpiHistory, fetchKpiHistoryPaged, fetchKpiJobsByDepartment,
 } from "../api";
+
+export const HISTORY_INFINITE_PAGE_SIZE = 20;
 
 // ─── Query key factory ────────────────────────────────────────────────────────
 
 export const KPI_KEYS = {
   all:         ["kpi"] as const,
   history:     (p: KpiFilterParams)     => ["kpi", "history",     p] as const,
+  historyInfinite: (p: KpiFilterParams) => ["kpi", "historyInfinite", p] as const,
   funnel:      (p: KpiFilterParams)     => ["kpi", "funnel",      p] as const,
   sourcing:    (p: KpiFilterParams)     => ["kpi", "sourcing",    p] as const,
   roi:         (p: KpiFilterParams)     => ["kpi", "roi", p]         as const,
@@ -31,6 +34,18 @@ export const useKpiHistoryQuery = (params: KpiFilterParams) =>
     queryKey:  KPI_KEYS.history(params),
     queryFn:   () => fetchKpiHistory(params),
     staleTime: 60_000,
+  });
+
+// Backs the dedicated "Recent Activity" page's infinite-scroll list — one
+// query, react-query's own cache/invalidation drives new pages in instead of
+// each page bump minting a separate useQuery cache entry.
+export const useKpiHistoryInfiniteQuery = (params: KpiFilterParams) =>
+  useInfiniteQuery({
+    queryKey:   KPI_KEYS.historyInfinite(params),
+    queryFn:    ({ pageParam }) => fetchKpiHistoryPaged({ ...params, page: pageParam, limit: HISTORY_INFINITE_PAGE_SIZE }),
+    initialPageParam: 1,
+    getNextPageParam: (lastPage) => (lastPage.pagination.hasNextPage ? lastPage.pagination.currentPage + 1 : undefined),
+    staleTime:  60_000,
   });
 
 export const useKpiFunnelQuery = (params: KpiFilterParams) =>

@@ -22,9 +22,21 @@ export interface ApplicationHistoryItem {
   matchThreshold:       number;
   interviewScore:       number | null;
   date:                 string;
+  hasInterview:         boolean;
+  candidateUserId:      string | null;
 }
 
 export type ApplicationHistoryData = ApplicationHistoryItem[];
+
+export interface ApplicationHistoryParams extends KpiFilterParams {
+  page?:  number;
+  limit?: number;
+}
+
+export interface ApplicationHistoryResult {
+  data:       ApplicationHistoryItem[];
+  pagination: { currentPage: number; totalPages: number; totalCount: number; limit: number; hasNextPage: boolean; hasPrevPage: boolean };
+}
 
 // ── Posts status ───────────────────────────────────────────────────────────────
 

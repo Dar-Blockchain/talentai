@@ -347,6 +347,8 @@
       "history_not_matched_desc": "Son score de CV est inférieur au seuil minimum requis pour cette offre, il n'a donc pas été invité à l'entretien.",
       "history_empty": "Aucune activité récente",
       "history_view_all": "Voir toutes les candidatures",
+      "history_show_more": "Voir plus",
+      "zone1_title_full": "Activité récente",
       "zone2_title": "Statut par poste",
       "col_post": "Poste",
       "col_velocity": "Vélocité",

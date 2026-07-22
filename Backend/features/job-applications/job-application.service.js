@@ -1704,13 +1704,23 @@ module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) 
 // Last N application events on the site: applied, invited, interview completed,
 // shortlisted, or rejected — whichever is each application's latest change.
 module.exports.getApplicationHistoryKPI = async (companyId, postId = null, dateFrom = null, limit = 4) => {
+  const result = await module.exports.getApplicationHistoryKPIPaged(companyId, postId, dateFrom, 1, limit);
+  return result.data;
+};
+
+module.exports.getApplicationHistoryKPIPaged = async (companyId, postId = null, dateFrom = null, page = 1, limit = 4) => {
   try {
     const match = { company: companyId, isArchived: false, isWithdrawn: false };
     if (postId)   match.post      = new mongoose.Types.ObjectId(postId);
     if (dateFrom) match.appliedAt = { $gte: new Date(dateFrom) };
 
+    const skip       = (page - 1) * limit;
+    const totalCount = await JobApplication.countDocuments(match);
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+
     const apps = await JobApplication.find(match)
       .sort({ updatedAt: -1 })
+      .skip(skip)
       .limit(limit)
       .select('profile post status recruiterDecision matchScore updatedAt firstInvitationSentAt')
       .populate('profile', 'firstName lastName userId')
@@ -1745,7 +1755,7 @@ module.exports.getApplicationHistoryKPI = async (companyId, postId = null, dateF
       });
     }
 
-    return apps.map((a) => {
+    const data = apps.map((a) => {
       const threshold  = a.post?.thresholdScore || 60;
       // A known low match score always means "not matched" — even on legacy rows
       // that were auto-marked "rejected" before the "not_matched" outcome existed.
@@ -1775,8 +1785,15 @@ module.exports.getApplicationHistoryKPI = async (companyId, postId = null, dateF
         matchThreshold:  threshold,
         interviewScore,
         date:            a.updatedAt,
+        hasInterview:    a.status === 'interview_completed',
+        candidateUserId: a.profile?.userId ? String(a.profile.userId) : null,
       };
     });
+
+    return {
+      data,
+      pagination: { currentPage: page, totalPages, totalCount, limit, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+    };
   } catch (error) {
     error.status = error.status || 500;
     throw error;

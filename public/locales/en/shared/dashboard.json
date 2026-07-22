@@ -351,6 +351,8 @@
       "history_not_matched_desc": "Their CV score is below this job's minimum match requirement, so they weren't invited to interview.",
       "history_empty": "No recent activity yet",
       "history_view_all": "View all applications",
+      "history_show_more": "Show more",
+      "zone1_title_full": "Recent Activity",
       "zone2_title": "Posts Overview",
       "col_post": "Post",
       "col_velocity": "Velocity",

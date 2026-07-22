@@ -204,6 +204,9 @@ router.get("/company/my/kpi/actions", jobApplicationController.getActionsKPI);
  *       - in: query
  *         name: limit
  *         schema: { type: integer, default: 4 }
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
  *     responses:
  *       200:
  *         description: Recent application history
