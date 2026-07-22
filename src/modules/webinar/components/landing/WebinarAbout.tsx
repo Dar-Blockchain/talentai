@@ -30,27 +30,31 @@ export function WebinarAbout({ lang, aboutText, highlights }: {
         <span className="w-6 h-px bg-[#6AD39C]" />
       </div>
       <h2
-        className="text-[#10453F] mb-6"
+        className="text-[#10453F] mb-8"
         style={{ fontFamily: "var(--font-fraunces)", fontWeight: 600, fontSize: "clamp(1.6rem, 2vw + 1rem, 2.2rem)", letterSpacing: "-0.01em" }}
       >
         {t("about.heading")}
       </h2>
 
       {aboutText && (
-        <p className="text-[15px] text-slate-600 leading-relaxed whitespace-pre-line mb-6 max-w-[720px] mx-auto">
+        <p className="text-[15px] text-slate-600 leading-relaxed whitespace-pre-line max-w-220 mx-auto">
           {aboutText}
         </p>
       )}
 
       {items.length > 0 && (
-        <div className="flex flex-wrap justify-center gap-3 max-w-[720px] mx-auto">
+        <div
+          className={`grid sm:grid-cols-3 gap-4 max-w-240 mx-auto ${aboutText ? "mt-10" : ""}`}
+        >
           {items.map((label, i) => (
             <div
               key={i}
-              className="flex flex-1 basis-[180px] items-center justify-center gap-2.5 rounded-xl border border-[#E7E5DE] bg-[#FBFBF9] px-4 py-3 text-[13.5px] text-slate-600 whitespace-nowrap"
+              className="rounded-2xl border border-[#E7E5DE] bg-[#FBFBF9] p-5 flex flex-col items-center text-center gap-3"
             >
-              <CheckCircle size={16} className="text-[#6AD39C] shrink-0" />
-              {label}
+              <span className="w-8 h-8 rounded-full bg-[#6AD39C]/15 flex items-center justify-center shrink-0">
+                <CheckCircle size={16} className="text-[#0F9D73]" />
+              </span>
+              <p className="text-[13.5px] text-slate-600 leading-relaxed">{label}</p>
             </div>
           ))}
         </div>

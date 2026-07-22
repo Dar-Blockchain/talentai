@@ -74,6 +74,7 @@ export interface WebinarData {
   lang: string;
   stats?: WebinarStats;
   highlights?: string[];
+  highlights_enabled?: boolean;
   webinar_link?: string;
   booking_link?: string;
   status?: "draft" | "active";

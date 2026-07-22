@@ -18,6 +18,7 @@ export const EMPTY_FORM: WebinarFormValues = {
   lang: "",
   highlights_fr: ["", "", ""],
   highlights_en: ["", "", ""],
+  highlights_enabled: true,
   questions: [],
 };
 
@@ -53,6 +54,7 @@ export function toFormValues(w: Webinar): WebinarFormValues {
     lang: w.lang,
     highlights_fr: [...(w.highlights_fr?.length ? w.highlights_fr : w.highlights ?? []), "", "", ""].slice(0, 3),
     highlights_en: [...(w.highlights_en?.length ? w.highlights_en : w.highlights ?? []), "", "", ""].slice(0, 3),
+    highlights_enabled: w.highlights_enabled ?? true,
     questions: w.questions.map((q) => ({
       key: q.key,
       label_fr: q.label_fr,

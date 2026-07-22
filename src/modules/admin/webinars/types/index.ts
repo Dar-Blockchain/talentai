@@ -48,6 +48,7 @@ export interface Webinar {
   highlights: string[];
   highlights_fr: string[];
   highlights_en: string[];
+  highlights_enabled: boolean;
   questions: WebinarQuestion[];
   stats: WebinarStats;
   created_by: string | null;
@@ -129,5 +130,6 @@ export interface WebinarFormValues {
   lang: "" | "fr" | "en" | "both";
   highlights_fr: string[];
   highlights_en: string[];
+  highlights_enabled: boolean;
   questions: WebinarQuestionDraft[];
 }

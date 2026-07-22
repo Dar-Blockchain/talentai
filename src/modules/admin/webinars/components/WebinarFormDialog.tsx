@@ -22,6 +22,7 @@ function basicsDefaults(f: WebinarFormValues) {
     about_en: f.about_en,
     highlights_fr: f.highlights_fr,
     highlights_en: f.highlights_en,
+    highlights_enabled: f.highlights_enabled,
     date: f.date,
     start_time: f.start_time,
     end_time: f.end_time,
@@ -44,6 +45,7 @@ const CONTENT_FIELDS = [
   "about_en",
   "highlights_fr",
   "highlights_en",
+  "highlights_enabled",
 ] as const;
 
 export function WebinarFormDialog({
@@ -119,7 +121,7 @@ export function WebinarFormDialog({
     <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
       <DialogContent
         showCloseButton={false}
-        className="sm:max-w-3xl p-0 gap-0 flex flex-col max-h-[92vh] overflow-hidden"
+        className="sm:max-w-5xl p-0 gap-0 flex flex-col max-h-[92vh] overflow-hidden"
         style={{ borderRadius: "20px" }}
       >
         {/* Header */}

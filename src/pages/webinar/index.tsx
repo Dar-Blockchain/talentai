@@ -156,7 +156,11 @@ const WebinarPage: React.FC = () => {
 
               {/* ══ Lower content — light canvas, left-aligned with the header/hero ══ */}
               <div className="w-full max-w-[1200px] mx-auto px-4 md:px-8 py-16 md:py-24">
-                <WebinarAbout lang={lang} aboutText={aboutText} highlights={webinar?.highlights} />
+                <WebinarAbout
+                  lang={lang}
+                  aboutText={aboutText}
+                  highlights={webinar?.highlights_enabled === false ? [] : webinar?.highlights}
+                />
                 <WebinarHowItWorks lang={lang} />
                 {/* <WebinarFAQ lang={lang} /> */}
               </div>

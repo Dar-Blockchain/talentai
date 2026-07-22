@@ -2,14 +2,15 @@ import { z } from "zod";
 
 export const webinarBasicsSchema = z
   .object({
-    title_fr:        z.string().trim().max(160, "Title is too long"),
-    title_en:        z.string().trim().max(160, "Title is too long"),
-    description_fr:  z.string().trim(),
-    description_en:  z.string().trim(),
-    about_fr:        z.string().trim(),
-    about_en:        z.string().trim(),
+    title_fr:        z.string().trim().max(80, "Title must be 80 characters or less"),
+    title_en:        z.string().trim().max(80, "Title must be 80 characters or less"),
+    description_fr:  z.string().trim().max(160, "Description must be 160 characters or less"),
+    description_en:  z.string().trim().max(160, "Description must be 160 characters or less"),
+    about_fr:        z.string().trim().max(500, "About must be 500 characters or less"),
+    about_en:        z.string().trim().max(500, "About must be 500 characters or less"),
     highlights_fr:   z.array(z.string()),
     highlights_en:   z.array(z.string()),
+    highlights_enabled: z.boolean(),
     date:            z.string().min(1, "Date is required"),
     start_time:      z.string().min(1, "Start time is required"),
     end_time:        z.string().min(1, "End time is required"),
@@ -46,10 +47,10 @@ export const webinarBasicsSchema = z
     if (needsEn && !values.about_en.trim()) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["about_en"], message: "English About text is required" });
     }
-    if (needsFr && !values.highlights_fr.some((h) => h.trim())) {
+    if (values.highlights_enabled && needsFr && !values.highlights_fr.some((h) => h.trim())) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["highlights_fr"], message: "At least one French highlight is required" });
     }
-    if (needsEn && !values.highlights_en.some((h) => h.trim())) {
+    if (values.highlights_enabled && needsEn && !values.highlights_en.some((h) => h.trim())) {
       ctx.addIssue({ code: z.ZodIssueCode.custom, path: ["highlights_en"], message: "At least one English highlight is required" });
     }
   });

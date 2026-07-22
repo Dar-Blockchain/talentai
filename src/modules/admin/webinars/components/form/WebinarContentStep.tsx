@@ -1,5 +1,6 @@
 import React from "react";
 import type { FieldErrors } from "react-hook-form";
+import { Switch } from "@/modules/shared/ui/shadcn/switch";
 import type { WebinarBasicsForm } from "../../schemas/webinarBasicsSchema";
 import type { WebinarFormValues } from "../../types";
 import { LangBox } from "./LangBox";
@@ -28,14 +29,18 @@ export function WebinarContentStep({
               Title <span className="text-red-400">*</span>{" "}
               <span className="text-slate-400 font-normal text-[11px] ml-1">(Hero heading)</span>
             </label>
-            <input
+            <textarea
               className={inp}
+              rows={2}
               value={form.title_fr}
               onChange={(e) => set("title_fr", e.target.value)}
               placeholder="Titre du webinar"
               autoFocus
+              maxLength={80}
+              style={{ resize: "none" }}
               aria-invalid={!!errors.title_fr}
             />
+            <p className="mt-1 text-[11px] text-slate-400">{form.title_fr.length}/80</p>
             {errors.title_fr && <p className={errTxt}>{errors.title_fr.message}</p>}
           </LangBox>
           <LangBox flag="🇬🇧" name="English">
@@ -43,13 +48,17 @@ export function WebinarContentStep({
               Title <span className="text-red-400">*</span>{" "}
               <span className="text-slate-400 font-normal text-[11px] ml-1">(Hero heading)</span>
             </label>
-            <input
+            <textarea
               className={inp}
+              rows={2}
               value={form.title_en}
               onChange={(e) => set("title_en", e.target.value)}
               placeholder="Webinar title"
+              maxLength={80}
+              style={{ resize: "none" }}
               aria-invalid={!!errors.title_en}
             />
+            <p className="mt-1 text-[11px] text-slate-400">{form.title_en.length}/80</p>
             {errors.title_en && <p className={errTxt}>{errors.title_en.message}</p>}
           </LangBox>
         </div>
@@ -59,14 +68,20 @@ export function WebinarContentStep({
             Title <span className="text-red-400">*</span>{" "}
             <span className="text-slate-400 font-normal text-[11px] ml-1">(Hero heading)</span>
           </label>
-          <input
+          <textarea
             className={inp}
+            rows={2}
             value={form.lang === "fr" ? form.title_fr : form.title_en}
             onChange={(e) => set(form.lang === "fr" ? "title_fr" : "title_en", e.target.value)}
             placeholder={form.lang === "fr" ? "Titre du webinar" : "Webinar title"}
             autoFocus
+            maxLength={80}
+            style={{ resize: "none" }}
             aria-invalid={!!(form.lang === "fr" ? errors.title_fr : errors.title_en)}
           />
+          <p className="mt-1 text-[11px] text-slate-400">
+            {(form.lang === "fr" ? form.title_fr : form.title_en).length}/80
+          </p>
           {(form.lang === "fr" ? errors.title_fr : errors.title_en) && (
             <p className={errTxt}>{(form.lang === "fr" ? errors.title_fr : errors.title_en)?.message}</p>
           )}
@@ -87,9 +102,11 @@ export function WebinarContentStep({
               value={form.description_fr}
               onChange={(e) => set("description_fr", e.target.value)}
               placeholder="De quoi parle ce webinar ?"
+              maxLength={160}
               style={{ resize: "none" }}
               aria-invalid={!!errors.description_fr}
             />
+            <p className="mt-1 text-[11px] text-slate-400">{form.description_fr.length}/160</p>
             {errors.description_fr && <p className={errTxt}>{errors.description_fr.message}</p>}
           </LangBox>
           <LangBox flag="🇬🇧" name="English">
@@ -103,9 +120,11 @@ export function WebinarContentStep({
               value={form.description_en}
               onChange={(e) => set("description_en", e.target.value)}
               placeholder="What's this webinar about?"
+              maxLength={160}
               style={{ resize: "none" }}
               aria-invalid={!!errors.description_en}
             />
+            <p className="mt-1 text-[11px] text-slate-400">{form.description_en.length}/160</p>
             {errors.description_en && <p className={errTxt}>{errors.description_en.message}</p>}
           </LangBox>
         </div>
@@ -121,9 +140,13 @@ export function WebinarContentStep({
             value={form.lang === "fr" ? form.description_fr : form.description_en}
             onChange={(e) => set(form.lang === "fr" ? "description_fr" : "description_en", e.target.value)}
             placeholder={form.lang === "fr" ? "De quoi parle ce webinar ?" : "What's this webinar about?"}
+            maxLength={160}
             style={{ resize: "none" }}
             aria-invalid={!!(form.lang === "fr" ? errors.description_fr : errors.description_en)}
           />
+          <p className="mt-1 text-[11px] text-slate-400">
+            {(form.lang === "fr" ? form.description_fr : form.description_en).length}/160
+          </p>
           {(form.lang === "fr" ? errors.description_fr : errors.description_en) && (
             <p className={errTxt}>
               {(form.lang === "fr" ? errors.description_fr : errors.description_en)?.message}
@@ -146,9 +169,11 @@ export function WebinarContentStep({
               value={form.about_fr}
               onChange={(e) => set("about_fr", e.target.value)}
               placeholder="Décrivez ce webinar en français…"
+              maxLength={500}
               style={{ resize: "vertical" }}
               aria-invalid={!!errors.about_fr}
             />
+            <p className="mt-1 text-[11px] text-slate-400">{form.about_fr.length}/500</p>
             {errors.about_fr && <p className={errTxt}>{errors.about_fr.message}</p>}
           </LangBox>
           <LangBox flag="🇬🇧" name="English">
@@ -162,9 +187,11 @@ export function WebinarContentStep({
               value={form.about_en}
               onChange={(e) => set("about_en", e.target.value)}
               placeholder="Describe this webinar in English…"
+              maxLength={500}
               style={{ resize: "vertical" }}
               aria-invalid={!!errors.about_en}
             />
+            <p className="mt-1 text-[11px] text-slate-400">{form.about_en.length}/500</p>
             {errors.about_en && <p className={errTxt}>{errors.about_en.message}</p>}
           </LangBox>
         </div>
@@ -182,16 +209,32 @@ export function WebinarContentStep({
             placeholder={
               form.lang === "fr" ? "Décrivez ce webinar en français…" : "Describe this webinar in English…"
             }
+            maxLength={500}
             style={{ resize: "vertical" }}
             aria-invalid={!!(form.lang === "fr" ? errors.about_fr : errors.about_en)}
           />
+          <p className="mt-1 text-[11px] text-slate-400">
+            {(form.lang === "fr" ? form.about_fr : form.about_en).length}/500
+          </p>
           {(form.lang === "fr" ? errors.about_fr : errors.about_en) && (
             <p className={errTxt}>{(form.lang === "fr" ? errors.about_fr : errors.about_en)?.message}</p>
           )}
         </div>
       )}
 
-      {/* Highlights — at least one bullet is required per language */}
+      {/* Highlights — at least one bullet is required per language, unless the section is toggled off */}
+      <div className="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5">
+        <div>
+          <p className="text-[13px] font-semibold text-slate-700">Show highlights section</p>
+          <p className="text-[11px] text-slate-400">Displays the highlight cards below the About text on the landing page.</p>
+        </div>
+        <Switch
+          checked={form.highlights_enabled}
+          onCheckedChange={(checked) => set("highlights_enabled", checked)}
+        />
+      </div>
+
+      <div className={form.highlights_enabled ? "" : "opacity-50"}>
       {form.lang === "both" ? (
         <div className="grid grid-cols-2 gap-4">
           <LangBox flag="🇫🇷" name="French">
@@ -282,6 +325,7 @@ export function WebinarContentStep({
           )}
         </div>
       )}
+      </div>
     </div>
   );
 }

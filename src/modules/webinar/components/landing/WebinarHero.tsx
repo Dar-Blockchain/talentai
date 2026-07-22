@@ -34,23 +34,27 @@ export function WebinarHero({
   webinarLink?: string;
 }) {
   const t = i18n.getFixedT(lang, "webinar");
+  // Long custom titles (admin-entered, up to 80 chars) need to scale down —
+  // the default clamp is tuned for the short 2-line fallback copy and looks
+  // oversized/cramped once the title runs past a couple of short lines.
+  const isLongTitle = (title?.length ?? 0) > 70;
 
   return (
     <section
-      className="relative overflow-hidden"
+      className="relative overflow-hidden flex items-center min-h-[calc(100svh-4rem)]"
       style={{
         background:
           "radial-gradient(120% 100% at 50% 0%, #EAF6F0 0%, #FBFBF9 60%)",
       }}
     >
-      <div className="relative max-w-[1200px] mx-auto px-4 md:px-8 py-20 md:py-28">
+      <div className="relative w-full max-w-[1200px] mx-auto px-4 md:px-8 py-10 md:py-14">
         <motion.div
           initial={{ opacity: 0, y: 18 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6, ease: EASE }}
-          className="max-w-[640px] mx-auto text-center"
+          className="max-w-225 mx-auto text-center"
         >
-          <div className="flex items-center justify-center gap-3 mb-7">
+          <div className="flex items-center justify-center gap-3 mb-4">
             <span className="w-6 h-px bg-[#6AD39C]" />
             <span
               className="text-[11px] font-semibold uppercase text-[#10453F]"
@@ -61,13 +65,16 @@ export function WebinarHero({
           </div>
 
           <h1
-            className="text-[#10453F] mb-6"
+            className="text-[#10453F] mb-4"
             style={{
               fontFamily: "var(--font-fraunces)",
               fontWeight: 600,
-              fontSize: "clamp(2rem, 4vw + 1rem, 4.375rem)",
-              lineHeight: 1.08,
+              fontSize: isLongTitle
+                ? "clamp(2rem, 2.8vw + 0.9rem, 3.75rem)"
+                : "clamp(2rem, 4vw + 1rem, 4.375rem)",
+              lineHeight: 1.15,
               letterSpacing: "-0.015em",
+              textWrap: "balance",
             }}
           >
             {title || (
@@ -80,14 +87,14 @@ export function WebinarHero({
           </h1>
 
           <p
-            className="text-[1.125rem] md:text-[1.25rem] max-w-[480px] mx-auto mb-9"
+            className="text-[1.125rem] md:text-[1.25rem] max-w-160 mx-auto mb-5"
             style={{ color: "#5B6B65", lineHeight: 1.55, fontWeight: 400 }}
           >
             {desc || t("hero.desc")}
           </p>
 
           <div
-            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[13.5px] mb-8"
+            className="flex flex-wrap items-center justify-center gap-x-3 gap-y-1.5 text-[13.5px] mb-4"
             style={{ color: "#6B7A74" }}
           >
             {formattedDate && (
@@ -110,7 +117,7 @@ export function WebinarHero({
           </div>
 
           <div
-            className="flex items-center justify-center gap-2 text-[13px] mb-8"
+            className="flex items-center justify-center gap-2 text-[13px] mb-5"
             style={{ color: "#6B7A74" }}
           >
             <span className="relative flex h-1.5 w-1.5">

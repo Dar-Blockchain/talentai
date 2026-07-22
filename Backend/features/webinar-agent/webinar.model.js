@@ -15,18 +15,21 @@ const WebinarSchema = new mongoose.Schema({
   // Primary/fallback copy — auto-derived from the *_fr/*_en fields below
   // based on `lang`, so existing consumers (admin list, cards, emails,
   // cron reminders) keep working without changes.
-  title:       { type: String, required: true },
-  description: { type: String, default: "" },
+  title:       { type: String, required: true, maxlength: 80 },
+  description: { type: String, default: "", maxlength: 160 },
   highlights:  { type: [String], default: [] },
 
   // Per-language variants — filled in from the admin form; both mirror
   // `title`/`description`/`highlights` when a webinar predates this field.
-  title_fr:       { type: String, default: "" },
-  title_en:       { type: String, default: "" },
-  description_fr: { type: String, default: "" },
-  description_en: { type: String, default: "" },
+  title_fr:       { type: String, default: "", maxlength: 80 },
+  title_en:       { type: String, default: "", maxlength: 80 },
+  description_fr: { type: String, default: "", maxlength: 160 },
+  description_en: { type: String, default: "", maxlength: 160 },
   highlights_fr:  { type: [String], default: [] },
   highlights_en:  { type: [String], default: [] },
+  // Lets the admin hide the "Highlights" cards on the landing page without
+  // clearing the bullets — e.g. temporarily, or for a webinar that doesn't need them.
+  highlights_enabled: { type: Boolean, default: true },
 
   date:        { type: Date, default: null },
   // End of the live session — same day as `date`, shown as a "from–to" range
@@ -41,8 +44,8 @@ const WebinarSchema = new mongoose.Schema({
   ai_context:  { type: String, default: "" },
 
   // "What is this webinar?" editorial text shown on the landing page
-  about_fr:    { type: String, default: "" },
-  about_en:    { type: String, default: "" },
+  about_fr:    { type: String, default: "", maxlength: 500 },
+  about_en:    { type: String, default: "", maxlength: 500 },
 
   // External join link shown in emails (e.g. Zoom/Teams/Google Meet URL)
   webinar_link: { type: String, default: "" },
