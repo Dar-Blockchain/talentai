@@ -38,24 +38,24 @@ const WebinarHeader: React.FC<WebinarHeaderProps> = ({
     <header
       className={`${sticky ? "sticky top-0 z-50" : ""} bg-white/95 backdrop-blur-sm border-b border-slate-100`}
     >
-      <div className="max-w-[1200px] mx-auto px-4 md:px-8 h-16 flex items-center justify-between">
+      <div className="max-w-[1200px] mx-auto px-3 sm:px-4 md:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
         <Image
           src="/logo.svg"
           alt="TalentAI"
           width={130}
           height={36}
-          className="h-8 w-auto object-contain"
+          className="h-6 sm:h-8 w-auto object-contain shrink-0"
           priority
         />
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {onToggleLang && (
             <button
               onClick={onToggleLang}
               title={lang === "fr" ? t("header.switchToEnglish") : t("header.switchToFrench")}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-slate-200 px-2.5 py-1.5 font-sans text-[15px] leading-none font-medium tracking-[-0.01em] text-[#10453F] hover:border-[#6AD39C] hover:bg-[#6AD39C]/10 transition-colors"
+              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-slate-200 px-2 py-1 sm:px-2.5 sm:py-1.5 font-sans text-[13px] sm:text-[15px] leading-none font-medium tracking-[-0.01em] text-[#10453F] hover:border-[#6AD39C] hover:bg-[#6AD39C]/10 transition-colors shrink-0"
             >
-              <Globe size={14} className="shrink-0" />
+              <Globe size={13} className="shrink-0" />
               {lang === "fr" ? "EN" : "FR"}
             </button>
           )}
@@ -65,13 +65,14 @@ const WebinarHeader: React.FC<WebinarHeaderProps> = ({
               href={`#${ctaTargetId}`}
               onClick={scrollToRegister}
               label={t("header.cta")}
+              className="h-8 sm:h-11 px-3 sm:px-7 text-[12.5px] sm:text-[15px] gap-1 sm:gap-2 [&_svg]:size-3.5 sm:[&_svg]:size-4"
             />
           )}
 
           {onBack && (
             <button
               onClick={onBack}
-              className="inline-flex items-center gap-1.5 font-sans text-[15px] leading-none font-medium tracking-[-0.01em] text-[#10453F] hover:text-[#6AD39C] transition-colors"
+              className="inline-flex items-center gap-1.5 font-sans text-[13px] sm:text-[15px] leading-none font-medium tracking-[-0.01em] text-[#10453F] hover:text-[#6AD39C] transition-colors shrink-0"
             >
               <ArrowLeft size={15} className="shrink-0" />
               <span className="hidden sm:inline">{backLabel}</span>
