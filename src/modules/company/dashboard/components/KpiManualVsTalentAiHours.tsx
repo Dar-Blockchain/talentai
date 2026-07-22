@@ -6,30 +6,17 @@ import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip,
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import { KpiCard, toApiRange, formatTrendDateRange, type TrendRangeTab } from "./KpiAtoms";
-import { ChartTooltip, GRAY, GRAY2, T, T_DARK, BORDER, WHITE } from "../utils/kpiTokens";
+import { ChartTooltip, GRAY, GRAY2, T, WHITE } from "../utils/kpiTokens";
 import { useKpiHoursComparisonQuery, useKpiCostComparisonQuery } from "../queries";
 import type { CostTrendPoint } from "../types";
 
-// Each bar is stacked into its two hour components — same hue family per entity
-// (gray = manual, teal = AI), darker shade for interview time (bottom segment),
-// lighter shade for analysis (top segment) — so composition reads without adding
-// a third categorical hue.
-const MANUAL_INTERVIEW_COLOR = GRAY;   // darker gray
-const MANUAL_ANALYSIS_COLOR  = GRAY2;  // lighter gray
-const AI_INTERVIEW_COLOR     = T_DARK; // darker teal
-const AI_ANALYSIS_COLOR      = T;      // lighter teal
-
-// Cost is a different measure than hours (money, not time), so it gets its own
-// color pair instead of reusing the hours entity colors above — same violet/cyan
-// already used for cost figures on the ROI card elsewhere in this dashboard.
-const MANUAL_COST_COLOR = "#7C3AED";
-const AI_COST_COLOR     = "#0891B2";
-
-// Time Saved gets a third bar per month (Manual, AI, Saved) — same emerald used
-// by the "Time Saved" card, so the trend of savings is visible over time instead
-// of only for the latest month.
-const SAVED_INTERVIEW_COLOR = "#059669"; // darker emerald
-const SAVED_ANALYSIS_COLOR  = "#34D399"; // lighter emerald
+// One solid color per entity — matches the condensed tooltip (one line per
+// entity, not split into interview/analysis), so the chart and the tooltip
+// agree on what they're showing. The interview/analysis split still lives in
+// the cards above, in full detail.
+const MANUAL_COLOR = GRAY2;
+const AI_COLOR      = T;
+const SAVED_COLOR   = "#10B981"; // same emerald as the Time Saved card
 
 interface Props { postId?: string; tab: TrendRangeTab; rangeValue: number }
 
@@ -51,12 +38,12 @@ function SplitRow({
   label, borderClass, bgClass, valueColor, dotColor,
   leftLabel, leftValue, leftSub,
   rightLabel, rightValue, rightSub,
-  costLabel, costValue,
+  costLabel, costValue, costSub,
 }: {
   label: string; borderClass: string; bgClass?: string; valueColor: string; dotColor: string;
   leftLabel: string; leftValue: string; leftSub: string;
   rightLabel: string; rightValue: string; rightSub: string;
-  costLabel?: string; costValue?: string;
+  costLabel?: string; costValue?: string; costSub?: string;
 }) {
   return (
     <div className={cn("h-full rounded-2xl border p-4 transition-shadow duration-150 hover:shadow-sm", borderClass, bgClass)}>
@@ -95,10 +82,20 @@ function SplitRow({
         </Tooltip>
       </div>
       {costValue != null && (
-        <div className="mt-3 pt-3 border-t border-dashed border-slate-200 flex items-center justify-between">
-          <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">{costLabel}</span>
-          <span className="text-[13px] font-extrabold tabular-nums" style={{ color: valueColor }}>{costValue}</span>
-        </div>
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="mt-3 pt-3 border-t border-dashed border-slate-200 flex items-center justify-between cursor-help">
+              <span className="text-[9px] font-semibold text-slate-400 uppercase tracking-wide">{costLabel}</span>
+              <span
+                className="text-[13px] font-extrabold tabular-nums border-b border-dashed border-slate-300"
+                style={{ color: valueColor }}
+              >
+                {costValue}
+              </span>
+            </div>
+          </TooltipTrigger>
+          <TooltipContent side="top" className="max-w-56 text-center">{costSub}</TooltipContent>
+        </Tooltip>
       )}
     </div>
   );
@@ -168,6 +165,7 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
   const costTrend = costData?.trend ?? [];
   const latestCost = costTrend.length ? costTrend[costTrend.length - 1] : null;
   const costSaved  = latestCost ? latestCost.costSaved  : null;
+  const gapPercent = latestCost ? latestCost.gapPercent : null;
 
   // Month → cost point, so the chart tooltip can show $ alongside hours for
   // whichever month is being hovered.
@@ -177,76 +175,63 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
     return map;
   }, [costTrend]);
 
-  // Per-bucket composition for the chart below: same two components as the cards
-  // above (interview time, analysis), but plotted for every bucket in the range —
-  // not just the latest one the cards summarize. Saved = manual minus AI, per
-  // component; AI's interview time is always 0, so the full interview time is
-  // saved, while analysis saved is clamped at 0 for the rare month AI costs more.
-  const chartData = useMemo(() => trend.map((p) => {
-    const manualInterviewHours = (p.interviewsCompleted * interviewDurationMinutes) / 60;
-    const manualAnalysisHours  = p.manualHours;
-    const aiAnalysisHours      = p.aiHours;
-    return {
-      ...p,
-      manualInterviewHours,
-      manualAnalysisHours,
-      aiInterviewHours: 0,
-      aiAnalysisHours,
-      savedInterviewHours: manualInterviewHours,
-      savedAnalysisHours:  Math.max(0, manualAnalysisHours - aiAnalysisHours),
-    };
-  }), [trend, interviewDurationMinutes]);
+  // One solid total per entity per bucket — matches the single-color bars and
+  // the condensed tooltip. Every bucket in the selected range keeps its own
+  // x-axis label (day/month/year, whatever the filter is set to), even ones
+  // with no activity — dropping those collapsed the axis down to a single
+  // category and left the chart mostly empty space.
+  const chartData = useMemo(() => trend.map((p) => ({
+    month: p.month,
+    manualTotalHours: (p.interviewsCompleted * interviewDurationMinutes) / 60 + p.manualHours,
+    aiTotalHours:     p.aiHours,
+    savedTotalHours:  Math.max(0, (p.interviewsCompleted * interviewDurationMinutes) / 60 + p.manualHours - p.aiHours),
+  })), [trend, interviewDurationMinutes]);
 
   const legendManual = t("hoursComparison.legend_manual", "Manual (by hand)");
   const legendAi      = t("hoursComparison.legend_ai", "With TalentAI");
+  const legendSaved   = t("hoursComparison.legend_saved", "Time Saved");
 
-  const seriesNames: Record<string, string> = {
-    manualInterviewHours: t("hoursComparison.chart_legend_manual_interview", "Manual — interview time"),
-    manualAnalysisHours:  t("hoursComparison.chart_legend_manual_analysis", "Manual — analysis"),
-    aiInterviewHours:     t("hoursComparison.chart_legend_ai_interview", "TalentAI — interview time"),
-    aiAnalysisHours:      t("hoursComparison.chart_legend_ai_analysis", "TalentAI — analysis"),
-    savedInterviewHours:  t("hoursComparison.chart_legend_saved_interview", "Time saved — interview time"),
-    savedAnalysisHours:   t("hoursComparison.chart_legend_saved_analysis", "Time saved — analysis"),
-  };
-
-  // Custom tooltip instead of the default formatter: pulls in that month's cost
-  // (from the separate cost query) alongside the hovered bar's hours, so hours
-  // and cost show together without a second chart.
+  // Custom tooltip instead of the default formatter — one line per entity
+  // (Manual / TalentAI / Time Saved), hours and cost inline together, mirroring
+  // the three solid bars exactly. Full interview/analysis detail stays in the
+  // cards above instead of being repeated here.
   const ChartTooltipContent = ({ active, payload, label }: any) => {
     if (!active || !payload?.length) return null;
+    const row  = payload[0]?.payload;
     const cost = costByMonth.get(label);
+    if (!row) return null;
     return (
-      <div style={{ ...ChartTooltip.contentStyle, backgroundColor: WHITE, opacity: 1 }} className="px-3.5 py-2.5 min-w-52 max-h-72 overflow-y-auto">
+      <div style={{ ...ChartTooltip.contentStyle, backgroundColor: WHITE, opacity: 1 }} className="px-3.5 py-2.5 min-w-52">
         <div className="font-semibold text-slate-800 mb-2 text-[13px]">{label}</div>
         <div className="flex flex-col gap-1.5">
-          {payload.map((entry: any) => (
-            <div key={entry.dataKey} className="flex items-center justify-between gap-5">
-              <span className="flex items-center gap-1.5 text-slate-600">
-                <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: entry.color }} />
-                {seriesNames[entry.dataKey] ?? entry.name}
-              </span>
-              <span className="font-bold text-slate-900 tabular-nums">{formatDuration(entry.value)}</span>
-            </div>
-          ))}
-        </div>
-        {cost && (
-          <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t" style={{ borderColor: BORDER }}>
-            <div className="flex items-center justify-between gap-5">
-              <span className="flex items-center gap-1.5 text-slate-600">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: MANUAL_COST_COLOR }} />
-                {t("hoursComparison.cost_manual", "Manual cost")}
-              </span>
-              <span className="font-bold text-slate-900 tabular-nums">{formatCost(cost.manualCost)}</span>
-            </div>
-            <div className="flex items-center justify-between gap-5">
-              <span className="flex items-center gap-1.5 text-slate-600">
-                <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: AI_COST_COLOR }} />
-                {t("hoursComparison.cost_ai", "TalentAI cost")}
-              </span>
-              <span className="font-bold text-slate-900 tabular-nums">{formatCost(cost.aiCost)}</span>
-            </div>
+          <div className="flex items-center justify-between gap-5">
+            <span className="flex items-center gap-1.5 text-slate-600">
+              <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: MANUAL_COLOR }} />
+              {legendManual}
+            </span>
+            <span className="font-bold text-slate-900 tabular-nums">
+              {formatDuration(row.manualTotalHours)}{cost ? ` · ${formatCost(cost.manualCost)}` : ""}
+            </span>
           </div>
-        )}
+          <div className="flex items-center justify-between gap-5">
+            <span className="flex items-center gap-1.5 text-slate-600">
+              <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: AI_COLOR }} />
+              {legendAi}
+            </span>
+            <span className="font-bold text-slate-900 tabular-nums">
+              {formatDuration(row.aiTotalHours)}{cost ? ` · ${formatCost(cost.aiCost)}` : ""}
+            </span>
+          </div>
+          <div className="flex items-center justify-between gap-5">
+            <span className="flex items-center gap-1.5 text-slate-600">
+              <span className="w-2 h-2 rounded-sm shrink-0" style={{ backgroundColor: SAVED_COLOR }} />
+              {legendSaved}
+            </span>
+            <span className="font-bold text-slate-900 tabular-nums">
+              {formatDuration(row.savedTotalHours)}{cost && cost.costSaved > 0 ? ` · ${formatCost(cost.costSaved)}` : ""}
+            </span>
+          </div>
+        </div>
       </div>
     );
   };
@@ -283,6 +268,9 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
             })}
             costLabel={t("hoursComparison.cost_label", "Cost")}
             costValue={latestCost ? formatCost(latestCost.manualCost) : undefined}
+            costSub={t("hoursComparison.cost_manual_sub", "{{iv}} candidates × {{rate}}", {
+              iv: latest.interviewsCompleted, rate: formatCost(costData?.manualCostPerCandidate ?? 0),
+            })}
           />
           <SplitRow
             label={legendAi}
@@ -300,6 +288,9 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
             })}
             costLabel={t("hoursComparison.cost_label", "Cost")}
             costValue={latestCost ? formatCost(latestCost.aiCost) : undefined}
+            costSub={t("hoursComparison.cost_ai_sub", "{{iv}} candidates × {{rate}}", {
+              iv: latest.interviewsCompleted, rate: formatCost(costData?.aiCostPerInterview ?? 0),
+            })}
           />
           {savedHours != null && (
             <SplitRow
@@ -322,6 +313,11 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
                 ? t("hoursComparison.cost_saved_label", "Cost saved")
                 : t("hoursComparison.cost_added_label", "Cost added")}
               costValue={costSaved != null ? formatCost(Math.abs(costSaved)) : undefined}
+              costSub={gapPercent != null
+                ? (costSaved != null && costSaved >= 0
+                    ? t("hoursComparison.cost_saved_sub", "{{pct}}% less cost using TalentAI", { pct: gapPercent })
+                    : t("hoursComparison.cost_added_sub", "{{pct}}% more cost using TalentAI", { pct: Math.abs(gapPercent) }))
+                : t("hoursComparison.this_month", "this month")}
             />
           )}
         </div>
@@ -337,7 +333,7 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
       ) : (
         <>
           <div className="mb-2 text-[11px] font-semibold text-slate-500">
-            {t("hoursComparison.chart_title", "Breakdown over time: interview time vs. analysis")}
+            {t("hoursComparison.chart_title", "Trend over time: manual vs. TalentAI vs. time saved")}
           </div>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={chartData} margin={{ top: 24, right: 12, left: 4, bottom: 0 }} barGap={4} barCategoryGap="24%">
@@ -352,46 +348,38 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue }) => {
               {/* Pinned near the top of the chart instead of trailing the cursor's Y —
                   this tooltip is tall (hours + cost rows), so following the hovered
                   bar's exact vertical position could push it past the bottom of the
-                  viewport and force a page scroll. */}
-              <RechartsTooltip content={<ChartTooltipContent />} position={{ y: -10 }} wrapperStyle={{ zIndex: 20 }} />
-              <Bar dataKey="manualInterviewHours" stackId="manual" fill={MANUAL_INTERVIEW_COLOR} stroke="#fff" strokeWidth={2} name={seriesNames.manualInterviewHours} />
-              <Bar dataKey="manualAnalysisHours" stackId="manual" fill={MANUAL_ANALYSIS_COLOR} stroke="#fff" strokeWidth={2} radius={[4, 4, 0, 0]} name={seriesNames.manualAnalysisHours}
-                label={makeStackTotalLabel(GRAY, chartData.length - 1, formatDuration, (p) => p.manualInterviewHours + p.manualAnalysisHours)}
+                  viewport and force a page scroll. A subtle cursor fill instead of
+                  Recharts' default opaque gray highlight rectangle, which otherwise
+                  reads like a large, meaningless block behind the bars. */}
+              <RechartsTooltip
+                content={<ChartTooltipContent />}
+                position={{ y: -10 }}
+                wrapperStyle={{ zIndex: 20 }}
+                cursor={{ fill: GRAY2, fillOpacity: 0.15 }}
               />
-              <Bar dataKey="aiInterviewHours" stackId="ai" fill={AI_INTERVIEW_COLOR} stroke="#fff" strokeWidth={2} name={seriesNames.aiInterviewHours} />
-              <Bar dataKey="aiAnalysisHours" stackId="ai" fill={AI_ANALYSIS_COLOR} stroke="#fff" strokeWidth={2} radius={[4, 4, 0, 0]} name={seriesNames.aiAnalysisHours}
-                label={makeStackTotalLabel(T, chartData.length - 1, formatDuration, (p) => p.aiInterviewHours + p.aiAnalysisHours)}
+              <Bar dataKey="manualTotalHours" fill={MANUAL_COLOR} radius={[4, 4, 0, 0]} name={legendManual}
+                label={makeStackTotalLabel(GRAY, chartData.length - 1, formatDuration, (p) => p.manualTotalHours)}
               />
-              <Bar dataKey="savedInterviewHours" stackId="saved" fill={SAVED_INTERVIEW_COLOR} stroke="#fff" strokeWidth={2} name={seriesNames.savedInterviewHours} />
-              <Bar dataKey="savedAnalysisHours" stackId="saved" fill={SAVED_ANALYSIS_COLOR} stroke="#fff" strokeWidth={2} radius={[4, 4, 0, 0]} name={seriesNames.savedAnalysisHours}
-                label={makeStackTotalLabel("#059669", chartData.length - 1, formatDuration, (p) => p.savedInterviewHours + p.savedAnalysisHours)}
+              <Bar dataKey="aiTotalHours" fill={AI_COLOR} radius={[4, 4, 0, 0]} name={legendAi}
+                label={makeStackTotalLabel(T, chartData.length - 1, formatDuration, (p) => p.aiTotalHours)}
+              />
+              <Bar dataKey="savedTotalHours" fill={SAVED_COLOR} radius={[4, 4, 0, 0]} name={legendSaved}
+                label={makeStackTotalLabel(SAVED_COLOR, chartData.length - 1, formatDuration, (p) => p.savedTotalHours)}
               />
             </BarChart>
           </ResponsiveContainer>
           <div className="flex flex-wrap gap-x-5 gap-y-1.5 mt-4">
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: MANUAL_INTERVIEW_COLOR }} />
-              <span className="text-[0.7rem] text-slate-500 font-medium">{seriesNames.manualInterviewHours}</span>
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: MANUAL_COLOR }} />
+              <span className="text-[0.7rem] text-slate-500 font-medium">{legendManual}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: MANUAL_ANALYSIS_COLOR }} />
-              <span className="text-[0.7rem] text-slate-500 font-medium">{seriesNames.manualAnalysisHours}</span>
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: AI_COLOR }} />
+              <span className="text-[0.7rem] text-slate-500 font-medium">{legendAi}</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: AI_INTERVIEW_COLOR }} />
-              <span className="text-[0.7rem] text-slate-500 font-medium">{seriesNames.aiInterviewHours}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: AI_ANALYSIS_COLOR }} />
-              <span className="text-[0.7rem] text-slate-500 font-medium">{seriesNames.aiAnalysisHours}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: SAVED_INTERVIEW_COLOR }} />
-              <span className="text-[0.7rem] text-slate-500 font-medium">{seriesNames.savedInterviewHours}</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: SAVED_ANALYSIS_COLOR }} />
-              <span className="text-[0.7rem] text-slate-500 font-medium">{seriesNames.savedAnalysisHours}</span>
+              <div className="w-2.5 h-2.5 rounded-sm" style={{ backgroundColor: SAVED_COLOR }} />
+              <span className="text-[0.7rem] text-slate-500 font-medium">{legendSaved}</span>
             </div>
           </div>
         </>

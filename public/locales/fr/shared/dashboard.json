@@ -398,6 +398,7 @@
       "anomalies": "Anomalies détectées",
       "no_incident": "Aucun incident détecté ce mois-ci",
       "zone7_title": "Reporting & ROI",
+      "zone_manual_vs_ai_title": "Manuel vs TalentAI",
       "saved_hours_label": "Heures économisées",
       "saved_hours_formula": "interviews × 30 min / 60",
       "costs_label": "Coûts",

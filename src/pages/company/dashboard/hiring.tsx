@@ -7,7 +7,6 @@ import KpiPostsOverview     from "@/modules/company/dashboard/components/KpiPost
 import KpiRecruitmentFunnel from "@/modules/company/dashboard/components/KpiRecruitmentFunnel";
 import KpiJobsByDepartment  from "@/modules/company/dashboard/components/KpiJobsByDepartment";
 import KpiCandidateQuality  from "@/modules/company/dashboard/components/KpiCandidateQuality";
-import KpiRoiSavings        from "@/modules/company/dashboard/components/KpiRoiSavings";
 import KpiManualVsTalentAiSection from "@/modules/company/dashboard/components/KpiManualVsTalentAiSection";
 import { useIsHR } from "@/modules/company/dashboard/hooks/useIsHR";
 import { getDashboardLayout } from "@/modules/shared/layouts";
@@ -21,7 +20,7 @@ const HiringDashboardContent = memo(() => {
     postId, activeDays,
     statusPage, sortBy, sortDir,
     handlePostChange, handlePeriodChange, handleStatusPageChange, handleSortChange,
-    historyQ, funnelQ, sourcingQ, roiQ, postsQ, postsStatusQ,
+    historyQ, funnelQ, sourcingQ, postsQ, postsStatusQ,
     statCardsQ, appMetricsQ,
   } = useDashboard();
 
@@ -93,12 +92,6 @@ const HiringDashboardContent = memo(() => {
               loading={sourcingQ.isLoading}
             />
           </div>
-        </div>
-        <div>
-          <KpiRoiSavings
-            data={roiQ.data}
-            loading={roiQ.isLoading}
-          />
         </div>
         <div>
           <KpiManualVsTalentAiSection postId={postId} />

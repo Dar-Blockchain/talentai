@@ -1,7 +1,7 @@
 import { useState, useCallback, useMemo } from "react";
 import {
   useKpiHistoryQuery, useKpiFunnelQuery,
-  useKpiSourcingQuery, useKpiRoiQuery, useKpiPostsQuery,
+  useKpiSourcingQuery, useKpiPostsQuery,
   useKpiPostsStatusQuery, useKpiStatCardsQuery, useKpiAppMetricsQuery,
 } from "../queries";
 import type { PostsSortColumn } from "../types";
@@ -38,7 +38,6 @@ export const useDashboard = () => {
   const historyQ     = useKpiHistoryQuery(filterParams);
   const funnelQ      = useKpiFunnelQuery(filterParams);
   const sourcingQ    = useKpiSourcingQuery(filterParams);
-  const roiQ         = useKpiRoiQuery(filterParams);
   const postsQ       = useKpiPostsQuery();
   const postsStatusQ = useKpiPostsStatusQuery(statusParams);
   const statCardsQ   = useKpiStatCardsQuery(filterParams);
@@ -91,7 +90,6 @@ export const useDashboard = () => {
     historyQ,
     funnelQ,
     sourcingQ,
-    roiQ,
     postsQ,
     postsStatusQ,
     statCardsQ,
