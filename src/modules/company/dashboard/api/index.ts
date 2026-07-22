@@ -1,7 +1,8 @@
 import axiosInstance from "@/utils/axiosInstance";
 import type {
   KpiFilterParams, KpiFunnelData,
-  KpiSourcingData, KpiRoiData,
+  KpiSourcingData, KpiRoiData, KpiHoursComparisonData, HoursComparisonParams,
+  KpiCostComparisonData, CostComparisonParams,
   PostsStatusParams, PostsStatusResult, KpiPostOption,
   ApplicationHistoryData, KpiDepartmentData,
 } from "../types";
@@ -27,6 +28,12 @@ export const fetchKpiSourcing = (params: KpiFilterParams): Promise<KpiSourcingDa
 
 export const fetchKpiRoi = (params: KpiFilterParams): Promise<KpiRoiData> =>
   axiosInstance.get(`job-applications/company/my/kpi/roi${qs(params)}`).then(sel);
+
+export const fetchKpiHoursComparison = (params: HoursComparisonParams): Promise<KpiHoursComparisonData> =>
+  axiosInstance.get(`job-applications/company/my/kpi/hours-comparison${qs(params)}`).then(sel);
+
+export const fetchKpiCostComparison = (params: CostComparisonParams): Promise<KpiCostComparisonData> =>
+  axiosInstance.get(`job-applications/company/my/kpi/cost-comparison${qs(params)}`).then(sel);
 
 export const fetchKpiPostsForFilter = async (): Promise<KpiPostOption[]> => {
   const res  = await axiosInstance.get("post/my-posts?limit=100");

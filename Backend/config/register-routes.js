@@ -25,6 +25,7 @@ const { router: internalCampaignRoutes } = require('../features/campaigns');
 const { router: departmentRoutes } = require('../features/departments');
 const { contactRouter } = require('../features/contact');
 const { jobApplicationRouter } = require("../features/job-applications");
+const { companySettingsRouter } = require("../features/company-settings");
 const { router: apiKeyRouter } = require('../features/api-keys');
 const { paymentRouter } = require('../features/billing/payments');
 const usersRouter = require('../features/users').userRouter;
@@ -77,6 +78,7 @@ function registerRoutes(app) {
 
   // Candidate Management
   app.use("/job-applications", jobApplicationRouter);
+  app.use("/company-settings", companySettingsRouter);
 
   // Utility
   app.use("/feedbacks", feedbackRouter);

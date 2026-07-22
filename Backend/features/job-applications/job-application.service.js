@@ -1451,6 +1451,164 @@ module.exports.getRoiKPI = async (companyId, postId = null, dateFrom = null) => 
   }
 };
 
+// ========== KPI - MANUAL VS TALENTAI HOURS/COST (Zone 7) ==========
+// Shared cvsAnalyzed/interviewsCompleted usage, bucketed in JS (not a Mongo
+// $year/$month aggregation) so the grouping key always matches the bucket
+// labels exactly — no UTC-vs-server-local timezone drift between how the
+// range/labels are built and how documents get bucketed. Both the hours and
+// cost comparison KPIs derive their numbers from this same usage data.
+//
+// unit="day": bucket per calendar day, value = how many days back (7/14/30).
+// unit="month": bucket per calendar month, value = how many months back
+// (3/6/9/12 for the Months filter, 12/24/36 for the Years filter — a "years"
+// range is just a larger month count, since a 1-3 point line chart wouldn't
+// show a usable trend).
+const ALLOWED_DAY_VALUES   = [7, 14, 30];
+const ALLOWED_MONTH_VALUES = [3, 6, 9, 12, 24, 36];
+
+function normalizeRange(unit, value) {
+  if (unit === 'day' && ALLOWED_DAY_VALUES.includes(value)) return { unit: 'day', value };
+  if (unit === 'month' && ALLOWED_MONTH_VALUES.includes(value)) return { unit: 'month', value };
+  return { unit: 'month', value: 3 };
+}
+
+async function getCvInterviewUsage(companyId, postId, unit, value) {
+  ({ unit, value } = normalizeRange(unit, value));
+
+  const base = { company: companyId, isArchived: false, isWithdrawn: false };
+  if (postId) base.post = new mongoose.Types.ObjectId(postId);
+
+  const now = new Date();
+  const buckets = [];
+
+  if (unit === 'day') {
+    for (let i = value - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      buckets.push({
+        key:   `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`,
+        label: d.toLocaleString('en', { month: 'short', day: 'numeric' }),
+        cvsAnalyzed: 0, interviewsCompleted: 0,
+      });
+    }
+  } else {
+    for (let i = value - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      // Spans more than a year (the Years filter) — disambiguate repeating
+      // month names with a 2-digit year, e.g. "Jan '24".
+      const label = value > 12
+        ? `${d.toLocaleString('en', { month: 'short' })} '${String(d.getFullYear()).slice(-2)}`
+        : d.toLocaleString('en', { month: 'short' });
+      buckets.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label,
+        cvsAnalyzed: 0, interviewsCompleted: 0,
+      });
+    }
+  }
+
+  const rangeStart = unit === 'day'
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - (value - 1))
+    : new Date(now.getFullYear(), now.getMonth() - (value - 1), 1);
+
+  const keyOf = unit === 'day'
+    ? (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    : (d) => `${d.getFullYear()}-${d.getMonth()}`;
+
+  const byKey = {};
+  buckets.forEach(b => { byKey[b.key] = b; });
+
+  const apps = await JobApplication.find({ ...base, appliedAt: { $gte: rangeStart } })
+    .select('appliedAt cvAnalysis status')
+    .lean();
+
+  apps.forEach(app => {
+    const bucket = byKey[keyOf(new Date(app.appliedAt))];
+    if (!bucket) return;
+    if (app.cvAnalysis) bucket.cvsAnalyzed += 1;
+    if (app.status === 'interview_completed') bucket.interviewsCompleted += 1;
+  });
+
+  // A completed interview can't happen without that candidate's CV having been
+  // screened first — if `cvAnalysis` wasn't linked on the application (e.g. it
+  // was applied before the profile had an analyzed CV on file), still count it
+  // as screened here so manual/AI cost & hours aren't understated for that bucket.
+  buckets.forEach(b => { b.cvsAnalyzed = Math.max(b.cvsAnalyzed, b.interviewsCompleted); });
+
+  return buckets.map(({ label, cvsAnalyzed, interviewsCompleted }) => ({ month: label, cvsAnalyzed, interviewsCompleted }));
+}
+
+const round2 = (n) => Math.round(n * 100) / 100;
+
+// manualHours = (cvsAnalyzed*7 + interviewsCompleted*10) / 60
+// aiHours     = (cvsAnalyzed*0.2 + interviewsCompleted*1) / 60
+module.exports.getHoursComparisonKPI = async (companyId, postId = null, unit = 'month', value = 3) => {
+  try {
+    const { CompanySettingsService } = require('../company-settings');
+    const settings = await CompanySettingsService.getOrCreateSettings(companyId);
+
+    const usage = await getCvInterviewUsage(companyId, postId, unit, value);
+
+    // 2 decimals: aiHours is routinely well under 0.05h for low-volume months
+    // (e.g. 2 CVs analyzed = 0.007h) and would silently round to 0.0 at 1 decimal.
+    const trend = usage.map(({ month, cvsAnalyzed, interviewsCompleted }) => ({
+      month,
+      cvsAnalyzed,
+      interviewsCompleted,
+      manualHours: round2((cvsAnalyzed * 7 + interviewsCompleted * 10) / 60),
+      aiHours:     round2((cvsAnalyzed * 0.2 + interviewsCompleted * 1) / 60),
+    }));
+
+    return { trend, interviewDurationMinutes: settings.interviewDurationMinutes };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// manualCost = interviewsCompleted * manualCostPerCandidate
+// aiCost     = interviewsCompleted * aiCostPerInterview
+//              (flat, real per-candidate charges for taking one candidate through
+//              CV review + interview end-to-end — not a time estimate)
+// costSaved  = manualCost - aiCost
+// gapPercent = costSaved / manualCost * 100
+module.exports.getCostComparisonKPI = async (companyId, postId = null, unit = 'month', value = 3) => {
+  try {
+    const { CompanySettingsService } = require('../company-settings');
+    const settings = await CompanySettingsService.getOrCreateSettings(companyId);
+
+    const usage = await getCvInterviewUsage(companyId, postId, unit, value);
+
+    const trend = usage.map(({ month, cvsAnalyzed, interviewsCompleted }) => {
+      const manualCost = interviewsCompleted * settings.manualCostPerCandidate;
+      const aiCost      = interviewsCompleted * settings.aiCostPerInterview;
+      const costSaved   = manualCost - aiCost;
+      const gapPercent  = manualCost > 0 ? Math.round((costSaved / manualCost) * 100) : null;
+
+      return {
+        month,
+        cvsAnalyzed,
+        interviewsCompleted,
+        manualCost: round2(manualCost),
+        aiCost:     round2(aiCost),
+        costSaved:  round2(costSaved),
+        gapPercent,
+      };
+    });
+
+    return {
+      trend,
+      currency:                 settings.currency,
+      manualCostPerCandidate:   settings.manualCostPerCandidate,
+      aiCostPerInterview:       settings.aiCostPerInterview,
+      blendedHourlyRate:        settings.blendedHourlyRate,
+      interviewDurationMinutes: settings.interviewDurationMinutes,
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
 // ========== KPI - GLOBAL FUNNEL (Zone 3) ==========
 // Applied â†’ Invited â†’ Completed â†’ Shortlisted
 module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) => {

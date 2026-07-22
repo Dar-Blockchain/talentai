@@ -562,6 +562,7 @@
         "company_info": "Company Info",
         "contact": "Contact & Presence",
         "api_keys": "API Keys",
+        "cost": "Hiring Costs",
         "language": "Language"
       },
       "banner": {
@@ -666,6 +667,23 @@
           "copied": "Key copied to clipboard"
         }
       },
+      "cost": {
+        "title": "Hiring Cost Rates",
+        "subtitle": "Drives the manual-vs-TalentAI cost & hours cards on your dashboard",
+        "section_title": "Cost & time assumptions",
+        "section_subtitle": "Used to calculate what manual screening would have cost, compared to your actual TalentAI charges",
+        "manual_cost_label": "Manual cost per candidate",
+        "manual_cost_desc": "Flat cost of screening one candidate by hand, CV review + interview included",
+        "ai_cost_label": "TalentAI cost per candidate",
+        "ai_cost_desc": "What TalentAI actually charges you per completed interview",
+        "hourly_rate_label": "Recruiter hourly rate",
+        "hourly_rate_desc": "Blended hourly cost of a recruiter, used to monetize interview time",
+        "interview_len_label": "Interview length",
+        "interview_len_desc": "How long a single interview takes, in minutes",
+        "saved": "Cost settings saved",
+        "save_failed": "Couldn't save cost settings — try again",
+        "invalid": "Enter a valid non-negative number"
+      },
       "language": {
         "title": "Interface Language",
         "subtitle": "Choose the language used throughout your dashboard",
@@ -689,6 +707,47 @@
         "team_size": "Team Size"
       }
     }
+  },
+  "trendRangeFilter": {
+    "days": "Days",
+    "months": "Months",
+    "years": "Years"
+  },
+  "hoursComparison": {
+    "title": "Hours needed: manual vs with TalentAI",
+    "subtitle_fallback": "Last months",
+    "description": "How many hours your team would spend screening the same CVs and interviews by hand each month, compared with letting TalentAI do it automatically.",
+    "legend_manual": "Manual (by hand)",
+    "legend_ai": "With TalentAI",
+    "legend_saved": "Time Saved",
+    "legend_added": "Time Added",
+    "interview_time_title": "Interview Time",
+    "interview_time_manual_sub": "{{iv}} interviews × {{min}}m",
+    "interview_time_ai_sub": "AI conducts the interview",
+    "analysis_title": "Analysis: CV & Evaluation",
+    "breakdown_manual": "{{cvs}} CVs × 7m + {{iv}} interviews × 10m",
+    "breakdown_ai": "{{cvs}} CVs × 0.2m + {{iv}} interviews × 1m",
+    "this_month": "this month",
+    "saved_pct": "{{pct}}% less time",
+    "added_pct": "{{pct}}% more time",
+    "no_data": "No data yet",
+    "chart_title": "Breakdown over time: interview time vs. analysis",
+    "chart_legend_manual_interview": "Manual — interview time",
+    "chart_legend_manual_analysis": "Manual — analysis",
+    "chart_legend_ai_interview": "TalentAI — interview time",
+    "chart_legend_ai_analysis": "TalentAI — analysis"
+  },
+  "costComparison": {
+    "title": "Cost needed: manual vs with TalentAI",
+    "subtitle_fallback": "This month",
+    "description": "How much your team would spend screening the same CVs and interviews by hand each month, compared with letting TalentAI do it automatically.",
+    "legend_manual": "Manual (by hand)",
+    "legend_ai": "With TalentAI",
+    "no_data": "No data yet",
+    "pie_saved_sub": "saved with TalentAI",
+    "pie_added_sub": "extra cost this month",
+    "breakdown_manual": "{{iv}} candidates × {{rate}}",
+    "breakdown_ai": "{{iv}} candidates × {{rate}}"
   },
   "tour": {
     "nav": {

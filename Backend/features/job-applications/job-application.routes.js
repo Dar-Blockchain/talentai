@@ -264,6 +264,54 @@ router.get("/company/my/kpi/roi", jobApplicationController.getRoiKPI);
 
 /**
  * @openapi
+ * /job-applications/company/my/kpi/hours-comparison:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: KPI — Manual vs TalentAI hours
+ *     parameters:
+ *       - in: query
+ *         name: unit
+ *         schema: { type: string, enum: [day, month] }
+ *         description: Bucket granularity (default month)
+ *       - in: query
+ *         name: value
+ *         schema: { type: integer, enum: [7, 14, 30, 3, 6, 9, 12, 24, 36] }
+ *         description: How far back to include, in `unit`s (default 3 months). Use 12/24/36 months for the Years filter.
+ *       - in: query
+ *         name: postId
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Hours comparison KPI
+ */
+router.get("/company/my/kpi/hours-comparison", jobApplicationController.getHoursComparisonKPI);
+
+/**
+ * @openapi
+ * /job-applications/company/my/kpi/cost-comparison:
+ *   get:
+ *     tags: [Job Applications]
+ *     summary: KPI — Manual vs TalentAI cost
+ *     parameters:
+ *       - in: query
+ *         name: unit
+ *         schema: { type: string, enum: [day, month] }
+ *         description: Bucket granularity (default month)
+ *       - in: query
+ *         name: value
+ *         schema: { type: integer, enum: [7, 14, 30, 3, 6, 9, 12, 24, 36] }
+ *         description: How far back to include, in `unit`s (default 3 months). Use 12/24/36 months for the Years filter.
+ *       - in: query
+ *         name: postId
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Cost comparison KPI
+ */
+router.get("/company/my/kpi/cost-comparison", jobApplicationController.getCostComparisonKPI);
+
+/**
+ * @openapi
  * /job-applications/{applicationId}/recruiter-decision:
  *   patch:
  *     tags: [Job Applications]

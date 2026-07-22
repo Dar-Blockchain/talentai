@@ -123,3 +123,53 @@ export interface KpiRoiData {
   shortlisted:         number | null;
   trend:               RoiTrendPoint[];
 }
+
+// ── Manual vs TalentAI hours ────────────────────────────────────────────────────
+
+export interface HoursTrendPoint {
+  month:               string;
+  cvsAnalyzed:         number;
+  interviewsCompleted: number;
+  manualHours:         number;
+  aiHours:             number;
+}
+
+export interface KpiHoursComparisonData {
+  trend:                    HoursTrendPoint[];
+  interviewDurationMinutes: number;
+}
+
+export type TrendRangeUnit = "day" | "month";
+
+export interface HoursComparisonParams {
+  postId?: string;
+  unit?:   TrendRangeUnit;
+  value?:  number;
+}
+
+// ── Manual vs TalentAI cost ──────────────────────────────────────────────────────
+
+export interface CostTrendPoint {
+  month:               string;
+  cvsAnalyzed:         number;
+  interviewsCompleted: number;
+  manualCost:          number;
+  aiCost:              number;
+  costSaved:           number;
+  gapPercent:          number | null;
+}
+
+export interface KpiCostComparisonData {
+  trend:                    CostTrendPoint[];
+  currency:                 string;
+  manualCostPerCandidate:   number;
+  aiCostPerInterview:       number;
+  blendedHourlyRate:        number;
+  interviewDurationMinutes: number;
+}
+
+export interface CostComparisonParams {
+  postId?: string;
+  unit?:   TrendRangeUnit;
+  value?:  number;
+}

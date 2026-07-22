@@ -8,6 +8,7 @@ import KpiRecruitmentFunnel from "@/modules/company/dashboard/components/KpiRecr
 import KpiJobsByDepartment  from "@/modules/company/dashboard/components/KpiJobsByDepartment";
 import KpiCandidateQuality  from "@/modules/company/dashboard/components/KpiCandidateQuality";
 import KpiRoiSavings        from "@/modules/company/dashboard/components/KpiRoiSavings";
+import KpiManualVsTalentAiSection from "@/modules/company/dashboard/components/KpiManualVsTalentAiSection";
 import { useIsHR } from "@/modules/company/dashboard/hooks/useIsHR";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
@@ -98,6 +99,9 @@ const HiringDashboardContent = memo(() => {
             data={roiQ.data}
             loading={roiQ.isLoading}
           />
+        </div>
+        <div>
+          <KpiManualVsTalentAiSection postId={postId} />
         </div>
       </div>
   );

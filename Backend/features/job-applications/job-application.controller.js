@@ -723,6 +723,34 @@ module.exports.getRoiKPI = async (req, res) => {
   }
 };
 
+// ========== KPI - MANUAL VS TALENTAI HOURS ==========
+module.exports.getHoursComparisonKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, unit, value } = req.query;
+    const data = await jobApplicationService.getHoursComparisonKPI(
+      companyId, postId || null, unit || 'month', value ? parseInt(value, 10) : 3
+    );
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - MANUAL VS TALENTAI COST ==========
+module.exports.getCostComparisonKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, unit, value } = req.query;
+    const data = await jobApplicationService.getCostComparisonKPI(
+      companyId, postId || null, unit || 'month', value ? parseInt(value, 10) : 3
+    );
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
 // ========== UPDATE RECRUITER DECISION ==========
 module.exports.updateRecruiterDecision = async (req, res) => {
   try {

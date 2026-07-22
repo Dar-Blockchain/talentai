@@ -1,8 +1,8 @@
 import { useQuery, keepPreviousData } from "@tanstack/react-query";
-import type { KpiFilterParams, PostsStatusParams } from "../types";
+import type { KpiFilterParams, PostsStatusParams, HoursComparisonParams, CostComparisonParams } from "../types";
 import {
   fetchKpiFunnel,
-  fetchKpiSourcing, fetchKpiRoi, fetchKpiPostsForFilter,
+  fetchKpiSourcing, fetchKpiRoi, fetchKpiHoursComparison, fetchKpiCostComparison, fetchKpiPostsForFilter,
   fetchKpiPostsStatus, fetchDashboardStats, fetchAppMetrics,
   fetchKpiHistory, fetchKpiJobsByDepartment,
 } from "../api";
@@ -15,6 +15,8 @@ export const KPI_KEYS = {
   funnel:      (p: KpiFilterParams)     => ["kpi", "funnel",      p] as const,
   sourcing:    (p: KpiFilterParams)     => ["kpi", "sourcing",    p] as const,
   roi:         (p: KpiFilterParams)     => ["kpi", "roi", p]         as const,
+  hoursComparison: (p: HoursComparisonParams) => ["kpi", "hoursComparison", p] as const,
+  costComparison:  (p: CostComparisonParams)  => ["kpi", "costComparison", p]  as const,
   posts:       ()                       => ["kpi", "posts"]          as const,
   postsStatus: (p: PostsStatusParams)   => ["kpi", "postsStatus", p] as const,
   statCards:   (p: KpiFilterParams)     => ["kpi", "statCards", p]   as const,
@@ -49,6 +51,20 @@ export const useKpiRoiQuery = (params: KpiFilterParams) =>
   useQuery({
     queryKey:  KPI_KEYS.roi(params),
     queryFn:   () => fetchKpiRoi(params),
+    staleTime: 5 * 60_000,
+  });
+
+export const useKpiHoursComparisonQuery = (params: HoursComparisonParams) =>
+  useQuery({
+    queryKey:  KPI_KEYS.hoursComparison(params),
+    queryFn:   () => fetchKpiHoursComparison(params),
+    staleTime: 5 * 60_000,
+  });
+
+export const useKpiCostComparisonQuery = (params: CostComparisonParams) =>
+  useQuery({
+    queryKey:  KPI_KEYS.costComparison(params),
+    queryFn:   () => fetchKpiCostComparison(params),
     staleTime: 5 * 60_000,
   });
 
