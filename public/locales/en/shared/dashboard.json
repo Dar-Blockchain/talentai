@@ -714,9 +714,9 @@
     "years": "Years"
   },
   "hoursComparison": {
-    "title": "Hours needed: manual vs with TalentAI",
+    "title": "Time & cost saved: manual vs with TalentAI",
     "subtitle_fallback": "Last months",
-    "description": "How many hours your team would spend screening the same CVs and interviews by hand each month, compared with letting TalentAI do it automatically.",
+    "description": "How many hours and how much your team would spend screening the same CVs and interviews by hand each month, compared with letting TalentAI do it automatically.",
     "legend_manual": "Manual (by hand)",
     "legend_ai": "With TalentAI",
     "legend_saved": "Time Saved",

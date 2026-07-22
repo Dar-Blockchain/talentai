@@ -710,9 +710,9 @@
     "years": "Années"
   },
   "hoursComparison": {
-    "title": "Heures nécessaires : manuel vs avec TalentAI",
+    "title": "Temps et coût économisés : manuel vs avec TalentAI",
     "subtitle_fallback": "Derniers mois",
-    "description": "Combien d'heures votre équipe passerait à examiner les mêmes CV et entretiens à la main chaque mois, comparé à TalentAI qui le fait automatiquement.",
+    "description": "Combien d'heures et combien d'argent votre équipe dépenserait à examiner les mêmes CV et entretiens à la main chaque mois, comparé à TalentAI qui le fait automatiquement.",
     "legend_manual": "Manuel (à la main)",
     "legend_ai": "Avec TalentAI",
     "legend_saved": "Temps économisé",
