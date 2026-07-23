@@ -317,12 +317,14 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
   if (candidateProfile) {
     const JobApplication = require("../../job-applications/job-application.model");
     let matchScore = null;
+    let invitedAt = null;
 
     const existing = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
-      .select("matchScore").lean();
+      .select("matchScore invitedAt").lean();
 
     if (existing) {
       matchScore = existing.matchScore;
+      invitedAt = existing.invitedAt;
     } else {
       // First visit: await creation so the AI-computed matchScore is available for the
       // threshold check before we respond. Fire-and-forget caused a race where findOne()
@@ -345,7 +347,9 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
       }
     }
 
-    if (post.thresholdScore != null && matchScore != null && matchScore < post.thresholdScore) {
+    // A manual recruiter invite overrides the threshold block — they've already
+    // chosen to interview this candidate despite the raw CV match score.
+    if (!invitedAt && post.thresholdScore != null && matchScore != null && matchScore < post.thresholdScore) {
       return { status: "under_threshold", meta: { required: post.thresholdScore, score: matchScore } };
     }
   }

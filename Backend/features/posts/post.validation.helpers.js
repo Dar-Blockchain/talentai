@@ -64,7 +64,7 @@ const validatePostData = (postData) => {
 
 const JOB_DETAIL_FIELDS = [
   'title', 'description', 'requirements', 'responsibilities',
-  'location', 'workMode', 'employmentType', 'experienceLevel', 'salary',
+  'location', 'workMode', 'employmentType', 'experienceLevel', 'salary', 'department',
 ];
 
 /**

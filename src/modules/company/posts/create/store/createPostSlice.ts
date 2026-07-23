@@ -31,6 +31,7 @@ export interface JobDetails {
   workMode: string;
   employmentType: string;
   experienceLevel: string;
+  department: string;
   salary: Salary;
 }
 
@@ -53,6 +54,7 @@ export interface PostGenerationState {
   promptDescription: string;
   workMode: string;
   employmentType: string;
+  department: string;
   salary: Salary;
   expirationDate: string;
   interviewLanguages: string[];
@@ -82,6 +84,7 @@ const initialState: PostGenerationState = {
   promptDescription: "",
   workMode: "",
   employmentType: "",
+  department: "",
   salary: { min: null, max: null, currency: DEFAULT_CURRENCY },
   expirationDate: getDefaultExpirationDate(),
   interviewLanguages: DEFAULT_LANGUAGES,
@@ -103,6 +106,7 @@ const createPostSlice = createSlice({
       state.promptDescription = "";
       state.workMode = "";
       state.employmentType = "";
+      state.department = "";
       state.salary = { min: null, max: null, currency: DEFAULT_CURRENCY };
       state.expirationDate = getDefaultExpirationDate();
       state.interviewLanguages = DEFAULT_LANGUAGES;
@@ -113,7 +117,11 @@ const createPostSlice = createSlice({
       state,
       action: PayloadAction<{ post: PostGenerationResponse; language: string }>,
     ) {
-      state.generatedPost = { ...action.payload.post, expirationDate: state.expirationDate };
+      state.generatedPost = {
+        ...action.payload.post,
+        expirationDate: state.expirationDate,
+        jobDetails: { ...action.payload.post.jobDetails, department: state.department },
+      };
       state.generatedLanguage = action.payload.language;
       state.generatedAt = Date.now();
     },
@@ -141,6 +149,11 @@ const createPostSlice = createSlice({
 
     setEmploymentType(state, action: PayloadAction<string>) {
       state.employmentType = action.payload;
+    },
+
+    setDepartment(state, action: PayloadAction<string>) {
+      state.department = action.payload;
+      if (state.generatedPost) state.generatedPost.jobDetails.department = action.payload;
     },
 
     setExpirationDate(state, action: PayloadAction<string>) {
@@ -237,7 +250,7 @@ const createPostSlice = createSlice({
 
 export const {
   clearPost, setGeneratedPost, setCreationType, setPromptDescription,
-  setWorkMode, setEmploymentType, setExpirationDate, updateSalaryField,
+  setWorkMode, setEmploymentType, setDepartment, setExpirationDate, updateSalaryField,
   updateJobField, updateJobSalaryField, updateRequirements, updateResponsibilities,
   editHardSkill, deleteHardSkill, addHardSkill,
   editSoftSkill, deleteSoftSkill, addSoftSkill,

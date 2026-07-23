@@ -130,10 +130,10 @@ const jobApplicationSchema = new mongoose.Schema(
     // ========== RECRUITER DECISION ==========
     recruiterDecision: {
       type: String,
-      enum: ["shortlisted", "rejected", null],
+      enum: ["shortlisted", "rejected", "not_matched", null],
       default: null,
       index: true,
-      description: "Recruiter's decision on the candidate (shortlisted, rejected, or pending)"
+      description: "Recruiter's decision on the candidate (shortlisted, manually rejected, auto not_matched due to low CV score, or pending)"
     },
     recruiterDecisionAt: {
       type: Date,

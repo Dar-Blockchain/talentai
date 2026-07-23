@@ -10,12 +10,13 @@ import { useCompanyProfileManagement } from "../hooks";
 import ProfileBanner from "./ProfileBanner";
 import CompanyInfoTab from "./CompanyInfoTab";
 import ApiKeysTab from "./ApiKeysTab";
+import CostSettingsTab from "./CostSettingsTab";
 import { LanguageTab } from "@/modules/settings/shared";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import AppUserInfo from "@/modules/shared/ui/AppUserInfo";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
 import {
-  Building2, MapPin, Key, CreditCard, Globe, Users, Tag, Settings as SettingsOutlined,
+  Building2, MapPin, Key, CreditCard, Globe, Users, Tag, Settings as SettingsOutlined, Calculator,
 } from "lucide-react";
 
 const TEAL = "#0D9488";
@@ -42,6 +43,7 @@ const CompanySettingsPage: React.FC = () => {
   const TABS = [
     { label: t("pages.settings.tabs.company_info"), icon: Building2 },
     { label: t("pages.settings.tabs.api_keys"),     icon: Key, dataTour: "settings-tab-apikeys" },
+    { label: t("pages.settings.tabs.cost", "Hiring Costs"), icon: Calculator },
     { label: t("pages.settings.tabs.language"),     icon: Globe },
   ];
 
@@ -115,6 +117,9 @@ const CompanySettingsPage: React.FC = () => {
             <ApiKeysTab />
           </TabsContent>
           <TabsContent value="2">
+            <CostSettingsTab />
+          </TabsContent>
+          <TabsContent value="3">
             <LanguageTab onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />
           </TabsContent>
         </Tabs>

@@ -198,23 +198,26 @@ async function _computeCountsByDay() {
   }
 }
 
-module.exports.getStatsCards = async (userId) => {
+module.exports.getStatsCards = async (userId, postId = null, dateFrom = null) => {
   try {
-    const [totalUsers, avgOverallScoreAgg, openPostsCount, activeCampaignsCount] = await Promise.all([
+    const interviewsMatch = { company: new mongoose.Types.ObjectId(userId), archived: { $ne: true }, completed: true };
+    if (postId) interviewsMatch.post = new mongoose.Types.ObjectId(postId);
+    if (dateFrom) interviewsMatch.createdAt = { $gte: new Date(dateFrom) };
+
+    const postsMatch = { user: userId, status: POST_STATUS.OPEN, archived: { $ne: true } };
+    if (postId) postsMatch._id = new mongoose.Types.ObjectId(postId);
+    if (dateFrom) postsMatch.createdAt = { $gte: new Date(dateFrom) };
+
+    const [totalUsers, interviewsCount, openPostsCount, activeCampaignsCount] = await Promise.all([
       CompanyMembership.countDocuments({ company: userId, status: "active" }),
-      PostInterviewAssessment.aggregate([
-        { $match: { company: new mongoose.Types.ObjectId(userId), archived: { $ne: true }, "interviewData.finalReport.coverage.overall": { $ne: null } } },
-        { $group: { _id: null, avgOverallScore: { $avg: "$interviewData.finalReport.coverage.overall" } } }
-      ]),
-      Post.countDocuments({ user: userId, status: POST_STATUS.OPEN, archived: { $ne: true } }),
+      PostInterviewAssessment.countDocuments(interviewsMatch),
+      Post.countDocuments(postsMatch),
       InternalCampaign.countDocuments({ company: userId, status: "ACTIVE" })
     ]);
 
-    const avgOverall = (avgOverallScoreAgg && avgOverallScoreAgg.length > 0) ? Math.round(avgOverallScoreAgg[0].avgOverallScore) : 0;
-
     return {
       totalEmployees: totalUsers,
-      avgInterviewScore: avgOverall,
+      interviewsCount,
       activeJobPosts: openPostsCount,
       activeCampaigns: activeCampaignsCount
     };

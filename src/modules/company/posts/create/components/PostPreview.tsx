@@ -39,7 +39,7 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
 
   const {
     title = "", description = "", experienceLevel = "",
-    employmentType = "", workMode = "",
+    employmentType = "", workMode = "", department = "",
     salary = { min: "", max: "", currency: "USD" },
     requirements = [], responsibilities = [],
   } = generatedPost.jobDetails ?? {};
@@ -65,6 +65,7 @@ const PostPreview = ({ generating = false }: PostPreviewProps) => {
         title={title}
         employmentType={normalizeEmploymentType(employmentType)}
         workMode={normalizeWorkMode(workMode)}
+        department={department}
         experienceLevel={experienceLevel}
         salary={salary}
         labelT={labelT}

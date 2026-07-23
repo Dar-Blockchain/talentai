@@ -8,6 +8,7 @@ import { validateEditPost } from "@/validations/postValidation";
 import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
 import SkillEditorModal from "@/modules/company/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/modules/company/posts/shared/constants";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
@@ -29,6 +30,7 @@ const getInitialValues = (job: any) => ({
     title:           job?.jobDetails?.title           || "",
     workMode:        job?.jobDetails?.workMode        || "",
     employmentType:  job?.jobDetails?.employmentType  || "",
+    department:      job?.jobDetails?.department       || "",
     experienceLevel: job?.jobDetails?.experienceLevel || "",
     description:     job?.jobDetails?.description     || "",
     requirements:    job?.jobDetails?.requirements    || [],
@@ -51,6 +53,7 @@ interface Props {
 const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
   const { showToast } = useToast();
   const updateMut     = useUpdatePostMutation(job?._id ?? "");
+  const { departments } = useDepartmentList();
 
   // Skill editor modal state
   const [open,          setOpen]          = useState(false);
@@ -224,6 +227,26 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
               )}
             />
           </div>
+        </div>
+
+        {/* Department */}
+        <div className="mb-4 flex-1">
+          <p className={labelClass}>Department</p>
+          <Controller
+            name="jobDetails.department"
+            control={control}
+            render={({ field }) => (
+              <Select value={field.value || undefined} onValueChange={field.onChange}>
+                <SelectTrigger className="w-full text-[12px] font-medium">
+                  <Image src="/icons/building3.svg" alt="department" width={16} height={16} />
+                  <SelectValue placeholder="Department" />
+                </SelectTrigger>
+                <SelectContent>
+                  {departments.map((d) => <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>)}
+                </SelectContent>
+              </Select>
+            )}
+          />
         </div>
 
         <SalaryRange

@@ -1,11 +1,13 @@
 import { useState, useCallback, useMemo } from "react";
 import {
-  useKpiActionsQuery, useKpiFunnelQuery, useKpiVelocityQuery,
-  useKpiSourcingQuery, useKpiRoiQuery, useKpiPostsQuery,
-  useKpiPostsStatusQuery,
+  useKpiHistoryQuery, useKpiFunnelQuery,
+  useKpiPostsQuery,
+  useKpiPostsStatusQuery, useKpiStatCardsQuery, useKpiAppMetricsQuery,
 } from "../queries";
+import type { PostsSortColumn } from "../types";
 
-const PAGE_SIZE = 3;
+export const POSTS_PAGE_SIZE = 4;
+const PAGE_SIZE = POSTS_PAGE_SIZE;
 
 export const useDashboard = () => {
   const [postId,     setPostId]     = useState<string>("");
@@ -13,23 +15,32 @@ export const useDashboard = () => {
   const [activeDays, setActiveDays] = useState<number | null>(null);
   const [statusPage, setStatusPage] = useState(1);
 
+  // Posts Overview — clicking a column header cycles its sort (asc → desc →
+  // none). Only one column is ever sorted at a time.
+  const [sortBy,  setSortBy]  = useState<PostsSortColumn | "">("");
+  const [sortDir, setSortDir] = useState<"" | "asc" | "desc">("");
+
   const filterParams = useMemo(
     () => ({ ...(postId   ? { postId }   : {}), ...(dateFrom ? { dateFrom } : {}) }),
     [postId, dateFrom],
   );
 
   const statusParams = useMemo(
-    () => ({ ...filterParams, page: statusPage, limit: PAGE_SIZE }),
-    [filterParams, statusPage],
+    () => ({
+      ...filterParams,
+      page: statusPage,
+      limit: PAGE_SIZE,
+      ...(sortBy && sortDir ? { sortBy, sortDir } : {}),
+    }),
+    [filterParams, statusPage, sortBy, sortDir],
   );
 
-  const actionsQ     = useKpiActionsQuery(filterParams);
+  const historyQ     = useKpiHistoryQuery(filterParams);
   const funnelQ      = useKpiFunnelQuery(filterParams);
-  const velocityQ    = useKpiVelocityQuery(filterParams);
-  const sourcingQ    = useKpiSourcingQuery(filterParams);
-  const roiQ         = useKpiRoiQuery();
   const postsQ       = useKpiPostsQuery();
   const postsStatusQ = useKpiPostsStatusQuery(statusParams);
+  const statCardsQ   = useKpiStatCardsQuery(filterParams);
+  const appMetricsQ  = useKpiAppMetricsQuery(filterParams);
 
   const handlePostChange = useCallback((id: string) => {
     setPostId(id);
@@ -50,19 +61,36 @@ export const useDashboard = () => {
 
   const handleStatusPageChange = useCallback((page: number) => setStatusPage(page), []);
 
+  // Cycle: unsorted → asc → desc → unsorted. Switching to a different column
+  // always starts fresh at asc.
+  const handleSortChange = useCallback((column: PostsSortColumn) => {
+    if (sortBy !== column) {
+      setSortBy(column);
+      setSortDir("asc");
+    } else if (sortDir === "asc") {
+      setSortDir("desc");
+    } else {
+      setSortBy("");
+      setSortDir("");
+    }
+    setStatusPage(1);
+  }, [sortBy, sortDir]);
+
   return {
     postId,
     activeDays,
     statusPage,
+    sortBy,
+    sortDir,
     handlePostChange,
     handlePeriodChange,
     handleStatusPageChange,
-    actionsQ,
+    handleSortChange,
+    historyQ,
     funnelQ,
-    velocityQ,
-    sourcingQ,
-    roiQ,
     postsQ,
     postsStatusQ,
+    statCardsQ,
+    appMetricsQ,
   };
 };
