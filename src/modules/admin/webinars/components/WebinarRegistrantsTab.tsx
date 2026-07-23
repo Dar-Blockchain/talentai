@@ -50,6 +50,14 @@ const SECTOR_LABEL: Record<WebinarSector, string> = {
   retail: "Retail", manufacturing: "Manufacturing", education: "Education",
   telecom: "Telecom", public_sector: "Public Sector", other: "Other",
 };
+const SECTORS: WebinarSector[] = [
+  "technology", "finance", "healthcare", "retail", "manufacturing", "education", "telecom", "public_sector", "other",
+];
+const SECTOR_COLOR: Record<WebinarSector, string> = {
+  technology: "#6366F1", finance: "#0EA5E9", healthcare: "#10B981",
+  retail: "#F59E0B", manufacturing: "#EF4444", education: "#8B5CF6",
+  telecom: "#EC4899", public_sector: "#64748B", other: "#94A3B8",
+};
 
 const SOURCE_CHANNEL_LABEL: Record<WebinarSourceChannel, string> = {
   linkedin: "LinkedIn", instagram: "Instagram", facebook: "Facebook",
@@ -82,6 +90,15 @@ const CATEGORY_META: Record<WebinarScoreCategory, { label: string; color: string
 const CATEGORY_ORDER: WebinarScoreCategory[] = ["adoption", "governance", "quality", "antifraud"];
 
 const SCRIPT_LABEL: Record<string, string> = { v1: "Script v1 — Speed & efficiency", v2: "Script v2 — Detection, no sales pitch" };
+
+// `sector` used to be a single string before it became multi-select — old
+// submissions read via .lean() aren't auto-cast by Mongoose, so this can
+// still arrive as a bare string (or null/undefined) instead of an array.
+function toSectorArray(v: unknown): WebinarSector[] {
+  if (Array.isArray(v)) return v as WebinarSector[];
+  if (typeof v === "string" && v) return [v as WebinarSector];
+  return [];
+}
 
 function QualificationBadge({ status }: { status?: WebinarQualification }) {
   if (!status) return <span className="text-xs text-slate-300">—</span>;
@@ -224,6 +241,12 @@ function OverviewStrip({ webinar }: { webinar: Webinar }) {
     .map((c) => ({ key: c, label: SOURCE_CHANNEL_LABEL[c], color: SOURCE_CHANNEL_COLOR[c], count: stats.channel_breakdown?.[c] ?? 0 }))
     .filter((it) => it.count > 0)
     .sort((a, b) => b.count - a.count);
+  // Multi-select — one registrant can add to more than one sector, so these
+  // counts don't have to sum to total_registrations.
+  const sectorItems = SECTORS
+    .map((s) => ({ key: s, label: SECTOR_LABEL[s], color: SECTOR_COLOR[s], count: stats.sector_breakdown?.[s] ?? 0 }))
+    .filter((it) => it.count > 0)
+    .sort((a, b) => b.count - a.count);
 
   const saveLive = () => {
     const n = Math.max(0, Math.round(Number(liveInput)) || 0);
@@ -277,6 +300,10 @@ function OverviewStrip({ webinar }: { webinar: Webinar }) {
         </CompactCard>
       </div>
 
+      <CompactCard title="Registered per sector">
+        <BreakdownList items={sectorItems} />
+      </CompactCard>
+
       <CompactCard title="Registrant target">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs text-slate-600">
@@ -305,7 +332,7 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
   const segment = sub.contact?.profile_type;
   const phone   = sub.contact?.phone;
   const position = sub.contact?.position;
-  const sector  = sub.contact?.sector;
+  const sector  = toSectorArray(sub.contact?.sector);
   const hrTeamSize = sub.contact?.hr_team_size;
   const utmSource   = sub.source?.utm_source;
   const utmCampaign = sub.source?.utm_campaign;
@@ -398,7 +425,9 @@ function SubmissionRow({ sub, webinar }: { sub: WebinarSubmission; webinar: Webi
             {phone && <p className="text-xs text-slate-700"><span className="text-slate-400 w-20 inline-block">Phone</span>{phone}</p>}
             {co && <p className="text-xs text-slate-700"><span className="text-slate-400 w-20 inline-block">Company</span>{co}</p>}
             {position && <p className="text-xs text-slate-700"><span className="text-slate-400 w-20 inline-block">Position</span>{position}</p>}
-            {sector && <p className="text-xs text-slate-700"><span className="text-slate-400 w-20 inline-block">Sector</span>{SECTOR_LABEL[sector]}</p>}
+            {sector && sector.length > 0 && (
+              <p className="text-xs text-slate-700"><span className="text-slate-400 w-20 inline-block">Sector</span>{sector.map((s) => SECTOR_LABEL[s]).join(", ")}</p>
+            )}
             {hrTeamSize && <p className="text-xs text-slate-700"><span className="text-slate-400 w-20 inline-block">HR size</span>{HR_TEAM_SIZE_LABEL[hrTeamSize]}</p>}
             {segment && <p className="text-xs text-slate-700"><span className="text-slate-400 w-20 inline-block">Segment</span>{SEGMENT_META[segment].label}</p>}
             <p className="text-xs text-slate-700"><span className="text-slate-400 w-20 inline-block">Language</span>{sub.lang?.toUpperCase()}</p>

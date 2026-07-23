@@ -73,6 +73,9 @@ const WebinarSchema = new mongoose.Schema({
     segment_breakdown:       { type: Map, of: Number, default: {} },
     utm_breakdown:           { type: Map, of: Number, default: {} },
     channel_breakdown:       { type: Map, of: Number, default: {} },
+    // Sector is multi-select, so a single registrant can add to more than one
+    // bucket here — counts don't have to sum to total_registrations.
+    sector_breakdown:        { type: Map, of: Number, default: {} },
   },
 
   created_by:  { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

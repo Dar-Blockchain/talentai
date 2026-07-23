@@ -33,6 +33,7 @@ export interface WebinarStats {
   segment_breakdown: Record<string, number>;
   utm_breakdown: Record<string, number>;
   channel_breakdown: Record<string, number>;
+  sector_breakdown: Record<string, number>;
 }
 
 export interface Webinar {
@@ -103,7 +104,7 @@ export interface WebinarSubmission {
     phone: string | null;
     entreprise: string | null;
     position: string | null;
-    sector: WebinarSector | null;
+    sector: WebinarSector[];
     hr_team_size: WebinarHrTeamSize | null;
     profile_type: WebinarProfileType | null;
   };

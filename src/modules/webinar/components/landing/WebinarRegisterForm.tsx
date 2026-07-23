@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useRouter } from "next/router";
 import { motion } from "framer-motion";
-import { CheckCircle2 } from "lucide-react";
+import { CheckCircle2, ChevronDown } from "lucide-react";
 import { useSaveWebinarProgressMutation } from "@/modules/webinar/queries";
 import { validateEmail } from "@/lib/validation/email";
 import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
@@ -11,6 +11,9 @@ import { Checkbox } from "@/modules/shared/ui/shadcn/checkbox";
 import { Alert, AlertDescription } from "@/modules/shared/ui/shadcn/alert";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuCheckboxItem,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { WebinarSubmitButton } from "./WebinarSubmitButton";
 import i18n from "@/i18n/config";
 import type {
@@ -69,6 +72,11 @@ const EASE = [0.22, 1, 0.36, 1] as const;
 
 const labelCn = "text-[10.5px] font-semibold uppercase text-[#7E9089]";
 const inputCn = "rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25";
+const multiSelectTriggerCn =
+  "group rounded-lg border border-[#E2E0D8] bg-white shadow-xs transition-all duration-200 " +
+  "hover:border-[#6AD39C]/50 " +
+  "focus-visible:outline-none focus-visible:border-[#6AD39C] focus-visible:ring-[3px] focus-visible:ring-[#6AD39C]/25 " +
+  "data-[state=open]:border-[#6AD39C] data-[state=open]:ring-[3px] data-[state=open]:ring-[#6AD39C]/20";
 
 /**
  * Self-contained "Reserve Your Spot" card: owns its own field state, saves
@@ -96,13 +104,18 @@ export function WebinarRegisterForm({
 
   const [form, setForm] = useState<{
     nom: string; email: string; phone: string; entreprise: string;
-    position: string; sector: WebinarSector | "";
+    position: string; sector: WebinarSector[];
     hr_team_size: WebinarHrTeamSize | ""; profile_type: WebinarProfileType | "";
   }>({
     nom: "", email: "", phone: "", entreprise: "",
-    position: "", sector: "",
+    position: "", sector: [],
     hr_team_size: "", profile_type: "",
   });
+  const toggleSector = (v: WebinarSector) =>
+    setForm((f) => ({
+      ...f,
+      sector: f.sector.includes(v) ? f.sector.filter((s) => s !== v) : [...f.sector, v],
+    }));
   // Self-reported discovery channel — distinct from URL-based UTM tracking
   // (captured separately below), so it lives outside the WebinarContact shape.
   const [sourceChannel, setSourceChannel] = useState<WebinarSourceChannel | "">("");
@@ -119,7 +132,17 @@ export function WebinarRegisterForm({
   const emailVal = form.email.trim();
   const validEmail = validateEmail(emailVal) === true;
   const showEmailError = emailVal.length > 0 && !validEmail;
-  const canSubmit = consent && form.nom.trim() !== "" && validEmail && form.profile_type !== "";
+  const canSubmit =
+    consent &&
+    form.nom.trim() !== "" &&
+    validEmail &&
+    form.entreprise.trim() !== "" &&
+    form.position.trim() !== "" &&
+    form.sector.length > 0 &&
+    form.hr_team_size !== "" &&
+    form.profile_type !== "" &&
+    form.phone.trim() !== "" &&
+    sourceChannel !== "";
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -249,8 +272,7 @@ export function WebinarRegisterForm({
 
             <div className="space-y-1.5">
               <Label htmlFor="entreprise" className={labelCn} style={{ letterSpacing: "0.08em" }}>
-                {t("registerForm.company")}{" "}
-                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+                {t("registerForm.company")} *
               </Label>
               <Input
                 id="entreprise"
@@ -258,13 +280,13 @@ export function WebinarRegisterForm({
                 onChange={(e) => setForm((f) => ({ ...f, entreprise: e.target.value }))}
                 placeholder={t("registerForm.companyPlaceholder")}
                 className={inputCn}
+                required
               />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="position" className={labelCn} style={{ letterSpacing: "0.08em" }}>
-                {t("registerForm.position")}{" "}
-                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+                {t("registerForm.position")} *
               </Label>
               <Input
                 id="position"
@@ -272,37 +294,74 @@ export function WebinarRegisterForm({
                 onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
                 placeholder={t("registerForm.positionPlaceholder")}
                 className={inputCn}
+                required
               />
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="sector" className={labelCn} style={{ letterSpacing: "0.08em" }}>
-                {t("registerForm.sector")}{" "}
-                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+                {t("registerForm.sector")} *
               </Label>
-              <Select
-                value={form.sector}
-                onValueChange={(v) => setForm((f) => ({ ...f, sector: v as WebinarSector }))}
-              >
-                <SelectTrigger id="sector" className={`w-full ${inputCn}`}>
-                  <SelectValue placeholder={t("registerForm.sectorPlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button
+                    type="button"
+                    id="sector"
+                    className={`w-full h-9 px-3 flex items-center justify-between gap-1.5 text-[14px] ${multiSelectTriggerCn}`}
+                  >
+                    {form.sector.length === 0 ? (
+                      <span className="truncate text-slate-400 font-normal">{t("registerForm.sectorPlaceholder")}</span>
+                    ) : (
+                      <span className="flex items-center gap-1 flex-1 min-w-0 overflow-hidden">
+                        {form.sector.length <= 2 ? (
+                          form.sector.map((s) => (
+                            <span
+                              key={s}
+                              className="inline-flex items-center rounded-full bg-[#6AD39C]/12 px-2 py-0.5 text-[11.5px] font-medium text-[#10453F] whitespace-nowrap"
+                            >
+                              {t(`registerForm.${SECTOR_I18N_KEY[s]}`)}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-[#6AD39C]/12 px-2 py-0.5 text-[11.5px] font-medium text-[#10453F] whitespace-nowrap">
+                            {t("registerForm.sectorSelectedCount", { count: form.sector.length })}
+                          </span>
+                        )}
+                      </span>
+                    )}
+                    <ChevronDown
+                      size={14}
+                      className="text-slate-400 shrink-0 transition-transform duration-200 group-data-[state=open]:rotate-180 group-data-[state=open]:text-[#6AD39C]"
+                    />
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent
+                  align="start"
+                  className="w-64 rounded-xl border-[#E2E0D8] shadow-lg p-1.5"
+                >
                   {SECTORS.map((v) => (
-                    <SelectItem key={v} value={v}>{t(`registerForm.${SECTOR_I18N_KEY[v]}`)}</SelectItem>
+                    <DropdownMenuCheckboxItem
+                      key={v}
+                      checked={form.sector.includes(v)}
+                      onSelect={(e) => e.preventDefault()}
+                      onCheckedChange={() => toggleSector(v)}
+                      className="rounded-lg text-[13.5px] focus:bg-[#6AD39C]/10 focus:text-[#10453F] data-[state=checked]:bg-[#6AD39C]/10 data-[state=checked]:font-medium data-[state=checked]:text-[#10453F] [&_svg]:text-[#6AD39C]"
+                    >
+                      {t(`registerForm.${SECTOR_I18N_KEY[v]}`)}
+                    </DropdownMenuCheckboxItem>
                   ))}
-                </SelectContent>
-              </Select>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
 
             <div className="space-y-1.5">
               <Label htmlFor="hr_team_size" className={labelCn} style={{ letterSpacing: "0.08em" }}>
-                {t("registerForm.hrTeamSize")}{" "}
-                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+                {t("registerForm.hrTeamSize")} *
               </Label>
               <Select
                 value={form.hr_team_size}
                 onValueChange={(v) => setForm((f) => ({ ...f, hr_team_size: v as WebinarHrTeamSize }))}
+                required
               >
                 <SelectTrigger id="hr_team_size" className={`w-full ${inputCn}`}>
                   <SelectValue placeholder={t("registerForm.hrTeamSizePlaceholder")} />
@@ -336,8 +395,7 @@ export function WebinarRegisterForm({
 
             <div className="space-y-1.5">
               <Label htmlFor="phone" className={labelCn} style={{ letterSpacing: "0.08em" }}>
-                {t("registerForm.phone")}{" "}
-                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+                {t("registerForm.phone")} *
               </Label>
               <Input
                 id="phone"
@@ -346,17 +404,18 @@ export function WebinarRegisterForm({
                 onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
                 placeholder={t("registerForm.phonePlaceholder")}
                 className={inputCn}
+                required
               />
             </div>
 
             <div className="space-y-1.5 sm:col-span-2">
               <Label htmlFor="source_channel" className={labelCn} style={{ letterSpacing: "0.08em" }}>
-                {t("registerForm.sourceChannel")}{" "}
-                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+                {t("registerForm.sourceChannel")} *
               </Label>
               <Select
                 value={sourceChannel}
                 onValueChange={(v) => setSourceChannel(v as WebinarSourceChannel)}
+                required
               >
                 <SelectTrigger id="source_channel" className={`w-full ${inputCn}`}>
                   <SelectValue placeholder={t("registerForm.sourceChannelPlaceholder")} />

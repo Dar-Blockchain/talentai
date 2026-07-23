@@ -236,12 +236,19 @@ exports.inviteToWebinar = async (id, emails) => {
 };
 
 exports.refreshStats = async (id) => {
+  // Contact/source fields (segment, sector, channel, UTM) are captured at
+  // registration time via saveProgress, before completion — so this must
+  // pull ALL submissions, not just completed ones, or early registrants who
+  // haven't finished the questionnaire yet get silently excluded from those
+  // breakdowns. Scoring-derived breakdowns (maturity/qualification/avg_score)
+  // stay correct regardless, since those fields simply don't exist yet on
+  // incomplete docs and are skipped by the truthy checks below.
   const [total, completed, submissions] = await Promise.all([
     WebinarSubmission.countDocuments({ webinar_id: id }),
     WebinarSubmission.countDocuments({ webinar_id: id, completed: true }),
     WebinarSubmission.find(
-      { webinar_id: id, completed: true },
-      { "scoring.total100": 1, "scoring.maturityLevel": 1, "scoring.qualification.status": 1, "contact.profile_type": 1, "source.utm_source": 1, "source.channel": 1 },
+      { webinar_id: id },
+      { "scoring.total100": 1, "scoring.maturityLevel": 1, "scoring.qualification.status": 1, "contact.profile_type": 1, "contact.sector": 1, "source.utm_source": 1, "source.channel": 1 },
     ).lean(),
   ]);
 
@@ -250,6 +257,7 @@ exports.refreshStats = async (id) => {
   const segmentBreakdown       = {};
   const utmBreakdown           = {};
   const channelBreakdown       = {};
+  const sectorBreakdown        = {};
   let totalScore = 0, scoredCount = 0;
 
   for (const s of submissions) {
@@ -268,6 +276,16 @@ exports.refreshStats = async (id) => {
     const channel = s.source?.channel;
     if (channel) channelBreakdown[channel] = (channelBreakdown[channel] || 0) + 1;
 
+    // Multi-select — one registrant can add to more than one sector bucket.
+    // `sector` predates the multi-select change, so old docs read via .lean()
+    // (no schema casting) may still hold a bare string instead of an array —
+    // normalize so this doesn't silently iterate the string's characters.
+    const rawSector = s.contact?.sector;
+    const sectors = Array.isArray(rawSector) ? rawSector : (typeof rawSector === "string" && rawSector ? [rawSector] : []);
+    for (const sector of sectors) {
+      sectorBreakdown[sector] = (sectorBreakdown[sector] || 0) + 1;
+    }
+
     if (s.scoring?.total100 != null) { totalScore += s.scoring.total100; scoredCount++; }
   }
 
@@ -282,6 +300,7 @@ exports.refreshStats = async (id) => {
       "stats.segment_breakdown":       segmentBreakdown,
       "stats.utm_breakdown":           utmBreakdown,
       "stats.channel_breakdown":       channelBreakdown,
+      "stats.sector_breakdown":        sectorBreakdown,
     }},
     { new: true },
   );

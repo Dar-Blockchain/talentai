@@ -23,6 +23,15 @@ const SOURCE_CHANNEL_LABEL: Record<string, string> = {
   referral: "Referral", newsletter: "Newsletter", other: "Other",
 };
 
+// `sector` used to be a single string before it became multi-select — old
+// submissions read via .lean() aren't auto-cast by Mongoose, so this can
+// still arrive as a bare string (or null/undefined) instead of an array.
+function toSectorArray(v: unknown): string[] {
+  if (Array.isArray(v)) return v as string[];
+  if (typeof v === "string" && v) return [v];
+  return [];
+}
+
 export async function exportWebinarSubmissions(w: Webinar): Promise<void> {
   const result = await adminWebinarApi.listSubmissions(w._id, { limit: 5000 });
   const submissions = result?.data ?? [];
@@ -33,7 +42,7 @@ export async function exportWebinarSubmissions(w: Webinar): Promise<void> {
     Phone: s.contact?.phone ?? "",
     Company: s.contact?.entreprise ?? "",
     Position: s.contact?.position ?? "",
-    Sector: s.contact?.sector ? SECTOR_LABEL[s.contact.sector] ?? s.contact.sector : "",
+    Sector: toSectorArray(s.contact?.sector).map((sec) => SECTOR_LABEL[sec] ?? sec).join(", "),
     "HR Team Size": s.contact?.hr_team_size ? HR_TEAM_SIZE_LABEL[s.contact.hr_team_size] ?? s.contact.hr_team_size : "",
     Segment: s.contact?.profile_type ?? "",
     Language: s.lang ?? "",

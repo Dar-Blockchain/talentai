@@ -15,7 +15,7 @@ export interface WebinarContact {
   phone?: string;
   entreprise: string;
   position?: string;
-  sector?: WebinarSector | "";
+  sector?: WebinarSector[];
   hr_team_size?: WebinarHrTeamSize | "";
   profile_type?: WebinarProfileType | "";
 }

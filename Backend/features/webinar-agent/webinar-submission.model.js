@@ -11,10 +11,11 @@ const WebinarSubmissionSchema = new mongoose.Schema({
     phone:        { type: String, default: null },
     entreprise:   { type: String, default: null },
     position:     { type: String, default: null },
+    // Multi-select — a registrant can span more than one sector.
     sector: {
-      type: String,
+      type: [String],
       enum: ["technology", "finance", "healthcare", "retail", "manufacturing", "education", "telecom", "public_sector", "other"],
-      default: null,
+      default: [],
     },
     // Bucketed headcount, mirrors the qualification-grid ranges.
     hr_team_size: { type: String, enum: ["lt10", "10_50", "50_200", "gt200"], default: null },

@@ -49,6 +49,10 @@ exports.saveProgress = async ({ submissionId, webinarId, contact, source, lang, 
     doc = await WebinarSubmission.create({ ...$set });
   }
 
+  // Fire-and-forget — segment/sector/channel breakdowns are captured here,
+  // at registration, so refresh stats now rather than waiting for completion.
+  refreshStats(webinarId).catch(() => {});
+
   return { submissionId: doc._id.toString(), completed: doc.completed === true, isReturning };
 };
 
