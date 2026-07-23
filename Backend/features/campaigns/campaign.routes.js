@@ -14,7 +14,7 @@ router.delete("/:campaignId/participate/:participantId", requireAuth, authLogMid
 router.get("/metrics", requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("InternalCampaign"), resolveCompanyActor, campaignController.getCampaignMetrics);
 router.get("/link/:token", authLogMiddleware("InternalCampaign"), campaignController.getCampaignByLinkToken);
 router.post("/link/:token/join", authLogMiddleware("InternalCampaign"), (req, res, next) => {
-  const token = req.cookies?.api_token;
+  const token = req.headers.authorization?.startsWith("Bearer ") || req.cookies?.jwt_token;
   if (token) return requireAuth(req, res, next);
   next();
 }, campaignController.joinCampaignByLink);

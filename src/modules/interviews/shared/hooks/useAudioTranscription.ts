@@ -11,7 +11,13 @@ export const useAudioTranscription = ({
   interviewConfig,
   showNotification,
   jobData,
+  cameraLive = true,
 }: UseAudioTranscriptionOptions): UseAudioTranscriptionReturn => {
+  // Mirrors `cameraLive` into a ref so the audio-processing callback (registered
+  // once per transcriber session) always reads the current value.
+  const cameraLiveRef = useRef(cameraLive);
+  useEffect(() => { cameraLiveRef.current = cameraLive; }, [cameraLive]);
+  const [cameraBlockedSubmit, setCameraBlockedSubmit] = useState(false);
 
   // ── Recording ────────────────────────────────────────────────────────────────
   const [isRecording, setIsRecording]               = useState(false);
@@ -158,7 +164,7 @@ export const useAudioTranscription = ({
 
   // ── Keyword extraction for AssemblyAI word boost ──────────────────────────────
 
-  const extractTechnicalKeywords = (_config: InterviewConfig, jd?: any): string[] => {
+  const extractTechnicalKeywords = (config: InterviewConfig, jd?: any): string[] => {
     const jdKeywords: string[] = [];
     if (jd) {
       (jd.skillAnalysis?.requiredSkills || []).forEach((s: any) => { if (s.name) jdKeywords.push(s.name); });
@@ -169,6 +175,17 @@ export const useAudioTranscription = ({
         });
       });
     }
+    // Proper nouns most likely to be mangled by accented speech
+    const ctx: any = (config as any)?.context || {};
+    const candidateName: string | undefined = ctx.candidateName || (config as any)?.candidateName;
+    const targetRole:    string | undefined = ctx.targetRole    || jd?.jobDetails?.title;
+    const targetCompany: string | undefined = ctx.targetCompany || jd?.createdBy?.name || jd?.companyName;
+    const priorEmployers: string[] = Array.isArray(ctx.priorEmployers) ? ctx.priorEmployers : [];
+    const properNouns = [candidateName, targetRole, targetCompany, ...priorEmployers]
+      .filter((v): v is string => typeof v === 'string' && v.trim().length > 1)
+      .flatMap(v => v.split(/[\s,;/]+/))
+      .filter(v => v.length > 1);
+    jdKeywords.push(...properNouns);
     const baseKeywords = [
       'JavaScript', 'TypeScript', 'Python', 'Java', 'Go', 'Rust', 'PHP', 'Ruby', 'Swift',
       'React', 'Angular', 'Vue', 'Node', 'Express', 'Next', 'Next.js', 'Node.js',
@@ -246,6 +263,16 @@ export const useAudioTranscription = ({
 
     if (!socketRef.current?.connected || !sessionIdRef.current) return;
 
+    // Camera must be live to submit — hold the answer (don't discard it) and
+    // auto-send once the camera comes back (see the effect below).
+    if (!cameraLiveRef.current) {
+      setCameraBlockedSubmit((already) => {
+        if (!already) showNotification('Turn your camera back on to submit your answer — your response is saved.', 'warning');
+        return true;
+      });
+      return;
+    }
+
     blockTurnsRef.current = true;
     socketRef.current.emit('candidate_response', {
       sessionId:       sessionIdRef.current,
@@ -262,11 +289,17 @@ export const useAudioTranscription = ({
     setSpeechPhase('thinking');
     addTranscriptDebugLog(`📤 Sent (${completeAnswer.length} chars)`);
 
+    setCameraBlockedSubmit(false);
     setAccumulatedTurns([]);
     accumulatedTurnsRef.current = [];
     speakingStartTimeRef.current = null;
     setTimeout(() => setCurrentTranscript(''), 1000);
-  }, [socketRef, sessionIdRef, addTranscriptDebugLog]);
+  }, [socketRef, sessionIdRef, addTranscriptDebugLog, showNotification]);
+
+  // Camera came back while an answer was held — auto-submit it now.
+  useEffect(() => {
+    if (cameraLive && cameraBlockedSubmit) sendAccumulatedAnswer();
+  }, [cameraLive, cameraBlockedSubmit, sendAccumulatedAnswer]);
 
   // ── Reset per-question state ──────────────────────────────────────────────────
 
@@ -327,6 +360,13 @@ export const useAudioTranscription = ({
         const text = turn.transcript?.trim();
         if (!text) return;
 
+        // Camera must be live for the candidate to speak at all — ignore any
+        // turn (including late-arriving buffered ones) while it's off.
+        if (!cameraLiveRef.current) {
+          setCurrentTranscript('');
+          return;
+        }
+
         if (!speakingStartTimeRef.current) {
           speakingStartTimeRef.current = Date.now();
         }
@@ -381,10 +421,10 @@ export const useAudioTranscription = ({
           return;
         }
 
-        if (turn.end_of_turn_confidence < 0.2) {
+        if (turn.end_of_turn_confidence < 0.12) {
           setAgentState('waiting');
-          setAgentMessage('Could not clearly hear you. Please continue speaking...');
-          showNotification('Speech very unclear - please speak more clearly', 'warning');
+          setAgentMessage('We may have missed part of that — please repeat if the text below is wrong.');
+          showNotification('We may have missed part of that — please repeat if the text is wrong.', 'info');
           setAccumulatedTranscript(text);
           addTranscriptDebugLog(`⚠️ Very low confidence: ${(turn.end_of_turn_confidence * 100).toFixed(1)}%`);
           return;
@@ -457,7 +497,8 @@ export const useAudioTranscription = ({
           const zcrRate = zcr / inputBuffer.length;
           // Keyboard clicks / sharp transients spike ZCR above 0.40; speech stays below.
           // RMS gate rejects breathing and ambient noise regardless of ZCR.
-          const looksLikeSpeech = rms > SPEECH_THRESHOLD && zcrRate < 0.40;
+          // Camera off → mic is effectively muted, so never register speech.
+          const looksLikeSpeech = cameraLiveRef.current && rms > SPEECH_THRESHOLD && zcrRate < 0.40;
 
           if (looksLikeSpeech) {
             speechFrames++;
@@ -484,8 +525,10 @@ export const useAudioTranscription = ({
           // Send real audio during most of reading time (keeps AssemblyAI calibrated,
           // prevents cold-start on first word). For the last 1500 ms, send silence
           // so AssemblyAI flushes pending reading-time speech before reading ends.
+          // Also send silence whenever the camera is off — the candidate isn't
+          // allowed to speak until it's back on.
           const int16Buffer = new Int16Array(inputBuffer.length);
-          if (!sendSilenceRef.current) {
+          if (!sendSilenceRef.current && cameraLiveRef.current) {
             for (let i = 0; i < inputBuffer.length; i++) {
               int16Buffer[i] = Math.max(-32768, Math.min(32767, inputBuffer[i] * 32767));
             }
@@ -524,8 +567,10 @@ export const useAudioTranscription = ({
   // ── Initialize audio + transcription ─────────────────────────────────────────
 
   const initializeAudio = useCallback(async () => {
+    // AGC compresses accented vowels and noiseSuppression can smear consonants.
+    // Keep echoCancellation on (needed for laptop mic + speaker setups).
     const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, sampleRate: 16000, channelCount: 1 },
+      audio: { echoCancellation: true, noiseSuppression: false, autoGainControl: false, sampleRate: 16000, channelCount: 1 },
     });
 
     audioStreamRef.current = stream;
@@ -751,5 +796,6 @@ export const useAudioTranscription = ({
     silenceWarning,
     questionAnswerElapsed,
     questionAnswerRemaining: Math.max(0, QUESTION_MAX_DURATION - questionAnswerElapsed),
+    cameraBlockedSubmit,
   };
 };

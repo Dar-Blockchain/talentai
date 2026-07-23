@@ -33,8 +33,10 @@ Analyze the job description below and return a single valid JSON object. No mark
 If the input is not a valid job description (random words, gibberish, offensive content, or completely unrelated text) → return exactly this and nothing else:
 { "error": "invalid_input" }
 
-If the description is valid but too vague to generate a meaningful job post (e.g., only a job title with no context, fewer than 10 meaningful words, no indication of role scope or required skills) → return exactly this and nothing else:
+If the description is truly too vague to work with (e.g., a single unrelated word like "job" or "asdf", NO role/domain hint at all) → return exactly this and nothing else:
 { "error": "insufficient_detail" }
+
+A short description that names a role type (e.g. "fullstack developer 3 years", "backend engineer Python", "mobile dev") IS enough — proceed to generate the post and INFER the standard companion skills for that role (rules below).
 
 ${internshipInstruction}
 ━━━ OUTPUT STRUCTURE ━━━
@@ -109,11 +111,37 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- required skills — include EVERY skill explicitly named in the description (up to 3). When more than 3 skills are mentioned, use this priority order:
-  1. Skills marked as "mandatory", "required", or "must have" — always include these first.
-  2. Skills with explicit years signals — never drop these in favor of skills with no years.
-  3. Skills with the strongest qualifier (mastery > solid > comfortable > basic).
-  Do NOT pad — if the description names 2, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
+- required skills — always return between 1 and 3 skills. Sourcing priority (in order):
+  1. EVERY skill explicitly named in the description — always include these first, in the order they appear (up to 3).
+     Among explicit skills, when more than 3 are mentioned prioritize:
+       a. Skills marked "mandatory", "required", or "must have".
+       b. Skills with explicit years signals.
+       c. Skills with the strongest qualifier (mastery > solid > comfortable > basic).
+  2. If the description names FEWER than 3 skills, INFER the missing slots from the STANDARD companion stack for the stated role type. Fill up to a total of 3 skills — do not exceed 3.
+  3. Explicit skills ALWAYS outrank inferred ones on importance and appear first in the list.
+
+  Inference guide — apply only when the description does not name enough skills to fill 3 slots. Pick the most widely used, industry-standard companions for the role:
+  - "Fullstack" / "Full-stack" developer          → React.js (frontend default), Node.js (backend default), PostgreSQL (DB default). If a specific stack element is already named, honour it (e.g. "fullstack with Vue" → Vue.js instead of React.js).
+  - "Frontend" developer (no framework named)     → React.js, TypeScript, HTML/CSS.
+  - "Backend" developer (no framework named)      → Node.js (default) OR Python if the description hints Python/Django/Flask/data/ML. Then PostgreSQL and REST APIs.
+  - "Mobile" developer (no framework named)       → React Native (default). Only pick Swift/Kotlin/Flutter if explicitly named.
+  - "Data" engineer                                → Python, SQL, Apache Airflow (or Apache Spark if description hints big data).
+  - "Data" analyst / scientist                    → Python, SQL, Pandas (analyst) or PyTorch (scientist).
+  - "DevOps" / "SRE" / "Platform" engineer        → Docker, Kubernetes, AWS.
+  - "AI/ML" / "Machine Learning" engineer         → Python, PyTorch, LangChain (or MLflow for MLOps signal).
+  - "Blockchain" / "Web3" developer               → Solidity, Hardhat, Ethers.js.
+  - "Game" developer                              → Unity (default) with C# (Unity), OR Unreal Engine with C++ if explicitly named.
+  - "Embedded" engineer                            → C, C++, FreeRTOS.
+  - "Security" / "AppSec" engineer                 → Burp Suite, OWASP ZAP, one cloud IAM (AWS IAM default).
+  - "QA" / "Test" engineer                        → Cypress, Playwright, Jest.
+
+  Rules for inferred skills:
+  - level must be null (code will default them to Junior/level 2).
+  - importance must be strictly LOWER than any explicit skill's importance. If ALL 3 are inferred, use importance 5, 4, 3 in listed order.
+  - The role type MUST be clearly recognisable from the description; do not invent skills for a generic "engineer" or "developer" with no domain — return the insufficient_detail marker instead.
+  - Never invent unusual, niche, or obscure technologies. Stick to widely used industry standards.
+
+  Prefer specific named tools over generic terms in every slot.
 
 - years parsing rule:
   - If a years signal PRECEDES a skill name (e.g. "2 years Node.js"), apply it to the skill that FOLLOWS it.

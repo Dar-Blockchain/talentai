@@ -13,6 +13,8 @@ interface InterviewContainerProps {
   currentTranscript?: string;
   resultsReady: boolean;
   noBorder?: boolean;
+  /** True once a face is actually visible in the camera — required to start. */
+  faceDetected?: boolean;
   onStartInterview: () => void;
   onBack?: () => void;
   /** Overrides the default "Back to post details" label (e.g. "Back to campaign" for campaign interviews). */
@@ -32,6 +34,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   currentTranscript,
   resultsReady,
   noBorder = false,
+  faceDetected = false,
   onStartInterview,
   onBack,
   backLabel,
@@ -43,13 +46,14 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   const { t } = useTranslation('interview');
   const [waitDots] = useState('');
 
-  const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted';
+  const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted' && faceDetected;
 
   const checks = useMemo(() => [
     { label: t('container.check_camera'),  ok: cameraStatus === 'granted' },
+    { label: t('container.check_face'),    ok: cameraStatus === 'granted' && faceDetected },
     { label: t('container.check_system'),  ok: connectionStatus === 'connected' },
     { label: t('container.check_loaded'),  ok: isHydrated },
-  ], [cameraStatus, connectionStatus, isHydrated, t]);
+  ], [cameraStatus, faceDetected, connectionStatus, isHydrated, t]);
 
   return (
     <div
@@ -73,6 +77,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
             checks={checks}
             allReady={allReady}
             cameraStatus={cameraStatus}
+            faceDetected={faceDetected}
             onStartInterview={onStartInterview}
             onBack={onBack}
             backLabel={backLabel}
@@ -157,12 +162,13 @@ const ReadinessChecklist: React.FC<{
   checks: { label: string; ok: boolean }[];
   allReady: boolean;
   cameraStatus: CameraStatus;
+  faceDetected: boolean;
   onStartInterview: () => void;
   onBack?: () => void;
   backLabel?: string;
   jobTitle?: string;
   companyName?: string;
-}> = ({ checks, allReady, cameraStatus, onStartInterview, onBack, backLabel, jobTitle, companyName }) => {
+}> = ({ checks, allReady, cameraStatus, faceDetected, onStartInterview, onBack, backLabel, jobTitle, companyName }) => {
   const { t } = useTranslation('interview');
 
   return (
@@ -174,7 +180,7 @@ const ReadinessChecklist: React.FC<{
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
         {checks.map(({ label, ok }) => (
           <div
             key={label}
@@ -198,6 +204,13 @@ const ReadinessChecklist: React.FC<{
           <div className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-[rgba(245,158,11,0.05)] border border-[rgba(245,158,11,0.18)]">
             <Video size={14} color="#f59e0b" className="shrink-0" />
             <p className="font-sans text-[0.72rem] text-[#d97706]">{t('container.camera_warning')}</p>
+          </div>
+        )}
+
+        {cameraStatus === 'granted' && !faceDetected && (
+          <div className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-[rgba(245,158,11,0.05)] border border-[rgba(245,158,11,0.18)]">
+            <Video size={14} color="#f59e0b" className="shrink-0" />
+            <p className="font-sans text-[0.72rem] text-[#d97706]">{t('container.face_warning')}</p>
           </div>
         )}
 

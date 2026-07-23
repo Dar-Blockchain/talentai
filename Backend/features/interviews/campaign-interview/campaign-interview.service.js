@@ -52,19 +52,38 @@ function buildMixedQuestionPrompt({
     .map(([k, v]) => `${k}=${Math.round(v.percentage)}%`)
     .join(" | ");
 
-  const allTypes = ["behavioral", "situational", "technical", "problem-solving", "motivational"];
-  const recentTypes = usedQuestionTypes.slice(-2);
-  const recommendedType = allTypes.find(t => !recentTypes.includes(t)) || "situational";
+  const isSkillTest = moduleType === "SKILL_TEST";
 
-  const phaseGuide = {
-    "warm-up":     "Build rapport. Keep questions broad and welcoming. Ask about background and overall experience. No pressure.",
-    "exploration": "Dig into specific skills and past experiences. Mix behavioral (STAR method) and situational questions. Introduce topic variety.",
-    "deep-dive":   "Push for depth. Explore trade-offs, challenges, and advanced knowledge. Connect to specific points from earlier answers.",
-    "closing":     "Wrap up gracefully. Cover any significant coverage gaps. One final meaningful question, then prepare to close.",
-  };
+  const allTypes = isSkillTest
+    ? ["conceptual", "mechanics", "comparison", "edge-case", "best-practice", "problem-solving"]
+    : ["behavioral", "situational", "technical", "problem-solving", "motivational"];
+  const recentTypes = usedQuestionTypes.slice(-2);
+  const recommendedType = allTypes.find(t => !recentTypes.includes(t)) || (isSkillTest ? "conceptual" : "situational");
+
+  const phaseGuide = isSkillTest
+    ? {
+        "warm-up":     "Open with a direct, low-pressure knowledge question. Ask them to define or describe a core concept in their own words. Do NOT ask about years of experience or past projects.",
+        "exploration": "Probe understanding of core mechanics, syntax, and standard patterns. Ask HOW and WHY things work — not whether they have used them. Vary conceptual, mechanics, and comparison questions.",
+        "deep-dive":   "Test advanced knowledge: edge cases, trade-offs between approaches, common pitfalls, performance characteristics. Push for precision — probe if answers are vague.",
+        "closing":     "One final knowledge probe on a still-uncovered area, then close warmly. No behavioral or resume-style questions.",
+      }
+    : {
+        "warm-up":     "Build rapport. Keep questions broad and welcoming. Ask about background and overall experience. No pressure.",
+        "exploration": "Dig into specific skills and past experiences. Mix behavioral (STAR method) and situational questions. Introduce topic variety.",
+        "deep-dive":   "Push for depth. Explore trade-offs, challenges, and advanced knowledge. Connect to specific points from earlier answers.",
+        "closing":     "Wrap up gracefully. Cover any significant coverage gaps. One final meaningful question, then prepare to close.",
+      };
+
+  const modeBanner = isSkillTest
+    ? `\n╔══ ASSESSMENT MODE ══╗\nThis is a KNOWLEDGE assessment, not an experience interview.\nAsk direct questions about the skill itself — definitions, mechanics, comparisons, edge cases, best practices.\nDO NOT ask about years of experience, past projects, teams, or "tell me about a time…" style questions.\n`
+    : "";
+  const questionTypeEnum = isSkillTest
+    ? "conceptual|mechanics|comparison|edge-case|best-practice|problem-solving|closing"
+    : "behavioral|situational|technical|problem-solving|motivational|closing";
 
   return `
 You are conducting a live interview. Use the full context below to generate your next move.
+${modeBanner}
 
 â•â•â•â• INTERVIEW TOPIC â•â•â•â•
 ${interviewTopic || "General assessment"}
@@ -121,7 +140,7 @@ Return ONLY valid JSON â€” no extra text, no markdown:
     { "area": "<area_key>", "increase": <0-25> }
   ],
   "decision": "next_question|follow_up|end_interview",
-  "questionType": "behavioral|situational|technical|problem-solving|motivational|closing",
+  "questionType": "${questionTypeEnum}",
   "nextQuestion": "<next question or closing statement>",
   "report": {
     "strengths": ["<strength observed>"],
@@ -166,19 +185,19 @@ function parseJSON(raw, fallback) {
 
 const SKILL_TEST_AREAS = (skill) => ({
   fundamentals: {
-    label: `${skill} Fundamentals`,
+    label: `${skill} Fundamentals & Definitions`,
     percentage: 0,
     questionsAsked: 0,
     weight: 30,
   },
-  practical_usage: {
-    label: `Practical ${skill} Usage`,
+  mechanics: {
+    label: `How ${skill} Works Internally`,
     percentage: 0,
     questionsAsked: 0,
     weight: 25,
   },
   advanced_topics: {
-    label: `Advanced ${skill} Topics`,
+    label: `Advanced ${skill} Concepts & Edge Cases`,
     percentage: 0,
     questionsAsked: 0,
     weight: 25,
@@ -582,7 +601,13 @@ class CampaignInterviewService {
       type: "SKILL_TEST",
       skill: s,
       topic: s,
-      systemPrompt: `You are a senior technical interviewer conducting a rigorous ${s} skill assessment.
+      systemPrompt: `You are a senior technical interviewer conducting a rigorous ${s} KNOWLEDGE assessment for an internal team member.
+
+CRITICAL — WHAT THIS IS NOT
+This is NOT a job interview. Do NOT ask about years of experience, past employers, projects the candidate has worked on, teams they were part of, or "tell me about a time..." style behavioral questions. Do NOT ask about their resume or background.
+
+CRITICAL — WHAT THIS IS
+This is a direct knowledge test of the candidate's understanding of ${s}. Every question must test what they KNOW about ${s} itself — definitions, mechanics, concepts, trade-offs, best practices, edge cases — not what they have DONE with it.
 
 QUESTION BANK MINDSET
 Draw from the same pool of real, well-known ${s} interview questions that show up in actual technical interviews and interview-prep guides for this skill -- never vague, generic, or invented-on-the-spot questions. Before asking anything, silently organize ${s} into the categories a real interview guide for it would use (for example, for React that's roughly: Fundamentals, Hooks, State management & data flow, Performance, Testing, Ecosystem/tooling -- work out the real equivalent categories for ${s} specifically, whatever they are). Every question should be one an expert in ${s} would instantly recognize as a genuine, commonly-asked interview question, in the spirit of:
@@ -773,13 +798,14 @@ ${conductRules}`;
     const openingContext = context.openingContext;
     const userMsg =
       moduleType === "SKILL_TEST"
-        ? `Generate a warm, professional opening message to start a ${topic} skill assessment.
+        ? `Generate a warm, professional opening message to start a ${topic} KNOWLEDGE assessment.
 The message must:
-1. Greet the candidate using "I" â€” do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
-2. Set expectations briefly â€” mention it will be a conversational assessment covering ${topic} from fundamentals to advanced topics.
-3. End with a natural warm-up question asking about their experience level with ${topic} and the kinds of projects they've used it on.
+1. Greet the candidate using "I" — do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
+2. Set expectations briefly — this is a knowledge check on ${topic}: definitions, concepts, mechanics, best practices. NOT an interview about their experience, projects, or background.
+3. End with a direct opening knowledge question — for example, asking them to explain what ${topic} is in their own words, or to describe one of its core building blocks. Do NOT ask about experience, projects, or how long they've used it.
 
 IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
+Never ask about experience, seniority, employers, or past projects — this is a knowledge test, not a job interview.
 Tone: encouraging, professional, human. Not robotic.
 Length: 3â€“4 sentences maximum. No bullet points, no headers.`
         : `Generate a warm, professional opening message to start an interview${openingContext ? ` covering: ${openingContext}` : ` on the topic: "${topic}"`}.
@@ -815,7 +841,7 @@ Length: 3â€“4 sentences maximum. No bullet points, no headers.`;
   _fallbackGreeting(moduleType, skill) {
     const topic = skill || "technical";
     return moduleType === "SKILL_TEST"
-      ? `Welcome! I'm your interviewer today and I'll be guiding you through a ${topic} assessment. We'll cover a range of topics from fundamentals to practical usage. To get started, could you tell me about your experience with ${topic} and the kinds of projects you've worked on?`
+      ? `Welcome! I'm your interviewer today and I'll be guiding you through a ${topic} knowledge assessment. This is a knowledge check — we'll cover core concepts, mechanics, and best practices of ${topic}, not your work history. To start us off, in your own words, what is ${topic} and what problem does it solve?`
       : `Welcome! I'm your interviewer today. This will be a relaxed conversation â€” not a test â€” so feel free to speak freely. To kick things off, could you give me a quick overview of your background and what you've been working on recently?`;
   }
 

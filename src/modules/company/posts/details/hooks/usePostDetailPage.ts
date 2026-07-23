@@ -8,6 +8,7 @@ import { useDeletePost } from "@/modules/company/posts/list/hooks/useDeletePost"
 import { useJobDetailQuery, useUpdatePostMutation } from "../queries";
 import { useUpdatePostStatusMutation } from "@/modules/company/posts/list/queries";
 import { buildInterviewUrl } from "@/lib/interviewSession";
+import { copyToClipboard } from "@/utils/functions";
 
 export const usePostDetailPage = () => {
   const router        = useRouter();
@@ -73,13 +74,13 @@ export const usePostDetailPage = () => {
     );
   };
 
-  const handleCopyLink = () => {
+  const handleCopyLink = async () => {
     const link = getInterviewLink();
     if (!link) return;
-    navigator.clipboard
-      .writeText(link)
-      .then(()  => showToast({ message: t("detail.toast.link_copied"),      severity: "success" }))
-      .catch(() => showToast({ message: t("detail.toast.link_copy_error"),  severity: "error"   }));
+    const ok = await copyToClipboard(link);
+    showToast(ok
+      ? { message: t("detail.toast.link_copied"),     severity: "success" }
+      : { message: t("detail.toast.link_copy_error"), severity: "error"   });
   };
 
   const handleUpdateLanguages = (languages: string[]) => {
