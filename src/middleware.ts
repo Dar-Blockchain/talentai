@@ -18,7 +18,8 @@ const PUBLIC_PATHS = [
   "/interviews",
   "/payments/stripe/callback",
   "/ui-kit",
-  "/webinar"
+  "/webinar",
+  "/blog"
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];
