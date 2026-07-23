@@ -114,7 +114,7 @@ const ApplicationHistoryRows = memo<Props>(({ items, showRail = true }) => {
         const rowClass = cn("group relative flex items-start gap-3 px-5 py-3.5 transition-colors hover:bg-slate-50/80", clickable && "cursor-pointer");
 
         return clickable ? (
-          <Link key={item.id} href={`/company/applications/${item.id}/assessment`} className={rowClass}>
+          <Link key={item.id} href={`/company/applications?applicationId=${item.id}`} className={rowClass}>
             {content}
           </Link>
         ) : (

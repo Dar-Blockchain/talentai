@@ -884,8 +884,9 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
 
     const query = { company: new ObjectId(companyId) };
 
-    if (filters.status) query.status = filters.status;
-    if (filters.postId) query.post = new ObjectId(filters.postId);
+    if (filters.status)        query.status = filters.status;
+    if (filters.postId)        query.post   = new ObjectId(filters.postId);
+    if (filters.applicationId) query._id    = new ObjectId(filters.applicationId);
 
     // "Take Action" deep-links from the dashboard — same definitions as the
     // Zone 1 KPI counts (getPendingShortlistsKPI / getNoshowsKPI / getUnreviewedInterviewsOver48Hours).

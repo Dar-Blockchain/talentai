@@ -138,7 +138,11 @@
     "subscription": {
       "remaining_label": "Remaining This Cycle",
       "posts_short": "posts",
-      "interviews_short": "interviews"
+      "interviews_short": "interviews",
+      "unlimited_short": "∞",
+      "multi_plan": "{{count}} active plans",
+      "plan_name": "{{name}} Plan",
+      "plan_suffix": "Plan"
     },
     "interview_activity": {
       "title": "Interview Activity",
@@ -441,6 +445,7 @@
       "no_cv_alert": "No CVs available for the current filters.",
       "action_filter_showing": "Showing",
       "action_filter_clear": "Clear",
+      "application_filter_showing": "Showing a single application",
       "status": {
         "all": "All statuses",
         "visited": "Visited",

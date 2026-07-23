@@ -221,7 +221,7 @@ export interface StatCardProps {
   color:   string;
   bg:      string;
   value:   React.ReactNode;
-  label:   string;
+  label:   React.ReactNode;
   loading: boolean;
   href?:   string;
 }

@@ -21,7 +21,13 @@ const HiringStatCards = memo<Props>(({ stats, appMetrics: appMet, loadingStats: 
   const { t } = useTranslation("dashboard");
   const { data: combined, isLoading: l2 } = useCombinedDetailsQuery();
   const c = combined?.combined;
-  const hasSub = !!c && (combined?.subscriptions?.length ?? 0) > 0;
+  const subs = combined?.subscriptions ?? [];
+  const hasSub = !!c && subs.length > 0;
+  const planLabelText = subs.length > 1
+    ? t("overview.subscription.multi_plan", "{{count}} active plans", { count: subs.length })
+    : subs[0]?.planName
+      ? t("overview.subscription.plan_name", "{{name}} Plan", { name: subs[0].planName })
+      : t("overview.subscription.plan_suffix", "Plan");
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -53,17 +59,21 @@ const HiringStatCards = memo<Props>(({ stats, appMetrics: appMet, loadingStats: 
           value={
             <div className="flex items-center gap-2.5">
               <div>
-                <span className="tabular-nums">{c?.usage.posts.remaining ?? 0}</span>
+                <span className="tabular-nums">
+                  {c?.usage.posts.remaining === -1 ? t("overview.subscription.unlimited_short", "∞") : c?.usage.posts.remaining ?? 0}
+                </span>
                 <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.posts_short", "posts")}</span>
               </div>
               <div className="w-px h-5 bg-slate-200" />
               <div>
-                <span className="tabular-nums">{c?.usage.monthlyInterviews.remaining ?? 0}</span>
+                <span className="tabular-nums">
+                  {c?.usage.monthlyInterviews.remaining === -1 ? t("overview.subscription.unlimited_short", "∞") : c?.usage.monthlyInterviews.remaining ?? 0}
+                </span>
                 <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.interviews_short", "interviews")}</span>
               </div>
             </div>
           }
-          label={t("overview.subscription.remaining_label", "Remaining This Cycle")}
+          label={planLabelText}
           href="/company/plans"
         />
       )}

@@ -138,7 +138,11 @@
     "subscription": {
       "remaining_label": "Restant ce cycle",
       "posts_short": "offres",
-      "interviews_short": "entretiens"
+      "interviews_short": "entretiens",
+      "unlimited_short": "∞",
+      "multi_plan": "{{count}} forfaits actifs",
+      "plan_name": "Forfait {{name}}",
+      "plan_suffix": "Forfait"
     },
     "interview_activity": {
       "title": "Activité des entretiens",
@@ -437,6 +441,7 @@
       "no_cv_alert": "Aucun CV disponible pour les filtres actuels.",
       "action_filter_showing": "Affichage",
       "action_filter_clear": "Effacer",
+      "application_filter_showing": "Affichage d'une seule candidature",
       "status": {
         "all": "Tous les statuts",
         "visited": "Visité",

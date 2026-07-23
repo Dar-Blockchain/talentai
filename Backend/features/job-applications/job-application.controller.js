@@ -544,7 +544,7 @@ module.exports.getApplicationsSummaryByCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
     const {
-      status, search, postId,
+      status, search, postId, applicationId,
       matchScoreMin, matchScoreMax,
       interviewScoreMin, interviewScoreMax,
       dateFrom, dateTo, sort, actionFilter,
@@ -552,9 +552,10 @@ module.exports.getApplicationsSummaryByCompany = async (req, res) => {
     } = req.query;
 
     const filters = {};
-    if (status)   filters.status   = status;
-    if (search)   filters.search   = search;
-    if (postId)   filters.postId   = postId;
+    if (status)        filters.status        = status;
+    if (search)        filters.search        = search;
+    if (postId)        filters.postId        = postId;
+    if (applicationId) filters.applicationId = applicationId;
     if (sort)     filters.sort     = sort;
     if (dateFrom) filters.dateFrom = dateFrom;
     if (dateTo)   filters.dateTo   = dateTo;
