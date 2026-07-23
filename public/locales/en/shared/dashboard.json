@@ -270,6 +270,50 @@
       "subtitle": "Internal campaigns by status"
     }
   },
+  "campaigns_dashboard": {
+    "stat": {
+      "total_campaigns": "Total Campaigns",
+      "total_participants": "Total Participants",
+      "completion_rate": "Completion Rate",
+      "avg_score": "Avg. AI Score",
+      "not_enough_data": "N/A"
+    },
+    "trend": {
+      "title": "Completion Trend",
+      "subtitle": "Campaign completions over the last 30 days",
+      "completed": "Completed",
+      "no_data": "No completions in this period"
+    },
+    "module_types": {
+      "title": "Campaigns by Module Type",
+      "subtitle": "Distribution of module types across campaigns",
+      "empty": "No campaigns yet",
+      "campaigns": "Campaigns",
+      "types": {
+        "QUESTIONNAIRE": "Questionnaire",
+        "AI_INTERVIEW": "AI Interview",
+        "SKILL_TEST": "Skill Test",
+        "TRAINING_PATH": "Training Path"
+      }
+    },
+    "recent_activity": {
+      "title": "Recent Activity",
+      "subtitle": "Latest campaign completions",
+      "empty": "No completions yet",
+      "score": "Score",
+      "completed_campaign": "Completed"
+    },
+    "table": {
+      "title": "Campaigns Overview",
+      "col_campaign": "Campaign",
+      "col_status": "Status",
+      "col_participants": "Participants",
+      "col_completion": "Completion",
+      "col_score": "Avg. Score",
+      "col_deadline": "Deadline",
+      "empty": "No campaigns yet"
+    }
+  },
   "sidebar": {
     "groups": {
       "main": "Main",
@@ -284,6 +328,7 @@
       "dashboard": "Dashboard",
       "hiring-dashboard": "Hiring Dashboard",
       "team-dashboard": "Team Dashboard",
+      "campaigns-dashboard": "Campaigns Dashboard",
       "kpi-dashboard": "KPI Dashboard",
       "campaigns": "Campaigns",
       "posts": "Posts",

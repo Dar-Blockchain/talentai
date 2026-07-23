@@ -17,6 +17,8 @@ const {
   deleteCampaign,
   getCampaignsByCompanyPaginated,
   getCampaignMetrics,
+  getCampaignAnalytics,
+  getCampaignsOverviewTable,
   updateCampaignStatus,
 } = require("./campaign.service");
 
@@ -328,6 +330,27 @@ exports.getCampaignMetrics = async (req, res) => {
     const companyId = req.auth?.companyId || req.user._id;
     const metrics = await getCampaignMetrics(companyId);
     res.status(200).json({ success: true, data: metrics });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.getCampaignAnalytics = async (req, res) => {
+  try {
+    const companyId = req.auth?.companyId || req.user._id;
+    const analytics = await getCampaignAnalytics(companyId);
+    res.status(200).json({ success: true, data: analytics });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.getCampaignsOverviewTable = async (req, res) => {
+  try {
+    const companyId = req.auth?.companyId || req.user._id;
+    const { page = 1, limit = 6, sortBy = null, sortDir = null } = req.query;
+    const result = await getCampaignsOverviewTable(companyId, page, limit, sortBy, sortDir);
+    res.status(200).json({ success: true, data: result.data, pagination: result.pagination });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

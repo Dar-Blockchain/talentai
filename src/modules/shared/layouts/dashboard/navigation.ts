@@ -3,6 +3,7 @@ import {
   Target,
   Users2,
   Megaphone,
+  BarChart3,
   Briefcase,
   Users,
   SlidersHorizontal,
@@ -16,8 +17,9 @@ import { EmployeePermissionKey } from "@/modules/company/employees/types/permiss
 import { MESSAGES_BASE_PATH } from "@/modules/chat/shared/constants/messagesRoutes";
 
 export const navigation = [
-  { id: "hiring-dashboard", icon: Target,          label: "Hiring Dashboard", href: "/company/dashboard/hiring" },
-  { id: "team-dashboard",   icon: Users2,          label: "Team Dashboard",   href: "/company/dashboard/team" },
+  { id: "hiring-dashboard",    icon: Target,          label: "Hiring Dashboard",    href: "/company/dashboard/hiring" },
+  { id: "team-dashboard",      icon: Users2,          label: "Team Dashboard",      href: "/company/dashboard/team" },
+  { id: "campaigns-dashboard", icon: BarChart3,       label: "Campaigns Dashboard", href: "/company/dashboard/campaigns" },
   { id: "campaigns",     icon: Megaphone,         label: "Campaigns",     href: "/company/campaigns" },
   { id: "posts",         icon: Briefcase,         label: "Posts",         href: "/company/posts" },
   { id: "employees",     icon: Users,             label: "Employees",     href: "/company/employees" },

@@ -270,6 +270,50 @@
       "subtitle": "Campagnes internes par statut"
     }
   },
+  "campaigns_dashboard": {
+    "stat": {
+      "total_campaigns": "Total campagnes",
+      "total_participants": "Total participants",
+      "completion_rate": "Taux de complétion",
+      "avg_score": "Score IA moyen",
+      "not_enough_data": "N/A"
+    },
+    "trend": {
+      "title": "Tendance de complétion",
+      "subtitle": "Complétions de campagnes ces 30 derniers jours",
+      "completed": "Terminées",
+      "no_data": "Aucune complétion sur cette période"
+    },
+    "module_types": {
+      "title": "Campagnes par type de module",
+      "subtitle": "Répartition des types de module par campagne",
+      "empty": "Aucune campagne pour l'instant",
+      "campaigns": "Campagnes",
+      "types": {
+        "QUESTIONNAIRE": "Questionnaire",
+        "AI_INTERVIEW": "Entretien IA",
+        "SKILL_TEST": "Test de compétences",
+        "TRAINING_PATH": "Parcours de formation"
+      }
+    },
+    "recent_activity": {
+      "title": "Activité récente",
+      "subtitle": "Dernières complétions de campagnes",
+      "empty": "Aucune complétion pour l'instant",
+      "score": "Score",
+      "completed_campaign": "Terminé"
+    },
+    "table": {
+      "title": "Aperçu des campagnes",
+      "col_campaign": "Campagne",
+      "col_status": "Statut",
+      "col_participants": "Participants",
+      "col_completion": "Complétion",
+      "col_score": "Score moyen",
+      "col_deadline": "Échéance",
+      "empty": "Aucune campagne pour l'instant"
+    }
+  },
   "sidebar": {
     "groups": {
       "main": "Principal",
@@ -284,6 +328,7 @@
       "dashboard": "Tableau de bord",
       "hiring-dashboard": "Tableau de recrutement",
       "team-dashboard": "Tableau d'équipe",
+      "campaigns-dashboard": "Tableau des campagnes",
       "kpi-dashboard": "Tableau KPI",
       "campaigns": "Campagnes",
       "posts": "Offres",
