@@ -5,7 +5,8 @@
     "find_jobs": "Trouver un emploi",
     "are_you_hiring": "Vous recrutez ?",
     "contact": "Contact",
-    "webinar": "Webinaire"
+    "webinar": "Webinaire",
+    "blog": "Blogs"
   },
   "hero": {
     "headline_1": "Arrêtez de perdre vos meilleurs talents",
@@ -220,5 +221,18 @@
     "error_message": "Le message est requis",
     "error_network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
     "error_generic": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "blog": {
+    "meta_title": "Blog | TalentAI",
+    "meta_description": "Analyses sur le recrutement propulsé par l'IA, l'automatisation du recrutement et la création de meilleurs pipelines d'entretien.",
+    "overline": "Blog TalentAI",
+    "headline": "Analyses sur le",
+    "headline_accent": "recrutement propulsé par l'IA",
+    "subtitle": "Guides pratiques, mises à jour produit et analyses approfondies sur l'automatisation du recrutement par l'équipe TalentAI.",
+    "empty": "Aucun article pour le moment — revenez bientôt.",
+    "read_article": "Lire l'article",
+    "back_to_blog": "Retour au blog",
+    "not_found": "Cet article est introuvable.",
+    "page_of": "Page {{page}} sur {{totalPages}}"
   }
 }

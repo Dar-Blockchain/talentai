@@ -10,12 +10,13 @@ import {
   Settings as SettingsIcon,
   Briefcase as PostsIcon,
   Video as WebinarIcon,
+  Newspaper as BlogIcon,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const DRAWER_WIDTH = 240;
 
-type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config' | 'webinars';
+type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config' | 'webinars' | 'blog';
 
 const GROUPS = [
   {
@@ -32,6 +33,7 @@ const GROUPS = [
       { id: 'post-interview'  as TabName, label: 'Post Interview',  icon: InterviewIcon },
       { id: 'skill-interview' as TabName, label: 'Skill Interview', icon: SkillIcon     },
       { id: 'webinars'        as TabName, label: 'Webinars',        icon: WebinarIcon   },
+      { id: 'blog'            as TabName, label: 'Blog',            icon: BlogIcon      },
     ],
   },
   {
