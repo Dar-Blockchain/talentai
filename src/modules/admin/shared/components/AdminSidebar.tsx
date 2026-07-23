@@ -33,7 +33,7 @@ const GROUPS = [
       { id: 'post-interview'  as TabName, label: 'Post Interview',  icon: InterviewIcon },
       { id: 'skill-interview' as TabName, label: 'Skill Interview', icon: SkillIcon     },
       { id: 'webinars'        as TabName, label: 'Webinars',        icon: WebinarIcon   },
-      { id: 'blog'            as TabName, label: 'Blog',            icon: BlogIcon      },
+      { id: 'blog'            as TabName, label: 'Blogs',            icon: BlogIcon      },
     ],
   },
   {
