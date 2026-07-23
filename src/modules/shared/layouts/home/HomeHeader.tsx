@@ -35,7 +35,7 @@ const Header = () => {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const landingLikePaths = useMemo(
-    () => ["/", "/terms", "/privacy"],
+    () => ["/", "/terms", "/privacy", "/blog", "/blog/[slug]"],
     []
   );
 
