@@ -112,7 +112,7 @@ const WebinarPage: React.FC = () => {
     <>
       <div className={`${fraunces.variable} min-h-screen flex flex-col bg-white`}>
         <WebinarHeader
-          ctaTargetId={inFunnel ? undefined : "webinar-register"}
+          ctaTargetId={inFunnel || !webinar ? undefined : "webinar-register"}
           onBack={inFunnel ? backToLanding : undefined}
           backLabel={t("page.backToLanding")}
           lang={lang}
@@ -120,26 +120,26 @@ const WebinarPage: React.FC = () => {
         />
 
         <div className="flex-1 flex flex-col">
-          {inFunnel ? (
-            loading ? (
+          {loading ? (
+            inFunnel ? (
               <div className="flex-1 flex items-center justify-center">
                 <div className="w-10 h-10 border-2 border-[#6AD39C]/30 border-t-[#10453F] rounded-full animate-spin" />
               </div>
-            ) : !webinar || webinar.questions.length === 0 ? (
-              <div className="flex-1 flex items-center justify-center">
-                <p className="text-[14px] text-slate-400">{t("page.notFound")}</p>
-              </div>
             ) : (
-              <WebinarFunnel
-                webinar={webinar} lang={lang}
-                initialContact={funnelSeed.contact}
-                initialSubmissionId={funnelSeed.submissionId}
-                initialConsent={funnelSeed.consent}
-                welcomeBack={funnelSeed.welcomeBack}
-              />
+              <LoadingScreen title={t("page.loading")} />
             )
-          ) : loading ? (
-            <LoadingScreen title={t("page.loading")} />
+          ) : !webinar || (inFunnel && webinar.questions.length === 0) ? (
+            <div className="flex-1 flex items-center justify-center">
+              <p className="text-[14px] text-slate-400">{t("page.notFound")}</p>
+            </div>
+          ) : inFunnel ? (
+            <WebinarFunnel
+              webinar={webinar} lang={lang}
+              initialContact={funnelSeed.contact}
+              initialSubmissionId={funnelSeed.submissionId}
+              initialConsent={funnelSeed.consent}
+              welcomeBack={funnelSeed.welcomeBack}
+            />
           ) : (
             <>
               <WebinarHero

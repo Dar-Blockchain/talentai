@@ -1,14 +1,15 @@
 const express    = require("express");
 const router     = express.Router();
 const controller = require("./webinar.controller");
-const { requireAuth }    = require("../../middleware/security/auth.middleware");
+const { requireAuth, attachUserIfPresent } = require("../../middleware/security/auth.middleware");
 const { controledAcces } = require("../../middleware/authorize.middleware.js");
 
 const adminOnly = controledAcces("Admin");
 
-// Public — no auth required
+// Public — no auth required, but a logged-in admin is identified (if present)
+// so draft webinars can still be previewed before publishing.
 router.get("/public/active", controller.getActive);
-router.get("/public/:id",    controller.getPublic);
+router.get("/public/:id",    attachUserIfPresent, controller.getPublic);
 
 // Admin-only
 router.get(   "/",                   requireAuth, adminOnly, controller.list);

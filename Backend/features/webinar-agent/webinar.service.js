@@ -55,11 +55,16 @@ exports.getActiveWebinar = async () => {
     .lean() ?? null;
 };
 
-exports.getPublicWebinar = async (id) => {
+exports.getPublicWebinar = async (id, requestingUser) => {
   const doc = await Webinar.findById(id)
     .select(`${PUBLIC_FIELDS} status`)
     .lean();
   if (!doc) throw new Error("Webinar not found");
+  // Drafts are only previewable by an admin (e.g. via the "Preview page"
+  // action) — hide them from everyone else as if they didn't exist.
+  if (doc.status === "draft" && requestingUser?.role !== "Admin") {
+    throw new Error("Webinar not found");
+  }
   return doc;
 };
 

@@ -21,6 +21,7 @@ const SIZE_ICON: Record<string, number> = { xs: 15, sm: 17, md: 18 };
 // usages elsewhere in the app keep their own look. Destructive items keep a
 // soft red tint instead of teal.
 const SOFT_ITEM_HOVER = cn(
+  "[&_[data-slot=dropdown-menu-item]]:cursor-pointer",
   "[&_[data-slot=dropdown-menu-item]]:transition-colors",
   "[&_[data-slot=dropdown-menu-item]:not([data-variant=destructive])]:focus:bg-teal-50",
   "[&_[data-slot=dropdown-menu-item]:not([data-variant=destructive])]:focus:text-teal-700",

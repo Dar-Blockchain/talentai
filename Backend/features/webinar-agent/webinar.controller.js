@@ -12,7 +12,7 @@ exports.getActive = handle(async (req, res) => {
 });
 
 exports.getPublic = handle(async (req, res) => {
-  const doc = await service.getPublicWebinar(req.params.id);
+  const doc = await service.getPublicWebinar(req.params.id, req.user);
   res.json({ success: true, data: doc });
 }, 404);
 

@@ -1,7 +1,7 @@
 {
   "page": {
     "backToLanding": "Retour à la page d'accueil",
-    "notFound": "Webinaire introuvable.",
+    "notFound": "Ce webinaire n'est pas disponible.",
     "loading": "Chargement du webinar…"
   },
   "header": {
