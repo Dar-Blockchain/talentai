@@ -12,6 +12,13 @@ export interface WebinarQuestion {
 export type WebinarQuestionDraft = WebinarQuestion;
 
 export type WebinarProfileType = "staffing_bpo" | "enterprise_chro" | "referrer";
+export type WebinarHrTeamSize = "lt10" | "10_50" | "50_200" | "gt200";
+export type WebinarSector =
+  | "technology" | "finance" | "healthcare" | "retail" | "manufacturing"
+  | "education" | "telecom" | "public_sector" | "other";
+export type WebinarSourceChannel =
+  | "linkedin" | "instagram" | "facebook" | "twitter_x"
+  | "google_search" | "referral" | "newsletter" | "other";
 export type WebinarMaturityLevel = "beginner" | "explorer" | "practitioner" | "pioneer";
 export type WebinarScoreCategory = "adoption" | "governance" | "quality" | "antifraud";
 export type WebinarQualification = "hot" | "warm" | "cold";
@@ -25,6 +32,7 @@ export interface WebinarStats {
   qualification_breakdown: Record<string, number>;
   segment_breakdown: Record<string, number>;
   utm_breakdown: Record<string, number>;
+  channel_breakdown: Record<string, number>;
 }
 
 export interface Webinar {
@@ -89,10 +97,19 @@ export interface WebinarSubmission {
   lang: string;
   consent: boolean;
   completed: boolean;
-  contact: { nom: string | null; email: string | null; entreprise: string | null; profile_type: WebinarProfileType | null };
+  contact: {
+    nom: string | null;
+    email: string | null;
+    phone: string | null;
+    entreprise: string | null;
+    position: string | null;
+    sector: WebinarSector | null;
+    hr_team_size: WebinarHrTeamSize | null;
+    profile_type: WebinarProfileType | null;
+  };
   answers: Record<string, unknown>;
   scoring?: WebinarScoringResult;
-  source?: { utm_source: string | null; utm_campaign: string | null };
+  source?: { utm_source: string | null; utm_campaign: string | null; channel: WebinarSourceChannel | null };
   createdAt: string;
 }
 

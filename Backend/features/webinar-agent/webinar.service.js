@@ -241,7 +241,7 @@ exports.refreshStats = async (id) => {
     WebinarSubmission.countDocuments({ webinar_id: id, completed: true }),
     WebinarSubmission.find(
       { webinar_id: id, completed: true },
-      { "scoring.total100": 1, "scoring.maturityLevel": 1, "scoring.qualification.status": 1, "contact.profile_type": 1, "source.utm_source": 1 },
+      { "scoring.total100": 1, "scoring.maturityLevel": 1, "scoring.qualification.status": 1, "contact.profile_type": 1, "source.utm_source": 1, "source.channel": 1 },
     ).lean(),
   ]);
 
@@ -249,6 +249,7 @@ exports.refreshStats = async (id) => {
   const qualificationBreakdown = {};
   const segmentBreakdown       = {};
   const utmBreakdown           = {};
+  const channelBreakdown       = {};
   let totalScore = 0, scoredCount = 0;
 
   for (const s of submissions) {
@@ -264,6 +265,9 @@ exports.refreshStats = async (id) => {
     const utm = s.source?.utm_source;
     if (utm) utmBreakdown[utm] = (utmBreakdown[utm] || 0) + 1;
 
+    const channel = s.source?.channel;
+    if (channel) channelBreakdown[channel] = (channelBreakdown[channel] || 0) + 1;
+
     if (s.scoring?.total100 != null) { totalScore += s.scoring.total100; scoredCount++; }
   }
 
@@ -277,6 +281,7 @@ exports.refreshStats = async (id) => {
       "stats.qualification_breakdown": qualificationBreakdown,
       "stats.segment_breakdown":       segmentBreakdown,
       "stats.utm_breakdown":           utmBreakdown,
+      "stats.channel_breakdown":       channelBreakdown,
     }},
     { new: true },
   );

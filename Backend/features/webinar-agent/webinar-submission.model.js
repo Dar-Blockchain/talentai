@@ -8,7 +8,16 @@ const WebinarSubmissionSchema = new mongoose.Schema({
   contact: {
     nom:          { type: String, default: null },
     email:        { type: String, default: null, index: true, sparse: true },
+    phone:        { type: String, default: null },
     entreprise:   { type: String, default: null },
+    position:     { type: String, default: null },
+    sector: {
+      type: String,
+      enum: ["technology", "finance", "healthcare", "retail", "manufacturing", "education", "telecom", "public_sector", "other"],
+      default: null,
+    },
+    // Bucketed headcount, mirrors the qualification-grid ranges.
+    hr_team_size: { type: String, enum: ["lt10", "10_50", "50_200", "gt200"], default: null },
     // Drives Dashboard 2's lead segment/script routing — set once at registration.
     profile_type: { type: String, enum: ["staffing_bpo", "enterprise_chro", "referrer"], default: null },
   },
@@ -16,6 +25,12 @@ const WebinarSubmissionSchema = new mongoose.Schema({
   source: {
     utm_source:   { type: String, default: null },
     utm_campaign: { type: String, default: null },
+    // Manually self-reported discovery channel (distinct from URL-based UTM tracking).
+    channel: {
+      type: String,
+      enum: ["linkedin", "instagram", "facebook", "twitter_x", "google_search", "referral", "newsletter", "other"],
+      default: null,
+    },
   },
 
   answers: { type: mongoose.Schema.Types.Mixed, default: {} },

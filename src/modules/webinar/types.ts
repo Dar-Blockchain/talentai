@@ -1,11 +1,22 @@
 export type Lang = "fr" | "en";
 
 export type WebinarProfileType = "staffing_bpo" | "enterprise_chro" | "referrer";
+export type WebinarHrTeamSize = "lt10" | "10_50" | "50_200" | "gt200";
+export type WebinarSector =
+  | "technology" | "finance" | "healthcare" | "retail" | "manufacturing"
+  | "education" | "telecom" | "public_sector" | "other";
+export type WebinarSourceChannel =
+  | "linkedin" | "instagram" | "facebook" | "twitter_x"
+  | "google_search" | "referral" | "newsletter" | "other";
 
 export interface WebinarContact {
   nom: string;
   email: string;
+  phone?: string;
   entreprise: string;
+  position?: string;
+  sector?: WebinarSector | "";
+  hr_team_size?: WebinarHrTeamSize | "";
   profile_type?: WebinarProfileType | "";
 }
 

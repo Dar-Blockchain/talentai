@@ -72,6 +72,7 @@ const WebinarSchema = new mongoose.Schema({
     qualification_breakdown: { type: Map, of: Number, default: {} },
     segment_breakdown:       { type: Map, of: Number, default: {} },
     utm_breakdown:           { type: Map, of: Number, default: {} },
+    channel_breakdown:       { type: Map, of: Number, default: {} },
   },
 
   created_by:  { type: mongoose.Schema.Types.ObjectId, ref: "User", default: null },

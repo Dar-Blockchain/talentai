@@ -13,12 +13,62 @@ import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { WebinarSubmitButton } from "./WebinarSubmitButton";
 import i18n from "@/i18n/config";
-import type { WebinarContact, WebinarProfileType } from "@/modules/webinar/types";
+import type {
+  WebinarContact, WebinarHrTeamSize, WebinarProfileType,
+  WebinarSector, WebinarSourceChannel,
+} from "@/modules/webinar/types";
 
 const PROFILE_TYPES: WebinarProfileType[] = ["staffing_bpo", "enterprise_chro", "referrer"];
+const PROFILE_TYPE_I18N_KEY: Record<WebinarProfileType, string> = {
+  staffing_bpo: "profileTypeStaffingBpo",
+  enterprise_chro: "profileTypeEnterpriseChro",
+  referrer: "profileTypeReferrer",
+};
+
+const HR_TEAM_SIZES: WebinarHrTeamSize[] = ["lt10", "10_50", "50_200", "gt200"];
+const HR_TEAM_SIZE_I18N_KEY: Record<WebinarHrTeamSize, string> = {
+  lt10: "hrTeamSizeLt10",
+  "10_50": "hrTeamSize10_50",
+  "50_200": "hrTeamSize50_200",
+  gt200: "hrTeamSizeGt200",
+};
+
+const SECTORS: WebinarSector[] = [
+  "technology", "finance", "healthcare", "retail", "manufacturing",
+  "education", "telecom", "public_sector", "other",
+];
+const SECTOR_I18N_KEY: Record<WebinarSector, string> = {
+  technology: "sectorTechnology",
+  finance: "sectorFinance",
+  healthcare: "sectorHealthcare",
+  retail: "sectorRetail",
+  manufacturing: "sectorManufacturing",
+  education: "sectorEducation",
+  telecom: "sectorTelecom",
+  public_sector: "sectorPublicSector",
+  other: "sectorOther",
+};
+
+const SOURCE_CHANNELS: WebinarSourceChannel[] = [
+  "linkedin", "instagram", "facebook", "twitter_x",
+  "google_search", "referral", "newsletter", "other",
+];
+const SOURCE_CHANNEL_I18N_KEY: Record<WebinarSourceChannel, string> = {
+  linkedin: "sourceChannelLinkedin",
+  instagram: "sourceChannelInstagram",
+  facebook: "sourceChannelFacebook",
+  twitter_x: "sourceChannelTwitterX",
+  google_search: "sourceChannelGoogleSearch",
+  referral: "sourceChannelReferral",
+  newsletter: "sourceChannelNewsletter",
+  other: "sourceChannelOther",
+};
 
 const VP = { once: true, margin: "-40px" };
 const EASE = [0.22, 1, 0.36, 1] as const;
+
+const labelCn = "text-[10.5px] font-semibold uppercase text-[#7E9089]";
+const inputCn = "rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25";
 
 /**
  * Self-contained "Reserve Your Spot" card: owns its own field state, saves
@@ -44,9 +94,18 @@ export function WebinarRegisterForm({
   const router = useRouter();
   const t = i18n.getFixedT(lang, "webinar");
 
-  const [form, setForm] = useState<{ nom: string; email: string; entreprise: string; profile_type: WebinarProfileType | "" }>({
-    nom: "", email: "", entreprise: "", profile_type: "",
+  const [form, setForm] = useState<{
+    nom: string; email: string; phone: string; entreprise: string;
+    position: string; sector: WebinarSector | "";
+    hr_team_size: WebinarHrTeamSize | ""; profile_type: WebinarProfileType | "";
+  }>({
+    nom: "", email: "", phone: "", entreprise: "",
+    position: "", sector: "",
+    hr_team_size: "", profile_type: "",
   });
+  // Self-reported discovery channel — distinct from URL-based UTM tracking
+  // (captured separately below), so it lives outside the WebinarContact shape.
+  const [sourceChannel, setSourceChannel] = useState<WebinarSourceChannel | "">("");
   const [consent, setConsent] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   // A returning visitor who already finished the questionnaire — re-registering
@@ -75,6 +134,7 @@ export function WebinarRegisterForm({
         source: {
           utm_source: (router.query.utm_source as string) || "",
           utm_campaign: (router.query.utm_campaign as string) || "",
+          channel: sourceChannel,
         },
       });
       if (res.completed) {
@@ -97,13 +157,15 @@ export function WebinarRegisterForm({
         whileInView={{ opacity: 1, y: 0 }}
         viewport={VP}
         transition={{ duration: 0.6, ease: EASE }}
-        className="w-full max-w-[420px] text-left"
+        className="w-full max-w-[760px] text-left"
       >
         <Card className="bg-white border-[#E7E5DE] rounded-2xl">
           <CardContent className="p-7 space-y-4">
             <Skeleton className="h-5 w-40" />
-            <Skeleton className="h-9 w-full rounded-md" />
-            <Skeleton className="h-9 w-full rounded-md" />
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <Skeleton className="h-9 w-full rounded-md" />
+              <Skeleton className="h-9 w-full rounded-md" />
+            </div>
             <Skeleton className="h-11 w-full rounded-lg" />
           </CardContent>
         </Card>
@@ -117,7 +179,7 @@ export function WebinarRegisterForm({
         initial={{ opacity: 0, y: 18 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5, ease: EASE }}
-        className="w-full max-w-[420px] text-left"
+        className="w-full max-w-[760px] text-left"
       >
         <Card className="bg-white border-[#E7E5DE] rounded-2xl shadow-[0_24px_50px_-20px_rgba(16,69,63,0.25)]">
           <CardContent className="p-7 md:p-8 text-center">
@@ -147,106 +209,167 @@ export function WebinarRegisterForm({
       whileInView={{ opacity: 1, y: 0 }}
       viewport={VP}
       transition={{ duration: 0.6, ease: EASE }}
-      className="w-full max-w-[420px] text-left"
+      className="w-full max-w-[760px] text-left"
     >
       <Card className="bg-white border-[#E7E5DE] rounded-2xl shadow-[0_24px_50px_-20px_rgba(16,69,63,0.25)]">
-        <CardContent className="px-6 py-4 md:px-7 md:py-5">
-          <form onSubmit={handleSubmit} className="space-y-3">
+        <CardContent className="px-6 py-5 md:px-9 md:py-7">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-3">
             <div className="space-y-1.5">
-              <Label
-                htmlFor="nom"
-                className="text-[10.5px] font-semibold uppercase text-[#7E9089]"
-                style={{ letterSpacing: "0.08em" }}
-              >
+              <Label htmlFor="nom" className={labelCn} style={{ letterSpacing: "0.08em" }}>
                 {t("registerForm.fullName")} *
               </Label>
               <Input
                 id="nom"
                 value={form.nom}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, nom: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, nom: e.target.value }))}
                 placeholder={t("registerForm.fullNamePlaceholder")}
-                className="rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25"
+                className={inputCn}
                 required
               />
             </div>
+
             <div className="space-y-1.5">
-              <Label
-                htmlFor="entreprise"
-                className="text-[10.5px] font-semibold uppercase text-[#7E9089]"
-                style={{ letterSpacing: "0.08em" }}
-              >
-                {t("registerForm.company")}{" "}
-                <span className="text-slate-300 font-normal normal-case">
-                  ({t("registerForm.optional")})
-                </span>
-              </Label>
-              <Input
-                id="entreprise"
-                value={form.entreprise}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, entreprise: e.target.value }))
-                }
-                placeholder={t("registerForm.companyPlaceholder")}
-                className="rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25"
-              />
-            </div>
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="profile_type"
-                className="text-[10.5px] font-semibold uppercase text-[#7E9089]"
-                style={{ letterSpacing: "0.08em" }}
-              >
-                {t("registerForm.profileType")} *
-              </Label>
-              <Select
-                value={form.profile_type}
-                onValueChange={(v) => setForm((f) => ({ ...f, profile_type: v as WebinarProfileType }))}
-              >
-                <SelectTrigger
-                  id="profile_type"
-                  className="w-full rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25"
-                >
-                  <SelectValue placeholder={t("registerForm.profileTypePlaceholder")} />
-                </SelectTrigger>
-                <SelectContent>
-                  {PROFILE_TYPES.map((v) => (
-                    <SelectItem key={v} value={v}>
-                      {t(`registerForm.profileType${v === "staffing_bpo" ? "StaffingBpo" : v === "enterprise_chro" ? "EnterpriseChro" : "Referrer"}`)}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1.5">
-              <Label
-                htmlFor="email"
-                className="text-[10.5px] font-semibold uppercase text-[#7E9089]"
-                style={{ letterSpacing: "0.08em" }}
-              >
+              <Label htmlFor="email" className={labelCn} style={{ letterSpacing: "0.08em" }}>
                 Email *
               </Label>
               <Input
                 id="email"
                 type="email"
                 value={form.email}
-                onChange={(e) =>
-                  setForm((f) => ({ ...f, email: e.target.value }))
-                }
+                onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
                 placeholder={t("registerForm.emailPlaceholder")}
                 aria-invalid={showEmailError}
-                className="rounded-lg border-[#E2E0D8] bg-white focus-visible:border-[#6AD39C] focus-visible:ring-[#6AD39C]/25"
+                className={inputCn}
                 required
               />
               {showEmailError && (
-                <p className="text-[12px] text-destructive">
-                  {t("registerForm.emailInvalid")}
-                </p>
+                <p className="text-[12px] text-destructive">{t("registerForm.emailInvalid")}</p>
               )}
             </div>
 
-            <label className="flex items-start gap-2.5 cursor-pointer pt-1">
+            <div className="space-y-1.5">
+              <Label htmlFor="entreprise" className={labelCn} style={{ letterSpacing: "0.08em" }}>
+                {t("registerForm.company")}{" "}
+                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+              </Label>
+              <Input
+                id="entreprise"
+                value={form.entreprise}
+                onChange={(e) => setForm((f) => ({ ...f, entreprise: e.target.value }))}
+                placeholder={t("registerForm.companyPlaceholder")}
+                className={inputCn}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="position" className={labelCn} style={{ letterSpacing: "0.08em" }}>
+                {t("registerForm.position")}{" "}
+                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+              </Label>
+              <Input
+                id="position"
+                value={form.position}
+                onChange={(e) => setForm((f) => ({ ...f, position: e.target.value }))}
+                placeholder={t("registerForm.positionPlaceholder")}
+                className={inputCn}
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="sector" className={labelCn} style={{ letterSpacing: "0.08em" }}>
+                {t("registerForm.sector")}{" "}
+                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+              </Label>
+              <Select
+                value={form.sector}
+                onValueChange={(v) => setForm((f) => ({ ...f, sector: v as WebinarSector }))}
+              >
+                <SelectTrigger id="sector" className={`w-full ${inputCn}`}>
+                  <SelectValue placeholder={t("registerForm.sectorPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {SECTORS.map((v) => (
+                    <SelectItem key={v} value={v}>{t(`registerForm.${SECTOR_I18N_KEY[v]}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="hr_team_size" className={labelCn} style={{ letterSpacing: "0.08em" }}>
+                {t("registerForm.hrTeamSize")}{" "}
+                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+              </Label>
+              <Select
+                value={form.hr_team_size}
+                onValueChange={(v) => setForm((f) => ({ ...f, hr_team_size: v as WebinarHrTeamSize }))}
+              >
+                <SelectTrigger id="hr_team_size" className={`w-full ${inputCn}`}>
+                  <SelectValue placeholder={t("registerForm.hrTeamSizePlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {HR_TEAM_SIZES.map((v) => (
+                    <SelectItem key={v} value={v}>{t(`registerForm.${HR_TEAM_SIZE_I18N_KEY[v]}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="profile_type" className={labelCn} style={{ letterSpacing: "0.08em" }}>
+                {t("registerForm.profileType")} *
+              </Label>
+              <Select
+                value={form.profile_type}
+                onValueChange={(v) => setForm((f) => ({ ...f, profile_type: v as WebinarProfileType }))}
+              >
+                <SelectTrigger id="profile_type" className={`w-full ${inputCn}`}>
+                  <SelectValue placeholder={t("registerForm.profileTypePlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {PROFILE_TYPES.map((v) => (
+                    <SelectItem key={v} value={v}>{t(`registerForm.${PROFILE_TYPE_I18N_KEY[v]}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="phone" className={labelCn} style={{ letterSpacing: "0.08em" }}>
+                {t("registerForm.phone")}{" "}
+                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+              </Label>
+              <Input
+                id="phone"
+                type="tel"
+                value={form.phone}
+                onChange={(e) => setForm((f) => ({ ...f, phone: e.target.value }))}
+                placeholder={t("registerForm.phonePlaceholder")}
+                className={inputCn}
+              />
+            </div>
+
+            <div className="space-y-1.5 sm:col-span-2">
+              <Label htmlFor="source_channel" className={labelCn} style={{ letterSpacing: "0.08em" }}>
+                {t("registerForm.sourceChannel")}{" "}
+                <span className="text-slate-300 font-normal normal-case">({t("registerForm.optional")})</span>
+              </Label>
+              <Select
+                value={sourceChannel}
+                onValueChange={(v) => setSourceChannel(v as WebinarSourceChannel)}
+              >
+                <SelectTrigger id="source_channel" className={`w-full ${inputCn}`}>
+                  <SelectValue placeholder={t("registerForm.sourceChannelPlaceholder")} />
+                </SelectTrigger>
+                <SelectContent>
+                  {SOURCE_CHANNELS.map((v) => (
+                    <SelectItem key={v} value={v}>{t(`registerForm.${SOURCE_CHANNEL_I18N_KEY[v]}`)}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <label className="flex items-start gap-2.5 cursor-pointer pt-1 sm:col-span-2">
               <Checkbox
                 checked={consent}
                 onCheckedChange={(v) => setConsent(v === true)}
@@ -258,18 +381,22 @@ export function WebinarRegisterForm({
             </label>
 
             {submitError && (
-              <Alert variant="destructive">
-                <AlertDescription>{submitError}</AlertDescription>
-              </Alert>
+              <div className="sm:col-span-2">
+                <Alert variant="destructive">
+                  <AlertDescription>{submitError}</AlertDescription>
+                </Alert>
+              </div>
             )}
 
-            <WebinarSubmitButton
-              label={t("registerForm.submit")}
-              loading={submitting}
-              disabled={!canSubmit || !webinarId || submitting}
-            />
+            <div className="sm:col-span-2">
+              <WebinarSubmitButton
+                label={t("registerForm.submit")}
+                loading={submitting}
+                disabled={!canSubmit || !webinarId || submitting}
+              />
+            </div>
 
-            <p className="text-center text-[11.5px] text-slate-400">
+            <p className="text-center text-[11.5px] text-slate-400 sm:col-span-2">
               {t("registerForm.privacy")}
             </p>
           </form>
