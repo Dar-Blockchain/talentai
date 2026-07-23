@@ -153,7 +153,7 @@ const WebinarManagement: React.FC = () => {
     <div>
       <AdminPageHeading
         title="Webinar Management"
-        subtitle="Create webinars, let AI build the question set, then verify to publish"
+        subtitle="Create webinars, build the question set, then verify and publish"
       />
 
       {/* Toolbar */}

@@ -33,7 +33,7 @@ import {
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
-import { ConfirmDialog, ADMIN_ACCENT, AdminStatCard } from "@/modules/admin/shared";
+import { ConfirmDialog, ADMIN_ACCENT } from "@/modules/admin/shared";
 import { useAdminWebinarQuery } from "../queries";
 import { getWebinarStatusMeta } from "../constants";
 import { formatWebinarSchedule } from "../utils/formatSchedule";
@@ -42,6 +42,20 @@ import { useWebinarActions } from "../hooks/useWebinarActions";
 import { WebinarQuestionsList } from "./WebinarQuestionsList";
 import { WebinarRegistrantsTab } from "./WebinarRegistrantsTab";
 import { WebinarInviteDialog } from "./WebinarInviteDialog";
+
+function CompactStat({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
+  return (
+    <div className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white py-2.5 px-3">
+      <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: `${ADMIN_ACCENT}14` }}>
+        <Icon size={15} color={ADMIN_ACCENT} />
+      </div>
+      <div className="min-w-0">
+        <div className="text-base font-bold text-slate-900 leading-none tabular-nums">{value}</div>
+        <div className="text-[10px] font-medium text-slate-400 uppercase tracking-wide mt-1 truncate">{label}</div>
+      </div>
+    </div>
+  );
+}
 
 export function WebinarDetailPage({ id }: { id: string }) {
   const router = useRouter();
@@ -116,36 +130,38 @@ export function WebinarDetailPage({ id }: { id: string }) {
 
       {/* Header card */}
       <div
-        className="mb-6 overflow-hidden rounded-2xl bg-white"
+        className="mb-4 overflow-hidden rounded-2xl bg-white"
         style={{ border: `1px solid ${webinar.status === "draft" ? "#FDE68A" : "#E5E7EB"}` }}
       >
         <div className="h-0.75 w-full" style={{ backgroundColor: webinar.status === "draft" ? "#F59E0B" : "#059669" }} />
-        <div className="px-5 pt-5 pb-4 md:px-6">
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div className="flex min-w-0 flex-1 items-start gap-4">
-              <div className="flex h-[52px] w-[52px] shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F3F4F6]">
-                <WebinarIcon size={24} color="#6B7280" />
+        <div className="px-4 pt-3.5 pb-3 md:px-5">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <div className="flex min-w-0 flex-1 items-start gap-3">
+              <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#E5E7EB] bg-[#F3F4F6]">
+                <WebinarIcon size={18} color="#6B7280" />
               </div>
               <div className="min-w-0">
-                <div className="mb-1.5 flex flex-wrap items-center gap-2">
-                  <p className="text-[1.35rem] font-extrabold leading-[1.25] text-[#111827]">{webinar.title}</p>
+                <div className="mb-1 flex flex-wrap items-center gap-2">
+                  <p className="text-[1.1rem] font-extrabold leading-[1.25] text-[#111827]">{webinar.title}</p>
                   <span
-                    className="inline-flex items-center gap-1 rounded-[5px] px-[7px] py-[3px]"
+                    className="inline-flex items-center gap-1 rounded-[5px] px-[7px] py-[2px]"
                     style={{ backgroundColor: statusMeta.bg, border: `1px solid ${statusMeta.color}28` }}
                   >
                     <span className="h-1.5 w-1.5 rounded-full" style={{ backgroundColor: statusMeta.dot }} />
-                    <span className="text-[10.5px] font-bold" style={{ color: statusMeta.color }}>{statusMeta.label}</span>
+                    <span className="text-[10px] font-bold" style={{ color: statusMeta.color }}>{statusMeta.label}</span>
                   </span>
                 </div>
-                <div className="flex flex-wrap items-center gap-3 text-[12px] text-[#6B7280]">
+                <div className="flex flex-wrap items-center gap-2.5 text-[11.5px] text-[#6B7280]">
                   {schedule && (
                     <span className="flex items-center gap-1">
-                      <CalendarIcon size={13} color="#9CA3AF" />
+                      <CalendarIcon size={12} color="#9CA3AF" />
                       {schedule.date}, {schedule.time}
                       {schedule.endTime && ` – ${schedule.endTime}`}
                     </span>
                   )}
-                  <span className="font-semibold uppercase">{webinar.lang}</span>
+                  <span className="font-semibold uppercase">
+                    {webinar.lang === "both" ? "EN/FR" : webinar.lang}
+                  </span>
                   <span>{webinar.questions.length} questions</span>
                 </div>
               </div>
@@ -159,7 +175,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
                   onClick={handleVerify}
                   disabled={verifyMut.isPending || !!publishBlockedReason}
                   title={publishBlockedReason ?? undefined}
-                  className="h-9 rounded-[10px] bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
+                  className="h-8 rounded-[10px] bg-teal-600 text-white hover:bg-teal-700 hover:text-white"
                 >
                   {verifyMut.isPending ? <Spinner className="size-3.5 text-white" /> : <VerifyIcon size={14} />}
                   Publish
@@ -169,7 +185,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
                 <Button
                   variant="outline"
                   onClick={handleCopyLink}
-                  className="h-9 rounded-[10px] border-[#A7F3D0] bg-[#F0FDF4] text-[#059669] hover:bg-[#DCFCE7]"
+                  className="h-8 rounded-[10px] border-[#A7F3D0] bg-[#F0FDF4] text-[#059669] hover:bg-[#DCFCE7]"
                 >
                   {copied ? <CheckIcon size={14} /> : <CopyIcon size={14} />}
                   {copied ? "Copied" : "Copy link"}
@@ -214,13 +230,13 @@ export function WebinarDetailPage({ id }: { id: string }) {
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "details" | "registrants")} className="mt-5">
-            <TabsList variant="line" className="h-11 gap-1 p-0">
-              <TabsTrigger value="details" className="mr-1 gap-1.5 px-1.5 text-[13px] font-semibold text-[#9CA3AF] data-[state=active]:text-[#0D9488]">
-                <WebinarIcon size={15} /> Webinar Details
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "details" | "registrants")} className="mt-3">
+            <TabsList variant="line" className="h-9 gap-1 p-0">
+              <TabsTrigger value="details" className="mr-1 gap-1.5 px-1.5 text-[12.5px] font-semibold text-[#9CA3AF] data-[state=active]:text-[#0D9488]">
+                <WebinarIcon size={14} /> Webinar Details
               </TabsTrigger>
-              <TabsTrigger value="registrants" className="gap-1.5 px-1.5 text-[13px] font-semibold text-[#9CA3AF] data-[state=active]:text-[#0D9488]">
-                <PeopleIcon size={15} /> Registrants
+              <TabsTrigger value="registrants" className="gap-1.5 px-1.5 text-[12.5px] font-semibold text-[#9CA3AF] data-[state=active]:text-[#0D9488]">
+                <PeopleIcon size={14} /> Registrants
                 <span className="ml-1 rounded-full bg-slate-100 px-1.5 py-0.5 text-[10px] font-bold text-slate-500">
                   {webinar.stats.total_registrations}
                 </span>
@@ -231,11 +247,11 @@ export function WebinarDetailPage({ id }: { id: string }) {
       </div>
 
       {activeTab === "details" ? (
-        <div className="space-y-5">
-          <div className="grid grid-cols-3 gap-4">
-            <AdminStatCard icon={PeopleIcon} label="Registrations" value={webinar.stats.total_registrations} />
-            <AdminStatCard icon={VerifyIcon} label="Completions" value={webinar.stats.total_completions} />
-            <AdminStatCard
+        <div className="space-y-3">
+          <div className="grid grid-cols-3 gap-3">
+            <CompactStat icon={PeopleIcon} label="Registrations" value={webinar.stats.total_registrations} />
+            <CompactStat icon={VerifyIcon} label="Completions" value={webinar.stats.total_completions} />
+            <CompactStat
               icon={ScoreIcon}
               label="Avg score"
               value={webinar.stats.avg_score != null ? `${webinar.stats.avg_score}/100` : "—"}
@@ -243,42 +259,42 @@ export function WebinarDetailPage({ id }: { id: string }) {
           </div>
 
           {webinar.webinar_link && (
-            <div className="rounded-xl border border-slate-100 bg-white p-4">
-              <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-2">Join link</p>
+            <div className="rounded-xl border border-slate-100 bg-white p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[2px] text-slate-400 mb-1.5">Join link</p>
               <a
                 href={webinar.webinar_link}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="flex items-center gap-2 break-all text-[13px] text-teal-600 hover:underline"
+                className="flex items-center gap-2 break-all text-[12.5px] text-teal-600 hover:underline"
               >
-                <LinkIcon size={14} className="shrink-0" /> {webinar.webinar_link}
+                <LinkIcon size={13} className="shrink-0" /> {webinar.webinar_link}
               </a>
             </div>
           )}
 
           {(webinar.about_fr || webinar.about_en) && (
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-3">
               {webinar.about_fr && (
-                <div className="rounded-xl border border-slate-100 bg-white p-4">
-                  <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-2">About (FR)</p>
-                  <p className="whitespace-pre-line text-[13px] leading-relaxed text-slate-700">{webinar.about_fr}</p>
+                <div className="rounded-xl border border-slate-100 bg-white p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[2px] text-slate-400 mb-1.5">About (FR)</p>
+                  <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-slate-700">{webinar.about_fr}</p>
                 </div>
               )}
               {webinar.about_en && (
-                <div className="rounded-xl border border-slate-100 bg-white p-4">
-                  <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-2">About (EN)</p>
-                  <p className="whitespace-pre-line text-[13px] leading-relaxed text-slate-700">{webinar.about_en}</p>
+                <div className="rounded-xl border border-slate-100 bg-white p-3">
+                  <p className="text-[10px] font-bold uppercase tracking-[2px] text-slate-400 mb-1.5">About (EN)</p>
+                  <p className="whitespace-pre-line text-[12.5px] leading-relaxed text-slate-700">{webinar.about_en}</p>
                 </div>
               )}
             </div>
           )}
 
           {highlights.length > 0 && (
-            <div className="rounded-xl border border-slate-100 bg-white p-4">
-              <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-2">Highlights</p>
-              <ul className="space-y-1.5">
+            <div className="rounded-xl border border-slate-100 bg-white p-3">
+              <p className="text-[10px] font-bold uppercase tracking-[2px] text-slate-400 mb-1.5">Highlights</p>
+              <ul className="space-y-1">
                 {highlights.map((h, i) => (
-                  <li key={i} className="flex items-start gap-1.5 text-[13px] text-slate-700">
+                  <li key={i} className="flex items-start gap-1.5 text-[12.5px] text-slate-700">
                     <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-teal-400" /> {h}
                   </li>
                 ))}
@@ -287,7 +303,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
           )}
 
           <div>
-            <p className="text-[10.5px] font-bold uppercase tracking-[2px] text-slate-400 mb-2">Questions</p>
+            <p className="text-[10px] font-bold uppercase tracking-[2px] text-slate-400 mb-1.5">Questions</p>
             <WebinarQuestionsList questions={webinar.questions} />
           </div>
         </div>
