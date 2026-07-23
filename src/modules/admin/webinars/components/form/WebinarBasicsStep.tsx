@@ -140,32 +140,6 @@ export function WebinarBasicsStep({
         />
         {errors.webinar_link && <p className={errTxt}>{errors.webinar_link.message}</p>}
       </div>
-      <div>
-        <label className={lbl}>
-          Booking link{" "}
-          <span className="text-slate-400 font-normal text-[11px]">
-            (optional — Calendly-style link for the participant's "book a 1:1" CTA)
-          </span>
-        </label>
-        <Controller
-          name="booking_link"
-          control={control}
-          render={({ field }) => (
-            <input
-              {...field}
-              className={inp}
-              type="url"
-              onChange={(e) => {
-                field.onChange(e);
-                onFieldChange("booking_link", e.target.value);
-              }}
-              placeholder="https://cal.com/your-team/1on1"
-              aria-invalid={!!errors.booking_link}
-            />
-          )}
-        />
-        {errors.booking_link && <p className={errTxt}>{errors.booking_link.message}</p>}
-      </div>
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className={lbl}>

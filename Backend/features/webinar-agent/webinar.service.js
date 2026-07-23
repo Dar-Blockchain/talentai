@@ -46,7 +46,7 @@ exports.getWebinar = async (id) => {
   return doc;
 };
 
-const PUBLIC_FIELDS = "title title_fr title_en description description_fr description_en date end_date lang questions highlights highlights_enabled stats about_fr about_en webinar_link booking_link";
+const PUBLIC_FIELDS = "title title_fr title_en description description_fr description_en date end_date lang questions highlights highlights_enabled stats about_fr about_en webinar_link";
 
 exports.getActiveWebinar = async () => {
   return Webinar.findOne({ status: "active" })

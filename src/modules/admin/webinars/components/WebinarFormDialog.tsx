@@ -28,7 +28,6 @@ function basicsDefaults(f: WebinarFormValues) {
     end_time: f.end_time,
     lang: f.lang,
     webinar_link: f.webinar_link,
-    booking_link: f.booking_link,
     target_min: f.target_min,
     target_max: f.target_max,
   };
@@ -230,7 +229,7 @@ export function WebinarFormDialog({
                 onClick={async () => {
                   const fields =
                     step === 0
-                      ? (["date", "start_time", "end_time", "lang", "webinar_link", "booking_link", "target_min", "target_max"] as const)
+                      ? (["date", "start_time", "end_time", "lang", "webinar_link", "target_min", "target_max"] as const)
                       : CONTENT_FIELDS;
                   if (await triggerBasics(fields)) setStep((s) => s + 1);
                 }}

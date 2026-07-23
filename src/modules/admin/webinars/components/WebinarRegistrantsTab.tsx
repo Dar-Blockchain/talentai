@@ -601,7 +601,7 @@ export function WebinarRegistrantsTab({ webinar }: { webinar: Webinar }) {
   const [search, setSearch] = useState("");
 
   const completed = statusFilter === "all" ? undefined : statusFilter === "completed";
-  const { data, isLoading } = useWebinarSubmissionsQuery(webinar._id, { limit: 200, completed });
+  const { data, isLoading } = useWebinarSubmissionsQuery(webinar._id, { limit: 10, completed });
 
   const allSubmissions = data?.data ?? [];
   const total = data?.total ?? 0;

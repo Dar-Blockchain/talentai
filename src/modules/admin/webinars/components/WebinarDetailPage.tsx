@@ -37,11 +37,12 @@ import { ConfirmDialog, ADMIN_ACCENT } from "@/modules/admin/shared";
 import { useAdminWebinarQuery } from "../queries";
 import { getWebinarStatusMeta } from "../constants";
 import { formatWebinarSchedule } from "../utils/formatSchedule";
-import { findInvalidQuestion, questionErrorMessage } from "../utils/webinarForm";
+import { findInvalidQuestion, questionErrorMessage, toFormValues } from "../utils/webinarForm";
 import { useWebinarActions } from "../hooks/useWebinarActions";
 import { WebinarQuestionsList } from "./WebinarQuestionsList";
 import { WebinarRegistrantsTab } from "./WebinarRegistrantsTab";
 import { WebinarInviteDialog } from "./WebinarInviteDialog";
+import { WebinarFormDialog } from "./WebinarFormDialog";
 
 function CompactStat({ icon: Icon, label, value }: { icon: React.ElementType; label: string; value: React.ReactNode }) {
   return (
@@ -77,6 +78,10 @@ export function WebinarDetailPage({ id }: { id: string }) {
     handleDelete,
     sendingReminder,
     handleSendReminder,
+    updateMut,
+    editOpen,
+    setEditOpen,
+    handleEditSave,
   } = useWebinarActions(webinar);
 
   const activeTab = router.query.tab === "registrants" ? "registrants" : "details";
@@ -204,7 +209,7 @@ export function WebinarDetailPage({ id }: { id: string }) {
                   )}
                   {webinar.status === "draft" && (
                     <DropdownMenuItem
-                      onClick={() => router.push(`/admin/dashboard?tab=webinars&edit=${webinar._id}`)}
+                      onClick={() => setEditOpen(true)}
                       className="gap-2.5 rounded-lg py-[9px] px-[10px]"
                     >
                       <EditIcon size={14} color="#6B7280" /> Edit
@@ -310,6 +315,14 @@ export function WebinarDetailPage({ id }: { id: string }) {
       ) : (
         <WebinarRegistrantsTab webinar={webinar} />
       )}
+
+      <WebinarFormDialog
+        open={editOpen}
+        initial={toFormValues(webinar)}
+        onClose={() => setEditOpen(false)}
+        onSave={handleEditSave}
+        saving={updateMut.isPending}
+      />
 
       <ConfirmDialog
         open={deleteOpen}

@@ -1,10 +1,10 @@
 import { useState } from "react";
 import { toast } from "sonner";
-import { useVerifyWebinarMutation, useDeleteWebinarMutation } from "../queries";
+import { useVerifyWebinarMutation, useDeleteWebinarMutation, useUpdateWebinarMutation } from "../queries";
 import { adminWebinarApi } from "../api";
 import { exportWebinarSubmissions } from "../utils/exportSubmissions";
 import { findInvalidQuestion, questionErrorMessage } from "../utils/webinarForm";
-import type { Webinar } from "../types";
+import type { Webinar, WebinarFormValues } from "../types";
 
 /** Single-webinar action set (copy link, export, publish, delete, send
  * reminder) shared by the detail page. Accepts the webinar as possibly not
@@ -14,10 +14,12 @@ import type { Webinar } from "../types";
 export function useWebinarActions(webinar: Webinar | undefined) {
   const verifyMut = useVerifyWebinarMutation();
   const deleteMut = useDeleteWebinarMutation();
+  const updateMut = useUpdateWebinarMutation();
 
   const [copied, setCopied] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [sendingReminder, setSendingReminder] = useState(false);
+  const [editOpen, setEditOpen] = useState(false);
 
   const publicUrl = webinar ? `/webinar?id=${webinar._id}` : "";
 
@@ -73,6 +75,20 @@ export function useWebinarActions(webinar: Webinar | undefined) {
     });
   };
 
+  const handleEditSave = (values: WebinarFormValues) => {
+    if (!webinar || updateMut.isPending) return;
+    updateMut.mutate(
+      { id: webinar._id, values },
+      {
+        onSuccess: () => {
+          toast.success("Webinar updated.");
+          setEditOpen(false);
+        },
+        onError: () => toast.error("Failed to update webinar."),
+      },
+    );
+  };
+
   const handleSendReminder = async (onDone: () => void) => {
     if (!webinar) return;
     setSendingReminder(true);
@@ -101,5 +117,9 @@ export function useWebinarActions(webinar: Webinar | undefined) {
     handleDelete,
     sendingReminder,
     handleSendReminder,
+    updateMut,
+    editOpen,
+    setEditOpen,
+    handleEditSave,
   };
 }

@@ -34,6 +34,10 @@ const transporter = nodemailer.createTransport(getMailTransportOptions());
 const FROM_ADDRESS =
   `"TalentAI" <${process.env.NO_REPLY_EMAIL || process.env.EMAIL_USER || "contact@talentai.bid"}>`;
 
+// Same 1:1 booking link used on the marketing site's home page — the webinar
+// results email offers it as a soft CTA instead of a per-webinar admin field.
+const CALENDLY_URL = "https://calendly.com/talent__ai/first-contact";
+
 // Verify SMTP at startup so misconfigurations are visible immediately
 transporter
   .verify()
@@ -405,7 +409,7 @@ const sendWebinarResultsEmail = async (submission, webinar) => {
       strength:      scoring.strength  ? { ...scoring.strength }  : null,
       vigilance:     scoring.vigilance ? { ...scoring.vigilance } : null,
       webinarLink:   webinar.webinar_link || null,
-      bookingLink:   webinar.booking_link || null,
+      bookingLink:   CALENDLY_URL,
       year,
     }),
     attachments: [logoAttachment],

@@ -1,5 +1,4 @@
 import React, { useState } from "react";
-import { useRouter } from "next/router";
 import { toast } from "sonner";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { Plus as AddIcon, Video as WebinarIcon } from "lucide-react";
@@ -31,7 +30,6 @@ const statusFilterLabel = (s: (typeof STATUS_FILTERS)[number]) =>
   s === "" ? "All" : s === "active" ? "Published" : "Draft";
 
 const WebinarManagement: React.FC = () => {
-  const router = useRouter();
   const page = 1;
   const [statusFilter, setStatusFilter] = useState<string>("");
 
@@ -52,18 +50,6 @@ const WebinarManagement: React.FC = () => {
   const [reminderTarget, setReminderTarget] = useState<Webinar | null>(null);
   const [sendingReminderId, setSendingReminderId] = useState<string | null>(null);
   const [inviteTarget, setInviteTarget] = useState<Webinar | null>(null);
-
-  // Deep link from the webinar detail page's "Edit" action (?edit=<id>).
-  React.useEffect(() => {
-    const editId = router.query.edit as string | undefined;
-    if (!editId || !data?.data) return;
-    const target = data.data.find((w) => w._id === editId);
-    if (target) {
-      setEditTarget(target);
-      setFormOpen(true);
-      router.replace({ pathname: router.pathname, query: { tab: "webinars" } }, undefined, { shallow: true });
-    }
-  }, [router, data]);
 
   const handleExport = async (w: Webinar) => {
     setExportingId(w._id);

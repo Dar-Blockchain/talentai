@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import type { WebinarMaturityLevel, WebinarScoreCategory, WebinarScoring } from "@/modules/webinar/types";
+import { CALENDLY_URL } from "@/modules/shared/constants";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { ArcRing } from "./ArcRing";
 import i18n from "@/i18n/config";
 
@@ -27,11 +29,9 @@ const CATEGORY_ORDER: WebinarScoreCategory[] = ["adoption", "governance", "quali
  * Deliberately minimal — "a few numbers, not an audit" — and laid out to fit
  * a single viewport (side-by-side panels instead of one long stacked column)
  * so nothing gets lost below the fold. */
-export function WebinarSnapshot({ scoring, lang, webinarLink, bookingLink }: {
+export function WebinarSnapshot({ scoring, lang }: {
   scoring: WebinarScoring;
   lang: string;
-  webinarLink?: string;
-  bookingLink?: string;
 }) {
   const t = i18n.getFixedT(lang === "en" ? "en" : "fr", "webinar");
 
@@ -142,26 +142,15 @@ export function WebinarSnapshot({ scoring, lang, webinarLink, bookingLink }: {
           </div>
         )}
 
-        {/* Soft CTAs — no sales pitch, just a replay link and an optional 1:1 invite */}
-        {(webinarLink || bookingLink) && (
-          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}
-            className="flex flex-col sm:flex-row gap-2.5 mb-3">
-            {webinarLink && (
-              <a href={webinarLink} target="_blank" rel="noopener noreferrer"
-                className="flex-1 text-center rounded-xl px-4 py-2.5 text-[12.5px] font-bold text-white transition-opacity hover:opacity-90"
-                style={{ background: TEAL }}>
-                {t("snapshot.ctaJoin")}
-              </a>
-            )}
-            {bookingLink && (
-              <a href={bookingLink} target="_blank" rel="noopener noreferrer"
-                className="flex-1 text-center rounded-xl px-4 py-2.5 text-[12.5px] font-bold border transition-colors hover:bg-[#F0FDF4]"
-                style={{ color: TEAL, borderColor: BRAND }}>
-                {t("snapshot.ctaBooking")}
-              </a>
-            )}
-          </motion.div>
-        )}
+        {/* Soft CTA — no sales pitch, just a low-pressure 1:1 invite */}
+        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}
+          className="mb-3">
+          <Button asChild variant="outline" size="lg" className="w-full rounded-xl text-[12.5px]">
+            <a href={CALENDLY_URL} target="_blank" rel="noopener noreferrer">
+              {t("snapshot.ctaBooking")}
+            </a>
+          </Button>
+        </motion.div>
 
         {/* Footer note — email notice + confidential, merged into one slim line */}
         <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.42 }}

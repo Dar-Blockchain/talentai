@@ -49,9 +49,6 @@ const WebinarSchema = new mongoose.Schema({
 
   // External join link shown in emails (e.g. Zoom/Teams/Google Meet URL)
   webinar_link: { type: String, default: "" },
-  // Optional 1:1-conversation booking link (Calendly, etc.) — shown as a soft
-  // CTA on the participant snapshot/results email alongside the join link.
-  booking_link: { type: String, default: "" },
 
   // Registrant-count target range shown as a pacing bar on the organizer's
   // aggregated overview — a working range set by the campaign owner.

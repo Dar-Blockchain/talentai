@@ -51,7 +51,6 @@ export interface Webinar {
   about_fr: string;
   about_en: string;
   webinar_link: string;
-  booking_link: string;
   target_min: number;
   target_max: number;
   highlights: string[];
@@ -129,8 +128,6 @@ export interface WebinarFormValues {
   about_fr: string;
   about_en: string;
   webinar_link: string;
-  /** Optional Calendly-style booking link for the participant's "book a 1:1" CTA. */
-  booking_link: string;
   /** Working registrant-count target range, shown as a pacing bar on the
    * organizer overview. Defaults to 50–70. */
   target_min: number;
