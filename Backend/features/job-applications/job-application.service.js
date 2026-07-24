@@ -1616,7 +1616,6 @@ module.exports.getCostComparisonKPI = async (companyId, postId = null, unit = 'm
       currency:                 settings.currency,
       manualCostPerCandidate:   settings.manualCostPerCandidate,
       aiCostPerInterview:       settings.aiCostPerInterview,
-      blendedHourlyRate:        settings.blendedHourlyRate,
       interviewDurationMinutes: settings.interviewDurationMinutes,
     };
   } catch (error) {
