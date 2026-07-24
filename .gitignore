@@ -190,8 +190,5 @@ nul
 
 # Local agent-tool state — not shared with the team
 .wolf/
-.github/
 .claude/
-.claude/commands/
-.claude/rules/
 CLAUDE.md
