@@ -47,6 +47,17 @@ const nextConfig: NextConfig = {
       tls: false,
     };
 
+    // @vladmandic/face-api's own bundled ESM file uses a dynamic `require()`
+    // internally — harmless (it's inside the library, not our code), but
+    // webpack can't statically analyze it and warns on every build.
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /node_modules\/@vladmandic\/face-api/,
+        message: /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/,
+      },
+    ];
+
     return config;
   },
   trailingSlash: true,
