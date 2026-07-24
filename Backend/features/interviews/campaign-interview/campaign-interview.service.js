@@ -52,19 +52,38 @@ function buildMixedQuestionPrompt({
     .map(([k, v]) => `${k}=${Math.round(v.percentage)}%`)
     .join(" | ");
 
-  const allTypes = ["behavioral", "situational", "technical", "problem-solving", "motivational"];
-  const recentTypes = usedQuestionTypes.slice(-2);
-  const recommendedType = allTypes.find(t => !recentTypes.includes(t)) || "situational";
+  const isSkillTest = moduleType === "SKILL_TEST";
 
-  const phaseGuide = {
-    "warm-up":     "Build rapport. Keep questions broad and welcoming. Ask about background and overall experience. No pressure.",
-    "exploration": "Dig into specific skills and past experiences. Mix behavioral (STAR method) and situational questions. Introduce topic variety.",
-    "deep-dive":   "Push for depth. Explore trade-offs, challenges, and advanced knowledge. Connect to specific points from earlier answers.",
-    "closing":     "Wrap up gracefully. Cover any significant coverage gaps. One final meaningful question, then prepare to close.",
-  };
+  const allTypes = isSkillTest
+    ? ["conceptual", "mechanics", "comparison", "edge-case", "best-practice", "problem-solving"]
+    : ["behavioral", "situational", "technical", "problem-solving", "motivational"];
+  const recentTypes = usedQuestionTypes.slice(-2);
+  const recommendedType = allTypes.find(t => !recentTypes.includes(t)) || (isSkillTest ? "conceptual" : "situational");
+
+  const phaseGuide = isSkillTest
+    ? {
+        "warm-up":     "Open with a direct, low-pressure knowledge question. Ask them to define or describe a core concept in their own words. Do NOT ask about years of experience or past projects.",
+        "exploration": "Probe understanding of core mechanics, syntax, and standard patterns. Ask HOW and WHY things work — not whether they have used them. Vary conceptual, mechanics, and comparison questions.",
+        "deep-dive":   "Test advanced knowledge: edge cases, trade-offs between approaches, common pitfalls, performance characteristics. Push for precision — probe if answers are vague.",
+        "closing":     "One final knowledge probe on a still-uncovered area, then close warmly. No behavioral or resume-style questions.",
+      }
+    : {
+        "warm-up":     "Build rapport. Keep questions broad and welcoming. Ask about background and overall experience. No pressure.",
+        "exploration": "Dig into specific skills and past experiences. Mix behavioral (STAR method) and situational questions. Introduce topic variety.",
+        "deep-dive":   "Push for depth. Explore trade-offs, challenges, and advanced knowledge. Connect to specific points from earlier answers.",
+        "closing":     "Wrap up gracefully. Cover any significant coverage gaps. One final meaningful question, then prepare to close.",
+      };
+
+  const modeBanner = isSkillTest
+    ? `\n╔══ ASSESSMENT MODE ══╗\nThis is a KNOWLEDGE assessment, not an experience interview.\nAsk direct questions about the skill itself — definitions, mechanics, comparisons, edge cases, best practices.\nDO NOT ask about years of experience, past projects, teams, or "tell me about a time…" style questions.\n`
+    : "";
+  const questionTypeEnum = isSkillTest
+    ? "conceptual|mechanics|comparison|edge-case|best-practice|problem-solving|closing"
+    : "behavioral|situational|technical|problem-solving|motivational|closing";
 
   return `
 You are conducting a live interview. Use the full context below to generate your next move.
+${modeBanner}
 
 â•â•â•â• INTERVIEW TOPIC â•â•â•â•
 ${interviewTopic || "General assessment"}
@@ -121,7 +140,7 @@ Return ONLY valid JSON â€” no extra text, no markdown:
     { "area": "<area_key>", "increase": <0-25> }
   ],
   "decision": "next_question|follow_up|end_interview",
-  "questionType": "behavioral|situational|technical|problem-solving|motivational|closing",
+  "questionType": "${questionTypeEnum}",
   "nextQuestion": "<next question or closing statement>",
   "report": {
     "strengths": ["<strength observed>"],
@@ -166,19 +185,19 @@ function parseJSON(raw, fallback) {
 
 const SKILL_TEST_AREAS = (skill) => ({
   fundamentals: {
-    label: `${skill} Fundamentals`,
+    label: `${skill} Fundamentals & Definitions`,
     percentage: 0,
     questionsAsked: 0,
     weight: 30,
   },
-  practical_usage: {
-    label: `Practical ${skill} Usage`,
+  mechanics: {
+    label: `How ${skill} Works Internally`,
     percentage: 0,
     questionsAsked: 0,
     weight: 25,
   },
   advanced_topics: {
-    label: `Advanced ${skill} Topics`,
+    label: `Advanced ${skill} Concepts & Edge Cases`,
     percentage: 0,
     questionsAsked: 0,
     weight: 25,
@@ -257,6 +276,22 @@ class CampaignInterviewService {
     // 1. Fetch campaign
     const campaign = await Campaign.findById(campaignId).lean();
     if (!campaign) throw new Error(`Campaign ${campaignId} not found`);
+
+    // A connected (logged-in) participant who already completed this
+    // campaign's module cannot start a new session -- this is the actual
+    // gate; the "already_completed" UI state on the frontend only hides the
+    // Start button, it doesn't stop a direct start_interview call. Anonymous
+    // or link-based participants aren't tracked by a stable candidateId here,
+    // so they're intentionally left out of this check.
+    if (mongoose.Types.ObjectId.isValid(candidateId)) {
+      const existingParticipant = await CampaignParticipant.findOne(
+        { campaign: campaignId, employee: candidateId },
+        { status: 1 },
+      ).lean();
+      if (existingParticipant?.status === "COMPLETED") {
+        throw new Error("You have already completed this interview and cannot retake it.");
+      }
+    }
 
     const moduleConfig = campaign.module?.config || {};
     const agentPrompt = moduleConfig.agentPrompt || null;
@@ -566,54 +601,53 @@ class CampaignInterviewService {
       type: "SKILL_TEST",
       skill: s,
       topic: s,
-      systemPrompt: `You are a senior technical interviewer conducting a rigorous ${s} skill assessment.
+      systemPrompt: `You are a senior technical interviewer conducting a rigorous ${s} KNOWLEDGE assessment for an internal team member.
+
+CRITICAL — WHAT THIS IS NOT
+This is NOT a job interview. Do NOT ask about years of experience, past employers, projects the candidate has worked on, teams they were part of, or "tell me about a time..." style behavioral questions. Do NOT ask about their resume or background.
+
+CRITICAL — WHAT THIS IS
+This is a direct knowledge test of the candidate's understanding of ${s}. Every question must test what they KNOW about ${s} itself — definitions, mechanics, concepts, trade-offs, best practices, edge cases — not what they have DONE with it.
+
+QUESTION BANK MINDSET
+Draw from the same pool of real, well-known ${s} interview questions that show up in actual technical interviews and interview-prep guides for this skill -- never vague, generic, or invented-on-the-spot questions. Before asking anything, silently organize ${s} into the categories a real interview guide for it would use (for example, for React that's roughly: Fundamentals, Hooks, State management & data flow, Performance, Testing, Ecosystem/tooling -- work out the real equivalent categories for ${s} specifically, whatever they are). Every question should be one an expert in ${s} would instantly recognize as a genuine, commonly-asked interview question, in the spirit of:
+  - "What's the difference between X and Y?"
+  - "What does Z do, and when would you reach for it over W?"
+  - "How would you implement / debug / optimize <a specific, concrete situation>?"
+  - "Explain how A affects B" or "Walk me through what happens when..."
+
+AVOID:
+  - "Tell me about your experience with ${s}" -- fine ONCE as a warm-up, never again
+  - Abstract questions with no concrete right answer, or ones a non-expert could bluff through
+  - Anything not tied to how ${s} is actually used and discussed in real ${s} work
 
 ROLE
-Act as a knowledgeable, professional, and empathetic interviewer â€” like a senior engineer interviewing a peer. Your tone should be encouraging yet evaluative. Make the candidate feel at ease while genuinely testing their depth.
+Act as a knowledgeable, professional, and empathetic interviewer -- like a senior engineer interviewing a peer. Encouraging yet evaluative: put the candidate at ease while genuinely testing depth.
 
 INTERVIEW PROGRESSION
-Phase 1 â€“ Warm-up (first 2 questions):
-  Broad, approachable questions about experience level and general familiarity with ${s}.
-  Goal: break the ice, calibrate seniority level.
-  Example style: "How long have you been working with ${s} and what kinds of projects have you used it on?"
+Phase 1 (first 2 questions) -- Fundamentals: canonical, foundational ${s} questions (core definitions and mechanics) plus a quick read on their experience level.
+Phase 2 (next 2-3 questions) -- Practical mechanics: real, specific questions about the tools/APIs/patterns a working ${s} developer uses day to day -- move across DIFFERENT categories from your map, don't linger on one for more than 2 questions in a row.
+Phase 3 (next 2-3 questions) -- Depth: pick the category (or categories) where the candidate showed the most -- or least -- strength, and go to the advanced end of it: internals, trade-offs, performance, edge cases, "what happens when...".
+Phase 4 (last 1-2 questions) -- Reflection: a mistake they learned from, or advice they'd give someone newer to ${s}.
 
-Phase 2 â€“ Exploration (next 2â€“3 questions):
-  Core concepts, common patterns, and practical application.
-  Mix conceptual understanding with real-world usage.
-  Example styles: "How does X work internally?", "How have you used Y in a production context?"
+QUESTION STYLES -- rotate, never repeat the same one twice in a row:
+  - Definition/comparison -- "What's the difference between X and Y?"
+  - Mechanism -- "What does Z do internally, or how does it actually work?"
+  - Practical/applied -- "How would you build / debug / optimize <a concrete, specific situation>?"
+  - Trade-off -- "When would you reach for X instead of Y, and why?"
+  - Best-practice/pitfall -- "What's a common mistake people make with X?"
 
-Phase 3 â€“ Deep-dive (next 2â€“3 questions):
-  Advanced topics, edge cases, performance considerations, architectural trade-offs.
-  Push for genuine depth â€” probe if answers are shallow.
-  Example styles: "What would happen if...?", "How would you approach optimizing...?"
+ANSWER-DRIVEN ADAPTATION
+  - Strong, specific answer -> stay on that same area and go one notch harder (edge case, scale, "what if")
+  - Thin or generic answer -> don't repeat the question verbatim; ask a narrower, more concrete version once, then move to a different area if it's still thin
+  - Skipped or avoided -> pivot to an easier area entirely, don't circle back to the same spot right away
 
-Phase 4 â€“ Closing (last 1â€“2 questions):
-  Reflection, best practices, lessons learned.
-  Example styles: "What's a mistake you made with ${s} and what did you learn?", "What advice would you give a junior developer starting with ${s}?"
-
-QUESTION TYPE ROTATION â€” always vary across:
-  â€¢ Conceptual   â†’ test understanding of how/why things work
-  â€¢ Applied      â†’ test hands-on experience with real projects
-  â€¢ Scenario     â†’ present a problem and ask how they'd solve it
-  â€¢ Best-practice â†’ probe for quality standards and code hygiene
-  â€¢ Problem-solving â†’ give a challenge and evaluate their reasoning
-
-ANTI-REPETITION RULES
-  â€“ Never ask two conceptual questions in a row
-  â€“ Never reuse the same example, framework feature, or scenario
-  â€“ If a candidate gave an excellent answer, build on it â€” don't repeat the same angle
-  â€“ If a candidate gave a poor answer, simplify slightly and try a different angle, don't abandon the area
-
-RESPONSE QUALITY ADAPTATION
-  â€“ Excellent answer â†’ increase difficulty, go deeper, ask about edge cases
-  â€“ Good answer â†’ probe one specific detail further before moving on
-  â€“ Fair answer â†’ stay at the same level, try a different angle
-  â€“ Poor/avoided â†’ give a simpler follow-up or pivot to a related area
-
-STYLE
-  â€“ Concise, clear questions (one thing at a time â€” no compound questions)
-  â€“ Brief acknowledgment of the previous answer before each new question (1 phrase max)
-  â€“ Professional but never cold or robotic`,
+HARD RULES
+  - Never ask two questions about the same narrow sub-topic back to back
+  - Never reuse the same example, snippet, or scenario twice
+  - One question at a time -- no compound questions
+  - Acknowledge the previous answer in one short phrase before asking the next question
+  - Professional but conversational -- never cold or robotic`,
     };
   }
 
@@ -697,42 +731,55 @@ Return ONLY valid JSON, no markdown, no extra text:
       ? focusAreas.map((a) => `  â€¢ ${a.label}`).join("\n")
       : null;
 
+    const focusRotationNote = focusAreas
+      ? `Rotate across ALL of the focus areas above -- do not spend more than 2 consecutive questions on the same area. Areas with a higher weight deserve more questions, but every area must get at least one.`
+      : `No predefined focus areas were given for "${topic}" -- before your first question, silently break "${topic}" down into 3-4 natural sub-competencies (the way an expert in this field would), and rotate your questions across those sub-competencies instead of asking generic variations of the same thing.`;
+
     const conductRules = `
 INTERVIEW CONDUCT RULES
-- Ask one question at a time â€” no compound questions.
-- Vary question types every turn: behavioral, situational, technical (if relevant), motivational, problem-solving.
+- Ask one question at a time -- no compound questions.
+- Vary question types every turn: definitional/conceptual, applied/practical, behavioral, situational, trade-off, best-practice.
 - Acknowledge the candidate's previous answer with one brief phrase before each new question.
-- Adapt difficulty based on answer quality (deeper if excellent, simpler if poor).
-- Never repeat the same angle, example, or scenario twice.
-- Every question must be directly relevant to the interview topic: "${topic}".`;
+- Adapt difficulty based on answer quality: excellent answer -> go deeper or raise difficulty; vague/shallow answer -> ask a follow-up on that SAME point before moving to a new sub-topic.
+- Never repeat the same angle, example, or scenario twice, and never ask two questions about the same narrow sub-topic in a row.
+- Every question must be directly relevant to the interview topic: "${topic}" -- never generic filler that could apply to any interview.
+${focusRotationNote}`;
 
     const systemPrompt = `You are an experienced interviewer conducting a structured assessment on the topic: "${topic}".
 Campaign: "${campaign.title}"
 Interview tone: ${tone}.
 
+QUESTION BANK MINDSET
+Where "${topic}" has a real body of professional knowledge behind it, draw from the same kind of real, well-known interview questions that show up in actual interviews and interview-prep guides for that subject -- never vague, generic, or invented-on-the-spot questions. Silently organize "${topic}" into the categories a real subject-matter expert would use to structure an assessment of it (for a technical subject that's roughly: fundamentals, everyday practical usage, tools/patterns, advanced/edge-case understanding; for a role, competency, or soft-skill topic that's roughly: core responsibilities or behaviors, decision-making, collaboration, growth areas -- work out what's actually relevant for "${topic}" specifically). Each question should be one a domain expert in "${topic}" would instantly recognize as a genuine, specific interview question, in the spirit of:
+  - "What's the difference between X and Y (within ${topic})?"
+  - "What does Z do, or how does it actually work?"
+  - "How would you handle/build/resolve <a specific, concrete situation involving ${topic}>?"
+  - "Tell me about a time you faced <a specific challenge related to ${topic}> -- what did you do?"
+
+AVOID: "tell me about your experience with ${topic}" beyond a single warm-up use, abstract questions with no concrete right answer, and any generic HR filler unrelated to this topic.
+
 INTERVIEW FOCUS
-Every single question you ask must be directly and specifically about "${topic}"${focusList ? `, covering these areas:\n${focusList}` : ""}.
-Do not ask generic HR questions unrelated to this topic unless used as a brief warm-up opener.
+Every single question you ask must be directly and specifically about "${topic}"${focusList ? `, covering these areas (with their relative importance):\n${focusList}` : ""}.
 
 ROLE
 Act as a knowledgeable, professional, and empathetic interviewer. Your tone is ${tone}.
 You combine behavioral, situational, technical, and problem-solving questions to build a complete picture of the candidate's capabilities in "${topic}".
 
 INTERVIEW PROGRESSION
-Phase 1 â€“ Warm-up: Ask about the candidate's overall experience with "${topic}" â€” how long, in what context.
-Phase 2 â€“ Exploration: Probe specific knowledge, past projects, and practical application of "${topic}".
-Phase 3 â€“ Deep-dive: Test advanced understanding, trade-offs, edge cases, and design decisions related to "${topic}".
-Phase 4 â€“ Closing: Ask about best practices, lessons learned, or an achievement they're proud of involving "${topic}".
+Phase 1 - Warm-up: One canonical, foundational question about "${topic}" plus a quick read on the candidate's overall experience with it -- how long, in what context.
+Phase 2 - Exploration: Real, specific questions about the tools/knowledge/practices a working professional in "${topic}" uses day to day, moving through its different sub-competencies -- don't linger on one for more than 2 questions in a row.
+Phase 3 - Deep-dive: Push to the advanced end of whichever sub-competency the candidate showed the most (or least) strength in -- trade-offs, edge cases, design decisions related to "${topic}".
+Phase 4 - Closing: Ask about best practices, lessons learned, or an achievement they're proud of involving "${topic}".
 
-QUESTION TYPE ROTATION (always vary):
-  â€¢ Conceptual     â†’ "How does X work in the context of ${topic}?"
-  â€¢ Applied        â†’ "Tell me about a project where you used ${topic}. What did you build?"
-  â€¢ Behavioral     â†’ "Tell me about a challenge you faced with ${topic} and how you solved it."
-  â€¢ Situational    â†’ "If you had to use ${topic} to solve [problem], how would you approach it?"
-  â€¢ Best-practice  â†’ "What are the most common mistakes people make with ${topic}?"
+QUESTION TYPE ROTATION (always vary, never repeat the same one twice in a row):
+  - Definition/comparison -> "What's the difference between X and Y?"
+  - Mechanism/conceptual  -> "How does X actually work, or what does it do?"
+  - Applied/practical     -> "Tell me about a project where you used ${topic}. What did you build?"
+  - Behavioral            -> "Tell me about a challenge you faced with ${topic} and how you solved it."
+  - Situational           -> "If you had to use ${topic} to solve [a specific problem], how would you approach it?"
+  - Best-practice         -> "What are the most common mistakes people make with ${topic}?"
 
 ${conductRules}`;
-
     return {
       type:          "AI_INTERVIEW",
       topic,
@@ -751,13 +798,14 @@ ${conductRules}`;
     const openingContext = context.openingContext;
     const userMsg =
       moduleType === "SKILL_TEST"
-        ? `Generate a warm, professional opening message to start a ${topic} skill assessment.
+        ? `Generate a warm, professional opening message to start a ${topic} KNOWLEDGE assessment.
 The message must:
-1. Greet the candidate using "I" â€” do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
-2. Set expectations briefly â€” mention it will be a conversational assessment covering ${topic} from fundamentals to advanced topics.
-3. End with a natural warm-up question asking about their experience level with ${topic} and the kinds of projects they've used it on.
+1. Greet the candidate using "I" — do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
+2. Set expectations briefly — this is a knowledge check on ${topic}: definitions, concepts, mechanics, best practices. NOT an interview about their experience, projects, or background.
+3. End with a direct opening knowledge question — for example, asking them to explain what ${topic} is in their own words, or to describe one of its core building blocks. Do NOT ask about experience, projects, or how long they've used it.
 
 IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
+Never ask about experience, seniority, employers, or past projects — this is a knowledge test, not a job interview.
 Tone: encouraging, professional, human. Not robotic.
 Length: 3â€“4 sentences maximum. No bullet points, no headers.`
         : `Generate a warm, professional opening message to start an interview${openingContext ? ` covering: ${openingContext}` : ` on the topic: "${topic}"`}.
@@ -793,7 +841,7 @@ Length: 3â€“4 sentences maximum. No bullet points, no headers.`;
   _fallbackGreeting(moduleType, skill) {
     const topic = skill || "technical";
     return moduleType === "SKILL_TEST"
-      ? `Welcome! I'm your interviewer today and I'll be guiding you through a ${topic} assessment. We'll cover a range of topics from fundamentals to practical usage. To get started, could you tell me about your experience with ${topic} and the kinds of projects you've worked on?`
+      ? `Welcome! I'm your interviewer today and I'll be guiding you through a ${topic} knowledge assessment. This is a knowledge check — we'll cover core concepts, mechanics, and best practices of ${topic}, not your work history. To start us off, in your own words, what is ${topic} and what problem does it solve?`
       : `Welcome! I'm your interviewer today. This will be a relaxed conversation â€” not a test â€” so feel free to speak freely. To kick things off, could you give me a quick overview of your background and what you've been working on recently?`;
   }
 

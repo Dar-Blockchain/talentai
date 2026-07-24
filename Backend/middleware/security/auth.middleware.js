@@ -79,6 +79,26 @@ const requireAuthUser = async (req, res, next) => {
   next();
 };
 
+// ─── attachUserIfPresent ──────────────────────────────────────────────────────
+// For routes that are public by default but behave differently for a logged-in
+// admin (e.g. previewing a draft). Never rejects — just populates req.user
+// when a valid session is present, and silently continues otherwise.
+const attachUserIfPresent = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const bearerToken = authHeader?.startsWith("Bearer ") ? authHeader.slice(7) : null;
+  const token = bearerToken || req.cookies?.jwt_token || null;
+  if (!token) return next();
+
+  try {
+    const decoded = jwt.verify(token, process.env.Net_Secret);
+    if (await isTokenRevoked(decoded.jti)) return next();
+    req.user = await userModel.findById(decoded.id).select("_id role").lean();
+  } catch {
+    // Invalid/expired token on an otherwise-public route — treat as anonymous
+  }
+  next();
+};
+
 // ─── requireAuth (API key OR JWT) ────────────────────────────────────────────
 
 const requireAuth = async (req, res, next) => {
@@ -144,4 +164,4 @@ const requireAuth = async (req, res, next) => {
   return requireAuthUser(req, res, next);
 };
 
-module.exports = { requireAuthUser, requireAuth, revokeToken };
+module.exports = { requireAuthUser, requireAuth, attachUserIfPresent, revokeToken };

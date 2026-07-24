@@ -1,0 +1,151 @@
+{
+  "page": {
+    "backToLanding": "Retour à la page d'accueil",
+    "notFound": "Ce webinaire n'est pas disponible.",
+    "loading": "Chargement du webinar…"
+  },
+  "header": {
+    "cta": "Réserver ma place",
+    "switchToEnglish": "Switch to English",
+    "switchToFrench": "Passer en français"
+  },
+  "hero": {
+    "badge": "Session live gratuite",
+    "titleLine1": "Découvrez votre",
+    "titleLine2": "maturité IA en recrutement",
+    "desc": "Un échange ciblé de 3 minutes avec notre IA, transformé en un rapport personnalisé sur l'état de votre recrutement.",
+    "questions": "questions",
+    "durationDefault": "~3 min",
+    "registrations": "{{count}}+ professionnels déjà inscrits",
+    "joinWebinar": "Rejoindre le webinar"
+  },
+  "about": {
+    "overline": "À propos",
+    "heading": "C'est quoi ce webinar ?"
+  },
+  "howItWorks": {
+    "overline": "Déroulement",
+    "heading": "Comment ça marche ?",
+    "steps": [
+      { "title": "Accédez au webinar", "desc": "Remplissez le formulaire ci-dessus — aucun compte requis." },
+      { "title": "Répondez aux questions", "desc": "3 minutes sur votre maturité IA et vos défis recrutement." },
+      { "title": "L'IA analyse votre profil", "desc": "Calcul de votre score de maturité et de vos points clés." },
+      { "title": "Recevez votre rapport", "desc": "Un rapport personnalisé livré directement par email." }
+    ]
+  },
+  "faq": {
+    "heading": "Bon à savoir",
+    "items": [
+      { "q": "Est-ce vraiment gratuit ?", "a": "Oui, 100% gratuit — sans carte bancaire, sans frais cachés." },
+      { "q": "Dois-je y assister en direct ?", "a": "Non — répondez à quelques questions et nous vous enverrons votre rapport IA personnalisé par email." },
+      { "q": "Que deviennent mes réponses ?", "a": "Elles servent uniquement à personnaliser votre rapport, conformément à notre politique de confidentialité." }
+    ]
+  },
+  "finalCta": {
+    "overline": "Dernière étape",
+    "heading": "Prêt à connaître votre position ?",
+    "body": "Renseignez vos coordonnées ci-dessous — votre rapport IA personnalisé n'est plus qu'à un formulaire."
+  },
+  "registerForm": {
+    "title": "Réservez Votre Place",
+    "subtitle": "Moins d'une minute.",
+    "fullName": "Nom complet",
+    "fullNamePlaceholder": "Jean Dupont",
+    "company": "Entreprise",
+    "optional": "optionnel",
+    "companyPlaceholder": "Nom de la société",
+    "position": "Poste",
+    "positionPlaceholder": "Responsable Talent Acquisition",
+    "sector": "Secteur",
+    "sectorPlaceholder": "Sélectionnez votre/vos secteur(s)",
+    "sectorSelectedCount": "{{count}} secteurs sélectionnés",
+    "sectorTechnology": "Technologie",
+    "sectorFinance": "Finance",
+    "sectorHealthcare": "Santé",
+    "sectorRetail": "Commerce de détail",
+    "sectorManufacturing": "Industrie",
+    "sectorEducation": "Éducation",
+    "sectorTelecom": "Télécoms",
+    "sectorPublicSector": "Secteur public",
+    "sectorOther": "Autre",
+    "hrTeamSize": "Taille de l'équipe RH",
+    "hrTeamSizePlaceholder": "Sélectionnez une tranche",
+    "hrTeamSizeLt10": "Moins de 10",
+    "hrTeamSize10_50": "10 – 50",
+    "hrTeamSize50_200": "50 – 200",
+    "hrTeamSizeGt200": "200+",
+    "phone": "Téléphone",
+    "phonePlaceholder": "+33 6 12 34 56 78",
+    "profileType": "Votre profil",
+    "profileTypePlaceholder": "Sélectionnez votre profil",
+    "profileTypeStaffingBpo": "Cabinet de staffing / BPO",
+    "profileTypeEnterpriseChro": "Entreprise / RH interne",
+    "profileTypeReferrer": "Apporteur d'affaires / Autre",
+    "sourceChannel": "Comment nous avez-vous connus ?",
+    "sourceChannelPlaceholder": "Sélectionnez un canal",
+    "sourceChannelLinkedin": "LinkedIn",
+    "sourceChannelInstagram": "Instagram",
+    "sourceChannelFacebook": "Facebook",
+    "sourceChannelTwitterX": "X / Twitter",
+    "sourceChannelGoogleSearch": "Recherche Google",
+    "sourceChannelReferral": "Recommandation",
+    "sourceChannelNewsletter": "Newsletter",
+    "sourceChannelOther": "Autre",
+    "email": "Email",
+    "emailPlaceholder": "vous@entreprise.com",
+    "emailInvalid": "Veuillez entrer une adresse email valide",
+    "consent": "J'accepte que mes réponses soient traitées pour personnaliser mon expérience.",
+    "submit": "Confirmer mon inscription",
+    "privacy": "Sans spam. Vos données restent privées.",
+    "submitError": "Une erreur est survenue. Veuillez réessayer.",
+    "alreadyDoneTitle": "Vous êtes déjà inscrit",
+    "alreadyDoneBody": "Vous êtes déjà inscrit à ce webinar et avez déjà complété le questionnaire. Consultez votre email pour les détails du webinar."
+  },
+  "funnel": {
+    "analysing": "Analyse de votre profil…",
+    "welcomeBack": "Bon retour ! Vous avez déjà réservé votre place. Merci de compléter le questionnaire pour finaliser votre inscription.",
+    "letsBegin": "Commençons",
+    "readyName": "Prêt, {{name}} ?",
+    "readyGeneric": "Quelques questions sur votre recrutement",
+    "questionProgress": "Question {{current}} sur {{total}} — environ 3 minutes. Vos réponses façonnent le rapport IA personnalisé que vous recevrez par email."
+  },
+  "question": {
+    "of": "sur {{total}}",
+    "select": "Sélectionner…",
+    "yourAnswer": "Votre réponse…",
+    "saving": "Enregistrement…",
+    "confirm": "Confirmer",
+    "next": "Suivant",
+    "pressEnter": "Appuyez sur Entrée pour continuer"
+  },
+  "scale": {
+    "notAtAll": "Pas du tout",
+    "slightly": "Peu",
+    "neutral": "Neutre",
+    "ratherYes": "Plutôt oui",
+    "absolutely": "Absolument"
+  },
+  "snapshot": {
+    "aiReport": "Rapport de maturité IA",
+    "registeredTitle": "Vous êtes inscrit !",
+    "analysedBody": "Voici votre profil de maturité IA personnalisé.",
+    "yourScore": "Votre score de maturité IA",
+    "maturity": {
+      "beginner": "Débutant",
+      "explorer": "Explorateur",
+      "practitioner": "Praticien",
+      "pioneer": "Pionnier"
+    },
+    "category": {
+      "adoption": "Adoption & outils",
+      "governance": "Gouvernance & conformité",
+      "quality": "Qualité & mesure",
+      "antifraud": "Vigilance fraude"
+    },
+    "strengthTitle": "Point fort",
+    "vigilanceTitle": "Point de vigilance",
+    "ctaBooking": "Réserver un échange 1:1",
+    "emailNotice": "Votre rapport complet arrive dans votre boîte mail.",
+    "confidential": "Données confidentielles · Aucun spam"
+  }
+}

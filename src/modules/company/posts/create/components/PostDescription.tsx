@@ -4,7 +4,7 @@ import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, updateSalaryField, setGeneratedPost } from "../store/createPostSlice";
+import { setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, setDepartment, updateSalaryField, setGeneratedPost } from "../store/createPostSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import GenerateLanguageModal, { GENERATE_LANG_KEY } from "./GenerateLanguageModal";
 import CardHeader from "./post-description/CardHeader";
@@ -22,7 +22,7 @@ interface PostDescriptionProps {
 const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
-  const { promptDescription, salary, workMode, employmentType, expirationDate, interviewLanguages } = useSelector(
+  const { promptDescription, salary, workMode, employmentType, department, expirationDate, interviewLanguages } = useSelector(
     (state: RootState) => state.postGeneration,
     shallowEqual
   );
@@ -112,10 +112,12 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
         <RoleFields
           employmentType={employmentType}
           workMode={workMode}
+          department={department}
           expirationDate={expirationDate}
           errors={{ employmentType: errors.employmentType, workMode: errors.workMode }}
           onEmploymentChange={(val) => { dispatch(setEmploymentType(val)); clear("employmentType"); }}
           onWorkModeChange={(val) => { dispatch(setWorkMode(val)); clear("workMode"); }}
+          onDepartmentChange={(val) => dispatch(setDepartment(val))}
           onExpirationChange={(val) => dispatch(setExpirationDate(val))}
         />
 

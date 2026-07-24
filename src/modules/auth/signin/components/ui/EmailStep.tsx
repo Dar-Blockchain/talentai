@@ -6,7 +6,6 @@ import type { Control, FieldErrors } from "react-hook-form";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Label } from "@/modules/shared/ui/shadcn/label";
 import { validators } from "@/modules/auth/shared/utils/validators";
-import { emailKeyDownGuard } from "@/lib/validation/email";
 import type { SigninFormValues } from "../../types";
 
 interface Props {
@@ -41,7 +40,6 @@ const EmailStep: React.FC<Props> = ({ control, errors, loading, invitationEmail 
                 value={invitationEmail || field.value || ""}
                 onChange={field.onChange}
                 onBlur={field.onBlur}
-                onKeyDown={emailKeyDownGuard}
                 className="pl-9 h-10 text-sm font-sans"
               />
             </div>

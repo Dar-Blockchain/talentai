@@ -1,11 +1,14 @@
 import { memo, useState } from "react";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import CardHeader from "./cards/CardHeader";
 import CardMeta from "./cards/CardMeta";
 import CardFooter from "./cards/CardFooter";
 import CardDraftBanner from "./cards/CardDraftBanner";
 import CardQrDialog from "./cards/CardQrDialog";
-import { getDaysLeft, getPostShareLink } from "../utils";
+import { getDaysLeft, getPostShareLink, copyToClipboard } from "../utils";
+import { useToast } from "@/hooks/useToast";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 
 interface JobPostCardProps {
   job: any;
@@ -20,22 +23,30 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [copied, setCopied]         = useState(false);
   const [qrOpen, setQrOpen]         = useState(false);
+  const { showToast } = useToast();
+  const { t } = useTranslation("posts");
 
+  const { departments } = useDepartmentList();
   const jd        = job.jobDetails || {};
   const isDraft   = job.status === "draft";
+  const departmentName = jd.department ? departments.find((d) => d._id === jd.department)?.name : undefined;
   const daysLeft  = getDaysLeft(job.expirationDate);
   const isExpired = daysLeft !== null && daysLeft <= 0;
   const statusKey = isDraft ? "draft" : isExpired ? "expired" : job.status === "closed" ? "closed" : "active";
 
   const shareLink = getPostShareLink(job._id, job.user?._id);
 
-  const handleCopyLink = (e: React.MouseEvent) => {
+  const handleCopyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setMenuAnchor(null);
-    navigator.clipboard.writeText(shareLink).then(() => {
+    const ok = await copyToClipboard(shareLink);
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+      showToast({ message: t("detail.toast.link_copied"), severity: "success" });
+    } else {
+      showToast({ message: t("detail.toast.link_copy_error"), severity: "error" });
+    }
   };
 
   return (
@@ -70,6 +81,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             location={jd.location}
             employmentType={jd.employmentType}
             workMode={jd.workMode}
+            department={departmentName}
           />
 
           <CardFooter

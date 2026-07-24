@@ -1,5 +1,5 @@
 import axiosInstance from '@/utils/axiosInstance';
-import type { UpdateProfilePayload, ProfileApiResponse, ApiKey, CreateApiKeyPayload, UpdateApiKeyPayload } from '../types';
+import type { UpdateProfilePayload, ProfileApiResponse, ApiKey, CreateApiKeyPayload, UpdateApiKeyPayload, CostSettings, UpdateCostSettingsPayload } from '../types';
 
 export const settingsApi = {
   fetchProfile: async (): Promise<ProfileApiResponse> => {
@@ -56,6 +56,18 @@ export const apiKeysApi = {
 
   regenerate: async (id: string): Promise<{ id: string; name: string; key: string }> => {
     const res = await axiosInstance.post(`api/api-keys/${id}/regenerate`, {});
+    return res.data?.data ?? res.data;
+  },
+};
+
+export const costSettingsApi = {
+  fetch: async (): Promise<CostSettings> => {
+    const res = await axiosInstance.get('company-settings');
+    return res.data?.data ?? res.data;
+  },
+
+  update: async (payload: UpdateCostSettingsPayload): Promise<CostSettings> => {
+    const res = await axiosInstance.patch('company-settings', payload);
     return res.data?.data ?? res.data;
   },
 };

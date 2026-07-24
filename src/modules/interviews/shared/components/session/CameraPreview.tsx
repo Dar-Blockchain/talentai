@@ -1,7 +1,9 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { VideoOff, MicOff } from 'lucide-react';
+import { VideoOff, MicOff, AlertTriangle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type CameraStatus, type InterviewStatus } from '../../types/interview';
+import type { UseIdentityGuardReturn } from '../../hooks/useIdentityGuard';
+import type { UseCameraGuardReturn } from '../../hooks/useCameraGuard';
 
 const BAR_COUNT = 5;
 const BAR_MAX = 22;
@@ -16,6 +18,12 @@ interface CameraPreviewProps {
   audioContextRef?: React.MutableRefObject<AudioContext | null>;
   audioStreamRef?: React.MutableRefObject<MediaStream | null>;
   attachStream?: () => void;
+  /** Identity/face guard state — rendered as a quiet trust indicator on the video frame.
+   *  Loading and non-critical failures stay invisible; only "verifying/verified/ended" show. */
+  identityGuard?: UseIdentityGuardReturn;
+  /** Camera-loss guard state — shown as a warning banner while the interview is
+   *  active and the camera track isn't live (strikes + final grace countdown). */
+  cameraGuard?: UseCameraGuardReturn;
 }
 
 const CameraPreview: React.FC<CameraPreviewProps> = ({
@@ -27,9 +35,35 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
   audioContextRef,
   audioStreamRef,
   attachStream,
+  identityGuard,
+  cameraGuard,
 }) => {
   const { t } = useTranslation('interview');
   const isActive = interviewStatus === 'active';
+
+  // Collapse the guard's internal states into a small, honest trust signal —
+  // no raw ML distances, no error strings. Loading and non-critical failures
+  // (guard couldn't load, camera not ready yet) stay silent rather than
+  // alarming the candidate over something that doesn't block the interview.
+  // `enrolled` is a one-way flag (never resets once true), so it alone would
+  // keep claiming "verified" even while the camera currently sees no face —
+  // faceCount must always win over it to reflect what's true right now.
+  const identityBadge = (() => {
+    if (!identityGuard) return null;
+    if (identityGuard.status === 'terminated') {
+      return { label: t('camera.identity_ended'), dot: '#EF4444', pulse: false };
+    }
+    if (identityGuard.status !== 'watching') return null;
+    if (identityGuard.faceCount === 0) {
+      return { label: t('camera.identity_no_face'), dot: '#F59E0B', pulse: true };
+    }
+    if (identityGuard.faceCount > 1) {
+      return { label: t('camera.identity_multiple'), dot: '#F59E0B', pulse: true };
+    }
+    return identityGuard.enrolled
+      ? { label: t('camera.identity_verified'), dot: '#6AD39C', pulse: false }
+      : { label: t('camera.identity_verifying'), dot: '#F59E0B', pulse: true };
+  })();
 
   useEffect(() => {
     attachStream?.();
@@ -162,11 +196,50 @@ const CameraPreview: React.FC<CameraPreviewProps> = ({
               );
             })}
 
+            {/* Camera-lost warning — strikes counting up, then a final grace countdown */}
+            {isActive && cameraGuard && !cameraGuard.cameraLive && (cameraGuard.strikes > 0 || cameraGuard.graceSecondsLeft !== null) && (
+              <div
+                className="absolute top-2.5 left-1/2 -translate-x-1/2 flex items-center gap-2 backdrop-blur-[12px] px-3 py-1.5 rounded-[10px] border"
+                style={{
+                  background: cameraGuard.graceSecondsLeft !== null ? 'rgba(153,27,27,0.85)' : 'rgba(120,53,15,0.8)',
+                  borderColor: cameraGuard.graceSecondsLeft !== null ? 'rgba(248,113,113,0.5)' : 'rgba(245,158,11,0.4)',
+                }}
+              >
+                <AlertTriangle size={13} color="#fff" className="shrink-0" />
+                <span className="font-sans font-semibold text-[0.65rem] text-white">
+                  {cameraGuard.graceSecondsLeft !== null
+                    ? t('camera.lost_grace', { seconds: cameraGuard.graceSecondsLeft, defaultValue: `Ending in ${cameraGuard.graceSecondsLeft}s — turn camera back on` })
+                    : t('camera.lost_warning', { strike: cameraGuard.strikes, max: 3, defaultValue: `Camera off (${cameraGuard.strikes}/3)` })}
+                </span>
+              </div>
+            )}
+
             {/* PREVIEW badge */}
             {!isConnecting && !isActive && (
               <div className="absolute top-2.5 left-2.5 flex items-center gap-1 bg-black/52 backdrop-blur-[12px] px-2 py-1 rounded-[6px] border border-white/[0.07]">
                 <div className="w-1 h-1 rounded-full bg-[#6AD39C] shrink-0" />
                 <span className="font-sans font-bold text-[0.54rem] text-white/80 tracking-[0.12em]">PREVIEW</span>
+              </div>
+            )}
+
+            {/* Bottom-left: identity/face check trust indicator */}
+            {identityBadge && (
+              <div className="absolute bottom-2.5 left-2.5 flex items-center gap-1.5 bg-black/52 backdrop-blur-[12px] px-2 py-1 rounded-[6px] border border-white/[0.07]">
+                <span className="relative flex w-1.5 h-1.5 shrink-0">
+                  {identityBadge.pulse && (
+                    <span
+                      className="absolute inline-flex h-full w-full rounded-full animate-ping opacity-60"
+                      style={{ background: identityBadge.dot }}
+                    />
+                  )}
+                  <span
+                    className="relative inline-flex w-1.5 h-1.5 rounded-full"
+                    style={{ background: identityBadge.dot }}
+                  />
+                </span>
+                <span className="font-sans font-semibold text-[0.58rem] text-white/80 tracking-[0.04em]">
+                  {identityBadge.label}
+                </span>
               </div>
             )}
 

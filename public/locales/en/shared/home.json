@@ -5,7 +5,8 @@
     "find_jobs": "Find Jobs",
     "are_you_hiring": "Are You Hiring?",
     "contact": "Contact",
-    "webinar": "Webinar"
+    "webinar": "Webinar",
+    "blog": "Blogs"
   },
   "hero": {
     "headline_1": "Stop Losing Top Talent",
@@ -160,7 +161,7 @@
     "benefit_1": "Understand the real impact of AI on your hiring process",
     "benefit_2": "See concrete examples of time-to-hire reduction",
     "benefit_3": "Leave with an actionable plan",
-    "cta": "Reserve my spot",
+    "cta": "Reserve My Spot",
     "card_type": "Live session",
     "card_sub": "Online · Free",
     "card_title": "AI & Recruitment: from hype to reality",
@@ -220,5 +221,18 @@
     "error_message": "Message is required",
     "error_network": "Network error. Please check your connection and try again.",
     "error_generic": "Something went wrong. Please try again."
+  },
+  "blog": {
+    "meta_title": "Blog | TalentAI",
+    "meta_description": "Insights on AI-powered recruitment, hiring automation, and building better interview pipelines.",
+    "overline": "TalentAI Blog",
+    "headline": "Insights on",
+    "headline_accent": "AI-powered recruitment",
+    "subtitle": "Practical playbooks, product updates, and hiring-automation deep dives from the TalentAI team.",
+    "empty": "No blog posts yet — check back soon.",
+    "read_article": "Read article",
+    "back_to_blog": "Back to blog",
+    "not_found": "This post couldn't be found.",
+    "page_of": "Page {{page}} of {{totalPages}}"
   }
 }

@@ -1,9 +1,139 @@
 "use client";
-import React, { memo } from "react";
-import { ArrowUp as ArrowUpwardOutlined, ArrowDown as ArrowDownwardOutlined, Minus as RemoveOutlined } from "lucide-react";
+import React, { memo, useMemo } from "react";
+import { useRouter } from "next/router";
+import { useTranslation } from "react-i18next";
+import { ArrowUp as ArrowUpwardOutlined, ArrowDown as ArrowDownwardOutlined, Minus as RemoveOutlined, ChevronRight as ArrowForwardIosRounded } from "lucide-react";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
+import type { TrendRangeUnit } from "../types";
+
+// ── Days / Months / Years trend filter ──────────────────────────────────────────
+// Shared by the Manual-vs-TalentAI hours & cost cards. "Years" is UI sugar: it
+// still asks the backend for monthly buckets (a 1-3 point line wouldn't show a
+// usable trend), just over a bigger month count — see `toApiRange`.
+
+export type TrendRangeTab = "day" | "month" | "year";
+
+const TAB_OPTIONS: { tab: TrendRangeTab; labelKey: string; labelDefault: string; values: number[]; suffix: string }[] = [
+  { tab: "day",   labelKey: "trendRangeFilter.days",   labelDefault: "Days",   values: [7, 14, 30],   suffix: "d" },
+  { tab: "month", labelKey: "trendRangeFilter.months", labelDefault: "Months", values: [3, 6, 9, 12], suffix: "M" },
+  { tab: "year",  labelKey: "trendRangeFilter.years",  labelDefault: "Years",  values: [1, 2, 3],     suffix: "Y" },
+];
+
+export const toApiRange = (tab: TrendRangeTab, value: number): { unit: TrendRangeUnit; value: number } =>
+  tab === "year" ? { unit: "month", value: value * 12 } : { unit: tab, value };
+
+// Older accounts (created before this filter shipped) still show every option
+// fine, but an account created a week ago has no data behind a "12M"/"1Y"
+// bucket — that option would just render empty columns. Cap each tab's
+// options to what the account's age can actually cover, so nothing offered
+// points at a date range that predates the account's creation.
+const daysSinceCreation = (createdAt?: string | Date | null): number | null => {
+  if (!createdAt) return null;
+  const created = new Date(createdAt);
+  if (Number.isNaN(created.getTime())) return null;
+  return Math.floor((Date.now() - created.getTime()) / 86_400_000);
+};
+
+const fitsWithinAccountAge = (tab: TrendRangeTab, value: number, ageDays: number): boolean => {
+  if (tab === "day") return value <= Math.max(ageDays, 1);
+  if (tab === "month") return value * 30 <= Math.max(ageDays, 1);
+  return value * 365 <= Math.max(ageDays, 1); // year
+};
+
+// Shared "May – Jul 2026" / "Jul 2026" subtitle formatting for any trend array
+// with a `month` field — used by both the hours and cost cards so a synced
+// range filter reads identically on both.
+export const formatTrendDateRange = (
+  trend: { month: string }[], tab: TrendRangeTab, rangeValue: number,
+): string => {
+  if (!trend.length) return "";
+  const showYear = tab === "month" && rangeValue <= 12;
+  const year = new Date().getFullYear();
+  if (trend.length === 1) return showYear ? `${trend[0].month} ${year}` : trend[0].month;
+  return showYear
+    ? `${trend[0].month} – ${trend[trend.length - 1].month} ${year}`
+    : `${trend[0].month} – ${trend[trend.length - 1].month}`;
+};
+
+export const TrendRangeFilter = memo<{
+  tab: TrendRangeTab;
+  value: number;
+  onChange: (tab: TrendRangeTab, value: number) => void;
+  createdAt?: string | Date | null;
+}>(({ tab, value, onChange, createdAt }) => {
+  const { t } = useTranslation("dashboard");
+
+  const ageDays = daysSinceCreation(createdAt);
+  const tabOptions = useMemo(() => {
+    if (ageDays == null) return TAB_OPTIONS;
+    return TAB_OPTIONS
+      .map((opt) => {
+        const values = opt.values.filter((v, i) => i === 0 || fitsWithinAccountAge(opt.tab, v, ageDays));
+        return { ...opt, values };
+      })
+      .filter((opt) => opt.values.length > 0);
+  }, [ageDays]);
+
+  const active = tabOptions.find((o) => o.tab === tab) ?? tabOptions[0];
+
+  // If the account's age has just become known (or shrunk what's available)
+  // and the currently selected tab/value no longer exists, snap to the
+  // closest still-valid option instead of silently querying an empty range.
+  React.useEffect(() => {
+    if (!active) return;
+    if (active.tab !== tab || !active.values.includes(value)) {
+      onChange(active.tab, active.values[0]);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active, tab, value]);
+
+  return (
+    <div className="flex flex-wrap items-center gap-2">
+      <div className="flex items-center gap-0.5">
+        {tabOptions.map((opt) => (
+          <Button
+            key={opt.tab}
+            size="xs"
+            variant={tab === opt.tab ? "default" : "ghost"}
+            onClick={() => onChange(opt.tab, opt.values[0])}
+            className={cn(
+              "rounded-full h-6 px-2.5 text-[11px] font-semibold transition-all duration-150",
+              tab !== opt.tab && "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
+            )}
+          >
+            {t(opt.labelKey, opt.labelDefault)}
+          </Button>
+        ))}
+      </div>
+      {active && (
+        <>
+          <div className="w-px h-4 bg-slate-200 hidden sm:block" />
+          <div className="flex items-center gap-0.5">
+            {active.values.map((v) => (
+              <Button
+                key={v}
+                size="xs"
+                variant={value === v ? "default" : "ghost"}
+                onClick={() => onChange(active.tab, v)}
+                className={cn(
+                  "rounded-full h-6 px-2 text-[11px] font-semibold transition-all duration-150",
+                  value !== v && "text-slate-500 hover:text-slate-700 hover:bg-slate-100",
+                )}
+              >
+                {v}{active.suffix}
+              </Button>
+            ))}
+          </div>
+        </>
+      )}
+    </div>
+  );
+});
+TrendRangeFilter.displayName = "TrendRangeFilter";
 
 export const Delta = memo<{ cur: number; prev: number }>(({ cur, prev }) => {
   const d = cur - prev;
@@ -24,7 +154,7 @@ Delta.displayName = "Delta";
 
 export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?: string }>(
   ({ icon: Icon, label, color = "#0D9488" }) => (
-    <div className="flex items-center gap-3 mb-5 mt-1">
+    <div className="flex items-center gap-3 mb-5">
       <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: `${color}18` }}>
         <Icon size={17} color={color} />
       </div>
@@ -35,16 +165,19 @@ export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?
 );
 ZoneHeading.displayName = "ZoneHeading";
 
-export const KpiCard = memo<{ title?: string; subtitle?: string; children: React.ReactNode; className?: string }>(
-  ({ title, subtitle, children, className }) => (
+export const KpiCard = memo<{ title?: string; subtitle?: string; children: React.ReactNode; className?: string; contentClassName?: string; headerFilter?: React.ReactNode }>(
+  ({ title, subtitle, children, className, contentClassName, headerFilter }) => (
     <Card className={cn("rounded-2xl", className)}>
       {title && (
         <CardHeader className="pb-0">
-          <CardTitle className="font-semibold text-[15px] text-slate-900">{title}</CardTitle>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <CardTitle className="font-semibold text-[15px] text-slate-900">{title}</CardTitle>
+            {headerFilter}
+          </div>
           {subtitle && <CardDescription className="text-[13px] text-slate-500">{subtitle}</CardDescription>}
         </CardHeader>
       )}
-      <CardContent className={cn(!title && "pt-6")}>{children}</CardContent>
+      <CardContent className={cn(!title && "pt-6", contentClassName)}>{children}</CardContent>
     </Card>
   ),
 );
@@ -82,3 +215,80 @@ export const MetricRow = memo<{ label: string; value: string | number; sub?: str
   ),
 );
 MetricRow.displayName = "MetricRow";
+
+export interface StatCardProps {
+  icon:    React.ElementType;
+  color:   string;
+  bg:      string;
+  value:   React.ReactNode;
+  label:   React.ReactNode;
+  loading: boolean;
+  href?:   string;
+}
+
+export const StatCard = memo<StatCardProps>(({ icon: Icon, color, bg, value, label, loading, href }) => {
+  const router = useRouter();
+  const clickable = !!href;
+
+  if (loading) return (
+    <div className="relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm p-4">
+      <div className="flex items-start gap-3">
+        <Skeleton className="w-11 h-11 rounded-xl shrink-0" />
+        <div className="flex-1 space-y-2 pt-0.5">
+          <Skeleton className="h-7 w-14" />
+          <Skeleton className="h-3 w-4/5" />
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div
+      role={clickable ? "button" : undefined}
+      tabIndex={clickable ? 0 : undefined}
+      onClick={clickable ? () => router.push(href!) : undefined}
+      onKeyDown={clickable ? (e) => e.key === "Enter" && router.push(href!) : undefined}
+      className={cn(
+        "group relative overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm p-4 transition-all duration-200",
+        clickable && "cursor-pointer hover:shadow-lg hover:-translate-y-0.5 hover:border-slate-200"
+      )}
+    >
+      <div className="flex items-start gap-3 mt-1">
+        {/* icon bubble */}
+        <div
+          className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
+          style={{ background: bg }}
+        >
+          <Icon size={22} color={color} />
+        </div>
+
+        {/* text */}
+        <div className="flex-1 min-w-0">
+          <div className="text-2xl font-black text-slate-800 leading-none tabular-nums tracking-tight">
+            {value}
+          </div>
+          <div className="text-[11px] font-semibold text-slate-400 mt-1.5 leading-snug uppercase tracking-wide">
+            {label}
+          </div>
+        </div>
+
+        {/* arrow for clickable cards */}
+        {clickable && (
+          <ArrowForwardIosRounded
+            size={13}
+            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 text-slate-300 shrink-0 mt-0.5"
+          />
+        )}
+      </div>
+
+      {/* subtle hover overlay */}
+      {clickable && (
+        <div
+          className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none rounded-2xl"
+          style={{ background: `${bg}33` }}
+        />
+      )}
+    </div>
+  );
+});
+StatCard.displayName = "StatCard";

@@ -39,20 +39,14 @@ async function pushToNotion(submission) {
   if (!dbId) return;
 
   const props = {
-    Email:      { title: [{ text: { content: submission.contact.email } }] },
-    Nom:        { rich_text: [{ text: { content: submission.contact.nom } }] },
-    Secteur:    { select: { name: submission.answers.secteur || "" } },
-    Role:       { select: { name: submission.answers.role || "" } },
-    Volume:     { select: { name: submission.answers.volume || "" } },
-    MaturiteIA: { number: submission.scoring.maturite_ia },
-    Frein:      { select: { name: submission.answers.frein || "" } },
-    Etape:      { select: { name: submission.answers.etape_douloureuse || "" } },
-    TimeToHire: { select: { name: submission.answers.time_to_hire || "" } },
-    Verbatim:   { rich_text: [{ text: { content: submission.answers.verbatim || "" } }] },
-    Intention:  { select: { name: submission.answers.intention || "" } },
-    These:      { select: { name: submission.scoring.these || "" } },
-    Tier:       { select: { name: submission.scoring.tier || "" } },
-    CreatedAt:  { date: { start: submission.createdAt?.toISOString() || new Date().toISOString() } },
+    Email:         { title: [{ text: { content: submission.contact.email } }] },
+    Nom:           { rich_text: [{ text: { content: submission.contact.nom } }] },
+    Segment:       { select: { name: submission.contact.profile_type || "" } },
+    Score:         { number: submission.scoring.total100 },
+    MaturityLevel: { select: { name: submission.scoring.maturityLevel || "" } },
+    Qualification: { select: { name: submission.scoring.qualification?.status || "" } },
+    Script:        { select: { name: submission.scoring.routing?.script || "" } },
+    CreatedAt:     { date: { start: submission.createdAt?.toISOString() || new Date().toISOString() } },
   };
 
   await withRetry(() =>
@@ -71,32 +65,24 @@ const SHEETS_WEBHOOK = process.env.WEBINAR_SHEETS_WEBHOOK;
 async function pushToSheets(submission) {
   if (!SHEETS_WEBHOOK) return;
   const row = {
-    created_at:        submission.createdAt,
-    email:             submission.contact.email,
-    nom:               submission.contact.nom,
-    entreprise:        submission.contact.entreprise,
-    webinar_id:        submission.webinar_id,
-    lang:              submission.lang,
-    utm_source:        submission.source?.utm_source,
-    utm_campaign:      submission.source?.utm_campaign,
-    role:              submission.answers.role,
-    secteur:           submission.answers.secteur,
-    volume:            submission.answers.volume,
-    pays:              submission.answers.pays,
-    marche:            submission.answers.marche,
-    usage_ia:          submission.answers.usage_ia,
-    frein:             submission.answers.frein,
-    legitimite_ia:     submission.answers.legitimite_entretien_ia,
-    etape_douloureuse: submission.answers.etape_douloureuse,
-    time_to_hire:      submission.answers.time_to_hire,
-    verbatim:          submission.answers.verbatim,
-    intention:         submission.answers.intention,
-    attente:           submission.answers.attente,
-    maturite_ia:       submission.scoring.maturite_ia,
-    intensite_pain:    submission.scoring.intensite_pain,
-    icp_fit:           submission.scoring.icp_fit,
-    these:             submission.scoring.these,
-    tier:              submission.scoring.tier,
+    created_at:      submission.createdAt,
+    email:            submission.contact.email,
+    nom:              submission.contact.nom,
+    entreprise:       submission.contact.entreprise,
+    segment:          submission.contact.profile_type,
+    webinar_id:       submission.webinar_id,
+    lang:             submission.lang,
+    utm_source:       submission.source?.utm_source,
+    utm_campaign:     submission.source?.utm_campaign,
+    marche:           submission.answers?.marche,
+    score_adoption:   submission.scoring.subScores?.adoption,
+    score_governance: submission.scoring.subScores?.governance,
+    score_quality:    submission.scoring.subScores?.quality,
+    score_antifraud:  submission.scoring.subScores?.antifraud,
+    total_score:      submission.scoring.total100,
+    maturity_level:   submission.scoring.maturityLevel,
+    qualification:    submission.scoring.qualification?.status,
+    script:           submission.scoring.routing?.script,
   };
 
   await withRetry(() => axios.post(SHEETS_WEBHOOK, row));
@@ -110,19 +96,22 @@ const ESP_LIST_ID = process.env.WEBINAR_ESP_LIST_ID ? Number(process.env.WEBINAR
 
 async function pushToEsp(submission) {
   if (!ESP_API_KEY || !ESP_API_URL) return;
-  const { these, tier } = submission.scoring || {};
+  const { maturityLevel, qualification, routing } = submission.scoring || {};
   const marche = submission.answers?.marche;
+  const segment = submission.contact?.profile_type;
 
   const tags = [
-    marche ? `marche:${marche}` : null,
-    these  ? `these:${these}`   : null,
-    tier   ? `tier:${tier}`     : null,
-    tier === "C" ? "nurture:acculturation" : null,
+    marche              ? `marche:${marche}`               : null,
+    segment             ? `segment:${segment}`              : null,
+    maturityLevel       ? `maturity:${maturityLevel}`       : null,
+    qualification?.status ? `qualification:${qualification.status}` : null,
+    routing?.script     ? `script:${routing.script}`        : null,
+    qualification?.status === "cold" ? "nurture:acculturation" : null,
   ].filter(Boolean);
 
   const body = {
     email:      submission.contact.email,
-    attributes: { FIRSTNAME: submission.contact.nom, WEBINAR_TIER: tier, WEBINAR_THESE: these },
+    attributes: { FIRSTNAME: submission.contact.nom, WEBINAR_QUALIFICATION: qualification?.status, WEBINAR_MATURITY: maturityLevel },
     listIds:    ESP_LIST_ID ? [ESP_LIST_ID] : [],
     updateEnabled: true,
     tags,

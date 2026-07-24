@@ -38,9 +38,9 @@ const buttonVariants = cva(
 
         // ── Outline ──
         outline: [
-          "border-2 border-primary bg-transparent text-primary",
-          "[&_svg]:text-primary",
-          "hover:bg-primary/10 hover:text-primary hover:-translate-y-px",
+          "border-2 border-[#10453F] bg-transparent text-[#10453F]",
+          "[&_svg]:text-[#10453F]",
+          "hover:bg-[#10453F]/5 hover:border-[#0B332E] hover:text-[#0B332E] hover:[&_svg]:text-[#0B332E] hover:-translate-y-px",
           "active:translate-y-0",
         ].join(" "),
 
@@ -130,7 +130,7 @@ function Button({
       {...props}
     >
       {loading && <Spinner className="size-4" />}
-      {children}
+      {asChild ? <Slot.Slottable>{children}</Slot.Slottable> : children}
     </Comp>
   )
 }

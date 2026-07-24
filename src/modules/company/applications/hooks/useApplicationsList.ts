@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import axiosInstance from "@/utils/axiosInstance";
 import {
@@ -10,15 +11,30 @@ const PAGE_SIZE = 15;
 
 export function useApplicationsList() {
   const { t } = useTranslation("dashboard");
+  const router = useRouter();
 
-  const [searchInput, setSearchInput] = useState("");
-  const [search, setSearch]           = useState("");
-  const [status, setStatus]           = useState("");
-  const [postId, setPostId]           = useState("");
-  const [postTitle, setPostTitle]     = useState("");
-  const [sort, setSort]               = useState("appliedAt_desc");
-  const [page, setPage]               = useState(1);
-  const [downloading, setDownloading] = useState(false);
+  const [searchInput, setSearchInput]     = useState("");
+  const [search, setSearch]               = useState("");
+  const [status, setStatus]               = useState("");
+  const [postId, setPostId]               = useState("");
+  const [postTitle, setPostTitle]         = useState("");
+  const [applicationId, setApplicationId] = useState("");
+  const [sort, setSort]                   = useState("appliedAt_desc");
+  const [page, setPage]                   = useState(1);
+  const [downloading, setDownloading]     = useState(false);
+  const [actionFilter, setActionFilter]   = useState("");
+
+  // Deep-link support — e.g. arriving from the dashboard's "Take Action"
+  // widget via /company/applications?actionFilter=pending_shortlist&postId=...
+  // or from the Recent Activity feed via /company/applications?applicationId=...
+  useEffect(() => {
+    if (!router.isReady) return;
+    const { postId: qPostId, actionFilter: qActionFilter, applicationId: qApplicationId } = router.query;
+    if (typeof qPostId === "string" && qPostId) setPostId(qPostId);
+    if (typeof qActionFilter === "string" && qActionFilter) setActionFilter(qActionFilter);
+    if (typeof qApplicationId === "string" && qApplicationId) setApplicationId(qApplicationId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [router.isReady]);
 
   // Debounce search input
   useEffect(() => {
@@ -27,9 +43,13 @@ export function useApplicationsList() {
   }, [searchInput]);
 
   // Reset page when filters change
-  useEffect(() => { setPage(1); }, [search, status, postId, sort]);
+  useEffect(() => { setPage(1); }, [search, status, postId, sort, actionFilter, applicationId]);
 
-  const params = { search: search || undefined, status: status || undefined, postId: postId || undefined, sort, page, limit: PAGE_SIZE };
+  const params = {
+    search: search || undefined, status: status || undefined, postId: postId || undefined,
+    applicationId: applicationId || undefined,
+    actionFilter: actionFilter || undefined, sort, page, limit: PAGE_SIZE,
+  };
 
   const { data: summaryData, isLoading: loading } = useApplicationsSummaryQuery(params);
   const { data: metrics }                         = useApplicationMetricsQuery();
@@ -68,8 +88,10 @@ export function useApplicationsList() {
     searchInput, setSearchInput,
     search, status, setStatus,
     postId, postTitle, setPostId, setPostTitle, clearPost,
+    applicationId, setApplicationId,
     sort, setSort,
     page, setPage,
+    actionFilter, setActionFilter,
     // data
     rows, pagination, metrics, loading,
     // actions

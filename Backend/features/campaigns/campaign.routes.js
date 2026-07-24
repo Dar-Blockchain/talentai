@@ -12,9 +12,11 @@ router.get("/employee/:userId/metrics", requireAuth, authLogMiddleware("Internal
 router.post("/:campaignId/participate/:userId", requireAuth, authLogMiddleware("InternalCampaign"), campaignController.participateInCampaign);
 router.delete("/:campaignId/participate/:participantId", requireAuth, authLogMiddleware("InternalCampaign"), campaignController.removeEmployeeFromCampaign);
 router.get("/metrics", requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("InternalCampaign"), resolveCompanyActor, campaignController.getCampaignMetrics);
+router.get("/analytics", requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("InternalCampaign"), resolveCompanyActor, campaignController.getCampaignAnalytics);
+router.get("/table", requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("InternalCampaign"), resolveCompanyActor, campaignController.getCampaignsOverviewTable);
 router.get("/link/:token", authLogMiddleware("InternalCampaign"), campaignController.getCampaignByLinkToken);
 router.post("/link/:token/join", authLogMiddleware("InternalCampaign"), (req, res, next) => {
-  const token = req.cookies?.api_token;
+  const token = req.headers.authorization?.startsWith("Bearer ") || req.cookies?.jwt_token;
   if (token) return requireAuth(req, res, next);
   next();
 }, campaignController.joinCampaignByLink);

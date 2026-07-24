@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import {
-  MessageCircle, Pencil, Trash2, ExternalLink, MoreVertical,
+  MessageCircle, Pencil, Trash2, ExternalLink,
   Calendar, Building2, Mail,
 } from "lucide-react";
 import { RootState } from "@/store/store";
@@ -13,12 +13,8 @@ import { ROLES } from "@/modules/shared/constants/employee";
 import { getRoleLabel } from "@/modules/company/employees/utils/employeeRoleI18n";
 import type { ExtendedMember } from "@/modules/company/employees/types";
 import { PURPLE, ROLE_STYLES } from "@/modules/company/employees/constants";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { DropdownMenuItem } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 import { cn } from "@/lib/utils";
 
 export { ROLE_STYLES } from "@/modules/company/employees/constants";
@@ -120,17 +116,14 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
             <span className="text-[11.5px] font-bold" style={{ color: status.color }}>{status.label}</span>
           </div>
 
-          <div onClick={(e) => e.stopPropagation()}>
-            <DropdownMenu open={menuOpen} onOpenChange={setMenuOpen}>
-              <DropdownMenuTrigger asChild>
-                <button
-                  aria-label={t("pages.employees.card.actions_menu")}
-                  className="flex size-8 cursor-pointer items-center justify-center rounded-lg text-[#94A3B8] transition-all duration-150 hover:bg-[#F8FAFC] hover:text-[#475569] data-[state=open]:bg-[#F8FAFC] data-[state=open]:opacity-100"
-                >
-                  <MoreVertical className="size-[18px]" />
-                </button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="min-w-[188px] rounded-[14px] border-[#E8EAED] shadow-[0_16px_40px_rgba(15,23,42,0.12)]">
+          <MoreOptionsMenu
+            open={menuOpen}
+            onOpenChange={setMenuOpen}
+            label={t("pages.employees.card.actions_menu")}
+            iconSize={18}
+            className="text-[#94A3B8] hover:bg-[#F8FAFC] hover:text-[#475569] data-[state=open]:bg-[#F8FAFC]"
+            contentClassName="rounded-[14px] border-[#E8EAED] shadow-[0_16px_40px_rgba(15,23,42,0.12)]"
+          >
                 {canMessage && (
                   <DropdownMenuItem onClick={(e) => { e.stopPropagation(); handleMessage(); }} className="cursor-pointer gap-2">
                     <MessageCircle className="size-[18px] text-teal-600" />
@@ -157,9 +150,7 @@ const EmployeeCard: React.FC<EmployeeCardProps> = memo(({
                     <span className="text-[13px] font-semibold text-red-600">{t("pages.employees.card.tooltip_remove")}</span>
                   </DropdownMenuItem>
                 )}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
+          </MoreOptionsMenu>
         </div>
 
         {/* Centered avatar + identity */}

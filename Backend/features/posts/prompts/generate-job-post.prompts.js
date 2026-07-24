@@ -113,7 +113,9 @@ skills
   1. Skills marked as "mandatory", "required", or "must have" — always include these first.
   2. Skills with explicit years signals — never drop these in favor of skills with no years.
   3. Skills with the strongest qualifier (mastery > solid > comfortable > basic).
-  Do NOT pad — if the description names 2, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
+  Do NOT pad beyond what's named — if the description names 2, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
+
+- requiredSkills MUST NOT be empty. If the description names zero specific skills (only a job title and/or generic context, e.g. "sales employee, 5 years experience"), infer the 3 most important skills a candidate in that role would realistically need, based on the job title and domain alone — same as softSkills inference below. Mark every inferred skill (no explicit signal in the description) with "level": null and "importance" spread 8/6/4 in order of relevance. Prefer concrete, named tools/competencies over generic labels (e.g. for "sales employee" → "CRM Software", "Cold Calling", "Negotiation" — not "Sales Skills" or "Communication Tools").
 
 - years parsing rule:
   - If a years signal PRECEDES a skill name (e.g. "2 years Node.js"), apply it to the skill that FOLLOWS it.
@@ -270,11 +272,19 @@ function normalizeSkillAnalysis(result) {
   }
 
   // ── Collect skills ────────────────────────────────────────────────────────
-  const rawRequired = Array.isArray(result.skillAnalysis.requiredSkills)
-    ? [...result.skillAnalysis.requiredSkills]
-        .sort((a, b) => (b.importance || 0) - (a.importance || 0))
-        .slice(0, 3)
+  const validRequired = Array.isArray(result.skillAnalysis.requiredSkills)
+    ? result.skillAnalysis.requiredSkills.filter(s => s && typeof s.name === "string" && s.name.trim())
     : [];
+
+  // Backstop for model non-compliance: the prompt instructs the model to infer
+  // skills from the role when none are explicitly named, but if it still
+  // returns an empty array, fall back to a single generic placeholder rather
+  // than showing no hard skills at all.
+  const rawRequired = (validRequired.length > 0 ? validRequired : [
+    { name: result.jobDetails?.title ? `${result.jobDetails.title} Experience` : "Relevant Experience", level: null, importance: 5 },
+  ])
+    .sort((a, b) => (b.importance || 0) - (a.importance || 0))
+    .slice(0, 3);
 
   const validSoft = Array.isArray(result.skillAnalysis.softSkills)
     ? result.skillAnalysis.softSkills.filter(s => s && typeof s.name === "string" && s.name.trim())

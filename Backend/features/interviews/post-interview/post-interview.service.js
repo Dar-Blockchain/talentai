@@ -311,25 +311,20 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
   const existingApp = await JobApplication.findOne({ profile: candidateProfile._id, post: postId }).select("isWithdrawn").lean();
   if (existingApp?.isWithdrawn) return { status: "withdrawn", meta: { jobTitle: post.jobDetails?.title || "" } };
 
-  // Record visit as a job application (idempotent — 409 on repeat visits is expected)
-  jobApplicationService.createJobApplication({
-    profile: candidateProfile._id,
-    post: postId,
-    company: post.user,
-  }).catch(() => {});
-
   const completed = await PostInterviewAssessment.exists({ candidate: candidateId, post: postId, completed: true });
   if (completed) return { status: "completed", meta: { jobTitle: post.jobDetails?.title || post.title || "" } };
 
   if (candidateProfile) {
     const JobApplication = require("../../job-applications/job-application.model");
     let matchScore = null;
+    let invitedAt = null;
 
     const existing = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
-      .select("matchScore").lean();
+      .select("matchScore invitedAt").lean();
 
     if (existing) {
       matchScore = existing.matchScore;
+      invitedAt = existing.invitedAt;
     } else {
       // First visit: await creation so the AI-computed matchScore is available for the
       // threshold check before we respond. Fire-and-forget caused a race where findOne()
@@ -352,7 +347,9 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
       }
     }
 
-    if (post.thresholdScore != null && matchScore != null && matchScore < post.thresholdScore) {
+    // A manual recruiter invite overrides the threshold block — they've already
+    // chosen to interview this candidate despite the raw CV match score.
+    if (!invitedAt && post.thresholdScore != null && matchScore != null && matchScore < post.thresholdScore) {
       return { status: "under_threshold", meta: { required: post.thresholdScore, score: matchScore } };
     }
   }

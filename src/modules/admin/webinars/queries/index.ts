@@ -46,16 +46,6 @@ export const useVerifyWebinarMutation = () => {
   return useMutation({ mutationFn: adminWebinarApi.verify, onSuccess: () => invalidate(qc) });
 };
 
-export const useArchiveWebinarMutation = () => {
-  const qc = useQueryClient();
-  return useMutation({ mutationFn: adminWebinarApi.archive, onSuccess: () => invalidate(qc) });
-};
-
-export const useRefreshStatsMutation = () => {
-  const qc = useQueryClient();
-  return useMutation({ mutationFn: adminWebinarApi.refreshStats, onSuccess: () => invalidate(qc) });
-};
-
 export const useWebinarSubmissionsQuery = (id: string, params?: { page?: number; limit?: number; completed?: boolean }) =>
   useQuery({
     queryKey: [...KEY, id, "submissions", params],
@@ -64,3 +54,11 @@ export const useWebinarSubmissionsQuery = (id: string, params?: { page?: number;
     staleTime: 20_000,
     placeholderData: (prev) => prev,
   });
+
+export const useUpdateLiveAttendeesMutation = () => {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: ({ id, count }: { id: string; count: number }) => adminWebinarApi.updateLiveAttendees(id, count),
+    onSuccess: () => invalidate(qc),
+  });
+};

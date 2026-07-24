@@ -15,10 +15,11 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 const QUICK_LINKS = [
-  { label: "Dashboard",    href: "/company/dashboard",    Icon: LayoutDashboard },
-  { label: "Posts",        href: "/company/posts",        Icon: Briefcase },
-  { label: "Applications", href: "/company/applications", Icon: Users },
-  { label: "Settings",     href: "/settings",             Icon: SlidersHorizontal },
+  { label: "Hiring Dashboard", href: "/company/dashboard?tab=hiring", Icon: LayoutDashboard },
+  { label: "Team Dashboard",   href: "/company/dashboard?tab=team",   Icon: LayoutDashboard },
+  { label: "Posts",            href: "/company/posts",            Icon: Briefcase },
+  { label: "Applications",     href: "/company/applications",     Icon: Users },
+  { label: "Settings",         href: "/settings",                 Icon: SlidersHorizontal },
 ];
 
 interface SearchResult {

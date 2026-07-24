@@ -1,7 +1,8 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
-  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+  DropdownMenuItem,
 } from '@/modules/shared/ui/shadcn/dropdown-menu';
+import { MoreOptionsMenu } from '@/modules/shared/ui/MoreOptionsMenu';
 import { Dialog, DialogContent, DialogFooter } from '@/modules/shared/ui/shadcn/dialog';
 import { Slider } from '@/modules/shared/ui/shadcn/slider';
 import { Button } from '@/modules/shared/ui/shadcn/button';
@@ -182,13 +183,7 @@ const PostsManagement: React.FC = () => {
                     </td>
                     <td className={TD}><span className="text-slate-500">{formatDate(post.createdAt)}</span></td>
                     <td className={TD}>
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <button className="rounded-md p-1.5 hover:bg-slate-100" style={{ color: ADMIN_NEUTRAL }}>
-                            <MoreVertIcon size={18} />
-                          </button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
+                      <MoreOptionsMenu icon={MoreVertIcon} iconSize={18} className="rounded-md text-[#0D9488] hover:bg-slate-100">
                           <DropdownMenuItem onClick={() => handleEditThreshold(post)} className="gap-2">
                             <ThresholdIcon size={18} /> Edit threshold
                           </DropdownMenuItem>
@@ -199,8 +194,7 @@ const PostsManagement: React.FC = () => {
                           <DropdownMenuItem onClick={() => handleDeleteRequest(post)} variant="destructive" className="gap-2">
                             <DeleteForeverIcon size={18} /> Delete permanently
                           </DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
+                      </MoreOptionsMenu>
                     </td>
                   </tr>
                 );

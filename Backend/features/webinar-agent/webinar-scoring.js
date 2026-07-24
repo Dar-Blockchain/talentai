@@ -1,7 +1,7 @@
 const { callLLM } = require("../../utils/bedrock-client");
 const Webinar      = require("./webinar.model");
 
-// ── Country → market mapping ──────────────────────────────────────────────────
+// ── Country → market mapping (still used for Notion multi-region DB routing) ──
 const COUNTRY_TO_MARCHE = {
   "Tunisie": "tunisie", "Tunisia": "tunisie",
   "France": "europe_francophone", "Belgique": "europe_francophone",
@@ -24,265 +24,223 @@ const COUNTRY_TO_MARCHE = {
   "Jordan": "moyen_orient", "Lebanon": "moyen_orient", "Iraq": "moyen_orient",
 };
 
-// Valid enum values — used for both LLM response validation and fallback scoring
-const VALID_ICP_FIT = ["ok", "faible", "hors"];
-const VALID_THESE   = ["v1", "v2", "v3", "indetermine"];
-const VALID_TIER    = ["A", "B", "C", "D"];
-
 function deriverMarche(pays) {
   if (!pays) return "autre";
   return COUNTRY_TO_MARCHE[pays.trim()] || "autre";
 }
 
-function clamp100(n) { return Math.max(0, Math.min(100, Math.round(Number(n) || 0))); }
-
-// ── Build rich Q&A block from the actual webinar questions stored in DB ───────
-async function buildQABlock(webinarId, rawAnswers, lang = "fr") {
-  try {
-    const webinar = await Webinar.findById(webinarId).select("title questions").lean();
-    if (!webinar?.questions?.length) return { block: null, title: null };
-
-    const lines = [...webinar.questions]
-      .sort((a, b) => a.order - b.order)
-      .flatMap(q => {
-        const raw = rawAnswers[q.key];
-        if (raw === undefined || raw === null || raw === "") return [];
-
-        const label = (lang === "en" ? q.label_en : q.label_fr) || q.label_fr || q.label_en;
-
-        let answer;
-        if (q.type === "scale") {
-          answer = `${raw}/5`;
-        } else if (q.type === "text") {
-          answer = String(raw).trim().slice(0, 600);
-        } else {
-          const opt = q.options?.find(o => o.key === raw);
-          answer = opt
-            ? `${lang === "en" ? opt.label_en : opt.label_fr} [key: ${raw}]`
-            : String(raw);
-        }
-
-        return [`• ${label}\n  → ${answer}`];
-      });
-
-    return { block: lines.join("\n\n") || null, title: webinar.title };
-  } catch {
-    return { block: null, title: null };
-  }
+function clamp(n, min, max) {
+  const v = Math.round(Number(n));
+  if (Number.isNaN(v)) return min;
+  return Math.max(min, Math.min(max, v));
 }
 
-// ── Main AI scoring ───────────────────────────────────────────────────────────
-async function calculerScoreIA(rawAnswers, webinarId, lang = "fr") {
-  const marche = deriverMarche(rawAnswers.pays || rawAnswers.q4_pays || "");
-  const { block: qaBlock, title: webinarTitle } = await buildQABlock(webinarId, rawAnswers, lang);
+const CATEGORIES = ["adoption", "governance", "quality", "antifraud"];
 
-  const answersForPrompt = qaBlock
-    || Object.entries(rawAnswers)
-        .filter(([, v]) => v !== undefined && v !== null && v !== "")
-        .map(([k, v]) => `• ${k}: ${v}`)
-        .join("\n");
+// Keyword hints used only when the LLM classification call fails — matched
+// against the question's FR/EN label. "adoption" is the catch-all default.
+const CATEGORY_KEYWORDS = {
+  antifraud:  ["fraude", "fraud", "washing", "vigilance", "déclaratif", "trust", "confiance", "preuve", "audit trail"],
+  governance: ["gouvernance", "governance", "conformité", "compliance", "policy", "politique", "cadre", "framework", "responsab"],
+  quality:    ["qualité", "quality", "mesure", "measurement", "kpi", "évaluation", "evaluation", "précision", "accuracy"],
+};
 
-  const isEn = lang === "en";
+function classifyByKeywords(label) {
+  const l = (label || "").toLowerCase();
+  for (const cat of ["antifraud", "governance", "quality"]) {
+    if (CATEGORY_KEYWORDS[cat].some(kw => l.includes(kw))) return cat;
+  }
+  return "adoption";
+}
 
-  const systemPrompt = `You are a senior analyst specializing in lead qualification and audience profiling for webinars and online events.
+// ── Build the structured list of answered choice/select/multiselect questions,
+//    each with the respondent's chosen option(s) and that option's admin-set
+//    score (0–100, validated to sum to 100 across a question's options) ──────
+function buildAnsweredChoiceList(questions, rawAnswers, isEn) {
+  const list = [];
+  for (const q of questions || []) {
+    const isChoiceGroup = q.type === "choice" || q.type === "select" || q.type === "multiselect";
+    if (!isChoiceGroup) continue;
+
+    const raw = rawAnswers[q.key];
+    const isEmptyArray = Array.isArray(raw) && raw.length === 0;
+    if (raw === undefined || raw === null || raw === "" || isEmptyArray) continue;
+
+    const label = (isEn ? q.label_en : q.label_fr) || q.label_fr || q.label_en;
+    const selectedKeys = Array.isArray(raw) ? raw : [raw];
+    const selectedOptions = selectedKeys
+      .map(k => q.options?.find(o => o.key === k))
+      .filter(Boolean);
+    if (selectedOptions.length === 0) continue;
+
+    const score = selectedOptions.reduce((s, o) => s + (o.score || 0), 0) / selectedOptions.length;
+    const optionLabel = selectedOptions
+      .map(o => (isEn ? o.label_en : o.label_fr) || o.label_fr || o.label_en)
+      .join(", ");
+
+    list.push({ key: q.key, label, optionLabel, score });
+  }
+  return list;
+}
+
+// ── Single LLM call: classify each answered question into one of the 4
+//    maturity pillars, plus write the organizer-only free-text insights.
+//    All numeric scoring stays deterministic JS math (see computeMaturityScoring)
+//    — the LLM is only trusted for classification/text, never arithmetic ──────
+async function classifyAndAnnotate(answeredQs, webinarTitle, isEn) {
+  const systemPrompt = `You are a senior analyst qualifying webinar registrants on their AI maturity.
 
 ## Your mission
-Analyze a respondent's answers to a webinar registration questionnaire and produce a rich, multi-dimensional qualification report. The webinar topic may be anything — AI, marketing, finance, HR, sales, productivity, etc. Adapt your analysis to whatever topic the webinar covers.
+Given a respondent's answers to an AI-maturity questionnaire, do two things:
 
-## Scoring dimensions
+1. Classify EVERY answered question into exactly one of these 4 pillars:
+   - "adoption": AI adoption, tool usage, day-to-day practice
+   - "governance": governance, compliance, policy, accountability frameworks
+   - "quality": quality control, measurement, KPIs, evaluation of AI outputs
+   - "antifraud": fraud detection, AI-washing vigilance, trust/proof/validation
 
-### 1. maturite_ia (0–100) — Topic Maturity / Knowledge Level
-How knowledgeable and experienced is this person regarding the webinar's topic?
-- 0–20: Complete beginner, no prior exposure
-- 21–40: Aware of the topic but no hands-on experience
-- 41–60: Has experimented or has basic working knowledge
-- 61–80: Experienced practitioner, uses it regularly
-- 81–100: Expert or advanced user, seeking to go deeper or scale
-
-### 2. intensite_pain (0–100) — Problem Intensity / Engagement Level
-How acute is their challenge or need related to the webinar topic?
-- 0–20: No real problem, attending out of curiosity
-- 21–40: Mild friction, not a priority right now
-- 41–60: Real pain or need, actively looking for improvement
-- 61–80: Significant challenge impacting their work or goals
-- 81–100: Urgent, critical problem they need to solve now
-
-### 3. readiness_score (0–100) — Readiness to Act / Conversion Potential
-How likely are they to take a concrete next step after the webinar?
-- 0–30: Just learning, no urgency, not ready for any action
-- 31–60: Interested but needs nurturing, action possible in months
-- 61–80: Ready to evaluate solutions or book a follow-up
-- 81–100: Ready to act now — pilot, purchase, or book immediately
-
-### 4. icp_fit — Ideal profile match for the webinar's target audience
-- "ok": Perfect fit for the webinar's target audience
-- "faible": Partial fit — some relevant signals but gaps exist
-- "hors": Out of scope — wrong profile for this webinar's topic or goals
-
-### 5. these — Which angle/pitch resonates most with this respondent
-- "v1": They need speed and efficiency — doing more with less
-- "v2": They need quality and precision — better decisions, less error
-- "v3": They need trust and proof — validation, compliance, or credibility
-- "indetermine": Signal unclear
-
-### 6. tier — Follow-up priority
-- "A": High priority — act within 48h, strong engagement and fit
-- "B": Good prospect — follow up within 1 week
-- "C": Nurture — not ready now, re-engage in 1–3 months
-- "D": Low priority — wrong profile, no clear need or fit
-
-### 7. key_insight — The single most important observation about this respondent
-One sharp, specific sentence grounded in their actual answers.
-
-### 8. main_pain — Their primary challenge in plain language
-One concrete sentence describing what's blocking or frustrating them most right now.
-
-### 9. recommended_action — What to do next with this lead
-Specific, actionable next step tailored to their profile and the webinar topic.
-
-### 10. strengths — What makes this respondent promising (array of 2–4 short strings)
-Concrete positive signals from their answers.
-
-### 11. blockers — What could limit engagement or conversion (array of 1–3 short strings)
-Real friction points or risks based on their answers.
+2. Write three short internal notes (NOT shown to the respondent):
+   - key_insight: one sharp sentence about this respondent's overall profile
+   - main_pain: one sentence describing their core AI-maturity gap
+   - recommended_action: a specific next step for the sales/success team
 
 ## Critical rules
-- Adapt your analysis entirely to the webinar topic — do NOT assume it is about HR or AI recruiting unless the topic says so.
-- Be honest and precise — not everyone is Tier A. Most respondents are B or C.
-- Calibrate your scores across the full 0–100 range. Avoid clustering everything at 50–70.
-- Reference specific answers when writing key_insight, main_pain, recommended_action.
+- Every question key given to you must appear in your "classifications" output.
+- Base your classification on the question's actual content, not just keywords.
 - All text fields must be in ${isEn ? "English" : "French"}.
-- Respond with ONLY a valid JSON object — no markdown, no explanation, no code blocks outside the JSON.
+- Respond with ONLY a valid JSON object — no markdown, no code fences.
 
 ## Required JSON format
 {
-  "maturite_ia": <integer 0-100>,
-  "intensite_pain": <integer 0-100>,
-  "readiness_score": <integer 0-100>,
-  "icp_fit": "ok" | "faible" | "hors",
-  "these": "v1" | "v2" | "v3" | "indetermine",
-  "tier": "A" | "B" | "C" | "D",
-  "key_insight": "<one sharp sentence about this respondent>",
-  "main_pain": "<one sentence describing their core challenge>",
-  "recommended_action": "<specific next step>",
-  "strengths": ["<strength 1>", "<strength 2>"],
-  "blockers": ["<blocker 1>", "<blocker 2>"]
+  "classifications": { "<question_key>": "adoption" | "governance" | "quality" | "antifraud", ... },
+  "key_insight": "<one sentence>",
+  "main_pain": "<one sentence>",
+  "recommended_action": "<one sentence>"
 }`;
 
-  const userMessage = `## Webinar context
-${webinarTitle ? `Webinar topic: "${webinarTitle}"` : ""}
-Market/Region: ${marche !== "autre" ? marche : (rawAnswers.pays || rawAnswers.q4_pays || "unknown")}
-Respondent language: ${lang.toUpperCase()}
+  const userMessage = `## Webinar
+${webinarTitle ? `Topic: "${webinarTitle}"` : ""}
 
-## Prospect's answers
-${answersForPrompt}
+## Answered questions (question key — label — chosen answer)
+${answeredQs.map(q => `- ${q.key} — ${q.label} — ${q.optionLabel}`).join("\n")}
 
-Analyze these answers and return the full qualification JSON.`;
+Classify each question key and write the internal notes.`;
 
-  try {
-    const response = await callLLM({
-      systemPrompt,
-      messages: [{ role: "user", content: userMessage }],
-      temperature: 0.15,
-      maxTokens: 900,
-      timeout: 25000,
-    });
+  const response = await callLLM({
+    systemPrompt,
+    messages: [{ role: "user", content: userMessage }],
+    temperature: 0.15,
+    maxTokens: 700,
+    timeout: 25000,
+  });
 
-    const text = (response.content || response.text || "").trim();
-    const jsonMatch = text.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) throw new Error("No JSON in LLM response");
+  const text = (response.content || response.text || "").trim();
+  const jsonMatch = text.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) throw new Error("No JSON in LLM response");
 
-    const p = JSON.parse(jsonMatch[0]);
-    return {
-      maturite_ia:        clamp100(p.maturite_ia),
-      intensite_pain:     clamp100(p.intensite_pain),
-      readiness_score:    clamp100(p.readiness_score),
-      icp_fit:            VALID_ICP_FIT.includes(p.icp_fit) ? p.icp_fit : "faible",
-      these:              VALID_THESE.includes(p.these)     ? p.these   : "indetermine",
-      tier:               VALID_TIER.includes(p.tier)       ? p.tier    : "C",
-      key_insight:        typeof p.key_insight        === "string" ? p.key_insight.slice(0, 300)        : null,
-      main_pain:          typeof p.main_pain          === "string" ? p.main_pain.slice(0, 300)          : null,
-      recommended_action: typeof p.recommended_action === "string" ? p.recommended_action.slice(0, 300) : null,
-      strengths:          Array.isArray(p.strengths) ? p.strengths.slice(0, 4).map(s => String(s).slice(0, 120)) : [],
-      blockers:           Array.isArray(p.blockers)  ? p.blockers.slice(0, 3).map(s => String(s).slice(0, 120))  : [],
-    };
-  } catch (err) {
-    console.error("[webinar-scoring] AI scoring failed, falling back:", err.message);
-    return calculerScoreFallback(rawAnswers);
+  const p = JSON.parse(jsonMatch[0]);
+  const classifications = {};
+  for (const q of answeredQs) {
+    const c = p.classifications?.[q.key];
+    classifications[q.key] = CATEGORIES.includes(c) ? c : classifyByKeywords(q.label);
   }
-}
-
-// ── Deterministic fallback ────────────────────────────────────────────────────
-
-// Each answer may come from a legacy key or the new DB-driven key (qN_xxx).
-const ANSWER_KEY_MAP = {
-  role:                    ["role",     "q1_role"],
-  secteur:                 ["secteur",  "q2_secteur"],
-  volume:                  ["volume",   "q3_volume"],
-  pays:                    ["pays",     "q4_pays"],
-  usage_ia:                ["usage_ia", "q5_usage_ia"],
-  frein:                   ["frein",    "q6_frein"],
-  legitimite_entretien_ia: ["legitimite_entretien_ia", "q7_legitimite"],
-  etape_douloureuse:       ["etape_douloureuse",       "q8_etape"],
-  time_to_hire:            ["time_to_hire",            "q9_tth"],
-  verbatim:                ["verbatim", "q10_verbatim"],
-  intention:               ["intention","q11_intention"],
-};
-
-function pick(answers, key) {
-  const [primary, fallback] = ANSWER_KEY_MAP[key];
-  return answers[primary] ?? answers[fallback];
-}
-
-function calculerScoreFallback(answers) {
-  const usage_ia                = pick(answers, "usage_ia");
-  const legitimite_entretien_ia = pick(answers, "legitimite_entretien_ia");
-  const etape_douloureuse       = pick(answers, "etape_douloureuse");
-  const time_to_hire            = pick(answers, "time_to_hire");
-  const verbatim                = pick(answers, "verbatim");
-  const volume                  = pick(answers, "volume");
-  const role                    = pick(answers, "role");
-  const secteur                 = pick(answers, "secteur");
-  const intention               = pick(answers, "intention");
-  const marche                  = deriverMarche(pick(answers, "pays"));
-
-  const baseMap     = { jamais: 0, curieux: 33, ponctuel: 66, integre: 100 };
-  const base        = baseMap[usage_ia] ?? 0;
-  const legit       = ((Number(legitimite_entretien_ia) || 1) - 1) * 25;
-  const maturite_ia = Math.round(0.6 * base + 0.4 * legit);
-
-  const etapePoids     = { casting: 100, fraude: 90, entretiens: 80, delais: 60, tri: 50, decision: 50, sourcing: 40 };
-  const etapePond      = etapePoids[etape_douloureuse] ?? 0;
-  const bonusTemps     = time_to_hire === "gt2m" ? 20 : time_to_hire === "1_2m" ? 10 : 0;
-  const bonusVerb      = verbatim && String(verbatim).trim().length > 0 ? 10 : 0;
-  const intensite_pain = Math.min(100, etapePond + bonusTemps + bonusVerb);
-
-  let icp_fit;
-  if (marche === "autre" || role === "autre") icp_fit = "hors";
-  else if (["50_200", "gt200"].includes(volume) || ["rh", "dirigeant", "cabinet"].includes(role)) icp_fit = "ok";
-  else icp_fit = "faible";
-
-  let these;
-  if (["50_200", "gt200"].includes(volume) || ["cabinet", "bpo"].includes(secteur)) these = "v1";
-  else if (["rh", "dirigeant"].includes(role) && ["entretiens", "casting", "decision"].includes(etape_douloureuse)) these = "v2";
-  else these = "indetermine";
-
-  let tier;
-  if (icp_fit === "hors") tier = "D";
-  else if (intention === "oui" && intensite_pain >= 60 && icp_fit === "ok") tier = "A";
-  else if (intensite_pain >= 60 && ["oui", "peut_etre"].includes(intention)) tier = "B";
-  else tier = "C";
-
-  const readiness_score = Math.min(100, Math.round(
-    (intensite_pain * 0.4) + (maturite_ia * 0.3) + (intention === "oui" ? 30 : intention === "peut_etre" ? 15 : 0)
-  ));
 
   return {
-    maturite_ia, intensite_pain, readiness_score,
-    icp_fit, these, tier,
-    key_insight: null, main_pain: null, recommended_action: null,
-    strengths: [], blockers: [],
+    classifications,
+    key_insight:        typeof p.key_insight        === "string" ? p.key_insight.slice(0, 300)        : null,
+    main_pain:           typeof p.main_pain          === "string" ? p.main_pain.slice(0, 300)          : null,
+    recommended_action: typeof p.recommended_action === "string" ? p.recommended_action.slice(0, 300) : null,
   };
 }
 
-module.exports = { deriverMarche, calculerScoreIA, calculerScoreFallback };
+function classifyAndAnnotateFallback(answeredQs) {
+  const classifications = {};
+  for (const q of answeredQs) classifications[q.key] = classifyByKeywords(q.label);
+  return { classifications, key_insight: null, main_pain: null, recommended_action: null };
+}
+
+function emptyScoring() {
+  return {
+    subScores: { adoption: 0, governance: 0, quality: 0, antifraud: 0 },
+    total48: 0, total100: 0, maturityLevel: "beginner",
+    strength: null, vigilance: null,
+    qualification: { status: "cold", painSignal: false },
+    routing: { script: null, recommend1on1: true, followUpTimeframe: "nurture, 1–3 months" },
+    key_insight: null, main_pain: null, recommended_action: null,
+  };
+}
+
+function routingFor(profileType, qualificationStatus) {
+  const script = profileType === "staffing_bpo" ? "v1" : profileType === "enterprise_chro" ? "v2" : null;
+  const recommend1on1 = profileType !== "referrer";
+  const followUpTimeframe =
+    qualificationStatus === "hot"  ? "within 48h" :
+    qualificationStatus === "warm" ? "within 1 week" :
+    "nurture, 1–3 months";
+  return { script, recommend1on1, followUpTimeframe };
+}
+
+// ── Main entry point ───────────────────────────────────────────────────────────
+async function computeMaturityScoring(rawAnswers, webinarId, lang = "fr", profileType = null) {
+  const isEn = lang === "en";
+  const webinar = await Webinar.findById(webinarId).select("title questions").lean().catch(() => null);
+  const answeredQs = buildAnsweredChoiceList(webinar?.questions, rawAnswers, isEn);
+
+  if (answeredQs.length === 0) {
+    const empty = emptyScoring();
+    empty.routing = routingFor(profileType, empty.qualification.status);
+    return empty;
+  }
+
+  let annotation;
+  try {
+    annotation = await classifyAndAnnotate(answeredQs, webinar?.title, isEn);
+  } catch (err) {
+    console.error("[webinar-scoring] AI classification failed, falling back:", err.message);
+    annotation = classifyAndAnnotateFallback(answeredQs);
+  }
+
+  const byCategory = { adoption: [], governance: [], quality: [], antifraud: [] };
+  for (const q of answeredQs) {
+    const cat = annotation.classifications[q.key] || "adoption";
+    byCategory[cat].push(q);
+  }
+
+  const subScores = {};
+  for (const cat of CATEGORIES) {
+    const qs = byCategory[cat];
+    const avg = qs.length ? qs.reduce((s, q) => s + q.score, 0) / qs.length : 0;
+    subScores[cat] = clamp(avg * 12 / 100, 0, 12);
+  }
+
+  const total48  = CATEGORIES.reduce((s, c) => s + subScores[c], 0);
+  const total100 = clamp(total48 * 100 / 48, 0, 100);
+  const maturityLevel =
+    total100 >= 78 ? "pioneer" :
+    total100 >= 56 ? "practitioner" :
+    total100 >= 34 ? "explorer" : "beginner";
+
+  const sorted = [...answeredQs].sort((a, b) => b.score - a.score);
+  const best  = sorted[0];
+  const worst = sorted[sorted.length - 1];
+  const toPoint = (q) => q ? { questionLabel: q.label, optionLabel: q.optionLabel, category: annotation.classifications[q.key] || "adoption" } : null;
+
+  const painSignal = subScores.antifraud < 6 || subScores.quality < 6;
+  let qualStatus =
+    maturityLevel === "pioneer" || maturityLevel === "practitioner" ? "hot" :
+    maturityLevel === "explorer" ? "warm" : "cold";
+  if (painSignal && qualStatus !== "hot") qualStatus = qualStatus === "cold" ? "warm" : "hot";
+
+  return {
+    subScores, total48, total100, maturityLevel,
+    strength:  toPoint(best),
+    vigilance: toPoint(worst === best ? null : worst),
+    qualification: { status: qualStatus, painSignal },
+    routing: routingFor(profileType, qualStatus),
+    key_insight:        annotation.key_insight,
+    main_pain:          annotation.main_pain,
+    recommended_action: annotation.recommended_action,
+  };
+}
+
+module.exports = { deriverMarche, computeMaturityScoring };

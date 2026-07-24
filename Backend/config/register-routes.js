@@ -25,11 +25,13 @@ const { router: internalCampaignRoutes } = require('../features/campaigns');
 const { router: departmentRoutes } = require('../features/departments');
 const { contactRouter } = require('../features/contact');
 const { jobApplicationRouter } = require("../features/job-applications");
+const { companySettingsRouter } = require("../features/company-settings");
 const { router: apiKeyRouter } = require('../features/api-keys');
 const { paymentRouter } = require('../features/billing/payments');
 const usersRouter = require('../features/users').userRouter;
 const skillRouter = require('../features/skills/skill.routes');
 const { webinarAgentRouter, webinarRouter } = require('../features/webinar-agent');
+const { blogRouter } = require('../features/blog');
 
 /**
  * Register all routes on the Express app
@@ -77,6 +79,7 @@ function registerRoutes(app) {
 
   // Candidate Management
   app.use("/job-applications", jobApplicationRouter);
+  app.use("/company-settings", companySettingsRouter);
 
   // Utility
   app.use("/feedbacks", feedbackRouter);
@@ -100,6 +103,9 @@ function registerRoutes(app) {
   app.use('/webinar-agent', webinarAgentRouter);
   // Webinar management (admin CRUD)
   app.use('/webinars', webinarRouter);
+
+  // Blog (public read + admin CRUD)
+  app.use('/blog', blogRouter);
 }
 
 module.exports = {

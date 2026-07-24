@@ -1,7 +1,8 @@
-import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined } from "lucide-react";
+import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined, Building2 as DepartmentOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 import { contractTypes, workModes } from "@/modules/company/posts/shared/constants";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 import { DatePicker } from "@/modules/shared/ui/DatePicker";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "../../utils";
@@ -11,19 +12,22 @@ import SectionLabel from "./SectionLabel";
 interface Props {
   employmentType: string;
   workMode: string;
+  department: string;
   expirationDate: string | null;
   errors: { employmentType: string; workMode: string };
   onEmploymentChange: (val: string) => void;
   onWorkModeChange: (val: string) => void;
+  onDepartmentChange: (val: string) => void;
   onExpirationChange: (val: string) => void;
 }
 
-const RoleFields = ({ employmentType, workMode, expirationDate, errors, onEmploymentChange, onWorkModeChange, onExpirationChange }: Props) => {
+const RoleFields = ({ employmentType, workMode, department, expirationDate, errors, onEmploymentChange, onWorkModeChange, onDepartmentChange, onExpirationChange }: Props) => {
   const { t } = useTranslation("posts");
+  const { departments } = useDepartmentList();
   return (
     <div>
       <SectionLabel>{t("create.form.section_role")}</SectionLabel>
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
         <div>
           <FieldLabel icon={WorkOutlined} label={t("create.post_form.labels.employment_type")} />
           <Select value={employmentType || undefined} onValueChange={onEmploymentChange}>
@@ -52,6 +56,20 @@ const RoleFields = ({ employmentType, workMode, expirationDate, errors, onEmploy
             </SelectContent>
           </Select>
           {errors.workMode && <p className="mt-0.5 text-[10.5px] text-[#EF4444]">{errors.workMode}</p>}
+        </div>
+
+        <div>
+          <FieldLabel icon={DepartmentOutlined} label={t("create.post_form.labels.department")} />
+          <Select value={department || undefined} onValueChange={onDepartmentChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t("create.post_form.placeholders.select_department")} />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((d) => (
+                <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
 
         <div>

@@ -46,6 +46,7 @@
   },
   "container": {
     "check_camera": "Accès caméra",
+    "check_face": "Visage visible",
     "check_system": "Système connecté",
     "check_loaded": "Page chargée",
     "ready_title": "Prêt à commencer ?",
@@ -54,6 +55,7 @@
     "check_ok": "OK",
     "check_waiting": "En attente",
     "camera_warning": "Autorisation caméra requise",
+    "face_warning": "Positionnez votre visage devant la caméra pour continuer",
     "back_to_post": "Retour aux détails du poste",
     "starting_title": "Démarrage de l'entretien…",
     "starting_subtitle": "Veuillez patienter pendant que nous vous connectons à votre intervieweur IA.",
@@ -71,13 +73,20 @@
     "listening": "En écoute…",
     "submit": "Soumettre et continuer",
     "skip_question": "Passer la question",
-    "waiting_for_speech": "Parlez votre réponse…"
+    "waiting_for_speech": "Parlez votre réponse…",
+    "camera_required": "Activez votre caméra pour soumettre"
   },
   "camera": {
     "requesting": "Demande d'accès caméra…",
     "denied": "Accès caméra refusé",
     "unavailable": "Caméra indisponible",
     "retry": "Réessayer",
+    "lost_warning": "Caméra éteinte ({{strike}}/{{max}})",
+    "lost_grace": "Fin dans {{seconds}}s — réactivez la caméra",
+    "face_alert_title": "Nous ne voyons pas votre visage",
+    "face_alert_body": "Veuillez faire face à la caméra et vous assurer que votre visage est clairement visible pour continuer l'entretien.",
+    "face_alert_countdown": "L'entretien se termine dans {{seconds}}s",
+    "face_alert_attempt": "Tentative {{attempt}} sur {{max}}",
     "connecting": "Connexion…",
     "rec": "REC",
     "microphone": "Microphone",
@@ -85,7 +94,13 @@
     "mic_inactive": "Inactif",
     "speak_clearly": "Parlez clairement — votre voix est capturée",
     "start_to_record": "Démarrez l'entretien pour activer l'enregistrement",
-    "allow_access": "Autorisez l'accès à la caméra et au microphone pour commencer"
+    "allow_access": "Autorisez l'accès à la caméra et au microphone pour commencer",
+    "identity_preparing": "Préparation de la vérification…",
+    "identity_verifying": "Vérification en cours…",
+    "identity_verified": "Identité vérifiée",
+    "identity_ended": "Entretien terminé",
+    "identity_no_face": "Visage non détecté",
+    "identity_multiple": "Plusieurs visages détectés"
   },
   "question": {
     "label": "Question",

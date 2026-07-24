@@ -18,7 +18,8 @@ const PUBLIC_PATHS = [
   "/interviews",
   "/payments/stripe/callback",
   "/ui-kit",
-  "/webinar"
+  "/webinar",
+  "/blog"
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];
@@ -31,6 +32,7 @@ const AUTH_ONLY_PATHS = ["/signin", "/register"];
 const ROLE_ROUTES: { prefix: string; roles: string[] }[] = [
   { prefix: "/messages", roles: ["Candidate", "Employee", "Company"] },
   { prefix: "/admin/dashboard",          roles: ["Admin"] },
+  { prefix: "/admin/webinars",            roles: ["Admin"] },
   { prefix: "/company",                  roles: ["Company", "Employee"] },
   { prefix: "/profile/company",          roles: ["Company"] },
   // Allow Employee so the page component can show a graceful message before redirecting

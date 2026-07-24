@@ -8,7 +8,7 @@ const Shell: React.FC<{ children: React.ReactNode }> = ({ children }) => (
     </div>
 
     <div className="mt-8 flex items-center gap-2.5">
-      <Image src="/logo.svg" alt="TalentAI" width={108} height={28} className="object-contain" />
+      <Image src="/logo.svg" alt="TalentAI" width={108} height={28} className="h-7 w-auto object-contain" />
       <span className="text-[11px] text-slate-300 font-medium">
         © {new Date().getFullYear()}
       </span>

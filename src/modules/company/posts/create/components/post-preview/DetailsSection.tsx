@@ -1,9 +1,10 @@
-import { TrendingUp as TrendingUpIcon, Briefcase as WorkOutlined, MapPin as LocationOnOutlined } from "lucide-react";
+import { TrendingUp as TrendingUpIcon, Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Building2 as DepartmentOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { updateJobField, updateJobSalaryField } from "../../store/createPostSlice";
 import { contractTypes, workModes, experienceLevels } from "@/modules/company/posts/shared/constants";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 import { EMPLOYMENT_OPTION_KEY, EXPERIENCE_OPTION_KEY, WORK_MODE_OPTION_KEY, optionLabel } from "../../utils";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Input } from "@/modules/shared/ui/shadcn/input";
@@ -14,14 +15,16 @@ interface Props {
   title: string;
   employmentType: string;
   workMode: string;
+  department: string;
   experienceLevel: string;
   salary: { min: number | string; max: number | string; currency: string };
   labelT: (key: string) => string;
 }
 
-const DetailsSection = ({ title, employmentType, workMode, experienceLevel, salary, labelT }: Props) => {
+const DetailsSection = ({ title, employmentType, workMode, department, experienceLevel, salary, labelT }: Props) => {
   const dispatch = useDispatch<AppDispatch>();
   const { t } = useTranslation("posts");
+  const { departments } = useDepartmentList();
 
   return (
     <Card className="p-6 gap-0">
@@ -73,6 +76,23 @@ const DetailsSection = ({ title, employmentType, workMode, experienceLevel, sala
             </SelectContent>
           </Select>
         </div>
+      </div>
+
+      <div className="mb-4">
+        <p className="mb-1 flex items-center gap-1 text-xs font-semibold text-[#374151]">
+          <DepartmentOutlined size={14} />
+          {t("create.post_form.labels.department")}
+        </p>
+        <Select value={department || undefined} onValueChange={(v) => dispatch(updateJobField({ field: "department", value: v }))}>
+          <SelectTrigger className="h-10 text-[13px]">
+            <SelectValue placeholder={t("create.post_form.placeholders.select_department")} />
+          </SelectTrigger>
+          <SelectContent>
+            {departments.map((d) => (
+              <SelectItem key={d._id} value={d._id} className="text-[13px]">{d.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="mb-4">

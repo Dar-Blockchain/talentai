@@ -40,32 +40,40 @@ const createAssessment = async (data, rawInterviewData, userId) => {
     const proficiencyLevel = getLevelFromScore(overallScore);
     const experienceLevel = getExperienceLabel(proficiencyLevel);
 
-    const assessment = new SkillInterviewAssessment({ ...data, proficiency: experienceLevel });
-    const savedAssessment = await assessment.save();
+    const candidateId = data.candidateId; // User._id, as sent by the interview socket
 
-    const candidateId = data.candidateId; // User._id
-
-    // If candidate exists, handle profile updates and remove previous assessments
+    // The schema's candidateId field is a Profile ref (and every read path —
+    // GET /my, GET /:id populate — queries/populates it as a Profile id), so
+    // resolve the Profile *before* saving and store that id, not the raw
+    // User id we were handed. Storing the User id here made "my assessments"
+    // permanently return empty for every candidate.
+    let profileId = null;
     if (candidateId) {
-      // Determine skill name from data (fallback to Unknown Skill)
-      const skillName = data.skill || 'Unknown Skill';
-
-      // candidateId is a User._id — resolve the Profile, and look up any prior
-      // assessment for the same candidate+skill in parallel (the two queries
-      // don't depend on each other's result).
-      const [profile, previousAssessments] = await Promise.all([
-        Profile.findOne({ userId: candidateId }).select('_id'),
-        SkillInterviewAssessment.find({
-          candidateId,
-          skill: skillName,
-          _id: { $ne: savedAssessment._id }
-        }).select('_id'),
-      ]);
+      const profile = await Profile.findOne({ userId: candidateId }).select('_id');
       if (!profile) {
         console.warn(`Profile not found for userId ${candidateId}`);
         throw new Error(`Profile not found for candidate: ${candidateId}`);
       }
-      const profileId = profile._id;
+      profileId = profile._id;
+    }
+
+    const assessment = new SkillInterviewAssessment({
+      ...data,
+      ...(profileId && { candidateId: profileId }),
+      proficiency: experienceLevel,
+    });
+    const savedAssessment = await assessment.save();
+
+    // If candidate exists, handle profile updates and remove previous assessments
+    if (profileId) {
+      // Determine skill name from data (fallback to Unknown Skill)
+      const skillName = data.skill || 'Unknown Skill';
+
+      const previousAssessments = await SkillInterviewAssessment.find({
+        candidateId: profileId,
+        skill: skillName,
+        _id: { $ne: savedAssessment._id }
+      }).select('_id');
 
       const previousIds = previousAssessments.map(a => a._id);
       const previousDeletedCount = previousIds.length;

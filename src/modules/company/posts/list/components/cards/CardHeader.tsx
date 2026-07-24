@@ -10,13 +10,10 @@ import {
 } from "lucide-react";
 import { useRouter } from "next/router";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
-import { Button } from "@/modules/shared/ui/shadcn/button";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 
 const STATUS_STYLES: Record<string, { i18nKey: string; color: string; bg: string; dot: string }> = {
   active:  { i18nKey: "open",    color: "#059669", bg: "#ECFDF5", dot: "#10B981" },
@@ -71,23 +68,15 @@ const CardHeader: React.FC<Props> = ({
         </div>
       </div>
 
-      <DropdownMenu open={Boolean(menuAnchor)} onOpenChange={(next) => { if (!next) onMenuClose(); }}>
-        <DropdownMenuTrigger asChild>
-          <Button
-            variant="ghost"
-            size="icon-xs"
-            onClick={(e) => { e.stopPropagation(); onMenuOpen(e); }}
-            className="shrink-0 text-gray-400 hover:bg-gray-100 hover:text-gray-700"
-          >
-            <MoreVertOutlined size={15} />
-          </Button>
-        </DropdownMenuTrigger>
-
-        <DropdownMenuContent
-          align="end"
-          className="min-w-[188px] rounded-xl border border-[#E5E7EB] p-1.5 shadow-lg"
-          onClick={(e) => e.stopPropagation()}
-        >
+      <MoreOptionsMenu
+        open={Boolean(menuAnchor)}
+        onOpenChange={(next) => { if (!next) onMenuClose(); }}
+        onTriggerClick={onMenuOpen}
+        size="xs"
+        icon={MoreVertOutlined}
+        className="text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+        contentClassName="rounded-xl border border-[#E5E7EB] p-1.5 shadow-lg"
+      >
           <div className="px-1.5 pb-1 pt-0.5">
             <p className="truncate text-[10px] font-bold uppercase tracking-wider text-[#9CA3AF]">
               {title || t("card.menu.header_fallback")}
@@ -148,8 +137,7 @@ const CardHeader: React.FC<Props> = ({
               <p className="text-[10px] leading-[1.2] text-[#9CA3AF]">{t("card.menu.delete_desc")}</p>
             </div>
           </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      </MoreOptionsMenu>
     </div>
   );
 };

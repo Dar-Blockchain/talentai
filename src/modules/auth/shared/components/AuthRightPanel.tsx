@@ -26,6 +26,7 @@ const AuthRightPanel: React.FC<Props> = ({ children, footerTKey, maxWidthClass =
               width={148}
               height={36}
               className="h-9 w-auto object-contain"
+              priority
             />
           </NextLink>
         </div>

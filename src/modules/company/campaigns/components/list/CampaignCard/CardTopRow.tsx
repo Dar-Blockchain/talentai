@@ -1,11 +1,11 @@
 import React, { useCallback, useState } from "react";
-import { MoreVertical, Trash2, Link2, Check } from "lucide-react";
+import { Trash2, Link2, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Campaign, CampaignStatus } from "@/modules/company/campaigns/types/campaign";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuItem, DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 import { buildCampaignSessionUrl } from "@/lib/campaignSession";
 import { useToast } from "@/hooks/useToast";
 import { STATUS_ICONS, scoreColor } from "./constants";
@@ -82,16 +82,11 @@ const CardTopRow: React.FC<Props> = ({ campaign, data, canDelete = true, canPubl
         )}
 
         {(showMenu || (isPublicLink && !isEmployee)) && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                onClick={(e) => e.stopPropagation()}
-                className="size-[26px] rounded-lg flex items-center justify-center text-muted-foreground/50 hover:text-foreground hover:bg-muted transition-colors cursor-pointer outline-none"
-              >
-                <MoreVertical className="size-[15px]" />
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-48 p-1 shadow-lg">
+          <MoreOptionsMenu
+            size="xs"
+            className="text-muted-foreground/50 hover:text-foreground hover:bg-muted"
+            contentClassName="w-48 p-1 shadow-lg"
+          >
               {isPublicLink && (
                 <DropdownMenuItem
                   onClick={handleCopyLink}
@@ -137,8 +132,7 @@ const CardTopRow: React.FC<Props> = ({ campaign, data, canDelete = true, canPubl
                   <span className="font-medium">{t(`${p}.card.menu_delete`)}</span>
                 </DropdownMenuItem>
               )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          </MoreOptionsMenu>
         )}
       </div>
     </div>

@@ -93,6 +93,9 @@ export interface UseAudioTranscriptionReturn {
   silenceWarning: number | null;
   questionAnswerElapsed: number;
   questionAnswerRemaining: number;
+  /** True when the candidate has a ready answer but it's being held because the
+   *  camera is off — it will auto-submit as soon as the camera comes back. */
+  cameraBlockedSubmit: boolean;
 }
 
 export interface UseAudioTranscriptionOptions {
@@ -102,6 +105,10 @@ export interface UseAudioTranscriptionOptions {
   interviewStatus: string;
   showNotification: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
   jobData?: any;
+  /** True while the camera has a live video track. While false, the mic is muted
+   *  (silence sent instead of real audio), spoken turns are ignored, and any
+   *  answer ready to submit is held until the camera comes back — then auto-sent. */
+  cameraLive?: boolean;
 }
 
 // ─── useCamera ─────────────────────────────────────────────────────────────────

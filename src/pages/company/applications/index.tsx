@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Users as PeopleAltOutlined, Briefcase as WorkOutlineOutlined } from "lucide-react";
+import { Users as PeopleAltOutlined, Briefcase as WorkOutlineOutlined, ListFilter as ListFilterOutlined, X as XOutlined } from "lucide-react";
 import EmptyState   from "@/modules/shared/ui/EmptyState";
 import LoadingState from "@/modules/shared/ui/LoadingState";
 import ApplicationMetrics  from "@/modules/company/applications/components/ApplicationMetrics";
@@ -22,11 +22,19 @@ const ApplicationsPage: NextPageWithLayout = () => {
     searchInput, setSearchInput,
     search, status, setStatus,
     postId, postTitle, setPostId, setPostTitle, clearPost,
+    applicationId, setApplicationId,
     sort, setSort,
     page, setPage,
+    actionFilter, setActionFilter,
     rows, pagination, metrics, loading,
     downloading, handleDownloadCVs,
   } = useApplicationsList();
+
+  const ACTION_FILTER_LABELS: Record<string, string> = {
+    pending_shortlist: t("pages.kpi.shortlists_pending", "Shortlists pending decision"),
+    unreviewed:        t("pages.kpi.interviews_unreviewed", "Interviews not reviewed >48h"),
+    no_show:           t("pages.kpi.noshows", "No-shows to follow up"),
+  };
 
   const [postPickerOpen, setPostPickerOpen] = useState(false);
   const [contactTarget,  setContactTarget]  = useState<ContactTarget | null>(null);
@@ -63,6 +71,36 @@ const ApplicationsPage: NextPageWithLayout = () => {
 
   return (
     <>
+      {applicationId && (
+        <div className="flex items-center gap-2 rounded-xl border border-teal-100 bg-teal-50/60 px-4 py-2.5 mb-4">
+          <ListFilterOutlined size={14} color="#0D9488" className="shrink-0" />
+          <span className="text-[13px] font-medium text-teal-800">
+            {t("pages.applications.application_filter_showing", "Showing a single application")}
+          </span>
+          <button
+            onClick={() => setApplicationId("")}
+            className="ml-auto flex items-center gap-1 text-[12px] font-semibold text-teal-600 hover:text-teal-800 transition-colors shrink-0"
+          >
+            <XOutlined size={13} />
+            {t("pages.applications.action_filter_clear", "Clear")}
+          </button>
+        </div>
+      )}
+      {actionFilter && ACTION_FILTER_LABELS[actionFilter] && (
+        <div className="flex items-center gap-2 rounded-xl border border-teal-100 bg-teal-50/60 px-4 py-2.5 mb-4">
+          <ListFilterOutlined size={14} color="#0D9488" className="shrink-0" />
+          <span className="text-[13px] font-medium text-teal-800">
+            {t("pages.applications.action_filter_showing", "Showing")}: {ACTION_FILTER_LABELS[actionFilter]}
+          </span>
+          <button
+            onClick={() => setActionFilter("")}
+            className="ml-auto flex items-center gap-1 text-[12px] font-semibold text-teal-600 hover:text-teal-800 transition-colors shrink-0"
+          >
+            <XOutlined size={13} />
+            {t("pages.applications.action_filter_clear", "Clear")}
+          </button>
+        </div>
+      )}
       <ApplicationsToolbar
         searchInput={searchInput}
         status={status}

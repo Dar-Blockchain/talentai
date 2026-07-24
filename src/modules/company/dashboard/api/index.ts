@@ -1,8 +1,10 @@
 import axiosInstance from "@/utils/axiosInstance";
 import type {
-  KpiFilterParams, KpiActionsData, KpiFunnelData,
-  KpiVelocityData, KpiSourcingData, KpiRoiData,
+  KpiFilterParams, KpiFunnelData,
+  KpiSourcingData, KpiRoiData, KpiHoursComparisonData, HoursComparisonParams,
+  KpiCostComparisonData, CostComparisonParams,
   PostsStatusParams, PostsStatusResult, KpiPostOption,
+  ApplicationHistoryData, ApplicationHistoryParams, ApplicationHistoryResult, KpiDepartmentData,
 } from "../types";
 
 const qs = (p: object) => {
@@ -15,20 +17,31 @@ const qs = (p: object) => {
 
 const sel = (res: { data: any }): any => res.data?.data ?? res.data;
 
-export const fetchKpiActions = (params: KpiFilterParams): Promise<KpiActionsData> =>
-  axiosInstance.get(`job-applications/company/my/kpi/actions${qs(params)}`).then(sel);
+export const fetchKpiHistory = (params: KpiFilterParams): Promise<ApplicationHistoryData> =>
+  axiosInstance.get(`job-applications/company/my/kpi/history${qs({ ...params, limit: 4 })}`).then(sel);
+
+export const fetchKpiHistoryPaged = async (params: ApplicationHistoryParams): Promise<ApplicationHistoryResult> => {
+  const res = await axiosInstance.get(`job-applications/company/my/kpi/history${qs({ page: 1, limit: 20, ...params })}`);
+  return {
+    data:       res.data?.data       ?? [],
+    pagination: res.data?.pagination ?? { currentPage: 1, totalPages: 1, totalCount: 0, limit: 20, hasNextPage: false, hasPrevPage: false },
+  };
+};
 
 export const fetchKpiFunnel = (params: KpiFilterParams): Promise<KpiFunnelData> =>
   axiosInstance.get(`job-applications/company/my/kpi/funnel${qs(params)}`).then(sel);
 
-export const fetchKpiVelocity = (params: KpiFilterParams): Promise<KpiVelocityData> =>
-  axiosInstance.get(`job-applications/company/my/kpi/velocity${qs(params)}`).then(sel);
-
 export const fetchKpiSourcing = (params: KpiFilterParams): Promise<KpiSourcingData> =>
   axiosInstance.get(`job-applications/company/my/kpi/sourcing${qs(params)}`).then(sel);
 
-export const fetchKpiRoi = (): Promise<KpiRoiData> =>
-  axiosInstance.get("job-applications/company/my/kpi/roi").then(sel);
+export const fetchKpiRoi = (params: KpiFilterParams): Promise<KpiRoiData> =>
+  axiosInstance.get(`job-applications/company/my/kpi/roi${qs(params)}`).then(sel);
+
+export const fetchKpiHoursComparison = (params: HoursComparisonParams): Promise<KpiHoursComparisonData> =>
+  axiosInstance.get(`job-applications/company/my/kpi/hours-comparison${qs(params)}`).then(sel);
+
+export const fetchKpiCostComparison = (params: CostComparisonParams): Promise<KpiCostComparisonData> =>
+  axiosInstance.get(`job-applications/company/my/kpi/cost-comparison${qs(params)}`).then(sel);
 
 export const fetchKpiPostsForFilter = async (): Promise<KpiPostOption[]> => {
   const res  = await axiosInstance.get("post/my-posts?limit=100");
@@ -47,3 +60,12 @@ export const fetchKpiPostsStatus = async (params: PostsStatusParams): Promise<Po
     pagination: res.data?.pagination ?? { currentPage: 1, totalPages: 1, totalCount: 0 },
   };
 };
+
+export const fetchDashboardStats = (params: KpiFilterParams) =>
+  axiosInstance.get(`dashboard/statsCards${qs(params)}`).then(sel);
+
+export const fetchAppMetrics = (params: KpiFilterParams) =>
+  axiosInstance.get(`job-applications/company/my/metrics${qs(params)}`).then(sel);
+
+export const fetchKpiJobsByDepartment = (): Promise<KpiDepartmentData> =>
+  axiosInstance.get("post/kpi/by-department").then(sel);

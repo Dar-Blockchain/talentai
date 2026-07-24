@@ -29,13 +29,11 @@ import {
   BreadcrumbSeparator,
 } from "@/modules/shared/ui/shadcn/breadcrumb";
 import {
-  DropdownMenu,
-  DropdownMenuTrigger,
-  DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 import { cn } from "@/lib/utils";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
@@ -210,19 +208,16 @@ const JobDetailHeader: React.FC<Props> = ({
                 </>
               )}
               {isOwner && (
-                <DropdownMenu open={menuOpen} onOpenChange={(next) => { if (!next) onMenuClose(); }}>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      onClick={(e) => { if (!menuOpen) onMenuOpen(e); }}
-                      className="flex h-9 w-9 items-center justify-center rounded-[10px] border-[1.5px] border-[#E5E7EB] bg-white text-[#6B7280] transition-all duration-150 hover:border-[#D1D5DB] hover:bg-[#F9FAFB] hover:text-[#374151]"
-                    >
-                      <MoreVertOutlined size={18} />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent
-                    align="end"
-                    className="mt-1.5 min-w-[180px] rounded-xl border border-[#E5E7EB] p-1 shadow-[0_12px_32px_rgba(0,0,0,0.12)]"
-                  >
+                <MoreOptionsMenu
+                  open={menuOpen}
+                  onOpenChange={(next) => { if (!next) onMenuClose(); }}
+                  onTriggerClick={(e) => { if (!menuOpen) onMenuOpen(e); }}
+                  size="md"
+                  bordered
+                  icon={MoreVertOutlined}
+                  className="border-[1.5px] hover:border-[#D1D5DB] hover:text-[#374151]"
+                  contentClassName="mt-1.5 min-w-[180px] rounded-xl border border-[#E5E7EB] p-1 shadow-[0_12px_32px_rgba(0,0,0,0.12)]"
+                >
                     {canEdit ? (
                       <DropdownMenuItem
                         onClick={() => { onMenuClose(); onEditPost(); }}
@@ -268,8 +263,7 @@ const JobDetailHeader: React.FC<Props> = ({
                         <p className="text-[11px] leading-tight text-[#9CA3AF]">{t("detail.menu.delete_desc")}</p>
                       </div>
                     </DropdownMenuItem>
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                </MoreOptionsMenu>
               )}
             </div>
           </div>

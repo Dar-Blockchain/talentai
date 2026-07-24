@@ -4,7 +4,7 @@ const Post         = require("./post.model");
 const { sendJobMatchEmail } = require("../../utils/email.service");
 const notificationService  = require("../notifications/notification.service");
 
-const FRONTEND_URL = process.env.FRONTEND_URL || "http://localhost:3000";
+const FRONTEND_URL = process.env.BASE_URL || "http://localhost:3000";
 
 // Normalize skill name for fuzzy matching:
 // "React.js" â†’ "reactjs", "Next.js" â†’ "nextjs", "Node JS" â†’ "nodejs", "vue" â†’ "vue"

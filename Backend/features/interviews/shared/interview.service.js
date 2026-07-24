@@ -32,6 +32,8 @@ const {
 
 const { updateQualityCounters, shouldEndInterview } = require('./interview.termination');
 
+const { cleanupTranscript } = require('./helpers/transcript-cleanup');
+
 const {
   buildAgentPersona,
   generateIntelligentGreeting,
@@ -278,6 +280,13 @@ class IntelligentInterviewService {
       const recentInterviewerMessages = session.conversation.filter(entry => entry.type === 'interviewer').slice(-1);
       const lastQuestion = recentInterviewerMessages[0]?.content || null;
       const targetArea   = recentInterviewerMessages[0]?.metadata?.targetAreas?.[0] || null;
+
+      // Cleanup transcript for accent-driven STT errors before analysis.
+      // Non-blocking: falls back to raw transcript on timeout / paraphrase / error.
+      const isSkippedMarker = transcript === '[SKIPPED]' || audioMetadata?.skipped === true;
+      transcript = isSkippedMarker
+        ? transcript
+        : await cleanupTranscript(transcript, { session, lastQuestion });
 
       // â”€â”€ GREETING RESPONSE SHORTCUT â”€â”€
       // If the candidate has no previous responses this is a reply to the greeting.

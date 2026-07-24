@@ -96,7 +96,7 @@ module.exports.getProfileByUserId = async (userId) => {
     user.profile ? Profile.findById(user.profile).populate("planLimits") : null,
     user.companyMembership
       ? CompanyMembership.findById(user.companyMembership)
-          .populate(MEMBERSHIP_POPULATE)
+          .populate("company", "username email user_image")
           .select("_id role updatedAt company")
       : null,
   ]);

@@ -1,16 +1,16 @@
 import React, { memo, useCallback, useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import {
-  ArrowLeft, Trash2, Pencil, Play, Pause, Square, Calendar, TriangleAlert, Megaphone, MoreVertical,
+  ArrowLeft, Trash2, Pencil, Play, Pause, Square, Calendar, TriangleAlert, Megaphone,
   Link2, Lock, EyeOff, Eye, Users, CalendarPlus, Copy, Check,
 } from "lucide-react";
 import {
   Tooltip, TooltipContent, TooltipTrigger, TooltipProvider,
 } from "@/modules/shared/ui/shadcn/tooltip";
 import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem,
-  DropdownMenuSeparator, DropdownMenuTrigger,
+  DropdownMenuItem, DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Campaign, CampaignStatus } from "@/modules/company/campaigns/types/campaign";
@@ -116,16 +116,13 @@ const CampaignHeader: React.FC<Props> = memo(({
 
             {actionsNode ?? (
               (onEditClick || onChangeStatus || onDeleteClick) && (
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <button
-                      type="button"
-                      className="size-[26px] rounded-lg flex items-center justify-center border border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted transition-colors cursor-pointer outline-none"
-                    >
-                      <MoreVertical className="size-[14px]" />
-                    </button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end" className="w-56 p-1 shadow-lg">
+                <MoreOptionsMenu
+                  size="xs"
+                  iconSize={14}
+                  bordered
+                  className="border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted"
+                  contentClassName="w-56 p-1 shadow-lg"
+                >
                     {onEditClick && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -176,8 +173,7 @@ const CampaignHeader: React.FC<Props> = memo(({
                         </DropdownMenuItem>
                       </>
                     )}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                </MoreOptionsMenu>
               )
             )}
           </div>
