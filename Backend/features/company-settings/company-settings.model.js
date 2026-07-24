@@ -25,11 +25,6 @@ const companySettingsSchema = new mongoose.Schema(
       default: 8,
       description: "Actual flat cost TalentAI charges per candidate taken through a completed interview (CV analysis + interview)",
     },
-    blendedHourlyRate: {
-      type: Number,
-      default: 25,
-      description: "Blended hourly cost of a recruiter, used only to monetize the interview time freed up by TalentAI",
-    },
     interviewDurationMinutes: {
       type: Number,
       default: 40,

@@ -19,9 +19,9 @@ module.exports.getOrCreateSettings = async (companyId) => {
   return { ...SCHEMA_DEFAULTS, ...settings };
 };
 
-// aiCostPerInterview (TalentAI's own per-interview charge) and blendedHourlyRate
-// are intentionally excluded — they're fixed on our side, not something a
-// company should be able to change from their settings.
+// aiCostPerInterview (TalentAI's own per-interview charge) is intentionally
+// excluded — it's fixed on our side, not something a company should be able
+// to change from their settings.
 const EDITABLE_FIELDS = ["manualCostPerCandidate", "interviewDurationMinutes"];
 module.exports.EDITABLE_FIELDS = EDITABLE_FIELDS;
 

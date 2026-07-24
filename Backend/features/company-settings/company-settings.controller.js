@@ -6,8 +6,8 @@ const handleError = (res, error, defaultStatus = 500) => {
   res.status(status).json({ success: false, error: error?.message || "Internal server error" });
 };
 
-// aiCostPerInterview and blendedHourlyRate are fixed on our side and deliberately
-// not accepted here — see CompanySettingsService.EDITABLE_FIELDS.
+// aiCostPerInterview is fixed on our side and deliberately not accepted here
+// — see CompanySettingsService.EDITABLE_FIELDS.
 const NUMERIC_FIELDS = ["manualCostPerCandidate", "interviewDurationMinutes"];
 
 module.exports.getSettings = async (req, res) => {

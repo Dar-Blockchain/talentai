@@ -177,7 +177,6 @@ export interface KpiCostComparisonData {
   currency:                 string;
   manualCostPerCandidate:   number;
   aiCostPerInterview:       number;
-  blendedHourlyRate:        number;
   interviewDurationMinutes: number;
 }
 

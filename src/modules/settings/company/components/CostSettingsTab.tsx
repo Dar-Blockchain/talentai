@@ -27,8 +27,8 @@ const toFormValues = (s: CostSettings): FormValues => ({
   interviewDurationMinutes: String(s.interviewDurationMinutes),
 });
 
-// aiCostPerInterview and blendedHourlyRate are TalentAI's own fixed rates —
-// not exposed here since the company can't change them.
+// aiCostPerInterview is TalentAI's own fixed rate — not exposed here since
+// the company can't change it.
 const FIELDS: { key: keyof FormValues; labelKey: string; labelDefault: string; descKey: string; descDefault: string; prefix?: string; suffix?: string }[] = [
   {
     key: "manualCostPerCandidate", labelKey: "manual_cost_label", labelDefault: "Manual cost per candidate",
