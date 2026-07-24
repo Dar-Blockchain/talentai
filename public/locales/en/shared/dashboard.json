@@ -326,9 +326,6 @@
     },
     "nav": {
       "dashboard": "Dashboard",
-      "hiring-dashboard": "Hiring Dashboard",
-      "team-dashboard": "Team Dashboard",
-      "campaigns-dashboard": "Campaigns Dashboard",
       "kpi-dashboard": "KPI Dashboard",
       "campaigns": "Campaigns",
       "posts": "Posts",

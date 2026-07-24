@@ -5,11 +5,9 @@ import CampaignsStatusOverview    from "@/modules/company/dashboard/components/t
 import CampaignModuleTypeBreakdown from "@/modules/company/dashboard/components/campaigns/CampaignModuleTypeBreakdown";
 import CampaignRecentActivity     from "@/modules/company/dashboard/components/campaigns/CampaignRecentActivity";
 import CampaignsOverviewTable     from "@/modules/company/dashboard/components/campaigns/CampaignsOverviewTable";
-import { getDashboardLayout } from "@/modules/shared/layouts";
-import type { NextPageWithLayout } from "@/pages/_app";
 
-const CampaignsDashboardContent = memo(() => (
-  <div className="max-w-[1440px] mx-auto">
+export const CampaignsDashboardContent = memo(() => (
+  <div>
     <CampaignsStatCards />
     <div className="mb-6">
       <CampaignCompletionTrend />
@@ -29,8 +27,3 @@ const CampaignsDashboardContent = memo(() => (
   </div>
 ));
 CampaignsDashboardContent.displayName = "CampaignsDashboardContent";
-
-const CampaignsDashboard: NextPageWithLayout = () => <CampaignsDashboardContent />;
-CampaignsDashboard.getLayout = getDashboardLayout;
-
-export default CampaignsDashboard;

@@ -8,10 +8,8 @@ import KpiJobsByDepartment  from "@/modules/company/dashboard/components/KpiJobs
 import KpiCandidateQuality  from "@/modules/company/dashboard/components/KpiCandidateQuality";
 import KpiManualVsTalentAiSection from "@/modules/company/dashboard/components/KpiManualVsTalentAiSection";
 import { useIsHR } from "@/modules/company/dashboard/hooks/useIsHR";
-import { getDashboardLayout } from "@/modules/shared/layouts";
-import type { NextPageWithLayout } from "@/pages/_app";
 
-const HiringDashboardContent = memo(() => {
+export const HiringDashboardContent = memo(() => {
 
   const {
     postId,
@@ -24,7 +22,7 @@ const HiringDashboardContent = memo(() => {
   const isHR = useIsHR();
 
   return (
-      <div className="max-w-[1440px] mx-auto flex flex-col gap-4 sm:gap-6">
+      <div className="flex flex-col gap-4 sm:gap-6">
         <div className="flex flex-col gap-3">
           <HiringStatCards
             stats={statCardsQ.data}
@@ -82,8 +80,3 @@ const HiringDashboardContent = memo(() => {
   );
 });
 HiringDashboardContent.displayName = "HiringDashboardContent";
-
-const HiringDashboard: NextPageWithLayout = () => <HiringDashboardContent />;
-HiringDashboard.getLayout = getDashboardLayout;
-
-export default HiringDashboard;

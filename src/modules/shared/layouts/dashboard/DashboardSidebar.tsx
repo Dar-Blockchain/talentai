@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useCallback, useState } from "react";
-import { X, LogOut, ChevronLeft, ChevronRight, ChevronDown, LayoutDashboard } from "lucide-react";
+import React, { useCallback } from "react";
+import { X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
@@ -31,14 +31,12 @@ const GREEN_MID  = "#6ad39c";   // mint green (logo circle accents)
 const GREEN_VIVID = "#52e899";  // bright green (logo "ai")
 
 const GROUPS = [
-  { groupKey: "main", ids: ["hiring-dashboard", "team-dashboard", "messages", "notifications"] },
+  { groupKey: "main", ids: ["dashboard", "messages", "notifications"] },
   { groupKey: "jobs", ids: ["posts", "applications"] },
   { groupKey: "campaigns", ids: ["campaigns"] },
   { groupKey: "team", ids: ["employees", "departments"] },
   { groupKey: "account", ids: ["settings", "subscription"] },
 ];
-
-const DASHBOARD_DROPDOWN_IDS = ["hiring-dashboard", "team-dashboard", "campaigns-dashboard"];
 
 const Sidebar: React.FC<SidebarProps> = ({
   collapsed,
@@ -50,7 +48,6 @@ const Sidebar: React.FC<SidebarProps> = ({
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const handleLogout = useLogout("/signin");
-  const [dashboardOpen, setDashboardOpen] = useState(() => router.pathname.startsWith("/company/dashboard"));
 
   const handleGoHome = useCallback(() => {
     if (router.pathname === "/") {
@@ -187,114 +184,6 @@ const Sidebar: React.FC<SidebarProps> = ({
     ) : btn;
   };
 
-  const renderDashboardItem = (isCollapsed: boolean) => {
-    const dashboardItems = navigation.filter((i) => DASHBOARD_DROPDOWN_IDS.includes(i.id));
-    const isActive = router.pathname.startsWith("/company/dashboard");
-    const translatedLabel = t("sidebar.nav.dashboard", { defaultValue: "Dashboard" });
-
-    // Collapsed sidebar has no room for an inline sublist — clicking the icon
-    // goes straight to the default (Hiring) dashboard.
-    if (isCollapsed) {
-      const btn = (
-        <Link
-          href="/company/dashboard/hiring"
-          data-tour="nav-dashboard"
-          className="group relative flex h-7 items-center justify-center rounded-[9px] no-underline transition-all duration-100"
-          style={{
-            backgroundColor: isActive ? "rgba(82,232,153,0.13)" : "transparent",
-            color: isActive ? GREEN_DARK : "#374151",
-          }}
-        >
-          {isActive && (
-            <span
-              className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-[3px]"
-              style={{ backgroundColor: GREEN_VIVID }}
-            />
-          )}
-          <span
-            className="nav-icon flex size-[38px] shrink-0 items-center justify-center rounded-lg transition-colors duration-100"
-            style={{ color: isActive ? GREEN_DARK : "#6B7280" }}
-          >
-            <LayoutDashboard size={20} />
-          </span>
-        </Link>
-      );
-      return (
-        <Tooltip key="dashboard-item">
-          <TooltipTrigger asChild><span>{btn}</span></TooltipTrigger>
-          <TooltipContent side="right">{translatedLabel}</TooltipContent>
-        </Tooltip>
-      );
-    }
-
-    return (
-      <div key="dashboard-item">
-        <div
-          className="group relative flex items-center gap-[5px] rounded-[9px] px-2 py-[1px] transition-all duration-100"
-          style={{
-            backgroundColor: isActive ? "rgba(82,232,153,0.13)" : "transparent",
-            color: isActive ? GREEN_DARK : "#374151",
-          }}
-        >
-          {isActive && (
-            <span
-              className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-[3px]"
-              style={{ backgroundColor: GREEN_VIVID }}
-            />
-          )}
-          <Link
-            href="/company/dashboard/hiring"
-            data-tour="nav-dashboard"
-            onClick={() => setDashboardOpen(true)}
-            className="flex flex-1 items-center gap-[5px] no-underline"
-          >
-            <span
-              className="nav-icon flex size-7 shrink-0 items-center justify-center rounded-lg transition-colors duration-100"
-              style={{ color: isActive ? GREEN_DARK : "#6B7280" }}
-            >
-              <LayoutDashboard size={20} />
-            </span>
-            <span className="flex-1 text-sm leading-none" style={{ fontWeight: isActive ? 700 : 600, color: "inherit" }}>
-              {translatedLabel}
-            </span>
-          </Link>
-          <button
-            type="button"
-            onClick={() => setDashboardOpen((o) => !o)}
-            aria-label={translatedLabel}
-            aria-expanded={dashboardOpen}
-            className="flex size-6 shrink-0 items-center justify-center rounded-md text-current transition-colors duration-100 hover:bg-black/5"
-          >
-            <ChevronDown size={14} className={cn("opacity-60 transition-transform duration-150", dashboardOpen && "rotate-180")} />
-          </button>
-        </div>
-
-        {dashboardOpen && (
-          <div className="mt-1 flex flex-col gap-1 pl-[30px]">
-            {dashboardItems.map((item) => {
-              const itemActive = router.pathname === item.href || router.pathname.startsWith(item.href + "/");
-              return (
-                <Link
-                  key={item.id}
-                  href={item.href}
-                  className="flex items-center gap-2 rounded-lg px-2 py-1.5 text-[13px] no-underline transition-colors duration-100"
-                  style={{
-                    color: itemActive ? GREEN_DARK : "#6B7280",
-                    fontWeight: itemActive ? 700 : 500,
-                    backgroundColor: itemActive ? "rgba(82,232,153,0.10)" : "transparent",
-                  }}
-                >
-                  <item.icon size={14} />
-                  {t(`sidebar.nav.${item.id}`, { defaultValue: item.label })}
-                </Link>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  };
-
   const content = (mobile = false) => {
     const isCollapsed = collapsed && !mobile;
     const planTooltipDateLocale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
@@ -369,14 +258,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                   <div className="mx-auto mb-3 h-px w-6 bg-gray-200" />
                 )}
                 <div className="flex flex-col gap-1">
-                  {group.groupKey === "main"
-                    ? [
-                        renderDashboardItem(isCollapsed),
-                        ...items
-                          .filter((item) => !DASHBOARD_DROPDOWN_IDS.includes(item.id))
-                          .map((item) => renderNavItem(item, isCollapsed)),
-                      ]
-                    : items.map((item) => renderNavItem(item, isCollapsed))}
+                  {items.map((item) => renderNavItem(item, isCollapsed))}
                 </div>
               </div>
             );

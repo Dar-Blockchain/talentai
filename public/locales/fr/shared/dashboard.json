@@ -326,9 +326,6 @@
     },
     "nav": {
       "dashboard": "Tableau de bord",
-      "hiring-dashboard": "Tableau de recrutement",
-      "team-dashboard": "Tableau d'équipe",
-      "campaigns-dashboard": "Tableau des campagnes",
       "kpi-dashboard": "Tableau KPI",
       "campaigns": "Campagnes",
       "posts": "Offres",
