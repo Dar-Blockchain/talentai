@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useEffect, useState, useRef, useCallback } from "react";
+import React, { useMemo, useEffect, useState, useCallback } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import { useAuthContext } from "@/modules/auth/shared/context/AuthContext";
@@ -13,8 +13,8 @@ import HeaderPrimaryActions from "@/modules/shared/layouts/home/HeaderPrimaryAct
 import HeaderMessagesDropdown from "@/modules/shared/layouts/home/HeaderMessagesDropdown";
 import LanguageSwitcher from "@/modules/shared/layouts/shared/LanguageSwitcher";
 import { useRouter } from "next/router";
-import { io, Socket } from "socket.io-client";
 import { cn } from "@/lib/utils";
+import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 
 interface HeaderProps {
   /** Force the CTA to always be "Sign up" (never "Watch Demo"), regardless of stored userType. */
@@ -23,7 +23,6 @@ interface HeaderProps {
 
 const Header = ({ forceSignup = false }: HeaderProps = {}) => {
   const router    = useRouter();
-  const socketRef = useRef<Socket | null>(null);
   const [scrolled, setScrolled] = useState(false);
   const { isAuthenticated: isAuthContext } = useAuthContext();
   const connectedUser = useSelector((state: RootState) => state.user?.connectedUser?.user);
@@ -37,7 +36,10 @@ const Header = ({ forceSignup = false }: HeaderProps = {}) => {
     setHasToken(!!getToken());
   }, [isAuthContext]);
   const isAuthenticated = isAuthContext || hasToken;
-  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  // Fed by the app-wide ChatUnreadSyncBridge/CandidateChatRealtimeBridge (mounted in _app.tsx),
+  // which already own the unread-count fetch and socket subscription — reading from Redux here
+  // avoids a second, uncached fetch + a second socket listener firing on every page mount.
+  const { activeModuleUnread: unreadMessageCount } = useChatUnreadBadges();
 
   const landingLikePaths = useMemo(
     () => ["/", "/terms", "/privacy", "/blog", "/blog/[slug]", "/campaigns/sessions/[campaignId]", "/interviews/[sessionId]"],
@@ -54,37 +56,6 @@ const Header = ({ forceSignup = false }: HeaderProps = {}) => {
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
-
-  useEffect(() => {
-    if (!isAuthenticated) return;
-    (async () => {
-      try {
-        const token = getToken();
-        if (!token) return;
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_BASE_URL}chat/conversations/unread-count`,
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
-        if (res.ok) {
-          const data = await res.json();
-          setUnreadMessageCount(data.data?.totalUnread || 0);
-        }
-      } catch { /* silent */ }
-    })();
-  }, [isAuthenticated]);
-
-  useEffect(() => {
-    if (!userId || !isAuthenticated) return;
-    const token = getToken();
-    if (!token) return;
-    const socket = io(
-      `${process.env.NEXT_PUBLIC_API_BASE_URL?.replace(/\/$/, "")}/chat`,
-      { auth: { userId, token }, transports: ["websocket", "polling"] }
-    );
-    socketRef.current = socket;
-    socket.on("message_notification", () => setUnreadMessageCount((p) => p + 1));
-    return () => { socket.disconnect(); };
-  }, [userId, isAuthenticated]);
 
   const isLandingPage = landingLikePaths.includes(router.pathname);
   const isCompact     = scrolled || !isLandingPage;

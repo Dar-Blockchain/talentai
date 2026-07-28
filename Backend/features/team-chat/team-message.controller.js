@@ -31,7 +31,7 @@ module.exports.sendMessage = async (req, res) => {
 
     try {
       const io = socket.getIO();
-      const teamChatNamespace = io.of('/team-chat');
+      const teamChatNamespace = io.of('/chat');
       const payload = { message, conversationId };
       const senderRoom = `user:${req.user._id.toString()}`;
       const receiverRoom = `user:${receiverId.toString()}`;
@@ -66,7 +66,7 @@ module.exports.deleteMessage = async (req, res) => {
 
     try {
       const io = socket.getIO();
-      const teamChatNamespace = io.of('/team-chat');
+      const teamChatNamespace = io.of('/chat');
       const basePayload = { messageId: result.messageId, conversationId: result.conversationId, scope: result.scope, deletedBy: userId };
 
       if (result.scope === 'everyone') {

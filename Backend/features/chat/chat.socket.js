@@ -32,6 +32,18 @@ module.exports.initializeChatNamespace = (io) => {
       }
     });
 
+    socket.on('join_team_conversation', ({ conversationId }) => {
+      if (conversationId) {
+        socket.join(`team-conversation:${conversationId}`);
+      }
+    });
+
+    socket.on('leave_team_conversation', ({ conversationId }) => {
+      if (conversationId) {
+        socket.leave(`team-conversation:${conversationId}`);
+      }
+    });
+
     socket.on('disconnect', (reason) => {
     });
 

@@ -121,6 +121,23 @@ export const useCandidateChatRealtime = () => {
         viewerIsViewingConversation,
       }));
 
+      // addCandidateMessage only appends to Redux when the conversation is the one
+      // currently open (applyIncomingMessage's isActiveConversation gate). For a
+      // backgrounded conversation, patch its messages query cache directly too —
+      // otherwise the staleTime: Infinity cache never learns about this message,
+      // and reopening the conversation later re-renders the stale cached list
+      // (missing this message) instead of refetching from the server.
+      qc.setQueriesData(
+        { queryKey: candidateChatKeys.messages(conversationId) },
+        (old) => {
+          if (!Array.isArray(old)) return old;
+          if (old.some((m) => String(m._id) === msgId)) return old;
+          return [...old, normalized].sort(
+            (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+          );
+        },
+      );
+
       // addCandidateMessage already updates conversations (lastMessage preview, sort order,
       // unreadCount) and messages in Redux. Only invalidate unreadCount to sync the server total.
       qc.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });

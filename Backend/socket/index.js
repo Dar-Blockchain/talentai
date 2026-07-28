@@ -1,6 +1,5 @@
 const { registerNotificationHandlers } = require('../features/notifications/notification.socket');
 const chatSocketHandler = require('../features/chat/chat.socket');
-const teamChatSocketHandler = require('../features/team-chat/team-chat.socket');
 const intelligentInterviewController = require('../features/interviews/shared/interview.socket');
 const campaignInterviewController = require('../features/interviews/campaign-interview/campaign-interview.controller');
 
@@ -16,7 +15,6 @@ function registerAllHandlers(socket) {
 
 function registerAllNamespaces(io) {
   chatSocketHandler.initializeChatNamespace(io);
-  teamChatSocketHandler.initializeTeamChatNamespace(io);
   intelligentInterviewController.initializeHandlers(io);
   campaignInterviewController.initializeHandlers(io);
 }
