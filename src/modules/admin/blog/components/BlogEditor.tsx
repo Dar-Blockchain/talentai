@@ -1,5 +1,6 @@
 import React, { useCallback, useRef } from "react";
-import { useEditor, EditorContent, type Editor } from "@tiptap/react";
+import { useEditor, EditorContent } from "@tiptap/react";
+import type { Editor } from "@tiptap/core";
 import StarterKit from "@tiptap/starter-kit";
 import ImageExtension from "@tiptap/extension-image";
 import Placeholder from "@tiptap/extension-placeholder";
@@ -82,7 +83,7 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ content, onChange }) => {
         ),
       },
       handleDrop: (view, event) => {
-        const files = event.dataTransfer?.files;
+        const files = (event as DragEvent).dataTransfer?.files;
         if (files && files.length > 0 && editor) {
           event.preventDefault();
           Array.from(files).forEach((file) => uploadAndInsert(editor, file));
@@ -91,7 +92,7 @@ const BlogEditor: React.FC<BlogEditorProps> = ({ content, onChange }) => {
         return false;
       },
       handlePaste: (view, event) => {
-        const files = event.clipboardData?.files;
+        const files = (event as ClipboardEvent).clipboardData?.files;
         if (files && files.length > 0 && editor) {
           Array.from(files).forEach((file) => uploadAndInsert(editor, file));
           return true;
