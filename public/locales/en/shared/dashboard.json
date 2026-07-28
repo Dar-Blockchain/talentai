@@ -419,6 +419,7 @@
       "funnel_completed": "Interviews Done",
       "funnel_shortlisted": "Shortlisted",
       "funnel_hired": "Hired",
+      "funnel_trend_empty": "No data yet",
       "passage": "pass",
       "key_metrics": "Pipeline Summary",
       "noshow_rate": "No-show rate",

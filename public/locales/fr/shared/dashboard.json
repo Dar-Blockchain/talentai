@@ -415,6 +415,7 @@
       "funnel_completed": "Entretiens réalisés",
       "funnel_shortlisted": "Présélectionnés",
       "funnel_hired": "Embauchés",
+      "funnel_trend_empty": "Aucune donnée pour le moment",
       "passage": "passage",
       "key_metrics": "Résumé du pipeline",
       "noshow_rate": "Taux d'absence",

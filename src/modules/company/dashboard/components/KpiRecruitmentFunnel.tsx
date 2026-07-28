@@ -94,6 +94,10 @@ const KpiRecruitmentFunnel = memo<Props>(({ data, loading }) => {
 
         {loading ? (
           <Skeleton className="w-full h-[190px] rounded-[10px]" />
+        ) : trend.length === 0 ? (
+          <div className="h-[190px] flex items-center justify-center">
+            <span className="text-[0.82rem] text-slate-400">{t("pages.kpi.funnel_trend_empty", "No data yet")}</span>
+          </div>
         ) : (
           <>
             <ResponsiveContainer width="100%" height={190}>
