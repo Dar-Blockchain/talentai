@@ -293,6 +293,7 @@ export const useCompanyProfileManagement = () => {
     isEmployee,
     profile,
     loading,
+    isInitialLoading: isLoading,
     error,
     uploadingImage,
     saveSuccess,
