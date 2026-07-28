@@ -27,12 +27,26 @@ export default function JobDetailsColumn({ jd, technicalSkills, softSkills }: Jo
         </SectionCard>
       )}
 
-      {jd.requirements && (
+      {jd.requirements && jd.requirements.length > 0 && (
         <SectionCard>
           <SectionTitle icon={<CheckCircle2 size={15} />} title={t('section.requirements')} />
-          <p className="font-[Poppins] text-[0.88rem] text-[#374151] leading-[1.85] whitespace-pre-line">
-            {jd.requirements}
-          </p>
+          {Array.isArray(jd.requirements) ? (
+            <ul className="flex flex-col gap-2">
+              {jd.requirements.map((req: string, i: number) => (
+                <li
+                  key={i}
+                  className="font-[Poppins] text-[0.88rem] text-[#374151] leading-[1.6] flex items-start gap-2"
+                >
+                  <CheckCircle2 size={14} className="mt-[3px] shrink-0 text-primary" />
+                  <span>{req}</span>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="font-[Poppins] text-[0.88rem] text-[#374151] leading-[1.85] whitespace-pre-line">
+              {jd.requirements}
+            </p>
+          )}
         </SectionCard>
       )}
 
