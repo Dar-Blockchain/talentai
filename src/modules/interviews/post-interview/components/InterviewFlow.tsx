@@ -31,7 +31,7 @@ export default function InterviewFlow({ jobId: propJobId, onPhaseChange }: Inter
   const hasJobId = !!resolvedJobId;
 
   const [step, setStep] = useState<"preview" | "interview">("preview");
-  const [source, setSource] = useState("");
+  const [source, setSource] = useState<{ type: string; detail?: string } | undefined>(undefined);
   const [sourceModalOpen, setSourceModalOpen] = useState(false);
 
   useEffect(() => { onPhaseChange?.(step); }, [step, onPhaseChange]);
@@ -52,7 +52,7 @@ export default function InterviewFlow({ jobId: propJobId, onPhaseChange }: Inter
     setSourceModalOpen(true);
   }, []);
 
-  const handleConfirmSource = useCallback((selectedSource: string) => {
+  const handleConfirmSource = useCallback((selectedSource: { type: string; detail?: string }) => {
     setSource(selectedSource);
     setSourceModalOpen(false);
     const langs = jobData?.interviewLanguages as string[] | undefined;
