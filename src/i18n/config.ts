@@ -88,10 +88,13 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
 
 /**
  * Synchronously determine the correct starting language before React renders.
- * Priority: persisted Redux user language (auth) → cookie → manual key → 'en'
+ * Priority: manual key (explicit user choice, always wins) → persisted Redux user language (auth) → 'en'
  */
 function getInitialLanguage(): string {
   if (typeof window === 'undefined') return 'en';
+
+  const manual = localStorage.getItem('talentai_lang_manual');
+  if (manual === 'fr' || manual === 'en') return manual;
 
   const hasToken = !!getToken();
   if (!hasToken) return 'en';
@@ -107,9 +110,6 @@ function getInitialLanguage(): string {
       }
     }
   } catch { /* ignore parse errors */ }
-
-  const manual = localStorage.getItem('talentai_lang_manual');
-  if (manual === 'fr' || manual === 'en') return manual;
 
   return 'en';
 }

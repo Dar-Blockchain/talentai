@@ -33,6 +33,7 @@ export function useInterviewSession({
   jobData,
   namespace,
   candidateIdOverride,
+  source,
 }: Omit<UseInterviewSessionOptions, 'notify'>) {
   const dispatch = useDispatch<AppDispatch>();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
@@ -266,13 +267,14 @@ export function useInterviewSession({
         },
         candidateId,
         postId,
+        source,
       });
     } catch (error) {
       console.error('Failed to start interview:', error);
       notify('Failed to start interview', 'error');
       socket.setInterviewStatus('idle');
     }
-  }, [socket.socketRef, socket.isConnected, socket.setInterviewStatus, interviewConfig, authUser, candidateIdOverride, audio.initializeAudio, notify]);
+  }, [socket.socketRef, socket.isConnected, socket.setInterviewStatus, interviewConfig, authUser, candidateIdOverride, source, audio.initializeAudio, notify]);
 
   const endInterview = useCallback(() => {
     if (socket.socketRef.current && socket.sessionId) socket.socketRef.current.emit('end_interview', { sessionId: socket.sessionId });

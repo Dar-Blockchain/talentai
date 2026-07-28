@@ -786,7 +786,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
 
     // â”€â”€ Fetch applications (all, for in-memory interviewScore sort/filter) â”€â”€â”€
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile recruiterDecision invitedAt")
+      .select("_id status matchScore appliedAt profile recruiterDecision invitedAt source")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -826,6 +826,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
         resumeFile: p.resume || null,
         recruiterDecision: app.recruiterDecision ?? null,
         invitedAt: app.invitedAt ?? null,
+        source: app.source ?? null,
         belowThreshold: app.matchScore !== null && app.matchScore !== undefined && app.matchScore < thresholdScore,
       };
     });
@@ -925,7 +926,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
     }
 
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile post recruiterDecision invitedAt")
+      .select("_id status matchScore appliedAt profile post recruiterDecision invitedAt source")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -968,6 +969,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
         resumeFile: p.resume || null,
         recruiterDecision: app.recruiterDecision ?? null,
         invitedAt: app.invitedAt ?? null,
+        source: app.source ?? null,
       };
     });
 

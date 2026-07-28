@@ -70,18 +70,21 @@ function DbLanguageSync() {
       return;
     }
 
-    const dbLang = normalizeLangCode(language);
-    if (dbLang) {
-      if (typeof window !== "undefined") localStorage.removeItem(MANUAL_LANG_KEY);
-      i18n.changeLanguage(dbLang);
-      return;
-    }
-
+    // An explicit manual choice always wins over the DB-stored language —
+    // otherwise a stale/default profile.language (defaults to "fr" on the
+    // backend) silently reverts the user's pick on every re-render of this
+    // effect (e.g. after a profile refetch).
     const manualLang =
       typeof window !== "undefined"
         ? normalizeLangCode(localStorage.getItem(MANUAL_LANG_KEY))
         : null;
-    i18n.changeLanguage(manualLang ?? "en");
+    if (manualLang) {
+      i18n.changeLanguage(manualLang);
+      return;
+    }
+
+    const dbLang = normalizeLangCode(language);
+    i18n.changeLanguage(dbLang ?? "en");
   }, [isAuthenticated, userId, language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;

@@ -75,6 +75,11 @@ const jobApplicationSchema = new mongoose.Schema(
       index: true,
       description: "Timestamp when application was submitted"
     },
+    source: {
+      type: String,
+      default: null,
+      description: "Where the candidate said they saw the job post link (e.g. linkedin, facebook, or free text for 'other')"
+    },
     updatedAt: {
       type: Date,
       default: Date.now,

@@ -16,7 +16,12 @@ import { useRouter } from "next/router";
 import { io, Socket } from "socket.io-client";
 import { cn } from "@/lib/utils";
 
-const Header = () => {
+interface HeaderProps {
+  /** Force the CTA to always be "Sign up" (never "Watch Demo"), regardless of stored userType. */
+  forceSignup?: boolean;
+}
+
+const Header = ({ forceSignup = false }: HeaderProps = {}) => {
   const router    = useRouter();
   const socketRef = useRef<Socket | null>(null);
   const [scrolled, setScrolled] = useState(false);
@@ -35,7 +40,7 @@ const Header = () => {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
 
   const landingLikePaths = useMemo(
-    () => ["/", "/terms", "/privacy", "/blog", "/blog/[slug]", "/campaigns/sessions/[campaignId]"],
+    () => ["/", "/terms", "/privacy", "/blog", "/blog/[slug]", "/campaigns/sessions/[campaignId]", "/interviews/[sessionId]"],
     []
   );
 
@@ -146,7 +151,7 @@ const Header = () => {
                 /* Primary actions + lang (unauthenticated) */
                 <div className="hidden [@media(min-width:800px)]:flex items-center gap-2">
                   <LanguageSwitcher variant="icon" size="small" standalone />
-                  <HeaderPrimaryActions inverted={!isCompact} />
+                  <HeaderPrimaryActions inverted={!isCompact} forceSignup={forceSignup} />
                 </div>
               )}
 

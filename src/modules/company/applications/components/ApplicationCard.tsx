@@ -3,7 +3,7 @@
 import React, { memo, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
-import { Briefcase } from "lucide-react";
+import { Briefcase, Link2 } from "lucide-react";
 import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { ContactTarget } from "./ContactCandidateModal";
 import { InviteTarget } from "./InviteToInterviewModal";
@@ -12,6 +12,7 @@ import ApplicationCardActions from "./ApplicationCardActions";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 import { Button } from "@/modules/shared/ui/shadcn/button";
+import { APPLICATION_SOURCE_LABELS } from "@/modules/shared/constants/applicationSource";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -174,6 +175,13 @@ const ApplicationCard = memo<ApplicationCardProps>(({
           </div>
 
           <div className="text-[11px] text-slate-500 mt-0.5 truncate">{app.email || "—"}</div>
+
+          {app.source && (
+            <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5">
+              <Link2 size={10} className="shrink-0" />
+              Saw this via {APPLICATION_SOURCE_LABELS[app.source] ?? app.source}
+            </div>
+          )}
 
           {app.appliedAt && (
             <div className="text-[10px] text-slate-400 mt-0.5">
