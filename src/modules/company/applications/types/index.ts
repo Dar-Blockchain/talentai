@@ -18,8 +18,8 @@ export interface ApplicationSummaryItem {
   recruiterDecision?: 'shortlisted' | 'rejected' | 'not_matched' | null;
   invitedAt?: string | null;
   belowThreshold?: boolean;
-  /** Where the candidate said they saw the job post link (e.g. 'linkedin', or free text for 'other'). */
-  source?: string | null;
+  /** Where the candidate said they saw the job post link. `detail` holds the free-text value when `type` is 'other'. */
+  source?: { type: string; detail?: string | null } | null;
 }
 
 // ─── CV / Profile shapes ──────────────────────────────────────────────────────
@@ -153,8 +153,8 @@ export interface ApplicationDetail {
   interviewAssessment?: InterviewAssessment;
   post?: JobPost;
   company?: { _id?: string };
-  /** Where the candidate said they saw the job post link (e.g. 'linkedin', or free text for 'other'). */
-  source?: string | null;
+  /** Where the candidate said they saw the job post link. `detail` holds the free-text value when `type` is 'other'. */
+  source?: { type: string; detail?: string | null } | null;
 }
 
 // ─── Derived candidate data (pre-computed in hook) ────────────────────────────

@@ -1,5 +1,25 @@
 const mongoose = require("mongoose");
 
+// Nested as its own schema (not an inline object) to avoid Mongoose's
+// special-casing of a `type` key inside a plain object literal, which
+// would otherwise misinterpret the whole `source` field as `type: {...}`
+// instead of a subdocument containing a `type` field.
+const applicationSourceSchema = new mongoose.Schema(
+  {
+    type: {
+      type: String,
+      enum: ["linkedin", "facebook", "twitter", "instagram", "job_board", "company_website", "referral", "other", null],
+      default: null,
+    },
+    detail: {
+      type: String,
+      default: null,
+      description: "Free-text detail when type is 'other'",
+    },
+  },
+  { _id: false },
+);
+
 const jobApplicationSchema = new mongoose.Schema(
   {
     // ========== REFERENCES ==========
@@ -76,9 +96,9 @@ const jobApplicationSchema = new mongoose.Schema(
       description: "Timestamp when application was submitted"
     },
     source: {
-      type: String,
-      default: null,
-      description: "Where the candidate said they saw the job post link (e.g. linkedin, facebook, or free text for 'other')"
+      type: applicationSourceSchema,
+      default: () => ({}),
+      description: "Where the candidate said they saw the job post link",
     },
     updatedAt: {
       type: Date,

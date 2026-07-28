@@ -176,10 +176,11 @@ const ApplicationCard = memo<ApplicationCardProps>(({
 
           <div className="text-[11px] text-slate-500 mt-0.5 truncate">{app.email || "—"}</div>
 
-          {app.source && (
+          {app.source?.type && (
             <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5">
               <Link2 size={10} className="shrink-0" />
-              Saw this via {APPLICATION_SOURCE_LABELS[app.source] ?? app.source}
+              Saw this via {APPLICATION_SOURCE_LABELS[app.source.type] ?? app.source.type}
+              {app.source.type === "other" && app.source.detail && ` (${app.source.detail})`}
             </div>
           )}
 

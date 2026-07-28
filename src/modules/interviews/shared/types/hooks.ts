@@ -224,8 +224,8 @@ export interface UseInterviewSessionOptions {
   namespace?: string;
   /** Overrides the computed candidateId (e.g. an anonymous/link token for unauthenticated campaign participants). */
   candidateIdOverride?: string | null;
-  /** Where the candidate saw this job post link (e.g. 'linkedin', 'facebook'). Sent with the application. */
-  source?: string;
+  /** Where the candidate saw this job post link. `detail` holds the free-text value when `type` is 'other'. Sent with the application. */
+  source?: { type: string; detail?: string };
 }
 
 // ─── useSecurityMonitoring ─────────────────────────────────────────────────────

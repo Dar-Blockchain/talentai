@@ -11,7 +11,7 @@ import { APPLICATION_SOURCE_OPTIONS } from '@/modules/shared/constants/applicati
 interface ApplicationSourceModalProps {
   open: boolean;
   onClose: () => void;
-  onContinue: (source: string) => void;
+  onContinue: (source: { type: string; detail?: string }) => void;
 }
 
 const ApplicationSourceModal: React.FC<ApplicationSourceModalProps> = ({ open, onClose, onContinue }) => {
@@ -22,7 +22,7 @@ const ApplicationSourceModal: React.FC<ApplicationSourceModalProps> = ({ open, o
   const handleContinue = () => {
     if (!source) { setError('Please tell us where you saw this job post'); return; }
     if (source === 'other' && !otherText.trim()) { setError('Please tell us where you saw this job post'); return; }
-    onContinue(source === 'other' ? otherText.trim() : source);
+    onContinue(source === 'other' ? { type: 'other', detail: otherText.trim() } : { type: source });
   };
 
   return (
