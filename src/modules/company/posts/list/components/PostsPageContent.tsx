@@ -42,9 +42,9 @@ const PostsPageContent: React.FC = () => {
 
   const {
     posts, loading, error, pagination,
-    page, search, statusFilter, typeFilter, sortBy,
+    page, search, statusFilter, sortBy,
     hasFilters, setPage, reload,
-    handleSearchChange, handleStatusChange, handleTypeChange, handleSortChange,
+    handleSearchChange, handleStatusChange, handleSortChange,
   } = useMyPosts({ limit: 9 });
 
   const deleteHook = useDeletePost({
@@ -68,10 +68,10 @@ const PostsPageContent: React.FC = () => {
     <div>
       <PostsToolbar
         totalCount={totalCount} loading={loading}
-        search={search} statusFilter={statusFilter} typeFilter={typeFilter} sortBy={sortBy}
+        search={search} statusFilter={statusFilter} sortBy={sortBy}
         postsUsed={postsUsed} postsLimit={postsLimit} postsAtLimit={postsAtLimit}
         onSearchChange={handleSearchChange} onStatusChange={handleStatusChange}
-        onTypeChange={handleTypeChange}     onSortChange={handleSortChange}
+        onSortChange={handleSortChange}
         onCreateClick={handleCreateClick}
       />
 

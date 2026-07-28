@@ -20,12 +20,9 @@ import {
   Calendar as CalendarTodayOutlined,
   ArrowDownAZ as SortByAlphaOutlined,
   CheckCircle2 as CheckCircleOutlineOutlined,
-  Sparkles as AutoAwesomeOutlined,
-  FileEdit as EditNoteOutlined,
-  ListFilter as FilterListOutlined,
   Lock as LockOutlined,
 } from "lucide-react";
-import type { StatusFilter, SortOption, TypeFilter } from "../types";
+import type { StatusFilter, SortOption } from "../types";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
@@ -37,14 +34,12 @@ interface PostsToolbarProps {
   loading: boolean;
   search: string;
   statusFilter: StatusFilter;
-  typeFilter: TypeFilter;
   sortBy: SortOption;
   postsUsed: number;
   postsLimit: number | typeof Infinity;
   postsAtLimit: boolean;
   onSearchChange: (v: string) => void;
   onStatusChange: (v: StatusFilter) => void;
-  onTypeChange: (v: TypeFilter) => void;
   onSortChange: (v: SortOption) => void;
   onCreateClick: () => void;
 }
@@ -54,12 +49,6 @@ const STATUS_OPTIONS: { value: StatusFilter; label_key: string; color: string }[
   { value: "active",  label_key: "status.active", color: "#059669" },
   { value: "draft",   label_key: "status.draft",  color: "#D97706" },
   { value: "expired", label_key: "status.closed", color: "#DC2626" },
-];
-
-const TYPE_OPTIONS: { value: TypeFilter; label_key: string; color: string; bg: string; Icon: React.ElementType }[] = [
-  { value: "all",    label_key: "type.all",    color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
-  { value: "ai",     label_key: "type.ai",     color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  { value: "manual", label_key: "type.manual", color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
 ];
 
 const SORT_GROUPS_DEF = [
@@ -80,15 +69,14 @@ const SORT_GROUPS_DEF = [
 ];
 
 const PostsToolbar: React.FC<PostsToolbarProps> = ({
-  totalCount, loading, search, statusFilter, typeFilter, sortBy,
+  totalCount, loading, search, statusFilter, sortBy,
   postsUsed, postsLimit, postsAtLimit,
-  onSearchChange, onStatusChange, onTypeChange, onSortChange, onCreateClick,
+  onSearchChange, onStatusChange, onSortChange, onCreateClick,
 }) => {
   const { t }  = useTranslation("posts");
   const { t: td } = useTranslation("dashboard");
 
   const statusOpts = STATUS_OPTIONS.map((o) => ({ ...o, label: t(o.label_key) }));
-  const typeOpts   = TYPE_OPTIONS.map((o)   => ({ ...o, label: t(o.label_key) }));
   const sortGroups = SORT_GROUPS_DEF.map((g) => ({
     ...g, label: t(g.label_key),
     options: g.options.map((o) => ({ ...o, label: t(o.label_key) })),
@@ -96,8 +84,6 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
   const sortFlat = sortGroups.flatMap((g) => g.options);
 
   const currentStatus = statusOpts.find((o) => o.value === statusFilter);
-  const currentType   = typeOpts.find((o) => o.value === typeFilter);
-  const CurrentTypeIcon = currentType?.Icon ?? FilterListOutlined;
   const currentSort   = sortFlat.find((o) => o.value === sortBy);
 
   return (
@@ -148,36 +134,6 @@ const PostsToolbar: React.FC<PostsToolbarProps> = ({
                   <SelectItem key={value} value={value}>
                     <span className="text-[13px]" style={{ fontWeight: statusFilter === value ? 700 : 400, color: statusFilter === value ? color : "#374151" }}>
                       {label}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            {/* Type filter */}
-            <Select value={typeFilter} onValueChange={(v) => onTypeChange(v as TypeFilter)}>
-              <SelectTrigger className={selectTriggerClass}>
-                <SelectValue>
-                  <span className="flex items-center gap-1">
-                    <CurrentTypeIcon size={14} color={typeFilter === "all" ? "#9CA3AF" : currentType?.color} />
-                    <span className="text-[13px]" style={{ color: typeFilter === "all" ? "#9CA3AF" : currentType?.color }}>
-                      {currentType?.label ?? t("type.all")}
-                    </span>
-                  </span>
-                </SelectValue>
-              </SelectTrigger>
-              <SelectContent className="min-w-[160px]">
-                {typeOpts.map(({ value, label, color, bg, Icon }) => (
-                  <SelectItem key={value} value={value}>
-                    <span className="flex items-center gap-2">
-                      {value !== "all" && (
-                        <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[5px]" style={{ backgroundColor: bg }}>
-                          <Icon size={11} color={color} />
-                        </span>
-                      )}
-                      <span className="text-[13px]" style={{ fontWeight: typeFilter === value ? 700 : 400, color: typeFilter === value ? color : "#374151" }}>
-                        {label}
-                      </span>
                     </span>
                   </SelectItem>
                 ))}
