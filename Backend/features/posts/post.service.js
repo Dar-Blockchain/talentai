@@ -27,8 +27,17 @@ const validatePostData = (postData) => {
   return true;
 };
 
+// An empty string department (unselected in the UI) must not be cast to
+// ObjectId - fall back to the schema default instead of failing the save.
+const sanitizeDepartment = (jobDetails) => {
+  if (jobDetails && !jobDetails.department) {
+    delete jobDetails.department;
+  }
+};
+
 module.exports.createPost = async (postData, token) => {
   try {
+    sanitizeDepartment(postData.jobDetails);
     validatePostData(postData);
 
     const post = new Post(postData);
@@ -357,6 +366,7 @@ module.exports.updatePost = async (postId, userId, updateData) => {
       updateData.jobDetails ||
       updateData.skillAnalysis
     ) {
+      sanitizeDepartment(updateData.jobDetails);
       validatePostData(updateData);
     }
 

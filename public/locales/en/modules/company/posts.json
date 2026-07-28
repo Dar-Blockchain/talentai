@@ -143,7 +143,7 @@
       "labels": {
         "employment_type": "Employment Type",
         "work_mode": "Work Mode",
-        "department": "Department",
+        "department": "Department (optional)",
         "currency": "Currency",
         "experience_level": "Experience Level",
         "expires": "Expires",
@@ -160,7 +160,7 @@
         "select": "Select",
         "select_employment_type": "Select employment type",
         "select_work_mode": "Select work mode",
-        "select_department": "Select department",
+        "select_department": "Select department (optional)",
         "select_currency": "Select currency",
         "select_experience_level": "Select experience level",
         "select_skill_level": "Experience level",
