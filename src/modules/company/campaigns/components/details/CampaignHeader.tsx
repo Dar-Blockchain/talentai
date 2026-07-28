@@ -95,6 +95,7 @@ const CampaignHeader: React.FC<Props> = memo(({
   [campaign.module?.type, t]);
 
   const createdDate = useMemo(() => fmtDate(campaign.createdAt, i18n.language), [campaign.createdAt, i18n.language]);
+  const isPublicLink = campaign.accessMethod === "LINK" && !!campaign.linkToken;
 
   return (
     <TooltipProvider delayDuration={200}>
@@ -115,7 +116,22 @@ const CampaignHeader: React.FC<Props> = memo(({
             </Button>
 
             {actionsNode ?? (
-              (onEditClick || onChangeStatus || onDeleteClick) && (
+              <div className="flex items-center gap-1.5">
+                {isPublicLink && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={handleCopyLink}
+                    className={linkCopied
+                      ? "h-8 gap-1.5 px-2.5 text-xs font-semibold border-gray-200 bg-gray-100 text-gray-700"
+                      : "h-8 gap-1.5 px-2.5 text-xs font-semibold border-gray-200 text-gray-500 hover:bg-gray-100 hover:text-gray-700"}
+                  >
+                    {linkCopied ? <Check className="size-3.5" /> : <Copy className="size-3.5" />}
+                    {linkCopied ? t(`${tp}.link_copied`) : t(`${tp}.copy_link_button`)}
+                  </Button>
+                )}
+
+                {(onEditClick || onChangeStatus || onDeleteClick) && (
                 <MoreOptionsMenu
                   size="xs"
                   iconSize={14}
@@ -123,6 +139,24 @@ const CampaignHeader: React.FC<Props> = memo(({
                   className="border-border bg-muted/40 text-muted-foreground hover:text-foreground hover:bg-muted"
                   contentClassName="w-56 p-1 shadow-lg"
                 >
+                    {isPublicLink && (
+                      <DropdownMenuItem
+                        onClick={handleCopyLink}
+                        className="gap-2 rounded-md px-2.5 py-2 cursor-pointer text-[13px] text-foreground focus:bg-muted focus:text-foreground"
+                      >
+                        {linkCopied
+                          ? <Check className="size-3.5 shrink-0 text-emerald-500" />
+                          : <Copy className="size-3.5 shrink-0 text-muted-foreground" />}
+                        <span className="font-medium">
+                          {linkCopied ? t(`${tp}.link_copied`) : t(`${tp}.copy_link_button`)}
+                        </span>
+                      </DropdownMenuItem>
+                    )}
+
+                    {isPublicLink && (onEditClick || (onChangeStatus && transitions.length > 0) || onDeleteClick) && (
+                      <DropdownMenuSeparator className="my-1" />
+                    )}
+
                     {onEditClick && (
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -174,7 +208,8 @@ const CampaignHeader: React.FC<Props> = memo(({
                       </>
                     )}
                 </MoreOptionsMenu>
-              )
+                )}
+              </div>
             )}
           </div>
 

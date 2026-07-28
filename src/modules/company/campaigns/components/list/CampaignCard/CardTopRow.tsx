@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from "react";
-import { Trash2, Link2, Check } from "lucide-react";
+import { Trash2, Copy as ContentCopyOutlined, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Campaign, CampaignStatus } from "@/modules/company/campaigns/types/campaign";
 import {
@@ -94,7 +94,7 @@ const CardTopRow: React.FC<Props> = ({ campaign, data, canDelete = true, canPubl
                 >
                   {linkCopied
                     ? <Check className="size-3.5 shrink-0 text-emerald-500" />
-                    : <Link2 className="size-3.5 shrink-0 text-muted-foreground" />}
+                    : <ContentCopyOutlined className="size-3.5 shrink-0 text-muted-foreground" />}
                   <span className="font-medium">
                     {linkCopied ? t(`${dp}.link_copied`) : t(`${dp}.copy_link_button`)}
                   </span>

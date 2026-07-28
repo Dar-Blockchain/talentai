@@ -1,5 +1,5 @@
-import React from "react";
-import { Clock, ArrowRight } from "lucide-react";
+import React, { useCallback, useState } from "react";
+import { Clock, ArrowRight, Copy as ContentCopyOutlined, Check } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { fmtDate } from "@/utils/functions";
 import { Campaign } from "@/modules/company/campaigns/types/campaign";
@@ -7,6 +7,8 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
   Tooltip, TooltipContent, TooltipProvider, TooltipTrigger,
 } from "@/modules/shared/ui/shadcn/tooltip";
+import { buildCampaignSessionUrl } from "@/lib/campaignSession";
+import { useToast } from "@/hooks/useToast";
 import type { CampaignCardData } from "./useCampaignCard";
 
 interface Props {
@@ -17,7 +19,26 @@ interface Props {
 const CardFooterCompany: React.FC<Props> = ({ campaign, data }) => {
   const { t } = useTranslation("dashboard");
   const p = "pages.campaigns";
+  const dp = "pages.campaigns.detail";
+  const { showToast } = useToast();
   const { remaining, isUrgent, isToday } = data;
+  const [linkCopied, setLinkCopied] = useState(false);
+  const isPublicLink = campaign.accessMethod === "LINK" && !!campaign.linkToken;
+
+  const handleCopyLink = useCallback(async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!campaign.linkToken) return;
+    const url = `${window.location.origin}${buildCampaignSessionUrl(campaign._id, campaign.linkToken)}`;
+    try {
+      await navigator.clipboard.writeText(url);
+      setLinkCopied(true);
+      showToast({ message: t(`${dp}.link_copied`), severity: "success" });
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch {
+      showToast({ message: t(`${dp}.link_copy_failed`), severity: "error" });
+    }
+  }, [campaign._id, campaign.linkToken, showToast, t, dp]);
 
   const deadlineNode = (() => {
     if (!campaign.deadline) {
@@ -72,14 +93,38 @@ const CardFooterCompany: React.FC<Props> = ({ campaign, data }) => {
         )}
       </div>
 
-      <Button
-        variant="ghost"
-        size="sm"
-        className="h-7 px-2.5 gap-1 text-xs font-semibold text-foreground/60 hover:text-foreground rounded-lg"
-      >
-        {t(`${p}.card.view`)}
-        <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
-      </Button>
+      <div className="flex items-center gap-1.5 shrink-0">
+        {isPublicLink && (
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon-sm"
+                  onClick={handleCopyLink}
+                  className={linkCopied
+                    ? "border-gray-200 bg-gray-100 text-gray-700"
+                    : "border-gray-200 text-gray-400 hover:bg-gray-100 hover:text-gray-700"}
+                >
+                  {linkCopied ? <Check className="size-3.5" /> : <ContentCopyOutlined className="size-3.5" />}
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent side="top">
+                {linkCopied ? t(`${dp}.link_copied`) : t(`${dp}.copy_link_button`)}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-7 px-2.5 gap-1 text-xs font-semibold text-foreground/60 hover:text-foreground rounded-lg"
+        >
+          {t(`${p}.card.view`)}
+          <ArrowRight className="size-3.5 transition-transform group-hover:translate-x-0.5" />
+        </Button>
+      </div>
     </div>
   );
 };
