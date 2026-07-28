@@ -4,7 +4,7 @@ import DashboardStats      from "./DashboardStats";
 import RecentApplications  from "./RecentApplications";
 import QuickActionCard     from "./QuickActionCard";
 import SkillsSnapshot      from "./SkillsSnapshot";
-import SkillInterviewDialog from "./SkillInterviewDialog";
+import AssessmentModal     from "@/modules/candidate/interviews/components/AssessmentModal";
 
 const CandidateDashboard: React.FC = () => {
   const connectedUser = useSelector((state: any) => state.user.connectedUser);
@@ -37,7 +37,7 @@ const CandidateDashboard: React.FC = () => {
 
       </div>
 
-      <SkillInterviewDialog open={dialogOpen} onOpenChange={setDialogOpen} />
+      <AssessmentModal open={dialogOpen} onClose={() => setDialogOpen(false)} />
     </>
   );
 };
