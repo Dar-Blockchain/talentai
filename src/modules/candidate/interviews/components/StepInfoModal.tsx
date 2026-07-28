@@ -1,5 +1,5 @@
 import React from "react";
-import { Dialog, DialogContent, DialogFooter } from "@/modules/shared/ui/shadcn/dialog";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -105,9 +105,11 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
           {/* Header */}
           <div className="flex justify-between items-center px-6 py-4 border-b border-[rgba(211,224,245,0.5)]">
             <div>
-              <p className="font-semibold text-[18px] text-[rgba(62,70,82,1)]">
-                {jobTitle}
-              </p>
+              <DialogTitle asChild>
+                <p className="font-semibold text-[18px] text-[rgba(62,70,82,1)]">
+                  {jobTitle}
+                </p>
+              </DialogTitle>
               <p className="font-normal text-[13px] text-[rgba(100,113,131,1)] mt-0.5">
                 Step {completedSteps} of {sortedSteps.length}
               </p>
