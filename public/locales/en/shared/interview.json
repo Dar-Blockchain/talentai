@@ -107,7 +107,9 @@
     "label_numbered": "Question {{number}}",
     "label_greeting": "AI Interviewer",
     "greeting_hint": "Introduce yourself to begin the interview",
-    "getting_next": "Getting next question…"
+    "getting_next": "Getting next question…",
+    "copy": "Copy question",
+    "copied": "Copied!"
   },
   "coverage_dashboard": {
     "title": "Coverage Report",

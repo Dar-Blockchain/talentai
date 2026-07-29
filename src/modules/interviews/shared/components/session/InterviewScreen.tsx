@@ -193,6 +193,7 @@ export default function InterviewScreen({
                 ? questionCount
                 : 0  // greeting shows with generic label, no number
             }
+            allowCopy={isSkillInterview}
           />
         )}
 

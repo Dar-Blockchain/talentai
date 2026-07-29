@@ -7,6 +7,10 @@ const {
   buildQuestionGeneratorSystem,
   buildTargetedQuestionSystem,
 } = require('../prompts/generation.prompts');
+const {
+  buildTechnicalSkillGuidelines,
+  buildSoftSkillGuidelines,
+} = require('../../skill-interview/prompts/skill-interview.prompts');
 
 /**
  * QuestionGeneratorAI â€” generates the next interview question.
@@ -80,35 +84,16 @@ Current Difficulty: ${candidateProfile.currentDifficulty || 'intermediate'}`;
       const experienceLevel = persona.job?.experienceLevel || session.config.context?.experienceLevel || 'mid';
       let questionGuidelines = '';
       if (session.config.interviewType === 'TECHNICAL_SKILL') {
-        const targetRole = session.config.context.targetRole;
-        const focusAreaNames = Object.keys(session.coverage?.areas || {});
-        questionGuidelines = `
-TECHNICAL SKILL ASSESSMENT for "${targetRole}".
-This is a standalone skill assessment -- there is usually no job description to anchor on, so YOU must decide what to probe based on how "${targetRole}" is actually used in real work: core concepts, common patterns and idioms, tooling, debugging, performance/trade-offs, and best practices.
-${focusAreaNames.length ? `Focus areas being tracked: ${focusAreaNames.join(', ')}. Spread your questions across these -- do not stay on one area for more than 2 consecutive questions.` : ''}
-
-QUESTION SUBSTANCE RULES:
-- Every question must target a concrete, real-world aspect of "${targetRole}" -- never a vague "tell me about your experience" restated in different words.
-- Prefer applied and scenario framing ("How would you handle X", "What would you do if Y broke in production") over pure definitions -- definitions are easy to memorize and reveal little.
-- Vary the ANGLE each turn: if the previous question was conceptual, make this one applied, a debugging scenario, or a trade-off/design decision -- never two questions of the same angle back to back.
-- If the candidate's last answer was strong, go one level deeper on that same sub-topic (edge cases, scale, failure modes) before moving on; if it was weak or shallow, pivot to a different, more concrete sub-topic rather than re-asking the same thing.
-
-Experience Level: ${experienceLevel} -- calibrate question complexity accordingly.`;
+        questionGuidelines = buildTechnicalSkillGuidelines(
+          session.config.context.targetRole,
+          session.coverage?.areas,
+          experienceLevel,
+        );
       } else if (session.config.interviewType === 'HR_INTERVIEW') {
         questionGuidelines = `HR/BEHAVIORAL interview -- focus on soft skills, teamwork, cultural fit.
 Experience Level: ${experienceLevel} -- calibrate question complexity accordingly.`;
       } else if (session.config.interviewType === 'SOFT_SKILL') {
-        const targetRole = session.config.context.targetRole;
-        questionGuidelines = `
-SOFT SKILLS ASSESSMENT${targetRole ? ` for "${targetRole}"` : ''}.
-Evaluate communication, emotional intelligence, collaboration, adaptability, and conflict handling -- through concrete stories, not abstract self-description.
-
-QUESTION SUBSTANCE RULES:
-- Use behavioral/STAR-style prompts ("Tell me about a time when...", "Describe a situation where...") that force a specific real example, not a self-rating like "how good are you at teamwork".
-- Rotate across sub-themes every question -- teamwork, giving/receiving feedback, handling disagreement, adapting to change, communicating under pressure, ownership and accountability. Never repeat a sub-theme already covered (see TOPICS ALREADY EXPLORED below).
-- If an answer stays vague or generic, the next question should push for a concrete outcome or the other person's reaction on that SAME story -- not jump to a brand-new topic.
-
-Experience Level: ${experienceLevel} -- calibrate question complexity accordingly.`;
+        questionGuidelines = buildSoftSkillGuidelines(session.config.context.targetRole, experienceLevel);
       }
 
       // -- Style instruction --

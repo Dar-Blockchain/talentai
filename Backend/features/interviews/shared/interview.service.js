@@ -178,6 +178,30 @@ class IntelligentInterviewService {
         } catch (personaError) {
           console.warn('âš ï¸ [Service] Persona building failed (non-blocking):', personaError.message);
         }
+      } else if (config.intelligenceContext?.focusAreas?.length > 0) {
+        // Skill interviews have no job description, so no persona is built above
+        // -- but config-manager already derived real, skill-specific focus areas
+        // (with concrete indicators) from the pipeline config in
+        // buildPipelineIntelligenceContext. Without this, session.coverage.areas
+        // stayed empty for every skill interview and the question generator had
+        // nothing but the bare skill name to work from, producing generic questions.
+        const frameworkAreas = {};
+        for (const fa of config.intelligenceContext.focusAreas) {
+          frameworkAreas[fa.area] = {
+            percentage: 0,
+            weight: Math.round((fa.weight || 0) * 100),
+            questionsAsked: 0,
+            completed: false,
+            indicators: fa.indicators || [],
+            description: fa.depth || '',
+          };
+        }
+        await this.sessionManager.updateCoverage(sessionId, {
+          overall: 0,
+          areas: frameworkAreas,
+          completedAreas: [],
+          lastUpdated: new Date().toISOString(),
+        });
       }
 
       await this.sessionManager.updateSession(sessionId, {

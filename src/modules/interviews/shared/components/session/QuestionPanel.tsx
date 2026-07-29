@@ -1,5 +1,5 @@
-import React from 'react';
-import { Sparkles, Timer, ArrowRight, Bot } from 'lucide-react';
+import React, { useState } from 'react';
+import { Sparkles, Timer, ArrowRight, Bot, Copy, Check } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type InterviewMessage } from '../../types/interview';
 import { type AgentState } from '../../types/interview';
@@ -13,6 +13,9 @@ interface QuestionPanelProps {
   questionAnswerElapsed?: number;
   questionAnswerRemaining?: number;
   agentState?: AgentState;
+  /** Skill interviews are self-practice, not a job evaluation — safe to let
+   * the candidate copy the question text (e.g. to look something up). */
+  allowCopy?: boolean;
 }
 
 const QuestionPanel: React.FC<QuestionPanelProps> = ({
@@ -24,8 +27,10 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
   questionAnswerElapsed = 0,
   questionAnswerRemaining = 0,
   agentState,
+  allowCopy = false,
 }) => {
   const { t } = useTranslation('interview');
+  const [copied, setCopied] = useState(false);
   const isGreeting    = currentMessage.type === 'greeting';
   const secondsLeft   = Math.ceil(readingTimeLeft / 1000);
   const progressPct   = Math.max(0, Math.min(100, (readingTimeLeft / 10000) * 100));
@@ -40,6 +45,16 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
     const m   = Math.floor(s / 60);
     const sec = s % 60;
     return `${m}:${String(sec).padStart(2, '0')}`;
+  };
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(currentMessage.content);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // clipboard access denied/unsupported — silently ignore, button just won't confirm
+    }
   };
 
   const state = isCritical ? 'critical' : isNearLimit ? 'warning' : isInReadingTime ? 'reading' : 'normal';
@@ -113,12 +128,29 @@ const QuestionPanel: React.FC<QuestionPanelProps> = ({
         </div>
 
         {/* Question text */}
-        <p
-          className="font-[Inter,sans-serif] text-[1.05rem] md:text-[1.1rem] font-semibold leading-[1.8] text-[#0f172a] tracking-[-0.01em] wrap-break-word transition-opacity duration-300"
-          style={{ opacity: isLoadingNext ? 0.25 : 1 }}
-        >
-          {currentMessage.content || t('question.getting_next')}
-        </p>
+        <div className="flex items-start gap-2">
+          <p
+            className="flex-1 font-[Inter,sans-serif] text-[1.05rem] md:text-[1.1rem] font-semibold leading-[1.8] text-[#0f172a] tracking-[-0.01em] wrap-break-word transition-opacity duration-300"
+            style={{ opacity: isLoadingNext ? 0.25 : 1 }}
+          >
+            {currentMessage.content || t('question.getting_next')}
+          </p>
+          {allowCopy && !isGreeting && !isLoadingNext && currentMessage.content && (
+            <button
+              type="button"
+              onClick={handleCopy}
+              title={copied ? t('question.copied', 'Copied!') : t('question.copy', 'Copy question')}
+              className="shrink-0 mt-1 flex items-center justify-center size-7 rounded-lg border transition-colors cursor-pointer"
+              style={{
+                borderColor: copied ? 'rgba(16,163,74,0.3)' : 'rgba(148,163,184,0.3)',
+                background: copied ? 'rgba(16,163,74,0.08)' : 'transparent',
+                color: copied ? '#16a34a' : '#94a3b8',
+              }}
+            >
+              {copied ? <Check size={13} /> : <Copy size={13} />}
+            </button>
+          )}
+        </div>
 
         {!isGreeting && currentMessage.reasoning && !isLoadingNext && (
           <p className="font-[Inter,sans-serif] text-[0.7rem] text-[#94a3b8] italic mt-2.5 pl-3 border-l-2 border-[rgba(106,211,156,0.3)] leading-relaxed">

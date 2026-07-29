@@ -107,7 +107,9 @@
     "label_numbered": "Question {{number}}",
     "label_greeting": "Intervieweur IA",
     "greeting_hint": "Présentez-vous pour commencer l'entretien",
-    "getting_next": "Récupération de la prochaine question…"
+    "getting_next": "Récupération de la prochaine question…",
+    "copy": "Copier la question",
+    "copied": "Copié !"
   },
   "coverage_dashboard": {
     "title": "Rapport de couverture",

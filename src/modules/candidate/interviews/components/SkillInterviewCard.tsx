@@ -56,10 +56,13 @@ const SkillInterviewCard: React.FC<Props> = ({ assessment, accentBg, accentBorde
   const timeAgo  = date ? dayjs(date).fromNow() : "";
 
   return (
-    <div className={cn(
-      "flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-white p-4",
-      "transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md",
-    )}>
+    <div
+      onClick={() => router.push(`/candidate/skills/interviews/${assessment._id}`)}
+      className={cn(
+        "flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-white p-4 cursor-pointer",
+        "transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md",
+      )}
+    >
       <div className="flex items-start gap-3">
         <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border", accentBg, accentBorder)}>
           <Icon className={cn("h-4 w-4", accentText)} />
