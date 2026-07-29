@@ -151,7 +151,6 @@ const WebinarPage: React.FC = () => {
                 durationLabel={durationLabel}
                 questionsCount={webinar?.questions.length ?? 0}
                 registrations={webinar?.stats?.total_registrations ?? 0}
-                webinarLink={webinar?.webinar_link}
               />
 
               {/* ══ Lower content — light canvas, left-aligned with the header/hero ══ */}

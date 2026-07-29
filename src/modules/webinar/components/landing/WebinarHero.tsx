@@ -1,11 +1,5 @@
 import { motion } from "framer-motion";
-import {
-  ChevronDown,
-  Calendar,
-  Clock,
-  MessageSquare,
-  Video,
-} from "lucide-react";
+import { ChevronDown, Calendar, Clock, MessageSquare } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { scrollToRegister } from "@/modules/webinar/utils/scrollToRegister";
 import i18n from "@/i18n/config";
@@ -21,7 +15,6 @@ export function WebinarHero({
   durationLabel,
   questionsCount,
   registrations,
-  webinarLink,
 }: {
   lang: "fr" | "en";
   title: string;
@@ -31,7 +24,6 @@ export function WebinarHero({
   durationLabel?: string | null;
   questionsCount: number;
   registrations: number;
-  webinarLink?: string;
 }) {
   const t = i18n.getFixedT(lang, "webinar");
   // Long custom titles (admin-entered, up to 80 chars) need to scale down —
@@ -141,20 +133,6 @@ export function WebinarHero({
                 />
               </a>
             </Button>
-
-            {webinarLink && (
-              <Button
-                asChild
-                size="lg"
-                variant="outline"
-                className="rounded-xl font-sans text-[15px] leading-none font-medium tracking-[-0.01em] px-7 border-2 border-[#10453F]/15 text-[#10453F] bg-white/60 backdrop-blur-sm transition-all hover:border-[#6AD39C] hover:bg-[#6AD39C]/10 hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
-              >
-                <a href={webinarLink} target="_blank" rel="noopener noreferrer">
-                  <Video size={16} />
-                  {t("hero.joinWebinar")}
-                </a>
-              </Button>
-            )}
           </div>
         </motion.div>
       </div>
