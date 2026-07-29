@@ -112,7 +112,6 @@ const WebinarPage: React.FC = () => {
     <>
       <div className={`${fraunces.variable} min-h-screen flex flex-col bg-white`}>
         <WebinarHeader
-          ctaTargetId={inFunnel || !webinar ? undefined : "webinar-register"}
           onBack={inFunnel ? backToLanding : undefined}
           backLabel={t("page.backToLanding")}
           lang={lang}

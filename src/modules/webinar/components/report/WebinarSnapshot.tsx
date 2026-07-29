@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { ArrowRight } from "lucide-react";
 import type { WebinarMaturityLevel, WebinarScoreCategory, WebinarScoring } from "@/modules/webinar/types";
 import { CALENDLY_URL } from "@/modules/shared/constants";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -26,9 +27,10 @@ const CATEGORY_COLOR: Record<WebinarScoreCategory, string> = {
 const CATEGORY_ORDER: WebinarScoreCategory[] = ["adoption", "governance", "quality", "antifraud"];
 
 /** Congratulations / results screen shown once AI scoring completes.
- * Deliberately minimal — "a few numbers, not an audit" — and laid out to fit
- * a single viewport (side-by-side panels instead of one long stacked column)
- * so nothing gets lost below the fold. */
+ * Deliberately minimal — "a few numbers, not an audit" — laid out as one flat
+ * card with internal dividers instead of several floating panels. Sized to fit
+ * a single viewport without scrolling, scaling up on larger screens where the
+ * extra room lets the same layout read comfortably instead of feeling cramped. */
 export function WebinarSnapshot({ scoring, lang }: {
   scoring: WebinarScoring;
   lang: string;
@@ -41,127 +43,127 @@ export function WebinarSnapshot({ scoring, lang }: {
   const hasPoints  = !!(scoring.strength || scoring.vigilance);
 
   return (
-    <div className="h-screen w-full overflow-y-auto flex flex-col" style={{ background: "#FBFBF9" }}>
-      <div className="flex-1 flex flex-col justify-center w-full max-w-[860px] mx-auto px-4 sm:px-6 py-5">
+    <div className="h-screen w-full overflow-hidden flex flex-col" style={{ background: "#F4F4F1" }}>
+      <div className="flex-1 flex flex-col justify-center w-full max-w-[1040px] mx-auto px-3 sm:px-6 py-3 sm:py-6 min-h-0">
 
-        {/* Compact header */}
-        <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}
+        <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.45, ease: EASE }}
-          className="flex items-center gap-3 mb-4 sm:mb-5">
-          <motion.div initial={{ scale: 0, rotate: -15 }} animate={{ scale: 1, rotate: 0 }}
-            transition={{ delay: 0.05, type: "spring", stiffness: 280, damping: 18 }}
-            className="w-11 h-11 rounded-xl flex items-center justify-center shrink-0"
-            style={{ background: TEAL, boxShadow: "0 6px 20px rgba(16,69,63,0.3)" }}>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12"/>
-            </svg>
-          </motion.div>
-          <div className="min-w-0">
-            <p className="text-[10px] font-bold uppercase tracking-[2px]" style={{ color: BRAND }}>
-              Talent AI · {t("snapshot.aiReport")}
-            </p>
-            <h1
-              className="text-[1.4rem] sm:text-[1.6rem] leading-[1.1] tracking-tight"
-              style={{ fontFamily: "var(--font-fraunces)", fontWeight: 600, color: TEAL }}
-            >
-              {t("snapshot.registeredTitle")}
-            </h1>
+          className="rounded-3xl border border-[#E7E5DE] bg-white overflow-hidden">
+
+          {/* Header */}
+          <div className="flex items-center gap-2.5 sm:gap-3 px-4 sm:px-7 lg:px-8 pt-4 sm:pt-6 pb-3 sm:pb-4">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0"
+              style={{ background: TEAL }}>
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="sm:size-[17px]">
+                <polyline points="20 6 9 17 4 12"/>
+              </svg>
+            </div>
+            <div className="min-w-0">
+              <p className="text-[9px] sm:text-[10px] font-semibold uppercase tracking-[1.5px] text-slate-400">
+                Talent AI · {t("snapshot.aiReport")}
+              </p>
+              <h1
+                className="font-sans text-[1.15rem] sm:text-[1.65rem] lg:text-[1.75rem] leading-[1.15] tracking-tight font-semibold"
+                style={{ color: TEAL }}
+              >
+                {t("snapshot.registeredTitle")}
+              </h1>
+            </div>
           </div>
-        </motion.div>
 
-        {/* Score + sub-scores — side by side so the report reads across, not down */}
-        <div className="grid grid-cols-1 md:grid-cols-[212px_1fr] gap-3 sm:gap-4 mb-3 sm:mb-4">
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.12 }}
-            className="rounded-2xl p-4 flex flex-row md:flex-col items-center justify-center gap-4 md:gap-2.5 text-center border border-[#E7E5DE] bg-white shadow-[0_10px_30px_-16px_rgba(16,69,63,0.25)]">
-            <div className="relative shrink-0">
-              <ArcRing value={score} size={92} stroke={8} color={scoreColor} />
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="text-[1.55rem] font-black leading-none tabular-nums" style={{ color: scoreColor }}>{score}</span>
-                <span className="text-[8px] font-bold text-slate-400">/100</span>
+          <div className="h-px bg-[#EEEDE7]" />
+
+          {/* Score + sub-scores */}
+          <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] lg:grid-cols-[220px_1fr] divide-y md:divide-y-0 md:divide-x divide-[#EEEDE7]">
+            <div className="p-4 sm:p-5 lg:p-6 flex flex-row md:flex-col items-center justify-center gap-4 md:gap-2 lg:gap-3 text-center">
+              <div className="relative shrink-0">
+                <ArcRing value={score} size={84} stroke={7} color={scoreColor} className="lg:hidden" />
+                <ArcRing value={score} size={100} stroke={8} color={scoreColor} className="hidden lg:block" />
+                <div className="absolute inset-0 flex flex-col items-center justify-center">
+                  <span className="text-[1.35rem] lg:text-[1.65rem] font-bold leading-none tabular-nums" style={{ color: scoreColor }}>{score}</span>
+                  <span className="text-[8px] lg:text-[9.5px] font-medium text-slate-400">/100</span>
+                </div>
+              </div>
+              <div className="flex flex-col items-start md:items-center gap-1 lg:gap-1.5">
+                <p className="text-[9px] lg:text-[9.5px] font-semibold uppercase tracking-[1.5px] text-slate-400">{t("snapshot.yourScore")}</p>
+                <span className="text-[12.5px] lg:text-[13.5px] font-semibold" style={{ color: scoreColor }}>
+                  {t(`snapshot.maturity.${maturity}`)}
+                </span>
               </div>
             </div>
-            <div className="flex flex-col items-start md:items-center gap-1">
-              <p className="text-[9.5px] font-bold uppercase tracking-[1.5px] text-slate-400">{t("snapshot.yourScore")}</p>
-              <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full"
-                style={{ background: scoreColor + "18", border: `1px solid ${scoreColor}30` }}>
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: scoreColor }} />
-                <span className="text-[10.5px] font-bold" style={{ color: scoreColor }}>{t(`snapshot.maturity.${maturity}`)}</span>
+
+            <div className="p-4 sm:p-5 lg:p-6 flex flex-col justify-center">
+              <div className="grid grid-cols-2 gap-x-6 lg:gap-x-10 gap-y-3.5 lg:gap-y-5">
+                {CATEGORY_ORDER.map((cat) => {
+                  const value = scoring.subScores?.[cat] ?? 0;
+                  const color = CATEGORY_COLOR[cat];
+                  return (
+                    <div key={cat}>
+                      <div className="flex justify-between text-[13px] lg:text-[14.5px] mb-1.5 text-slate-500">
+                        <span className="truncate pr-1 font-medium">{t(`snapshot.category.${cat}`)}</span>
+                        <span className="font-bold tabular-nums shrink-0" style={{ color }}>{value}<span className="text-slate-300">/12</span></span>
+                      </div>
+                      <div className="h-2 rounded-full bg-slate-100">
+                        <motion.div className="h-full rounded-full" style={{ background: color }}
+                          initial={{ width: 0 }} animate={{ width: `${(value / 12) * 100}%` }}
+                          transition={{ delay: 0.3, duration: 0.7, ease: EASE }} />
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </motion.div>
+          </div>
 
-          <motion.div initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.18 }}
-            className="rounded-2xl p-4 flex flex-col justify-center border border-[#E7E5DE] bg-white shadow-[0_10px_30px_-16px_rgba(16,69,63,0.25)]">
-            <div className="grid grid-cols-2 gap-x-5 gap-y-2.5">
-              {CATEGORY_ORDER.map((cat) => {
-                const value = scoring.subScores?.[cat] ?? 0;
-                const color = CATEGORY_COLOR[cat];
-                return (
-                  <div key={cat}>
-                    <div className="flex justify-between text-[10px] mb-1 text-slate-400">
-                      <span className="truncate pr-1">{t(`snapshot.category.${cat}`)}</span>
-                      <span className="font-bold tabular-nums shrink-0" style={{ color }}>{value}<span className="text-slate-300">/12</span></span>
-                    </div>
-                    <div className="h-1.5 rounded-full bg-slate-200">
-                      <motion.div className="h-full rounded-full" style={{ background: color }}
-                        initial={{ width: 0 }} animate={{ width: `${(value / 12) * 100}%` }}
-                        transition={{ delay: 0.4, duration: 0.8, ease: EASE }} />
-                    </div>
+          {hasPoints && (
+            <>
+              <div className="h-px bg-[#EEEDE7]" />
+              <div className="grid grid-cols-2 divide-x divide-[#EEEDE7]">
+                {scoring.strength && (
+                  <div className="p-4 sm:p-5 lg:p-6">
+                    <p className="text-[9px] lg:text-[9.5px] font-semibold uppercase tracking-[1.5px] mb-1 text-slate-400">
+                      {t("snapshot.strengthTitle")}
+                    </p>
+                    <p className="text-[12.5px] lg:text-[13.5px] leading-snug line-clamp-2 text-slate-700">
+                      {scoring.strength.optionLabel} <span className="text-slate-400">— {scoring.strength.questionLabel}</span>
+                    </p>
                   </div>
-                );
-              })}
-            </div>
-          </motion.div>
-        </div>
+                )}
+                {scoring.vigilance && (
+                  <div className="p-4 sm:p-5 lg:p-6">
+                    <p className="text-[9px] lg:text-[9.5px] font-semibold uppercase tracking-[1.5px] mb-1 text-slate-400">
+                      {t("snapshot.vigilanceTitle")}
+                    </p>
+                    <p className="text-[12.5px] lg:text-[13.5px] leading-snug line-clamp-2 text-slate-700">
+                      {scoring.vigilance.optionLabel} <span className="text-slate-400">— {scoring.vigilance.questionLabel}</span>
+                    </p>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
 
-        {/* Strength + vigilance — side by side */}
-        {hasPoints && (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3 sm:mb-4">
-            {scoring.strength && (
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.26 }}
-                className="rounded-xl p-3 border" style={{ background: "#F0FDF4", borderColor: "#BBF7D0" }}>
-                <p className="text-[9px] font-bold uppercase tracking-[1.5px] mb-0.5" style={{ color: "#15803D" }}>
-                  {t("snapshot.strengthTitle")}
-                </p>
-                <p className="text-[12px] leading-snug line-clamp-2" style={{ color: "#166534" }}>
-                  {scoring.strength.optionLabel} <span className="text-[#4D7C0F]">— {scoring.strength.questionLabel}</span>
-                </p>
-              </motion.div>
-            )}
-            {scoring.vigilance && (
-              <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.3 }}
-                className="rounded-xl p-3 border" style={{ background: "#FFFBEB", borderColor: "#FDE68A" }}>
-                <p className="text-[9px] font-bold uppercase tracking-[1.5px] mb-0.5" style={{ color: "#B45309" }}>
-                  {t("snapshot.vigilanceTitle")}
-                </p>
-                <p className="text-[12px] leading-snug line-clamp-2" style={{ color: "#92400E" }}>
-                  {scoring.vigilance.optionLabel} <span className="text-[#B45309]">— {scoring.vigilance.questionLabel}</span>
-                </p>
-              </motion.div>
-            )}
+          <div className="h-px bg-[#EEEDE7]" />
+
+          {/* CTA */}
+          <div className="p-4 sm:p-5 lg:p-6">
+            <Button
+              asChild
+              size="lg"
+              className="group w-full h-11 lg:h-12 rounded-xl bg-[#0F9D73] font-sans text-[13.5px] leading-none font-medium tracking-[-0.01em] text-white transition-colors hover:bg-[#0C8A64]"
+            >
+              <a href={CALENDLY_URL} target="_blank" rel="noopener noreferrer">
+                {t("snapshot.ctaBooking")}
+                <ArrowRight size={15} className="transition-transform group-hover:translate-x-0.5" />
+              </a>
+            </Button>
           </div>
-        )}
-
-        {/* Soft CTA — no sales pitch, just a low-pressure 1:1 invite */}
-        <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.36 }}
-          className="mb-3">
-          <Button asChild variant="outline" size="lg" className="w-full rounded-xl text-[12.5px]">
-            <a href={CALENDLY_URL} target="_blank" rel="noopener noreferrer">
-              {t("snapshot.ctaBooking")}
-            </a>
-          </Button>
         </motion.div>
 
-        {/* Footer note — email notice + confidential, merged into one slim line */}
-        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.42 }}
-          className="flex items-center justify-center gap-1.5 text-center">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="shrink-0">
-            <rect x="2" y="4" width="20" height="16" rx="2"/><path d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/>
-          </svg>
-          <p className="text-[10.5px] text-slate-400 leading-snug">
-            {t("snapshot.emailNotice")} · {t("snapshot.confidential")}
-          </p>
-        </motion.div>
+        {/* Footer note */}
+        <p className="text-[10.5px] lg:text-[11px] text-slate-400 leading-snug text-center mt-3">
+          {t("snapshot.emailNotice")} · {t("snapshot.confidential")}
+        </p>
       </div>
     </div>
   );
