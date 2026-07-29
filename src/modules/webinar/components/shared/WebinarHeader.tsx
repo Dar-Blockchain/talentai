@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowLeft, Check } from "lucide-react";
 import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 import {
@@ -11,7 +12,11 @@ import {
 import { cn } from "@/lib/utils";
 import i18n from "@/i18n/config";
 
-const Flag: React.FC<{ code: string; label: string; size?: number }> = ({ code, label, size = 20 }) => (
+const Flag: React.FC<{ code: string; label: string; size?: number }> = ({
+  code,
+  label,
+  size = 20,
+}) => (
   <img
     src={`https://flagcdn.com/w40/${code}.png`}
     srcSet={`https://flagcdn.com/w80/${code}.png 2x`}
@@ -54,27 +59,35 @@ const WebinarHeader: React.FC<WebinarHeaderProps> = ({
       className={`${sticky ? "sticky top-0 z-50" : ""} bg-white/95 backdrop-blur-sm border-b border-slate-100`}
     >
       <div className="max-w-[1200px] mx-auto px-3 sm:px-4 md:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
-        <Image
-          src="/logo.svg"
-          alt="TalentAI"
-          width={130}
-          height={36}
-          className="h-6 sm:h-8 w-auto object-contain shrink-0"
-          priority
-        />
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/logo.svg"
+            alt="TalentAI"
+            width={130}
+            height={36}
+            className="h-6 sm:h-8 w-auto object-contain"
+            priority
+          />
+        </Link>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {onToggleLang && (
-            <DropdownMenu open={langOpen} onOpenChange={setLangOpen} modal={false}>
+            <DropdownMenu
+              open={langOpen}
+              onOpenChange={setLangOpen}
+              modal={false}
+            >
               <DropdownMenuTrigger asChild>
                 <button
                   className={cn(
                     "inline-flex items-center justify-center rounded-lg cursor-pointer focus:outline-none transition-all duration-200 size-8 sm:size-9",
                     "bg-gray-100 border border-gray-200 hover:bg-gray-200 hover:border-gray-300",
-                    langOpen && "bg-gray-200 border-gray-300"
+                    langOpen && "bg-gray-200 border-gray-300",
                   )}
                 >
-                  <span className="text-[15px] leading-none select-none text-gray-600">文</span>
+                  <span className="text-[15px] leading-none select-none text-gray-600">
+                    文
+                  </span>
                 </button>
               </DropdownMenuTrigger>
 
@@ -94,17 +107,28 @@ const WebinarHeader: React.FC<WebinarHeaderProps> = ({
                       }}
                       className={cn(
                         "flex items-center gap-2.5 rounded-lg px-2.5 py-2 cursor-pointer focus:outline-none transition-colors duration-100",
-                        active ? "bg-gray-100 focus:bg-gray-100" : "hover:bg-gray-50 focus:bg-gray-50"
+                        active
+                          ? "bg-gray-100 focus:bg-gray-100"
+                          : "hover:bg-gray-50 focus:bg-gray-50",
                       )}
                     >
                       <Flag code={l.flag} label={l.label} size={20} />
-                      <span className={cn(
-                        "flex-1 text-[13px]",
-                        active ? "font-semibold text-gray-900" : "font-normal text-gray-600"
-                      )}>
+                      <span
+                        className={cn(
+                          "flex-1 text-[13px]",
+                          active
+                            ? "font-semibold text-gray-900"
+                            : "font-normal text-gray-600",
+                        )}
+                      >
                         {l.label}
                       </span>
-                      {active && <Check className="size-3 text-gray-500 shrink-0" strokeWidth={2.5} />}
+                      {active && (
+                        <Check
+                          className="size-3 text-gray-500 shrink-0"
+                          strokeWidth={2.5}
+                        />
+                      )}
                     </DropdownMenuItem>
                   );
                 })}

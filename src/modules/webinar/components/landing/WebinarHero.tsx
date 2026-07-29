@@ -122,7 +122,7 @@ export function WebinarHero({
             <Button
               asChild
               size="lg"
-              className="group rounded-2xl bg-[#0F9D73] font-sans text-[17px] leading-none font-medium tracking-[-0.01em] text-white px-10 h-14 shadow-[0_10px_30px_rgba(15,157,115,0.22)] ring-1 ring-inset ring-white/20 transition-all hover:bg-[#095E44] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
+              className="group rounded-2xl bg-[#0F9D73] font-sans text-[17px] leading-none font-medium tracking-[-0.01em] text-white px-8 has-[>svg]:px-8 h-14 shadow-[0_10px_30px_rgba(15,157,115,0.22)] ring-1 ring-inset ring-white/20 transition-all hover:bg-[#095E44] hover:-translate-y-0.5 active:translate-y-0 active:scale-[0.98]"
             >
               <a href="#webinar-register" onClick={scrollToRegister}>
                 {t("header.cta")}
