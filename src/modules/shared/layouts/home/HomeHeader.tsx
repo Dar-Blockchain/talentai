@@ -107,9 +107,9 @@ const Header = ({ forceSignup = false }: HeaderProps = {}) => {
                 <div className="hidden [@media(min-width:800px)]:flex items-center gap-1.5">
                   {/* Language + notif + messages cluster */}
                   <div className="flex items-center gap-0.5 bg-gray-100/80 rounded-xl px-1 py-1">
-                    <LanguageSwitcher variant="icon" size="small" />
                     <HeaderMessagesDropdown userId={userId} unreadMessageCount={unreadMessageCount} />
                     <HeaderNotification onViewAll={isCandidate ? handleCandidateViewAll : undefined} />
+                    <LanguageSwitcher variant="icon" size="small" />
                   </div>
 
                   {/* Divider */}
