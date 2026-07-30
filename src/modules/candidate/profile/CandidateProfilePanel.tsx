@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import {
-  ClipboardList, GraduationCap, TrendingUp, Trophy, CheckCircle2, Circle, ArrowRight,
+  ClipboardList, GraduationCap, TrendingUp, Trophy, CheckCircle2, Circle, ArrowRight, Sparkles,
 } from "lucide-react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
@@ -14,7 +14,10 @@ import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { cn } from "@/lib/utils";
 import { RootState } from "@/store/store";
+import { useToast } from "@/hooks/useToast";
 import { useApplicationStatsQuery } from "@/modules/candidate/applications/queries/useApplicationsQuery";
+
+const MONTHLY_TEST_QUOTA = 5;
 
 // ─── ProfileCard ──────────────────────────────────────────────────────────────
 
@@ -168,6 +171,52 @@ const ProfileStrengthCard: React.FC<{ checklist: ChecklistItem[]; label: string 
   );
 };
 
+// ─── QuotaCard ────────────────────────────────────────────────────────────────
+
+const QuotaCard: React.FC<{ used: number; label: string; subtitle: string; upgradeLabel: string; upgradeToast: string }> = ({
+  used, label, subtitle, upgradeLabel, upgradeToast,
+}) => {
+  const { showToast } = useToast();
+  const remaining = Math.max(0, MONTHLY_TEST_QUOTA - used);
+  const locked    = remaining === 0;
+  const pct       = Math.min(100, (used / MONTHLY_TEST_QUOTA) * 100);
+
+  return (
+    <Card className="gap-0 py-0 p-3">
+      <div className="flex items-center gap-2 mb-1">
+        <div className={cn("size-6 rounded-md flex items-center justify-center shrink-0", locked ? "bg-amber-100" : "bg-primary-light")}>
+          <Sparkles className={cn("size-3.5", locked ? "text-amber-600" : "text-primary-dark")} />
+        </div>
+        <span className="text-[0.8rem] font-bold text-gray-900 flex-1 truncate">{label}</span>
+        <span className={cn("text-[0.78rem] font-black tabular-nums", locked ? "text-amber-600" : "text-primary-dark")}>
+          {used}/{MONTHLY_TEST_QUOTA}
+        </span>
+      </div>
+
+      <Progress
+        value={pct}
+        className={cn(
+          "h-1.5 my-2.5",
+          locked ? "bg-amber-100 [&>[data-slot=progress-indicator]]:bg-amber-500" : "bg-primary-light [&>[data-slot=progress-indicator]]:bg-primary",
+        )}
+      />
+
+      <p className="text-[0.68rem] text-gray-400 leading-snug">{subtitle}</p>
+
+      {locked && (
+        <button
+          type="button"
+          onClick={() => showToast({ message: upgradeToast, severity: "info" })}
+          className="mt-2 w-full flex items-center justify-center gap-1 py-1.5 rounded-md text-[0.7rem] font-bold text-white bg-amber-500 hover:bg-amber-600 transition-colors cursor-pointer"
+        >
+          <Sparkles className="size-3" />
+          {upgradeLabel}
+        </button>
+      )}
+    </Card>
+  );
+};
+
 // ─── CandidateProfilePanel (connected) ───────────────────────────────────────
 
 const CandidateProfilePanel: React.FC = () => {
@@ -212,6 +261,13 @@ const CandidateProfilePanel: React.FC = () => {
       <ProfileStrengthCard
         checklist={checklist}
         label={t("candidate.profile.profile_strength")}
+      />
+      <QuotaCard
+        used={profile?.quota ?? 0}
+        label={t("candidate.skills.monthly_quota")}
+        subtitle={t("candidate.skills.quota_subtitle")}
+        upgradeLabel={t("candidate.skills.upgrade")}
+        upgradeToast={t("candidate.skills.upgrade_toast")}
       />
     </>
   );

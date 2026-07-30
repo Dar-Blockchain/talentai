@@ -1,10 +1,18 @@
 import React from "react";
+import { useRouter } from "next/router";
+import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
-import { Code2, Users } from "lucide-react";
+import { Code2, Users, Play, Sparkles } from "lucide-react";
 import dayjs from "@/lib/dayjs";
+import { RootState } from "@/store/store";
+import { useToast } from "@/hooks/useToast";
 import { Progress } from "@/modules/shared/ui/shadcn/progress";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { buildInterviewUrl } from "@/lib/interviewSession";
 import { cn } from "@/lib/utils";
+
+const MONTHLY_TEST_QUOTA = 5;
 
 interface SkillCardProps {
   type: "technical" | "soft";
@@ -45,8 +53,13 @@ function scoreTier(s: number) {
 }
 
 const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
+  const router = useRouter();
   const { t } = useTranslation("dashboard");
   const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
+  const { showToast } = useToast();
+
+  const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
+  const locked  = (profile?.quota ?? 0) >= MONTHLY_TEST_QUOTA;
 
   const score    = skill.testScore ?? 0;
   const levelKey = LEVEL_KEYS[skill.levelConfirmed] ?? "new";
@@ -55,6 +68,18 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
 
   const isTech = type === "technical";
   const Icon   = isTech ? Code2 : Users;
+
+  const handleTest = () => {
+    if (locked) {
+      showToast({ message: s("upgrade_toast"), severity: "info" });
+      return;
+    }
+    router.push(buildInterviewUrl({
+      type:     "skill",
+      skill:    skill.name,
+      category: skill.category,
+    }));
+  };
 
   return (
     <div
@@ -110,10 +135,29 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
         />
       </div>
 
-      {/* Timestamp */}
-      <p className="text-[0.58rem] text-gray-300 leading-none">
-        {timeAgo ?? s("just_added")}
-      </p>
+      {/* Timestamp + test action */}
+      <div className="flex items-center justify-between gap-2 mt-0.5">
+        <p className="text-[0.58rem] text-gray-300 leading-none">
+          {timeAgo ?? s("just_added")}
+        </p>
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={handleTest}
+          title={locked ? s("limit_tooltip") : undefined}
+          className={cn(
+            "h-6 gap-1 px-2 text-[0.62rem] font-bold",
+            locked
+              ? "border-amber-200 bg-amber-50 text-amber-700 hover:bg-amber-100"
+              : isTech
+                ? "border-info/20 bg-info/10 text-info hover:bg-info/15"
+                : "border-warning/20 bg-warning/10 text-warning hover:bg-warning/15",
+          )}
+        >
+          {locked ? <Sparkles className="size-2.5" /> : <Play className="size-2.5" />}
+          {locked ? s("upgrade") : score > 0 ? s("retest") : s("test")}
+        </Button>
+      </div>
     </div>
   );
 };
