@@ -47,12 +47,21 @@ const makeInstantNotification = (
   icon:      type,
 });
 
-const prependNotification = (old: NotificationsData, notif: NotificationItem): NotificationsData => ({
-  ...old,
-  notifications:    [notif, ...old.notifications],
-  nonArchivedCount: old.nonArchivedCount + 1,
-  unreadCount:      old.unreadCount + 1,
-});
+const prependNotification = (old: NotificationsData, notif: NotificationItem): NotificationsData => {
+  // Guard against double-insertion: a socket 'notification' event queued while
+  // the initial GET /GetMyNotification is in flight gets replayed once that
+  // fetch resolves (see applyOrQueue/pendingRef below). If the fetched data
+  // already includes this notification (it was persisted before the fetch
+  // returned), replaying the prepend on top of it would duplicate it in the UI
+  // even though only one row exists in the database.
+  if (old.notifications.some(n => n.id === notif.id)) return old;
+  return {
+    ...old,
+    notifications:    [notif, ...old.notifications],
+    nonArchivedCount: old.nonArchivedCount + 1,
+    unreadCount:      old.unreadCount + 1,
+  };
+};
 
 const INTERVIEW_TYPE_LABELS: Record<string, string> = {
   HR_INTERVIEW:          'HR',

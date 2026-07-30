@@ -190,26 +190,34 @@ module.exports.verifyUserOTP = async (email, otp, location = null) => {
     throw Object.assign(new Error("Invalid OTP code. Please check and try again."), { status: 401 });
   }
 
-  clearOtpRateLimit(email); // successful match — reset the counter
-
   const locationUpdate = location
     ? { ip: location.ip, Localisation: formatLocation(location) }
     : {};
 
   const now = new Date();
-  await Promise.all([
-    User.updateOne(
-      { _id: user._id },
-      {
-        $unset: { otp: "" },
-        $set: {
-          isVerified: true,
-          lastLogin: now,
-          ...locationUpdate,
-        },
-      }
-    ),
-  ]);
+  // Atomically consume the OTP: the match on "otp.code" ensures that if two
+  // concurrent requests race with the same valid code, only the first one's
+  // update matches (it unsets otp), so the second gets null here instead of
+  // also succeeding and double-firing onSuccess side effects (e.g. welcome
+  // notification) on the client.
+  const consumedUser = await User.findOneAndUpdate(
+    { _id: user._id, "otp.code": otp },
+    {
+      $unset: { otp: "" },
+      $set: {
+        isVerified: true,
+        lastLogin: now,
+        ...locationUpdate,
+      },
+    },
+    { new: true }
+  );
+
+  if (!consumedUser) {
+    throw Object.assign(new Error("Invalid OTP code. Please check and try again."), { status: 401 });
+  }
+
+  clearOtpRateLimit(email); // successful match — reset the counter
 
   const updatedUser = {
     _id:        user._id,
