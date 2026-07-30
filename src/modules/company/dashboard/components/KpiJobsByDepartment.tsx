@@ -1,9 +1,11 @@
 "use client";
 import React, { memo, useMemo } from "react";
+import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { Building2 as DepartmentOutlined } from "lucide-react";
+import { Building2 as DepartmentOutlined, Plus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, LabelList, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { ZoneHeading, KpiCard } from "./KpiAtoms";
 import { BORDER } from "../utils/kpiTokens";
 import { useKpiJobsByDepartmentQuery } from "../queries";
@@ -76,6 +78,7 @@ const NameLabel = (buckets: Bucket[]) => (props: any) => {
 
 const KpiJobsByDepartment = memo(() => {
   const { t } = useTranslation("dashboard");
+  const router = useRouter();
   const isHR = useIsHR();
   const { data, isLoading } = useKpiJobsByDepartmentQuery(isHR);
 
@@ -100,9 +103,20 @@ const KpiJobsByDepartment = memo(() => {
       <ZoneHeading icon={DepartmentOutlined} label={t("pages.kpi.zone_department_title", "Jobs by Department")} color={ACCENT} />
       <KpiCard className="flex-1 flex flex-col" contentClassName="flex-1 flex flex-col min-h-0">
         <div className="flex flex-1 min-h-0 flex-col gap-4">
-          <p className="text-center text-[11px] text-slate-400">
-            {t("pages.kpi.zone_department_subtitle", "Open and past job posts grouped by department — visible to HR only")}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex-1 text-center text-[11px] text-slate-400">
+              {t("pages.kpi.zone_department_subtitle", "Open and past job posts grouped by department — visible to HR only")}
+            </p>
+            <Button
+              size="xs"
+              variant="outline"
+              className="h-7 gap-1 rounded-full text-[11px] font-semibold shrink-0"
+              onClick={() => router.push("/company/departments")}
+            >
+              <Plus size={13} />
+              {t("pages.kpi.zone_department_add", "Add Department")}
+            </Button>
+          </div>
           {isLoading ? (
             <Skeleton className="w-full rounded-[10px]" style={{ height: MIN_HEIGHT }} />
           ) : (
