@@ -1,11 +1,13 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import Image from "next/image";
 import { CheckCircle2, Sparkles, HelpCircle } from "lucide-react";
 import SectionTitle from "./SectionTitle";
 import Spinner from "./Spinner";
 import { useLanguage } from "@/hooks/useLanguage";
 import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 import { GENERATE_LANG_KEY } from "@/modules/company/posts/create/components/GenerateLanguageModal";
+import type { SupportedLanguage } from "@/i18n/config";
 
 interface Props {
   onInputChange: (key: string, value: string) => void;
@@ -36,7 +38,7 @@ const LanguageTab: React.FC<Props> = ({
     setSaving(code);
     try {
       onInputChange("language", code);
-      await changeLanguage(code as any);
+      await changeLanguage(code as SupportedLanguage);
       await onSaveLanguage(code);
     } finally {
       setSaving(null);
@@ -87,13 +89,13 @@ const LanguageTab: React.FC<Props> = ({
                   active && <CheckCircle2 size={18} className="text-teal-600" />
                 )}
               </div>
-              <img
+              <Image
                 src={`https://flagcdn.com/w80/${lang.flag}.png`}
-                srcSet={`https://flagcdn.com/w160/${lang.flag}.png 2x`}
                 width={48}
                 height={32}
                 alt={lang.label}
                 className="rounded block"
+                unoptimized
               />
               <p className={`font-bold text-[0.95rem] ${active ? "text-teal-600" : "text-gray-900"}`}>
                 {lang.label}
@@ -157,13 +159,13 @@ const LanguageTab: React.FC<Props> = ({
                   {active && (
                     <CheckCircle2 size={18} className="absolute top-2.5 right-2.5 text-teal-600" />
                   )}
-                  <img
+                  <Image
                     src={`https://flagcdn.com/w80/${lang.flag}.png`}
-                    srcSet={`https://flagcdn.com/w160/${lang.flag}.png 2x`}
                     width={48}
                     height={32}
                     alt={lang.label}
                     className="rounded block"
+                    unoptimized
                   />
                   <p className={`font-bold text-[0.95rem] ${active ? "text-teal-600" : "text-gray-900"}`}>
                     {lang.label}

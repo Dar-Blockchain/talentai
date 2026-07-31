@@ -2,7 +2,13 @@ import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } 
 import { PieChart as DonutLargeIcon } from 'lucide-react';
 import { AdminChartCard, ADMIN_CHART_COLORS } from '@/modules/admin/shared';
 
-const AdminSkillsDistribution = ({ skillDistribution }: { skillDistribution: any[] }) => (
+interface SkillDistributionEntry {
+  name: string;
+  value: number;
+  color: string;
+}
+
+const AdminSkillsDistribution = ({ skillDistribution }: { skillDistribution: SkillDistributionEntry[] }) => (
   <AdminChartCard icon={DonutLargeIcon} title="Skills Distribution" className="mb-4">
     <ResponsiveContainer width="100%" height={240}>
       <PieChart>

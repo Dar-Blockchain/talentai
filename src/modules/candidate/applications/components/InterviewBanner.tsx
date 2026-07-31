@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Video as VideoCallOutlined, Calendar as CalendarTodayOutlined, Clock as AccessTimeOutlined, Link as LinkOutlined } from "lucide-react";
-import { T, TBG } from "../utils/constants";
+import { T } from "../utils/constants";
 
 interface InterviewBannerProps {
   title: string;

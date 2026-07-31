@@ -134,7 +134,7 @@ const resources: InitOptions['resources'] = {
     'modules/interview/campaign-interview': campaignInterviewEn,
     webinar: webinarEn,
     dashboard: mergeDashboardPageBundles(
-      dashboardEn as any,
+      dashboardEn as unknown as { pages: Record<string, unknown> },
       employeesEn,
       departmentsEn,
       campaignEn,
@@ -161,7 +161,7 @@ const resources: InitOptions['resources'] = {
     'modules/interview/campaign-interview': campaignInterviewFr,
     webinar: webinarFr,
     dashboard: mergeDashboardPageBundles(
-      dashboardFr as any,
+      dashboardFr as unknown as { pages: Record<string, unknown> },
       employeesFr,
       departmentsFr,
       campaignFr,

@@ -111,8 +111,9 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
       });
       setSent(true);
       setTimeout(onClose, 2000);
-    } catch (e: any) {
-      setError(e.response?.data?.error || e.message || t("pages.applications.contact_modal.error_email"));
+    } catch (e: unknown) {
+      const err = e as { response?: { data?: { error?: string } }; message?: string };
+      setError(err.response?.data?.error || err.message || t("pages.applications.contact_modal.error_email"));
     } finally {
       setSending(false);
     }

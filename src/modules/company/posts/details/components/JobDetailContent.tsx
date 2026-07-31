@@ -1,4 +1,5 @@
 import React from "react";
+import type { JobDetail } from "@/modules/company/posts/details/types";
 import PostBasicDetails from "./PostBasicDetails";
 import EditPostDetails from "./EditPostDetails";
 
@@ -7,7 +8,7 @@ type EditMode = "post" | null;
 interface Props {
   activeEdit: EditMode;
   isOwner: boolean;
-  job: any;
+  job: JobDetail;
   onEditPost: () => void;
   onCancelEdit: () => void;
   onSaveSuccess: () => void;

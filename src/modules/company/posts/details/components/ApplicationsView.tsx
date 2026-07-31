@@ -5,6 +5,7 @@ import ApplicationsToolbar from "./applications/ApplicationsToolbar";
 import ApplicationsEmptyState from "./applications/ApplicationsEmptyState";
 import ApplicationsList from "./applications/ApplicationsList";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import type { ApplicationSummaryItem } from "@/modules/company/applications/types";
 
 const TEAL     = "#0D9488";
 const PAGE_SIZE = 10;
@@ -42,11 +43,11 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
 
   const { data, isLoading: loading } = useApplicationsSummaryQuery(queryParams);
 
-  const rows       = data?.data ?? [];
-  const pagination = data?.pagination ?? {};
+  const rows: ApplicationSummaryItem[] = data?.data ?? [];
+  const pagination: { totalPages: number; totalCount?: number } = data?.pagination ?? { totalPages: 0 };
 
   useEffect(() => {
-    const fromServer = rows.filter((r: any) => !!r.invitedAt).map((r: any) => String(r.id));
+    const fromServer = rows.filter((r) => !!r.invitedAt).map((r) => String(r.id));
     if (fromServer.length === 0) return;
     setInvitedIds(prev => {
       const merged = new Set(prev);
@@ -61,7 +62,7 @@ const ApplicationsView: React.FC<Props> = ({ jobId }) => {
         searchInput={searchInput}
         status={status}
         sort={sort}
-        totalCount={(pagination as any).totalCount}
+        totalCount={pagination.totalCount}
         loading={loading}
         onSearchChange={setSearchInput}
         onStatusChange={setStatus}

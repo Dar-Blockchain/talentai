@@ -5,7 +5,7 @@ import { apiKeysKeys, costSettingsKeys } from './keys';
 import { profileKeys } from '@/modules/settings/shared';
 import { setConnectedUser } from '@/store/slices/userSlice';
 import type { AppDispatch } from '@/store/store';
-import type { UpdateProfilePayload, CreateApiKeyPayload, UpdateApiKeyPayload, UpdateCostSettingsPayload } from '../types';
+import type { UpdateProfilePayload, CreateApiKeyPayload, UpdateApiKeyPayload, UpdateCostSettingsPayload, ProfileApiResponse } from '../types';
 
 // ─── Fetch profile ────────────────────────────────────────────────────────────
 
@@ -28,7 +28,7 @@ export const useUpdateSettingsProfile = () => {
     onSuccess: (data) => {
       if (!data?.profile) return;
       dispatch(setConnectedUser({ profile: data.profile }));
-      queryClient.setQueryData(profileKeys.me, (old: any) =>
+      queryClient.setQueryData(profileKeys.me, (old: ProfileApiResponse | undefined) =>
         old ? { ...old, profile: data.profile } : old
       );
     },
@@ -47,7 +47,7 @@ export const useUploadSettingsAvatar = () => {
     onSuccess: (data) => {
       if (!data?.profile) return;
       dispatch(setConnectedUser({ profile: data.profile }));
-      queryClient.setQueryData(profileKeys.me, (old: any) =>
+      queryClient.setQueryData(profileKeys.me, (old: ProfileApiResponse | undefined) =>
         old ? { ...old, profile: data.profile } : old
       );
     },

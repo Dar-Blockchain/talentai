@@ -41,7 +41,7 @@ export interface DeleteMemberPayload {
 export interface Invitation {
   _id: string;
   email: string;
-  company?: any;
+  company?: unknown;
   user?: {
     _id: string;
     username: string;

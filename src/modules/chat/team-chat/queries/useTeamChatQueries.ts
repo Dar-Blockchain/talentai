@@ -25,6 +25,12 @@ import type {
   TeamMessage,
 } from "@/modules/chat/team-chat/types";
 import { toChatShellConversation, toChatShellMessage } from "@/modules/chat/team-chat/utils/mappers";
+import type { ChatShellConversation } from "@/modules/chat/shared/types/shell";
+
+const getErrorStatus = (err: unknown): number | undefined => {
+  const e = err as { response?: { status?: number }; status?: number };
+  return e?.response?.status ?? e?.status;
+};
 
 const syncConversations = (dispatch: AppDispatch, data: ReturnType<typeof toChatShellConversation>[]) => {
   dispatch(setTeamConversations(data));
@@ -87,10 +93,10 @@ export const useTeamMessagesQuery = (
       try {
         const messages = await teamChatApi.fetchMessages(conversationId as string, params);
         return messages.map(toChatShellMessage);
-      } catch (err: any) {
+      } catch (err: unknown) {
         // 404 means the conversation has no messages yet or was just created.
         // Treat it as an empty list so the chat opens cleanly instead of erroring.
-        const status = err?.response?.status ?? err?.status;
+        const status = getErrorStatus(err);
         if (status === 404) return [] as ReturnType<typeof toChatShellMessage>[];
         throw err;
       }
@@ -103,8 +109,8 @@ export const useTeamMessagesQuery = (
     refetchOnWindowFocus: false,
     refetchOnReconnect: false,
     // Retry once after a short delay for transient server errors (e.g. backend not yet ready).
-    retry: (failureCount, err: any) => {
-      const status = err?.response?.status ?? err?.status;
+    retry: (failureCount, err: unknown) => {
+      const status = getErrorStatus(err);
       if (status === 404 || status === 403) return false; // handled above or auth issue — don't retry
       return failureCount < 1;
     },
@@ -220,9 +226,12 @@ export const useSendTeamMessageMutation = () => {
 
       queryClient.setQueriesData(
         { queryKey: teamChatKeys.messages(variables.conversationId) },
-        (old) => {
+        (old: unknown) => {
           if (!Array.isArray(old)) return old;
-          return [...old.filter((m: any) => String(m._id) !== context.tempId), mapped];
+          return [
+            ...(old as ChatShellMessage[]).filter((m) => String(m._id) !== context.tempId),
+            mapped,
+          ];
         },
       );
     },
@@ -231,8 +240,8 @@ export const useSendTeamMessageMutation = () => {
       dispatch(removeTeamMessage(context.tempId));
       queryClient.setQueriesData(
         { queryKey: teamChatKeys.messages(variables.conversationId) },
-        (old) => Array.isArray(old)
-          ? old.filter((m: any) => String(m._id) !== context.tempId)
+        (old: unknown) => Array.isArray(old)
+          ? (old as ChatShellMessage[]).filter((m) => String(m._id) !== context.tempId)
           : old,
       );
       queryClient.invalidateQueries({ queryKey: [...teamChatKeys.all, "conversations"] });
@@ -363,9 +372,11 @@ export const useDeleteTeamConversationMutation = () => {
       dispatch(removeTeamConversation(conversationId));
       queryClient.setQueriesData(
         { queryKey: [...teamChatKeys.all, "conversations"] },
-        (old) => {
+        (old: unknown) => {
           if (!Array.isArray(old)) return old;
-          return old.filter((c: any) => String(c._id) !== String(conversationId));
+          return (old as ChatShellConversation[]).filter(
+            (c) => String(c._id) !== String(conversationId),
+          );
         },
       );
       queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });

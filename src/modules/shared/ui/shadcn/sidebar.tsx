@@ -65,15 +65,15 @@ export function SidebarProvider({
   const openMobile = openMobileProp ?? _openMobile;
 
   const setOpen = React.useCallback((value: boolean) => {
-    setOpenProp ? setOpenProp(value) : _setOpen(value);
+    if (setOpenProp) { setOpenProp(value); } else { _setOpen(value); }
   }, [setOpenProp]);
 
   const setOpenMobile = React.useCallback((value: boolean) => {
-    setOpenMobileProp ? setOpenMobileProp(value) : _setOpenMobile(value);
+    if (setOpenMobileProp) { setOpenMobileProp(value); } else { _setOpenMobile(value); }
   }, [setOpenMobileProp]);
 
   const toggleSidebar = React.useCallback(() => {
-    isMobile ? setOpenMobile(!openMobile) : setOpen(!open);
+    if (isMobile) { setOpenMobile(!openMobile); } else { setOpen(!open); }
   }, [isMobile, open, openMobile, setOpen, setOpenMobile]);
 
   const state: SidebarState = open ? "expanded" : "collapsed";
@@ -273,7 +273,7 @@ export function SidebarMenuButton({
 }: SidebarMenuButtonProps) {
   const { state, isMobile } = useSidebar();
   const isCollapsed = state === "collapsed" && !isMobile;
-  const Comp = asChild ? (Slot.Root as any) : "button";
+  const Comp: React.ElementType = asChild ? Slot.Root : "button";
 
   const button = (
     <Comp

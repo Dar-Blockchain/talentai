@@ -32,6 +32,9 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   onSkipQuestion,
 }) => {
   const { t } = useTranslation('interview');
+  const [skipHovered,   setSkipHovered]   = useState(false);
+  const [submitHovered, setSubmitHovered] = useState(false);
+
   if (interviewStatus !== 'active') return null;
 
   const secondsLeft  = Math.ceil(readingTimeLeft / 1000);
@@ -41,8 +44,6 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   const isSpeaking      = !isProcessing && !!isVoiceActive;
   const blockedByCamera = !isProcessing && (!cameraLive || cameraBlockedSubmit);
   const isDisabled      = isProcessing || isSpeaking || !canSubmit || blockedByCamera;
-  const [skipHovered,   setSkipHovered]   = useState(false);
-  const [submitHovered, setSubmitHovered] = useState(false);
 
   const submitBg = isProcessing
     ? '#f3f4f6'

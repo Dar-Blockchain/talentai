@@ -9,6 +9,7 @@ import { PersonalInformationFormValues, personalInformationSchema } from '../sch
 import { useCandidateProfile, useUpdateCandidateProfile, useUploadCandidateAvatar } from '../queries';
 import { VALID_TABS, initialProfile, buildSyncedProfile } from './profileManagement.utils';
 import { profileKeys, UserProfile } from '@/modules/settings/shared';
+import type { ProfileApiResponse } from '@/modules/settings/shared/types';
 import { updateProfileResume } from '@/store/slices/userSlice';
 
 // ─── Pure helpers ─────────────────────────────────────────────────────────────
@@ -131,8 +132,9 @@ export const useProfileManagement = () => {
       await uploadMutation.mutateAsync({ userId, file });
       setSaveSuccess(true);
       toast.success('Profile picture updated successfully!');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to upload image');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : undefined;
+      toast.error(message || 'Failed to upload image');
     } finally {
       setUploadingImage(false);
     }
@@ -155,8 +157,9 @@ export const useProfileManagement = () => {
           setIsEditing(false);
           setSaveSuccess(true);
           toast.success('Profile updated successfully!');
-        } catch (err: any) {
-          toast.error(err?.message || 'Failed to update profile. Please try again.');
+        } catch (err: unknown) {
+          const message = err instanceof Error ? err.message : undefined;
+          toast.error(message || 'Failed to update profile. Please try again.');
         }
       },
       () => {
@@ -170,8 +173,9 @@ export const useProfileManagement = () => {
     try {
       await updateMutation.mutateAsync({ userId, payload: { language: lang } });
       toast.success('Language updated successfully!');
-    } catch (err: any) {
-      toast.error(err?.message || 'Failed to update language');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : undefined;
+      toast.error(message || 'Failed to update language');
     }
   }, [userId, updateMutation]);
 
@@ -202,11 +206,15 @@ export const useProfileManagement = () => {
     handleSaveProfile,
     handleSaveLanguage,
     handleCancel,
-    handleCvUpdated:      useCallback((filename: string, _cvAnalysis?: any) => {
+    handleCvUpdated:      useCallback((
+      filename: string,
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      _cvAnalysis?: unknown,
+    ) => {
       setProfile((prev) => ({ ...prev, resume: filename }));
       setSavedProfile((prev) => ({ ...prev, resume: filename }));
       dispatch(updateProfileResume(filename));
-      queryClient.setQueryData(profileKeys.me, (old: any) =>
+      queryClient.setQueryData(profileKeys.me, (old: ProfileApiResponse | undefined) =>
         old ? { ...old, profile: { ...old.profile, resume: filename } } : old
       );
     }, [dispatch, queryClient]),
@@ -214,7 +222,7 @@ export const useProfileManagement = () => {
       setProfile((prev) => ({ ...prev, resume: "" }));
       setSavedProfile((prev) => ({ ...prev, resume: "" }));
       dispatch(updateProfileResume(""));
-      queryClient.setQueryData(profileKeys.me, (old: any) =>
+      queryClient.setQueryData(profileKeys.me, (old: ProfileApiResponse | undefined) =>
         old ? { ...old, profile: { ...old.profile, resume: "" } } : old
       );
     }, [dispatch, queryClient]),

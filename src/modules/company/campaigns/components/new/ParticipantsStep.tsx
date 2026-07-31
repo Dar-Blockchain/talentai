@@ -3,6 +3,7 @@
 import React, { memo, useState, useRef, useCallback, useMemo } from "react";
 import { Users, Building2 } from "lucide-react";
 import type { FetchMembersFilters } from "@/modules/company/members/types";
+import type { ExtendedMember, Department } from "@/modules/company/employees/types";
 import { useMembersQuery, useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { Checkbox } from "@/modules/shared/ui/shadcn/checkbox";
@@ -81,9 +82,12 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
   const { data: membersRaw, isLoading: loading, error: membersError } = useMembersQuery(memberFilters);
   const { data: deptsRaw } = useDepartmentsQuery();
 
-  const members     = (membersRaw as any)?.members ?? [];
-  const pageTotal   = (membersRaw as any)?.total   ?? 0;
-  const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
+  const members: ExtendedMember[] =
+    (membersRaw as { members?: ExtendedMember[] } | undefined)?.members ?? [];
+  const pageTotal: number =
+    (membersRaw as { total?: number } | undefined)?.total ?? 0;
+  const departments: Department[] =
+    (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as { data?: Department[] } | undefined)?.data) ?? [];
   const error       = membersError ? String(membersError) : null;
 
   const hasFilters = !!(search || roleFilter !== "all" || deptFilter !== "all");
@@ -94,7 +98,7 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
     debounceRef.current = setTimeout(() => { setDebouncedSearch(value); setPage(1); }, 300);
   }, []);
 
-  const pageIds          = members.map((m: any) => m.userId ?? m._id);
+  const pageIds          = members.map((m) => m.userId ?? m._id);
   const allPageSelected  = pageIds.length > 0 && pageIds.every((id: string) => selected.includes(id));
   const somePageSelected = pageIds.some((id: string) => selected.includes(id)) && !allPageSelected;
 
@@ -142,7 +146,6 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
           <div className="flex items-center gap-3 px-4 py-2.5 bg-muted/40 border-b border-border">
             <Checkbox
               checked={allPageSelected}
-              // @ts-ignore – indeterminate not typed in shadcn Checkbox but supported via ref
               data-indeterminate={somePageSelected || undefined}
               onCheckedChange={toggleAllOnPage}
               className="shrink-0"
@@ -176,7 +179,7 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
             </div>
           </div>
         ) : (
-          members.map((member: any, i: number) => {
+          members.map((member, i: number) => {
             const isSelected = selected.includes(member.userId);
             const name = (member.firstName && member.lastName)
               ? `${member.firstName} ${member.lastName}`
@@ -188,7 +191,7 @@ const ParticipantsStep = memo<ParticipantsStepProps>(({ selected, onChange }) =>
             const roleColor = roleEntry?.color ?? ROLE_STYLES[member.role]?.color ?? "#6B7280";
             const roleLabel = roleEntry?.label ?? ROLE_LABELS[member.role] ?? member.role;
             const RoleIcon  = roleEntry?.icon ?? null;
-            const dept      = (member as any).department?.name ?? (member as any).departmentName ?? null;
+            const dept      = member.department?.name ?? member.departmentName ?? null;
 
             return (
               <div

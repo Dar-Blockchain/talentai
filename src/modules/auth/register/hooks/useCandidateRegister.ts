@@ -62,10 +62,12 @@ export function useCandidateRegister({ onOtpReady }: RegisterFormProps) {
       // so any state update after it would be a no-op or cause a React warning.
       setAnalyzingCv(false);
       onOtpReady?.(email);
-    } catch (err: any) {
+    } catch (err) {
       setAnalyzingCv(false);
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Failed to send verification code.", severity: "error" });
+      const name = err instanceof Error ? err.name : undefined;
+      const message = err instanceof Error ? err.message : undefined;
+      if (name !== "AbortError")
+        showToast({ message: message ?? "Failed to send verification code.", severity: "error" });
     }
   };
 

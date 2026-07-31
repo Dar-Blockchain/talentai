@@ -5,6 +5,7 @@ import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import { MessageCircle as ChatOutlined, ArrowLeft as ArrowBackOutlined, Briefcase as WorkOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { Participant } from "./helpers";
+import type { ChatShellConversation, ChatShellMessage } from "@/modules/chat/shared/types/shell";
 import ConversationSidebar      from "./ConversationSidebar";
 import ConversationHeader       from "./ConversationHeader";
 import MessageList              from "./MessageList";
@@ -23,9 +24,9 @@ export interface ReturnToPost {
 
 export interface ChatShellProps {
   // session data (from useChatSession)
-  conversations:        any[];
-  conversation:         any;
-  messages:             any[];
+  conversations:        ChatShellConversation[];
+  conversation:         ChatShellConversation | null | undefined;
+  messages:             ChatShellMessage[];
   activeConversationId: string | null;
   currentUserId:        string | undefined;
   otherUser:            Participant | undefined;
@@ -219,7 +220,7 @@ const ReturnBanner = memo(function ReturnBanner({ jobTitle, onReturn }: ReturnTo
 
 // ── Sidebar ───────────────────────────────────────────────
 interface SidebarProps {
-  conversations: any[];
+  conversations: ChatShellConversation[];
   activeConversationId: string | null;
   currentUserId: string | undefined;
   onSelect: (id: string) => void;
@@ -313,8 +314,8 @@ const Sidebar = memo(function Sidebar({
 // ── Chat panel ────────────────────────────────────────────
 interface PanelProps {
   hasConversations: boolean;
-  conversation:   any;
-  messages:       any[];
+  conversation:   ChatShellConversation | null | undefined;
+  messages:       ChatShellMessage[];
   currentUserId:  string | undefined;
   otherUser:      Participant | undefined;
   loading:        boolean;

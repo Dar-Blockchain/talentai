@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import Image from "next/image";
 import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Sparkles as AutoAwesomeOutlined, CheckSquare as CheckBoxOutlined, Square as CheckBoxOutlineBlankOutlined } from "lucide-react";
@@ -9,7 +10,6 @@ import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
 export const GENERATE_LANG_KEY = "talentai_generate_lang";
 
 const TEAL    = "#0D9488";
-const TEAL_BG = "#F0FDFA";
 
 interface Props {
   open: boolean;
@@ -73,9 +73,9 @@ const GenerateLanguageModal: React.FC<Props> = ({ open, loading, onConfirm, onCl
                     active ? "bg-white shadow-[0_1px_4px_rgba(0,0,0,0.08)]" : "bg-transparent",
                   )}
                 >
-                  <img
-                    src={`https://flagcdn.com/w40/${lang.flag}.png`}
-                    srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`}
+                  <Image
+                    src={`https://flagcdn.com/w80/${lang.flag}.png`}
+                    unoptimized
                     width={24} height={16} alt={lang.label}
                     className="block rounded-[2px]"
                   />

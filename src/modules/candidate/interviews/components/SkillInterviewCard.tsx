@@ -1,6 +1,4 @@
 import React from "react";
-import { useRouter } from "next/router";
-import { useTranslation } from "react-i18next";
 import { ExternalLink } from "lucide-react";
 import dayjs from "@/lib/dayjs";
 import { cn } from "@/lib/utils";
@@ -49,7 +47,6 @@ interface Props {
 }
 
 const SkillInterviewCard: React.FC<Props> = ({ assessment, accentBg, accentBorder, accentText, icon: Icon, s }) => {
-  const router   = useRouter();
   const score    = getScore(assessment);
   const levelKey = getLevelKey(score);
   const date     = assessment.updatedAt || assessment.createdAt;

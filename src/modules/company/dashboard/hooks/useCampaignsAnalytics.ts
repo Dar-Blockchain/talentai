@@ -35,7 +35,12 @@ export interface CampaignsAnalytics {
 }
 
 const STALE = 60_000;
-const sel = (r: any) => r.data?.data ?? r.data;
+// The API sometimes wraps the payload as `{ data: T }` and sometimes returns
+// `T` directly, so we accept `unknown` here and cast to the declared shape.
+const sel = (r: { data: unknown }): CampaignsAnalytics => {
+  const body = r.data as { data?: CampaignsAnalytics } | undefined;
+  return (body?.data ?? body) as CampaignsAnalytics;
+};
 const fetchCampaignsAnalytics = (): Promise<CampaignsAnalytics> =>
   axiosInstance.get("internal-campaigns/analytics").then(sel);
 

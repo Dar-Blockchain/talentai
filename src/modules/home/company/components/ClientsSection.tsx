@@ -1,12 +1,16 @@
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
+import Image from "next/image";
 
+// w is derived from each PNG's real intrinsic size (w/h) scaled to the display height h,
+// so the CSS "width: auto" resolves to the same value as the width attribute — mismatching
+// it triggers Next.js's "width or height modified, but not the other" warning.
 const partners = [
-  { src: "/images/supporters/darblockchain.png", alt: "Dar Blockchain", h: 26 },
-  { src: "/images/supporters/lightency.png", alt: "Lightency", h: 26 },
-  { src: "/images/supporters/nivdia.png",  alt: "NVIDIA Inception Program", h: 32 },
-  { src: "/images/supporters/f6s.png",     alt: "F6S #22 Top AI Company", h: 32 },
-  { src: "/images/supporters/hedera.png",  alt: "Built on Hedera Hashgraph", h: 32 },
+  { src: "/images/supporters/darblockchain.png", alt: "Dar Blockchain", h: 26, w: 101 },
+  { src: "/images/supporters/lightency.png", alt: "Lightency", h: 26, w: 96 },
+  { src: "/images/supporters/nivdia.png",  alt: "NVIDIA Inception Program", h: 32, w: 74 },
+  { src: "/images/supporters/f6s.png",     alt: "F6S #22 Top AI Company", h: 32, w: 168 },
+  { src: "/images/supporters/hedera.png",  alt: "Built on Hedera Hashgraph", h: 32, w: 110 },
 ];
 
 /* Triple so the marquee has enough content to loop seamlessly */
@@ -62,10 +66,12 @@ const ClientsSection: React.FC = () => {
           >
             {LOOPED.map((logo, i) => (
               <div key={i} className="flex-shrink-0 flex items-center">
-                <img
+                <Image
                   src={logo.src}
                   alt={logo.alt}
-                  style={{ height: logo.h, width: "auto" }}
+                  width={logo.w}
+                  height={logo.h}
+                  style={{ height: logo.h, width: logo.w }}
                   className="object-contain opacity-75 hover:opacity-100 transition-all duration-300"
                   draggable={false}
                 />

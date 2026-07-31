@@ -23,9 +23,9 @@ const AuthRightPanel: React.FC<Props> = ({ children, footerTKey, maxWidthClass =
             <Image
               src="/logo.svg"
               alt="TalentAI"
-              width={148}
+              width={129}
               height={36}
-              className="h-9 w-auto object-contain"
+              className="h-9 w-32.25 object-contain"
               priority
             />
           </NextLink>

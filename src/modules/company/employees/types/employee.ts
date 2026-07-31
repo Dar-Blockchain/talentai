@@ -1,7 +1,7 @@
 export interface Invitation {
   _id: string;
   email: string;
-  Company?: any;
+  Company?: unknown;
   user?: {
     _id: string;
     username: string;

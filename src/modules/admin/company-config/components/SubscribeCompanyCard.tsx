@@ -44,7 +44,7 @@ const SubscribeCompanyCard: React.FC<SubscribeCompanyCardProps> = ({ plans, onSu
       setSearchInput('');
       queryClient.invalidateQueries({ queryKey: ['admin', 'companies'] });
     },
-    onError: (err: any) => onError(err?.message || 'Failed to create subscription.'),
+    onError: (err: Error) => onError(err?.message || 'Failed to create subscription.'),
   });
 
   const canSubmit = !!selectedCompany && !!selectedPlanId && !subscribing;

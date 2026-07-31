@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type { AxiosError } from "axios";
 import { RootState } from "../store";
 import { planLimitsService } from "@/services/planLimitsService";
 
@@ -47,8 +48,9 @@ export const fetchPlanLimits = createAsyncThunk<
 >("planLimits/fetchAll", async (_, { rejectWithValue }) => {
   try {
     return await planLimitsService.fetchAll() as PlanLimit[];
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || error.message || "Error fetching plan limits");
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ message?: string }>;
+    return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Error fetching plan limits");
   }
 });
 
@@ -59,8 +61,9 @@ export const fetchPlanLimitById = createAsyncThunk<
 >("planLimits/fetchById", async (planLimitId, { rejectWithValue }) => {
   try {
     return await planLimitsService.fetchById(planLimitId) as PlanLimit;
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || error.message || "Error fetching plan limit");
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ message?: string }>;
+    return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Error fetching plan limit");
   }
 });
 
@@ -71,8 +74,9 @@ export const updatePlanLimits = createAsyncThunk<
 >("planLimits/update", async ({ id, updates }, { rejectWithValue }) => {
   try {
     return await planLimitsService.update(id, updates) as PlanLimit;
-  } catch (error: any) {
-    return rejectWithValue(error.response?.data?.message || error.message || "Error updating plan limits");
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ message?: string }>;
+    return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Error updating plan limits");
   }
 });
 

@@ -1,4 +1,5 @@
 import { useTranslation } from "react-i18next";
+import Image from "next/image";
 
 export default function LogoutOverlay({ open }: { open: boolean }) {
   const { t } = useTranslation("auth");
@@ -7,9 +8,12 @@ export default function LogoutOverlay({ open }: { open: boolean }) {
 
   return (
     <div className="fixed inset-0 z-9999 flex flex-col items-center justify-center gap-4 bg-background">
-      <img
+      <Image
         src="/gif/loading.gif"
         alt="Loading…"
+        width={96}
+        height={96}
+        unoptimized
         className="w-24 h-24 object-contain"
         draggable={false}
       />

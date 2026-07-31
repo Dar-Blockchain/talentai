@@ -66,7 +66,7 @@ const AiReportTab: React.FC<Props> = ({ aiAssessment, candidateProfile, aiSummar
       {/* Sections grid */}
       {activeSections.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          {activeSections.map(({ key, title, headerCls, borderCls, iconWrapCls, iconCls, dotCls, textCls, countCls, Icon, iconColor }) => {
+          {activeSections.map(({ key, title, headerCls, borderCls, iconWrapCls, dotCls, textCls, countCls, Icon, iconColor }) => {
             const items = aiAssessment?.[key] as string[];
             return (
               <div key={key} className={`rounded-2xl border bg-white overflow-hidden ${borderCls}`}>

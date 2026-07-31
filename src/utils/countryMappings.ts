@@ -19,6 +19,7 @@ export const getAllCountryNames = (): string[] => {
   const countryObj = countries.getNames("en", { select: "official" });
   return Object.entries(countryObj)
     .filter(([code]) => !EXCLUDED_COUNTRIES.includes(code))
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     .map(([_, name]) => name)
     .sort((a, b) => a.localeCompare(b));
 };

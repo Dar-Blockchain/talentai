@@ -37,7 +37,8 @@ interface NotificationDropdownProps {
 const NotificationDropdown: React.FC<NotificationDropdownProps> = ({
   onClose,
   notifications, unreadCount,
-  onMarkAsRead, onMarkAllAsRead,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  onMarkAsRead: _onMarkAsRead, onMarkAllAsRead,
   onViewAll, onNotificationClick, onArchive, onArchiveAll, onDelete,
 }) => {
   const { t } = useTranslation('dashboard');

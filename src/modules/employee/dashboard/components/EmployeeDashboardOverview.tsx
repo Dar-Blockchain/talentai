@@ -241,10 +241,10 @@ const EmployeeDashboardOverview: React.FC = () => {
   // Derived
   const pending    = useMemo(() => campaigns.filter(c => c.participantStatus === "INVITED" || c.participantStatus === "IN_PROGRESS").slice(0, 5), [campaigns]);
   const completed  = useMemo(() => campaigns.filter(c => c.participantStatus === "COMPLETED").slice(0, 5), [campaigns]);
-  const scored     = useMemo(() => completed.filter(c => (c as any).score != null), [completed]);
+  const scored     = useMemo(() => completed.filter(c => c.score != null), [completed]);
   const avgScore   = useMemo(() => {
     if (!scored.length) return 0;
-    return Math.round(scored.reduce((s, c) => s + (c as any).score, 0) / scored.length);
+    return Math.round(scored.reduce((s, c) => s + (c.score ?? 0), 0) / scored.length);
   }, [scored]);
 
   const fullName   = `${ profile?.firstName || ""} ${ profile?.lastName || ""}`.trim() || user?.username || "there";
@@ -284,7 +284,7 @@ const EmployeeDashboardOverview: React.FC = () => {
                 {fullName} 👋
               </p>
               <p className="mt-1.5 text-[13px] text-[#6B7280]">
-                Here's your campaign progress for today.
+                Here&apos;s your campaign progress for today.
               </p>
               {companyName && (
                 <p className="mt-1.5 text-xs text-[#9CA3AF]">
@@ -389,9 +389,9 @@ const EmployeeDashboardOverview: React.FC = () => {
 
               <div className="flex min-w-[180px] flex-1 flex-col gap-4">
                 {[
-                  { label: "Excellent (≥80)", value: scored.filter(c => (c as any).score >= 80).length, color: GREEN },
-                  { label: "Good (60–79)",    value: scored.filter(c => { const s = (c as any).score; return s >= 60 && s < 80; }).length, color: TEAL },
-                  { label: "Below 60",        value: scored.filter(c => (c as any).score < 60).length, color: ROSE },
+                  { label: "Excellent (≥80)", value: scored.filter(c => (c.score ?? 0) >= 80).length, color: GREEN },
+                  { label: "Good (60–79)",    value: scored.filter(c => { const s = c.score ?? 0; return s >= 60 && s < 80; }).length, color: TEAL },
+                  { label: "Below 60",        value: scored.filter(c => (c.score ?? 0) < 60).length, color: ROSE },
                 ].map(row => (
                   <div key={row.label}>
                     <div className="mb-1 flex justify-between">
@@ -414,11 +414,11 @@ const EmployeeDashboardOverview: React.FC = () => {
                 </p>
                 {scored.slice(0, 5).map(c => (
                   <div key={c.campaignId} className="flex items-center gap-2.5">
-                    <div className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: scoreColor((c as any).score) }} />
+                    <div className="h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: scoreColor(c.score ?? 0) }} />
                     <p className="flex-1 truncate text-xs font-medium text-[#374151]">
                       {c.title}
                     </p>
-                    <span className="text-xs font-bold" style={{ color: scoreColor((c as any).score) }}>{(c as any).score}</span>
+                    <span className="text-xs font-bold" style={{ color: scoreColor(c.score ?? 0) }}>{c.score}</span>
                   </div>
                 ))}
               </div>

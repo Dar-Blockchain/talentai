@@ -40,8 +40,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   backLabel,
   jobTitle,
   companyName,
-  dashboardPath: _dashboardPath,
-  reportPath: _reportPath,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept in the public prop signature though unused internally
+  dashboardPath,
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- kept in the public prop signature though unused internally
+  reportPath,
 }) => {
   const { t } = useTranslation('interview');
   const [waitDots] = useState('');
@@ -88,6 +90,7 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
 
         {interviewStatus === 'connecting' && (
           <div className="flex flex-col items-center text-center py-4 gap-0">
+            {/* eslint-disable-next-line @next/next/no-img-element -- animated GIF must not be re-encoded/optimized by next/image */}
             <img
               src="/gif/loading.gif"
               alt="Connecting…"
@@ -270,6 +273,7 @@ const AnalyzingSpinner: React.FC<{ waitDots: string }> = ({ waitDots }) => {
 
   return (
     <div className="flex flex-col items-center text-center py-4 gap-0">
+      {/* eslint-disable-next-line @next/next/no-img-element -- animated GIF must not be re-encoded/optimized by next/image */}
       <img
         src="/gif/loading.gif"
         alt="Analyzing…"

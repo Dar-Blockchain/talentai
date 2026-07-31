@@ -3,11 +3,12 @@ import { Building2, Briefcase, MapPin, Banknote, Calendar, CalendarX2 } from 'lu
 import { formatSalary } from '@/modules/company/posts/utils/postHelpers';
 import { fmtDate } from '@/utils/functions';
 import { SectionCard, MetaBadge } from './JobPanelShared';
+import type { JobDetails } from '../../types/api';
 
 interface JobHeaderCardProps {
   jobTitle: string;
   companyName: string;
-  jd: any;
+  jd: JobDetails;
   createdAt?: string;
   expirationDate?: string;
 }

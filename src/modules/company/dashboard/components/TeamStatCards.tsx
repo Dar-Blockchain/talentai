@@ -11,12 +11,26 @@ import {
 } from "lucide-react";
 
 const STALE = 60_000;
-const sel       = (r: any) => r.data?.data ?? r.data;
-const selMember = (r: any) => r.data?.stats ?? r.data?.data ?? r.data;
 
-const fetchCampaignMetrics = () => axiosInstance.get("internal-campaigns/metrics").then(sel);
-const fetchDepartmentStats = () => axiosInstance.get("departments/stats").then(sel);
-const fetchMemberStats     = () => axiosInstance.get("company-memberships/memberships/stats").then(selMember);
+interface CampaignMetrics { total: number; active: number }
+interface DepartmentStats { total: number }
+interface MemberStats { total: number }
+
+// The API sometimes wraps the payload (`{ data: T }` / `{ stats: T }`) and
+// sometimes returns `T` directly; the precise shape is driven by each call
+// site's declared generic, so we accept `unknown` here and cast the result.
+const sel = <T,>(r: { data: unknown }): T => {
+  const body = r.data as { data?: T } | undefined;
+  return (body?.data ?? body) as T;
+};
+const selMember = <T,>(r: { data: unknown }): T => {
+  const body = r.data as { stats?: T; data?: T } | undefined;
+  return (body?.stats ?? body?.data ?? body) as T;
+};
+
+const fetchCampaignMetrics = () => axiosInstance.get("internal-campaigns/metrics").then((r) => sel<CampaignMetrics>(r));
+const fetchDepartmentStats = () => axiosInstance.get("departments/stats").then((r) => sel<DepartmentStats>(r));
+const fetchMemberStats     = () => axiosInstance.get("company-memberships/memberships/stats").then((r) => selMember<MemberStats>(r));
 
 const TeamStatCards = memo(() => {
   const { t } = useTranslation("dashboard");

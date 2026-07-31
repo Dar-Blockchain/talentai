@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { ConfirmDialog } from '@/modules/shared/ui/ConfirmDialog';
 import { Tabs, TabsList, TabsTrigger } from '@/modules/shared/ui/shadcn/tabs';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
@@ -137,7 +137,11 @@ const CandidateNotificationsPanel: React.FC<Props> = ({ variant = 'tab' }) => {
 
   const handleConfirmDelete = () => {
     if (confirm.type === 'all') {
-      isOnArchivedTab ? deleteAllArchived() : deleteAll();
+      if (isOnArchivedTab) {
+        deleteAllArchived();
+      } else {
+        deleteAll();
+      }
       setPage(1);
     } else if (confirm.id) {
       deleteById(confirm.id);

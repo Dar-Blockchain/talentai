@@ -8,7 +8,6 @@ import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { WebinarHero } from "@/modules/webinar/components/landing/WebinarHero";
 import { WebinarAbout } from "@/modules/webinar/components/landing/WebinarAbout";
 import { WebinarHowItWorks } from "@/modules/webinar/components/landing/WebinarHowItWorks";
-import { WebinarFAQ } from "@/modules/webinar/components/landing/WebinarFAQ";
 import { WebinarFinalCta } from "@/modules/webinar/components/landing/WebinarFinalCta";
 import { WebinarFunnel } from "@/modules/webinar/components/questionnaire/WebinarFunnel";
 import { usePublicWebinarQuery } from "@/modules/webinar/queries";

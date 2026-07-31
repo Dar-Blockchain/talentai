@@ -5,10 +5,12 @@ import dayjs from "@/lib/dayjs";
 import { Progress } from "@/modules/shared/ui/shadcn/progress";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { cn } from "@/lib/utils";
+import type { Skill } from "../types/skill.types";
+import type { TOptions } from "i18next";
 
 interface SkillCardProps {
   type: "technical" | "soft";
-  skill: any;
+  skill: Skill;
   last: boolean;
 }
 
@@ -46,7 +48,7 @@ function scoreTier(s: number) {
 
 const SkillCard: React.FC<SkillCardProps> = ({ skill, type }) => {
   const { t } = useTranslation("dashboard");
-  const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
+  const s = (k: string, opts?: TOptions) => t(`candidate.skills.${k}`, opts) as string;
 
   const score    = skill.testScore ?? 0;
   const levelKey = LEVEL_KEYS[skill.levelConfirmed] ?? "new";

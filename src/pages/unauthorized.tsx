@@ -42,7 +42,7 @@ export default function Unauthorized() {
 
           {/* Description */}
           <p className="text-sm text-gray-500 leading-relaxed mb-6 max-w-xs mx-auto">
-            You don't have permission to view this page. If you think this is a
+            You don&apos;t have permission to view this page. If you think this is a
             mistake, please contact your administrator.
           </p>
 

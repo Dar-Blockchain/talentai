@@ -32,6 +32,25 @@ interface SearchResult {
   href: string;
 }
 
+interface PostApiResult {
+  _id: string;
+  status?: string;
+  jobDetails?: {
+    title?: string;
+    location?: string;
+    employmentType?: string;
+  };
+}
+
+interface ApplicationApiResult {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  postTitle?: string;
+  matchScore?: number;
+}
+
 const GlobalSearch: React.FC = () => {
   const router = useRouter();
   const [open, setOpen]       = useState(false);
@@ -73,7 +92,7 @@ const GlobalSearch: React.FC = () => {
           axiosInstance.get("/job-applications/company/my/summary", { params: { search: query, limit: 5 } }),
         ]);
 
-        const posts: SearchResult[] = (postsRes.data?.results || []).map((p: any) => ({
+        const posts: SearchResult[] = (postsRes.data?.results || []).map((p: PostApiResult) => ({
           type:       "post",
           id:         p._id,
           title:      p.jobDetails?.title || "Untitled Post",
@@ -83,7 +102,7 @@ const GlobalSearch: React.FC = () => {
           href:       `/company/posts/${p._id}`,
         }));
 
-        const apps: SearchResult[] = (appsRes.data?.data || []).map((a: any) => ({
+        const apps: SearchResult[] = (appsRes.data?.data || []).map((a: ApplicationApiResult) => ({
           type:     "application",
           id:       a.id,
           title:    [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email || "Unknown Candidate",
@@ -111,9 +130,9 @@ const GlobalSearch: React.FC = () => {
     if (e.key === "ArrowDown") { e.preventDefault(); setFocused((f) => Math.min(f + 1, totalItems - 1)); }
     if (e.key === "ArrowUp")   { e.preventDefault(); setFocused((f) => Math.max(f - 1, 0)); }
     if (e.key === "Enter" && focused >= 0) {
-      const items = query.trim() ? results : QUICK_LINKS;
+      const items: { href: string }[] = query.trim() ? results : QUICK_LINKS;
       const target = items[focused];
-      if (target) { router.push((target as any).href); setOpen(false); setQuery(""); }
+      if (target) { router.push(target.href); setOpen(false); setQuery(""); }
     }
   }, [focused, results, query, router, totalItems]);
 
@@ -302,7 +321,7 @@ const GlobalSearch: React.FC = () => {
           {showEmpty && (
             <div className="py-10 text-center">
               <Search size={32} color="#E5E7EB" className="mx-auto mb-2" />
-              <p className="text-[13px] font-medium text-gray-400">No results for "{query}"</p>
+              <p className="text-[13px] font-medium text-gray-400">No results for &quot;{query}&quot;</p>
               <p className="mt-1 text-[11.5px] text-[#C4C9D4]">Try a job title or candidate name</p>
             </div>
           )}

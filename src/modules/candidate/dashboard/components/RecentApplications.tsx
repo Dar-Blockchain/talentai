@@ -7,6 +7,7 @@ import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import ApplicationCard from "@/modules/candidate/applications/components/ApplicationCard";
 import { useApplicationsQuery } from "@/modules/candidate/applications/queries/useApplicationsQuery";
+import type { CandidateApplication } from "@/modules/candidate/applications/types/application.types";
 import SectionHeader from "./SectionHeader";
 
 const AppSkeleton = () => (
@@ -39,7 +40,7 @@ const RecentApplications: React.FC = () => {
     return res === key ? st : res;
   };
 
-  const handleClick = (app: any) => {
+  const handleClick = (app: CandidateApplication) => {
     if ((app.status || "").toLowerCase() === "visited" && app.post?._id)
       router.push(buildInterviewUrl({ type: "post", jobId: app.post._id }));
     else
@@ -66,7 +67,7 @@ const RecentApplications: React.FC = () => {
                 </CardContent>
               </Card>
             )
-            : apps.map((app: any) => (
+            : apps.map((app: CandidateApplication) => (
               <ApplicationCard
                 key={app._id}
                 app={app}

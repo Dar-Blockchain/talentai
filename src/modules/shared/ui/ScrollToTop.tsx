@@ -3,7 +3,7 @@ import React, { useEffect, useState } from "react"
 const SCROLL_THRESHOLD = 300
 
 const getScrollEl = (): HTMLElement | Window => {
-  if (typeof window === "undefined") return window as any
+  if (typeof window === "undefined") return window
   return document.getElementById("main-scroll") ?? window
 }
 

@@ -1,5 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import {
   LayoutDashboard as DashboardIcon,
   Users as PeopleIcon,
@@ -59,7 +60,7 @@ const SidebarContent: React.FC<AdminSidebarProps> = ({
     {/* Logo bar */}
     <div className="h-16 flex items-center justify-between px-4 bg-[#F7FBF9] border-b border-gray-200 shrink-0">
       <Link href="/">
-        <img src="/logo.svg" alt="TalentAI" className="h-9 cursor-pointer" />
+        <Image src="/logo.svg" alt="TalentAI" width={129} height={36} className="h-9 w-32.25 cursor-pointer" priority />
       </Link>
       <button
         onClick={onDrawerClose}

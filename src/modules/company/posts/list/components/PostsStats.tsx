@@ -25,7 +25,7 @@ const PostsStats: React.FC = memo(() => {
           <div>
             {isLoading
               ? <Skeleton className="h-7 w-[50px]" />
-              : <p className="text-[1.4rem] leading-none font-extrabold text-[#111827]">{(metrics as any)?.[key] ?? 0}</p>
+              : <p className="text-[1.4rem] leading-none font-extrabold text-[#111827]">{metrics?.[key] ?? 0}</p>
             }
             <p className="mt-1 text-[0.68rem] font-semibold uppercase tracking-wider text-[#9CA3AF]">{t(`stats.${key}`)}</p>
           </div>

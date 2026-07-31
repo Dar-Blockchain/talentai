@@ -10,16 +10,15 @@ import {
   DropdownMenuItem,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { cn } from "@/lib/utils";
-import i18n from "@/i18n/config";
 
 const Flag: React.FC<{ code: string; label: string; size?: number }> = ({
   code,
   label,
   size = 20,
 }) => (
-  <img
-    src={`https://flagcdn.com/w40/${code}.png`}
-    srcSet={`https://flagcdn.com/w80/${code}.png 2x`}
+  <Image
+    src={`https://flagcdn.com/w80/${code}.png`}
+    unoptimized
     width={size}
     height={Math.round(size * 0.72)}
     alt={label}
@@ -51,7 +50,6 @@ const WebinarHeader: React.FC<WebinarHeaderProps> = ({
   lang,
   onToggleLang,
 }) => {
-  const t = i18n.getFixedT(lang, "webinar");
   const [langOpen, setLangOpen] = useState(false);
 
   return (
@@ -63,9 +61,9 @@ const WebinarHeader: React.FC<WebinarHeaderProps> = ({
           <Image
             src="/logo.svg"
             alt="TalentAI"
-            width={130}
+            width={129}
             height={36}
-            className="h-6 sm:h-8 w-auto object-contain"
+            className="h-6 sm:h-8 w-21.5 sm:w-28.75 object-contain"
             priority
           />
         </Link>

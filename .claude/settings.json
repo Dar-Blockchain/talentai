@@ -2,7 +2,10 @@
   "permissions": {
     "allow": [
       "Bash(mkdir -p c:/Users/takwa/projetsBlockChain/talentai/src/pages/register)",
-      "Bash(mkdir -p c:/Users/takwa/projetsBlockChain/talentai/src/components/features/register)"
+      "Bash(mkdir -p c:/Users/takwa/projetsBlockChain/talentai/src/components/features/register)",
+      "Bash(npx tsc *)",
+      "Bash(export ESLINT_USE_FLAT_CONFIG=false)",
+      "Bash(npx eslint *)"
     ]
   },
   "hooks": {

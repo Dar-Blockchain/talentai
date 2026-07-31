@@ -1,6 +1,5 @@
 import { useEffect, useRef } from "react";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/router";
 import { useToast } from "@/hooks/useToast";
 import { refreshAbort } from "@/modules/auth/shared/utils";
 import { OTP_TTL } from "@/modules/auth/shared/types";
@@ -10,7 +9,6 @@ import type { CompanyFormValues, RegisterFormProps } from "../types";
 import { useLanguage } from "@/hooks/useLanguage";
 
 export function useCompanyRegister({ onOtpReady }: RegisterFormProps) {
-  const router        = useRouter();
   const { showToast } = useToast();
   const { currentLang } = useLanguage();
 
@@ -51,9 +49,11 @@ export function useCompanyRegister({ onOtpReady }: RegisterFormProps) {
       // Write timer expiry so useRegisterOtp can restore it on mount
       localStorage.setItem(COMPANY_EXPIRY_KEY, (Date.now() + OTP_TTL * 1000).toString());
       onOtpReady?.(email);
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Failed to send verification code.", severity: "error" });
+    } catch (err) {
+      const name = err instanceof Error ? err.name : undefined;
+      const message = err instanceof Error ? err.message : undefined;
+      if (name !== "AbortError")
+        showToast({ message: message ?? "Failed to send verification code.", severity: "error" });
     }
   };
 

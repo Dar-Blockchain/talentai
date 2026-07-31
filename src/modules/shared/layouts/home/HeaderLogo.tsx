@@ -1,6 +1,7 @@
 "use client";
 import React, { useCallback } from "react";
 import { useRouter } from "next/router";
+import Image from "next/image";
 
 const HeaderLogo = () => {
   const router = useRouter();
@@ -18,7 +19,7 @@ const HeaderLogo = () => {
       onClick={goHome}
       className="inline-flex cursor-pointer items-center justify-center transition-opacity duration-200 hover:opacity-[0.82]"
     >
-      <img src="/logo.svg" alt="TalentAI" className="block h-9 select-none" />
+      <Image src="/logo.svg" alt="TalentAI" width={129} height={36} className="block h-9 w-32.25 select-none" priority />
     </div>
   );
 };

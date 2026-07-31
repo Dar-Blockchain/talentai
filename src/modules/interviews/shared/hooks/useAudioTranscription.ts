@@ -1,9 +1,24 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { AssemblyAI } from 'assemblyai';
-import { InterviewConfig, InterviewMessage, AgentState, SpeechPhase } from '../types/interview';
-import type { UseAudioTranscriptionReturn, UseAudioTranscriptionOptions } from '../types/hooks';
+import type { StreamingTranscriber, TurnEvent } from 'assemblyai';
+import { InterviewConfig, InterviewMessage, AgentState, SpeechPhase, type InterviewJobData } from '../types/interview';
+import type { UseAudioTranscriptionReturn, UseAudioTranscriptionOptions, BackendSilenceConfig } from '../types/hooks';
 
 export type { UseAudioTranscriptionReturn, UseAudioTranscriptionOptions };
+
+/** `jobData` shape used for keyword-extraction word-boosting — a superset of the
+ *  fields other interview components need, since the raw API payload can carry
+ *  more (untyped) fields than `InterviewJobData` declares. */
+/** Safari-only vendor-prefixed AudioContext constructor. */
+type WindowWithWebkitAudioContext = Window & { webkitAudioContext?: typeof AudioContext };
+
+interface KeywordExtractionJobData extends Omit<InterviewJobData, 'jobDetails'> {
+  skillAnalysis?: {
+    requiredSkills?: { name?: string }[];
+    softSkills?: { name?: string }[];
+  };
+  jobDetails?: { title?: string; requirements?: string | string[] };
+}
 
 export const useAudioTranscription = ({
   socketRef,
@@ -34,7 +49,7 @@ export const useAudioTranscription = ({
   const audioStreamRef  = useRef<MediaStream | null>(null);
   const audioContextRef = useRef<AudioContext | null>(null);
   const processorRef    = useRef<ScriptProcessorNode | null>(null);
-  const transcriberRef  = useRef<any>(null);
+  const transcriberRef  = useRef<StreamingTranscriber | null>(null);
   const mediaStreamRef  = useRef<MediaStream | null>(null);
 
   // ── Transcript / turn accumulation ───────────────────────────────────────────
@@ -101,7 +116,7 @@ export const useAudioTranscription = ({
   // ── UI helpers ────────────────────────────────────────────────────────────────
   const [questionHighlight, setQuestionHighlight]               = useState(false);
   const [coverageDashboardExpanded, setCoverageDashboardExpanded] = useState(false);
-  const [backendSilenceConfig, setBackendSilenceConfig]         = useState<any>(null);
+  const [backendSilenceConfig, setBackendSilenceConfig]         = useState<BackendSilenceConfig | null>(null);
 
   // ── Debug ──────────────────────────────────────────────────────────────────────
   const [debugMode, setDebugMode]                 = useState(false);
@@ -164,20 +179,25 @@ export const useAudioTranscription = ({
 
   // ── Keyword extraction for AssemblyAI word boost ──────────────────────────────
 
-  const extractTechnicalKeywords = (config: InterviewConfig, jd?: any): string[] => {
+  const extractTechnicalKeywords = (config: InterviewConfig, jd?: KeywordExtractionJobData | null): string[] => {
     const jdKeywords: string[] = [];
     if (jd) {
-      (jd.skillAnalysis?.requiredSkills || []).forEach((s: any) => { if (s.name) jdKeywords.push(s.name); });
-      (jd.skillAnalysis?.softSkills     || []).forEach((s: any) => { if (s.name) jdKeywords.push(s.name); });
-      (jd.jobDetails?.requirements      || []).forEach((r: string) => {
+      (jd.skillAnalysis?.requiredSkills || []).forEach((s) => { if (s.name) jdKeywords.push(s.name); });
+      (jd.skillAnalysis?.softSkills     || []).forEach((s) => { if (s.name) jdKeywords.push(s.name); });
+      const requirements = jd.jobDetails?.requirements;
+      const requirementsList = Array.isArray(requirements) ? requirements : requirements ? [requirements] : [];
+      requirementsList.forEach((r: string) => {
         (r.match(/[A-Z][a-zA-Z]*(?:\.[a-z]+)?/g) || []).forEach((t: string) => {
           if (t.length >= 2 && !jdKeywords.includes(t)) jdKeywords.push(t);
         });
       });
     }
     // Proper nouns most likely to be mangled by accented speech
-    const ctx: any = (config as any)?.context || {};
-    const candidateName: string | undefined = ctx.candidateName || (config as any)?.candidateName;
+    // `context`/`candidateName` aren't declared on InterviewConfig's type but the
+    // backend config payload can carry them — read defensively without widening
+    // the shared InterviewConfig type.
+    const ctx = (config.context ?? {}) as InterviewConfig['context'] & { candidateName?: string; priorEmployers?: string[] };
+    const candidateName: string | undefined = ctx.candidateName ?? (config as InterviewConfig & { candidateName?: string }).candidateName;
     const targetRole:    string | undefined = ctx.targetRole    || jd?.jobDetails?.title;
     const targetCompany: string | undefined = ctx.targetCompany || jd?.createdBy?.name || jd?.companyName;
     const priorEmployers: string[] = Array.isArray(ctx.priorEmployers) ? ctx.priorEmployers : [];
@@ -331,7 +351,7 @@ export const useAudioTranscription = ({
       const client = new AssemblyAI({ apiKey: 'dummy' });
 
       const audioContext = audioContextRef.current
-        ?? new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+        ?? new (window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext)({ sampleRate: 16000 });
       if (!audioContextRef.current) audioContextRef.current = audioContext;
 
       const source    = audioContext.createMediaStreamSource(stream);
@@ -356,7 +376,7 @@ export const useAudioTranscription = ({
 
       transcriberRef.current = transcriber;
 
-      transcriber.on('turn', (turn: any) => {
+      transcriber.on('turn', (turn: TurnEvent) => {
         const text = turn.transcript?.trim();
         if (!text) return;
 
@@ -461,8 +481,6 @@ export const useAudioTranscription = ({
         }
       });
 
-      let audioPacketsSent = 0;
-      let lastLogTime = Date.now();
       // VAD state — hysteresis prevents flickering on brief / ambient sounds
       let prevVoiceActive  = false;
       let speechFrames     = 0;  // consecutive frames passing speech criteria
@@ -472,7 +490,7 @@ export const useAudioTranscription = ({
       const FRAMES_TO_ACTIVATE = 8;     // 8 × 64 ms = ~512 ms — filters coughs, throat clears, keyboard clicks
       const FRAMES_TO_RELEASE  = 12;    // 12 × 64 ms = ~768 ms of silence to deactivate
 
-      transcriber.on('open', (_openData: any) => {
+      transcriber.on('open', () => {
         setIsConnecting(false);
 
         source.connect(processor);
@@ -534,15 +552,12 @@ export const useAudioTranscription = ({
             }
           }
           transcriber.sendAudio(int16Buffer.buffer);
-          audioPacketsSent++;
-          const now = Date.now();
-          if (now - lastLogTime > 5000) { lastLogTime = now; }
         };
 
         addTranscriptDebugLog('🎤 Streaming started');
       });
 
-      transcriber.on('error', (error: any) => {
+      transcriber.on('error', (error: Error) => {
         console.error('❌ AssemblyAI error:', error);
         setIsConnecting(false);
         showNotification('Speech recognition error. Please try again.', 'error');
@@ -574,7 +589,7 @@ export const useAudioTranscription = ({
     });
 
     audioStreamRef.current = stream;
-    audioContextRef.current = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: 16000 });
+    audioContextRef.current = new (window.AudioContext || (window as WindowWithWebkitAudioContext).webkitAudioContext)({ sampleRate: 16000 });
     setIsRecording(true);
 
     try {

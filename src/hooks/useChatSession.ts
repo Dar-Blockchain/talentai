@@ -19,6 +19,9 @@ import {
   markMessageRead,
   removeMessage,
   removeConversation,
+  type Message,
+  type Participant,
+  type Conversation,
   selectConversations,
   selectCurrentConversation,
   selectCurrentConversationLoading,
@@ -39,7 +42,7 @@ export interface UseChatSessionOptions {
 
 const playNotificationSound = () => {
   try {
-    const ctx = new (window.AudioContext || (window as any).webkitAudioContext)();
+    const ctx = new (window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext)();
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.connect(gain);
@@ -104,19 +107,19 @@ export const useChatSession = ({
       }
     });
 
-    socket.on("new_message", (msg: any) => {
+    socket.on("new_message", (msg: Message) => {
       const senderId = msg.sender?._id || msg.sender;
       if (msg.deliveryBlocked && String(senderId) !== String(currentUserId)) return;
       dispatch(addMessage(msg));
       if (senderId !== currentUserId) playNotificationSound();
     });
-    socket.on("message_read",  ({ messageId, conversationId: cid }: any) =>
+    socket.on("message_read",  ({ messageId, conversationId: cid }: { messageId: string; conversationId: string }) =>
       dispatch(markMessageRead({ messageId, conversationId: cid })));
-    socket.on("message_deleted", ({ messageId, conversationId: cid }: any) => {
+    socket.on("message_deleted", ({ messageId, conversationId: cid }: { messageId: string; conversationId: string }) => {
       dispatch(removeMessage({ messageId, conversationId: cid }));
       showToast({ message: "A message was deleted", severity: "info" });
     });
-    socket.on("conversation_deleted", ({ conversationId: cid }: any) => {
+    socket.on("conversation_deleted", ({ conversationId: cid }: { conversationId: string }) => {
       dispatch(removeConversation(cid));
       showToast({ message: "This conversation was deleted", severity: "info" });
       router.push(deleteRedirectRoute);
@@ -178,7 +181,7 @@ export const useChatSession = ({
     const trimmed = text.trim();
     if (!trimmed || !conversation || !currentUserId || !activeConversationId) return;
 
-    const other = conversation.participants.find((p: any) => p._id !== currentUserId);
+    const other = conversation.participants.find((p: Participant) => p._id !== currentUserId);
     if (!other) {
       showToast({ message: "Could not find recipient.", severity: "error" });
       return;
@@ -198,7 +201,7 @@ export const useChatSession = ({
           severity: "warning",
         });
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast({ message: `Failed to send: ${err || "Unknown error"}`, severity: "error" });
       throw err;
     }
@@ -208,7 +211,7 @@ export const useChatSession = ({
     try {
       await dispatch(deleteMessageThunk(messageId)).unwrap();
       showToast({ message: "Message deleted", severity: "success" });
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast({ message: `Failed to delete: ${err || "Unknown error"}`, severity: "error" });
     }
   }, [dispatch, showToast]);
@@ -222,18 +225,18 @@ export const useChatSession = ({
         setActiveConversationId(null);
         router.push(deleteRedirectRoute);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       showToast({ message: `Failed to delete: ${err || "Unknown error"}`, severity: "error" });
       throw err;
     }
   }, [activeConversationId, dispatch, showToast, router, deleteRedirectRoute]);
 
   const totalUnread = useMemo(
-    () => conversations.reduce((acc: number, c: any) => acc + (c.unreadCount || 0), 0),
+    () => conversations.reduce((acc: number, c: Conversation) => acc + (c.unreadCount || 0), 0),
     [conversations],
   );
   const otherUser = useMemo(
-    () => conversation?.participants?.find((p: any) => p._id !== currentUserId),
+    () => conversation?.participants?.find((p: Participant) => p._id !== currentUserId),
     [conversation, currentUserId],
   );
 

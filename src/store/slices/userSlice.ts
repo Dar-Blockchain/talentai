@@ -1,4 +1,5 @@
 import { createAsyncThunk, createSlice, PayloadAction } from "@reduxjs/toolkit";
+import type { AxiosError } from "axios";
 import { RootState } from "../store";
 import { userService } from "@/services/userService";
 
@@ -66,23 +67,53 @@ export interface ConnectedUserProfile {
   };
 
   quota?: number;
-  skills?: any[] | null;
-  softSkills?: any[] | null;
-  planUsage?: any;
+  skills?: { name?: string; [key: string]: unknown }[] | null;
+  softSkills?: unknown[] | null;
+  planUsage?: unknown;
   overallScore?: number;
-  interviewDetails?: any[];
+  interviewDetails?: unknown[];
   resume?: string;
   isPublicProfile?: boolean;
   createdAt?: string;
   _id?: string;
 }
 
+export interface UserProfileResponsePayload {
+  data?: UserProfileResponsePayload;
+  user?: ConnectedUserEntity;
+  profile?: ConnectedUserProfile;
+  planLimits?: UserPlanLimitsInfo | null;
+  companyMembership?: CompanyMembershipInfo | null;
+}
+
+export interface UserPlanLimitsInfo {
+  name?: string;
+  planName?: string;
+  plan?: { name?: string; [key: string]: unknown };
+  planId?: { name?: string; [key: string]: unknown };
+  [key: string]: unknown;
+}
+
+export interface CompanyMembershipInfo {
+  _id?: string;
+  role?: string;
+  company?: {
+    _id?: string;
+    username?: string;
+    profile?: {
+      companyDetails?: { name?: string };
+    };
+    [key: string]: unknown;
+  };
+  [key: string]: unknown;
+}
+
 interface UserState {
   connectedUser: {
     user: ConnectedUserEntity | null;
     profile: ConnectedUserProfile | null;
-    planLimits: any | null;
-    companyMembership: any | null;
+    planLimits: UserPlanLimitsInfo | null;
+    companyMembership: CompanyMembershipInfo | null;
     loading: boolean;
     error: string | null;
   };
@@ -104,49 +135,52 @@ const initialState: UserState = {
 };
 
 export const updateProfile = createAsyncThunk<
-  any,
-  { payload: any; targetUserId?: string },
+  UserProfileResponsePayload,
+  { payload: Record<string, unknown>; targetUserId?: string },
   { rejectValue: string }
 >("user/updateProfile", async ({ payload: updatePayload, targetUserId }, { getState, rejectWithValue }) => {
   try {
-    const state = getState() as any;
+    const state = getState() as RootState;
     const connectedUser = state.user.connectedUser.user;
     const userId = targetUserId || connectedUser?._id || connectedUser?.id;
-    return await userService.updateProfile(userId, updatePayload);
-  } catch (error: any) {
+    return await userService.updateProfile(userId as string, updatePayload);
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ message?: string }>;
     return rejectWithValue(
-      error.response?.data?.message || "An error occurred while updating profile"
+      axiosError.response?.data?.message || "An error occurred while updating profile"
     );
   }
 });
 
 export const getMyProfile = createAsyncThunk<
-  any,
+  UserProfileResponsePayload,
   void,
   { rejectValue: string }
 >("user/getMyProfile", async (_, { rejectWithValue }) => {
   try {
     return await userService.getMyProfile();
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ message?: string }>;
     return rejectWithValue(
-      error.response?.data?.message || "An error occurred while fetching profile"
+      axiosError.response?.data?.message || "An error occurred while fetching profile"
     );
   }
 });
 
 export const uploadProfileImage = createAsyncThunk<
-  any,
+  UserProfileResponsePayload,
   { file: File; targetUserId?: string },
   { rejectValue: string }
 >("user/uploadProfileImage", async ({ file, targetUserId }, { getState, rejectWithValue }) => {
   try {
-    const state = getState() as any;
+    const state = getState() as RootState;
     const connectedUser = state.user.connectedUser.user;
     const userId = targetUserId || connectedUser?._id || connectedUser?.id;
-    return await userService.uploadProfileImage(userId, file);
-  } catch (error: any) {
+    return await userService.uploadProfileImage(userId as string, file);
+  } catch (error: unknown) {
+    const axiosError = error as AxiosError<{ message?: string }>;
     return rejectWithValue(
-      error.response?.data?.message || "An error occurred while uploading profile image"
+      axiosError.response?.data?.message || "An error occurred while uploading profile image"
     );
   }
 });
@@ -156,7 +190,7 @@ const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
-    setConnectedUser(state, action: PayloadAction<any>) {
+    setConnectedUser(state, action: PayloadAction<UserProfileResponsePayload>) {
       // Normalize: some APIs wrap the response in a `data` key, others don't
       const p = action.payload?.data ?? action.payload;
       state.connectedUser.user = p.user ?? state.connectedUser.user;
@@ -178,7 +212,7 @@ const userSlice = createSlice({
         state.connectedUser.profile.quota = action.payload;
       }
     },
-    updateProfileSkills(state, action: PayloadAction<string[]>) {
+    updateProfileSkills(state, action: PayloadAction<{ name?: string; [key: string]: unknown }[]>) {
       if (state?.connectedUser?.profile) {
         state.connectedUser.profile.skills = action.payload;
       }
@@ -193,7 +227,7 @@ const userSlice = createSlice({
         state.connectedUser.profile.resume = action.payload;
       }
     },
-    updatePlanUsage(state, action: PayloadAction<any>) {
+    updatePlanUsage(state, action: PayloadAction<unknown>) {
       if (state?.connectedUser?.profile) {
         state.connectedUser.profile.planUsage = action.payload;
       }
@@ -208,7 +242,7 @@ const userSlice = createSlice({
         })
         .addCase(
           updateProfile.fulfilled,
-          (state: UserState, action: PayloadAction<any>) => {
+          (state: UserState, action: PayloadAction<UserProfileResponsePayload>) => {
             state.connectedUser.loading = false;
             if (action.payload.profile !== undefined)           state.connectedUser.profile           = action.payload.profile;
             if (action.payload.companyMembership !== undefined) state.connectedUser.companyMembership = action.payload.companyMembership;
@@ -228,7 +262,7 @@ const userSlice = createSlice({
         })
         .addCase(
           uploadProfileImage.fulfilled,
-          (state: UserState, action: PayloadAction<any>) => {
+          (state: UserState, action: PayloadAction<UserProfileResponsePayload>) => {
             state.connectedUser.loading = false;
             state.connectedUser.profile = action.payload.profile;
             state.connectedUser.user = action.payload.user;
@@ -247,7 +281,7 @@ const userSlice = createSlice({
         })
         .addCase(
           getMyProfile.fulfilled,
-          (state: UserState, action: PayloadAction<any>) => {
+          (state: UserState, action: PayloadAction<UserProfileResponsePayload>) => {
             const p = action.payload?.data ?? action.payload;
             state.connectedUser.loading = false;
             state.connectedUser.profile = p.profile ?? state.connectedUser.profile;

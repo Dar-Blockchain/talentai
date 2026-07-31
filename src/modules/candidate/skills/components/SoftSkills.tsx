@@ -7,6 +7,7 @@ import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { UseSkillsReturn } from "../hooks/useSkills";
 import SkillCard from "./SkillCard";
 import EmptySkills from "./EmptySkills";
+import type { TOptions } from "i18next";
 
 type Props = UseSkillsReturn & { levelFilter?: number | null };
 
@@ -27,7 +28,7 @@ function SoftSkills({
   levelFilter = null,
 }: Props) {
   const { t } = useTranslation("dashboard");
-  const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
+  const s = (k: string, opts?: TOptions) => t(`candidate.skills.${k}`, opts) as string;
 
   const filtered = levelFilter === null
     ? skills

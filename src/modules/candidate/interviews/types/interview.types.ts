@@ -5,8 +5,8 @@ export interface SkillInterviewAssessment {
   id?: string;
   skill: string;
   proficiency: string;
-  candidateId?: any;
-  interviewerId?: any;
+  candidateId?: unknown;
+  interviewerId?: unknown;
   interviewData?: {
     finalReport?: {
       summary?: string;
@@ -47,5 +47,5 @@ export interface SkillInterviewAssessment {
   category?: string;
   createdAt?: string;
   updatedAt?: string;
-  [key: string]: any;
+  [key: string]: unknown;
 }

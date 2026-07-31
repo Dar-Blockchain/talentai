@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Globe as TranslateOutlined, Check as CheckOutlined, ArrowRight as ArrowForwardOutlined, Lock as LockOutlined } from "lucide-react";
@@ -81,9 +82,9 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
                           <CheckOutlined size={11} color="#fff" />
                         </div>
                       )}
-                      <img
-                        src={`https://flagcdn.com/w40/${meta.flag}.png`}
-                        srcSet={`https://flagcdn.com/w80/${meta.flag}.png 2x`}
+                      <Image
+                        src={`https://flagcdn.com/w80/${meta.flag}.png`}
+                        unoptimized
                         width={36} height={26}
                         alt={meta.label}
                         style={{ borderRadius: 4, display: "block", boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}
@@ -103,9 +104,9 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
 
               {selectedMeta && (
                 <div className="flex items-center gap-3 px-3 py-2 rounded-[10px] bg-[#F8FAFC] border border-[#E2E8F0] mb-5">
-                  <img
-                    src={`https://flagcdn.com/w40/${selectedMeta.flag}.png`}
-                    srcSet={`https://flagcdn.com/w80/${selectedMeta.flag}.png 2x`}
+                  <Image
+                    src={`https://flagcdn.com/w80/${selectedMeta.flag}.png`}
+                    unoptimized
                     width={22} height={16}
                     alt={selectedMeta.label}
                     style={{ borderRadius: 2, display: "block", flexShrink: 0 }}
@@ -122,9 +123,9 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
           {/* ── Single: info card ── */}
           {!isMulti && singleLang && (
             <div className="flex items-center gap-4 p-4 mb-5 rounded-[14px]" style={{ backgroundColor: TEAL_BG, border: "1.5px solid #99F6E4" }}>
-              <img
-                src={`https://flagcdn.com/w40/${singleLang.flag}.png`}
-                srcSet={`https://flagcdn.com/w80/${singleLang.flag}.png 2x`}
+              <Image
+                src={`https://flagcdn.com/w80/${singleLang.flag}.png`}
+                unoptimized
                 width={40} height={29}
                 alt={singleLang.label}
                 style={{ borderRadius: 4, display: "block", flexShrink: 0, boxShadow: "0 1px 4px rgba(0,0,0,0.12)" }}

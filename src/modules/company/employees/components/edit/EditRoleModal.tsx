@@ -10,6 +10,7 @@ import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/modules/c
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { cn } from "@/lib/utils";
+import type { Department } from "@/modules/company/departments/types";
 
 const PURPLE = "#8310FF";
 
@@ -31,7 +32,8 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
     [t],
   );
   const { data: deptsRaw, isLoading: departmentsLoading } = useDepartmentsQuery();
-  const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
+  const departments: Department[] =
+    (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as { data?: Department[] } | undefined)?.data) ?? [];
 
   const [role,         setRole]         = useState(currentRole);
   const [departmentId, setDepartmentId] = useState(currentDepartmentId ?? "");

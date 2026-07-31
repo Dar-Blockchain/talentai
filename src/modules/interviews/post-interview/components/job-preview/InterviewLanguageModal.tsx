@@ -7,6 +7,7 @@ import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 
 const FlagImg: React.FC<{ flag: string; label: string; width: number; height: number; className?: string }> = ({ flag, label, width, height, className }) => (
+  // eslint-disable-next-line @next/next/no-img-element -- external flagcdn.com host not in next/image remotePatterns
   <img
     src={`https://flagcdn.com/w40/${flag}.png`}
     srcSet={`https://flagcdn.com/w80/${flag}.png 2x`}

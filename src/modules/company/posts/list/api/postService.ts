@@ -1,7 +1,11 @@
 import axiosInstance from "@/utils/axiosInstance";
+import type { JobPost } from "../types";
 
 export const postService = {
-  fetchMyPosts: async (params: { page?: number; limit?: number; search?: string; sort?: string; status?: string; creationType?: string } = {}) => {
+  fetchMyPosts: async (params: { page?: number; limit?: number; search?: string; sort?: string; status?: string; creationType?: string } = {}): Promise<{
+    posts: JobPost[];
+    pagination: { total: number; page: number; limit: number; totalPages: number; hasNextPage: boolean; hasPrevPage: boolean };
+  }> => {
     const { page = 1, limit = 12, search = "", sort = "newest", status, creationType } = params;
     const queryParams = new URLSearchParams({
       page: page.toString(), limit: limit.toString(),
@@ -30,12 +34,12 @@ export const postService = {
     return res.data;
   },
 
-  fetchPostMetrics: async () => {
+  fetchPostMetrics: async (): Promise<{ total?: number; active?: number; draft?: number; closed?: number }> => {
     const res = await axiosInstance.get("post/metrics");
     return res.data.data;
   },
 
-  savePost: async (jobData: any) => {
+  savePost: async (jobData: unknown) => {
     if (!jobData) throw new Error("No job data available");
     const res = await axiosInstance.post("post/save-post", jobData);
     const saved = res.data;
@@ -43,7 +47,7 @@ export const postService = {
     return { success: true, jobData: job, planUsage: saved.planUsage || null };
   },
 
-  updatePost: async (jobId: string | number, jobData: any) => {
+  updatePost: async (jobId: string | number, jobData: unknown) => {
     if (!jobData || !jobId) throw new Error("Job ID or data is missing");
     const res = await axiosInstance.put(`post/updatePost/${jobId}`, jobData);
     const job = res.data.data || res.data;

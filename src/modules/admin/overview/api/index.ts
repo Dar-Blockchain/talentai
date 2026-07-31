@@ -43,7 +43,7 @@ export const adminOverviewApi = {
         const { data } = await axiosInstance.get("dashboard/getUserCountsByDay");
         if (!data?.success || !data?.data) return [] as UserGrowthPoint[];
 
-        const processedData: UserGrowthPoint[] = data.data.usersCreatedByDay.map((item: any) => ({
+        const processedData: UserGrowthPoint[] = data.data.usersCreatedByDay.map((item: { day: string; userCount: number }) => ({
           day: new Date(item.day).toLocaleDateString("en-US", { month: "short", day: "numeric" }),
           users: item.userCount,
           posts: 0,
@@ -51,7 +51,7 @@ export const adminOverviewApi = {
           fullDate: item.day,
         }));
 
-        (data.data.postsCreatedByDay || []).forEach((postItem: any) => {
+        (data.data.postsCreatedByDay || []).forEach((postItem: { day: string; postCount: number }) => {
           const existing = processedData.find((i) => i.fullDate === postItem.day);
           if (existing) {
             existing.posts = postItem.postCount;
@@ -63,7 +63,7 @@ export const adminOverviewApi = {
           }
         });
 
-        (data.data.jobAssessmentsCreatedByDay || []).forEach((a: any) => {
+        (data.data.jobAssessmentsCreatedByDay || []).forEach((a: { day: string; jobAssessmentCount: number }) => {
           const existing = processedData.find((i) => i.fullDate === a.day);
           if (existing) {
             existing.assessments = a.jobAssessmentCount;

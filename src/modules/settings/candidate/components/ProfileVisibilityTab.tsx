@@ -40,8 +40,8 @@ const ProfileVisibilityTab: React.FC<ProfileVisibilityTabProps> = ({
       const msg = newVisibility ? s('success_public') : s('success_private');
       setSuccess(msg);
       showToast({ message: msg, severity: 'success' });
-    } catch (err: any) {
-      const msg = err.message || 'Failed to update profile visibility';
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to update profile visibility';
       setError(msg);
       showToast({ message: msg, severity: 'error' });
     } finally {

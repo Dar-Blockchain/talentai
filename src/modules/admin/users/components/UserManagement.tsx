@@ -267,7 +267,7 @@ const UserManagement: React.FC<UserManagementProps> = ({
           <div className="flex items-center gap-3">
             <Select
               value={String(rowsPerPage)}
-              onValueChange={(v) => handleChangeRowsPerPage({ target: { value: v } } as any)}
+              onValueChange={(v) => handleChangeRowsPerPage({ target: { value: v } } as React.ChangeEvent<HTMLInputElement>)}
             >
               <SelectTrigger size="sm" className="text-[12px] text-slate-600">
                 <SelectValue />

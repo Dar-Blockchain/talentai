@@ -3,6 +3,7 @@ import { useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { RootState } from "@/store/store";
 import { Brain as PsychologyOutlined, Code2 as CodeOutlined, Users as PeopleOutlined } from "lucide-react";
+import type { TOptions } from "i18next";
 
 const T    = "#0D9488";
 const TBG  = "#F0FDFA";
@@ -11,7 +12,7 @@ const NAVY = "#0D1B2A";
 
 const SkillsHeader: React.FC = () => {
   const { t } = useTranslation("dashboard");
-  const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
+  const s = (k: string, opts?: TOptions) => t(`candidate.skills.${k}`, opts) as string;
 
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
   const techSkills = profile?.skills?.length ?? 0;
@@ -40,7 +41,7 @@ const SkillsHeader: React.FC = () => {
           {[
             { icon: CodeOutlined,   labelKey: "technical", value: techSkills, color: "#2563EB" },
             { icon: PeopleOutlined, labelKey: "soft",      value: softSkills, color: "#D97706" },
-          ].map(({ icon: Icon, labelKey, value, color }) => (
+          ].map(({ labelKey, value, color }) => (
             <div
               key={labelKey}
               className="text-center px-3.5 py-2 rounded-xl min-w-16"

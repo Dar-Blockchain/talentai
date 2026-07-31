@@ -14,7 +14,6 @@ import {
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 
-const TEAL   = "#0D9488";
 const PURPLE = "#7C3AED";
 
 // ─── ActionButton ─────────────────────────────────────────────────────────────
@@ -135,7 +134,11 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
     requestInFlight.current = true;
     onMenuClose();
     const prev = app.recruiterDecision as "shortlisted" | "rejected" | null | undefined;
-    decision === "shortlisted" ? setDecidingShortlist(true) : setDecidingReject(true);
+    if (decision === "shortlisted") {
+      setDecidingShortlist(true);
+    } else {
+      setDecidingReject(true);
+    }
     patchSummary(decision);
     try {
       await applicationsApi.updateDecision(appId, decision);

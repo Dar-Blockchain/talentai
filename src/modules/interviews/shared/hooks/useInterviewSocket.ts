@@ -1,9 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
-import { io } from 'socket.io-client';
+import { io, type Socket } from 'socket.io-client';
 import {
   InterviewMessage,
   ConnectionStatus,
   InterviewStatus,
+  type Coverage,
+  type RealTimeReport,
 } from '../types/interview';
 import type {
   InterviewStartedData,
@@ -12,6 +14,14 @@ import type {
   UseInterviewSocketCallbacks,
   UseInterviewSocketReturn,
 } from '../types/hooks';
+
+/** Engine.IO sometimes attaches extra diagnostic fields to `connect_error`
+ *  beyond the standard `Error` shape socket.io-client declares. */
+interface SocketConnectError extends Error {
+  description?: string;
+  type?: string;
+  transport?: string;
+}
 
 export type {
   InterviewStartedData,
@@ -22,7 +32,7 @@ export type {
 };
 
 export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseInterviewSocketReturn => {
-  const socketRef = useRef<any>(null);
+  const socketRef = useRef<Socket | null>(null);
   const connectionInitialized = useRef(false);
   const [isConnected, setIsConnected] = useState(false);
   const [connectionStatus, setConnectionStatus] = useState<ConnectionStatus>('connecting');
@@ -95,20 +105,20 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       }
     });
 
-    socket.on('connect_error', (error) => {
+    socket.on('connect_error', (error: SocketConnectError) => {
       console.error('❌ WebSocket connection error:', error);
       console.error('Error details:', {
         message: error.message,
-        description: (error as any).description,
-        type: (error as any).type,
-        transport: (error as any).transport
+        description: error.description,
+        type: error.type,
+        transport: error.transport
       });
       setIsConnected(false);
       setConnectionStatus('error');
 
       if (error.message?.includes('Invalid namespace')) {
         callbacksRef.current.onNotification('Interview namespace not available. Retrying...', 'warning');
-      } else if ((error as any).type === 'TransportError') {
+      } else if (error.type === 'TransportError') {
         callbacksRef.current.onNotification('Connection transport failed, retrying...', 'warning');
       } else {
         callbacksRef.current.onNotification(`Connection failed: ${error.message || 'Unknown error'}`, 'error');
@@ -116,7 +126,7 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
     });
 
     // Interview event handlers
-    socket.on('interview_started', (data: any) => {
+    socket.on('interview_started', (data: InterviewStartedData) => {
       setSessionId(data.sessionId);
       sessionIdRef.current = data.sessionId;
       setInterviewStatus('active');
@@ -127,34 +137,34 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       callbacksRef.current.onInterviewMessage(message);
     });
 
-    socket.on('coverage_update', (data: any) => {
+    socket.on('coverage_update', (data: { coverage: Coverage }) => {
       callbacksRef.current.onCoverageUpdate(data.coverage);
     });
 
-    socket.on('report_update', (data: any) => {
+    socket.on('report_update', (data: { report: RealTimeReport }) => {
       callbacksRef.current.onReportUpdate?.(data.report);
     });
 
-    socket.on('silence_response', (data: any) => {
+    socket.on('silence_response', (data: SilenceResponseData) => {
       callbacksRef.current.onSilenceResponse(data);
     });
 
-    socket.on('voice_activity', (data: any) => {
+    socket.on('voice_activity', (data: { isActive: boolean }) => {
       callbacksRef.current.onVoiceActivity(data);
     });
 
-    socket.on('interview_ended', (data: any) => {
+    socket.on('interview_ended', (data: InterviewEndedData) => {
       // Status transition is the callback's responsibility — it may need to delay
       // the change (e.g. to keep the farewell message visible for a few seconds).
       callbacksRef.current.onInterviewEnded(data);
     });
 
-    socket.on('assessment_saved', (data: any) => {
+    socket.on('assessment_saved', (data: { assessmentId: string }) => {
       setAssessmentId(data?.assessmentId ?? null);
       callbacksRef.current.onAssessmentSaved?.(data);
     });
 
-    socket.on('interview_error', (error: any) => {
+    socket.on('interview_error', (error: { message: string }) => {
       console.error('❌ Interview error:', error);
       callbacksRef.current.onInterviewError(error);
       callbacksRef.current.onNotification(`Interview error: ${error.message}`, 'error');
@@ -162,26 +172,26 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
 
     // ── Previously unhandled events ──────────────────────────────────────────
 
-    socket.on('greeting_chunk', (data: any) => {
+    socket.on('greeting_chunk', (data: { chunk: string; sessionId?: string }) => {
       callbacksRef.current.onGreetingChunk?.(data);
     });
 
-    socket.on('greeting_complete', (data: any) => {
+    socket.on('greeting_complete', (data: { text: string; sessionId?: string }) => {
       callbacksRef.current.onGreetingComplete?.(data);
     });
 
-    socket.on('interviewer_typing', (data: any) => {
+    socket.on('interviewer_typing', (data: { typing: boolean }) => {
       callbacksRef.current.onInterviewerTyping?.(data);
     });
 
-    socket.on('response_processed', (_data: any) => {
+    socket.on('response_processed', () => {
     });
 
-    socket.on('topic_change', (data: any) => {
+    socket.on('topic_change', (data: { from?: string; to?: string }) => {
       callbacksRef.current.onTopicChange?.(data);
     });
 
-    socket.on('interview_wrap_up', (data: any) => {
+    socket.on('interview_wrap_up', (data: { sessionId?: string }) => {
       callbacksRef.current.onInterviewWrapUp?.(data);
     });
 
@@ -189,7 +199,7 @@ export const useInterviewSocket = (callbacks: UseInterviewSocketCallbacks): UseI
       callbacksRef.current.onSilenceReset?.();
     });
 
-    socket.on('session_status', (_data: any) => {
+    socket.on('session_status', () => {
     });
 
     socket.on('interview_paused', () => {

@@ -10,8 +10,8 @@ type UserLocation = Awaited<ReturnType<typeof getUserLocation>>;
 
 interface UseOtpFlowOptions {
   storageKey: string;
-  resendMutation?: { mutateAsync: (args: { email: string; signal?: AbortSignal }) => Promise<any>; isPending: boolean } | null;
-  verifyMutation: { mutateAsync: (args: { email: string; otp: string; location?: any; signal?: AbortSignal }) => Promise<any>; isPending: boolean };
+  resendMutation?: { mutateAsync: (args: { email: string; signal?: AbortSignal }) => Promise<unknown>; isPending: boolean } | null;
+  verifyMutation: { mutateAsync: (args: { email: string; otp: string; location?: UserLocation; signal?: AbortSignal }) => Promise<unknown>; isPending: boolean };
 }
 
 /**
@@ -53,9 +53,11 @@ export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOt
       const location = locationRef.current;
       await verifyMutation.mutateAsync({ email, otp: code, location, signal });
       timer.clear();
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Invalid code. Please try again.", severity: "error" });
+    } catch (err) {
+      const name = err instanceof Error ? err.name : undefined;
+      const message = err instanceof Error ? err.message : undefined;
+      if (name !== "AbortError")
+        showToast({ message: message ?? "Invalid code. Please try again.", severity: "error" });
     }
   };
 
@@ -68,9 +70,11 @@ export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOt
       timer.start();
       otp.reset();
       showToast({ message: "A new verification code has been sent to your email.", severity: "success" });
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Failed to resend code.", severity: "error" });
+    } catch (err) {
+      const name = err instanceof Error ? err.name : undefined;
+      const message = err instanceof Error ? err.message : undefined;
+      if (name !== "AbortError")
+        showToast({ message: message ?? "Failed to resend code.", severity: "error" });
     }
   };
 

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TOptions } from "i18next";
 import { Code2, Users, Layers, Plus } from "lucide-react";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -73,7 +74,7 @@ function SectionHeader({
 
 function CandidateSkills() {
   const { t } = useTranslation("dashboard");
-  const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
+  const s = (k: string, opts?: TOptions) => t(`candidate.skills.${k}`, opts) as string;
 
   const tech = useSkills({ kind: "technical", limit: 8 });
   const soft = useSkills({ kind: "soft",      limit: 8 });

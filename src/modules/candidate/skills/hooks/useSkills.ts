@@ -37,7 +37,7 @@ export function useSkills({ kind, limit = 8 }: UseSkillsOptions): UseSkillsRetur
   kindRef.current = kind;
 
   const doFetch = async (q: string, p: number, append: boolean) => {
-    append ? setLoadingMore(true) : setLoading(true);
+    if (append) setLoadingMore(true); else setLoading(true);
     try {
       const data = await fetchMySkills({
         kind:   kindRef.current,

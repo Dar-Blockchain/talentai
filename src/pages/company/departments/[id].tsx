@@ -1,4 +1,4 @@
-﻿import React, { useCallback, useEffect, useState } from "react";
+﻿import React, { useCallback, useState } from "react";
 import { useRouter }        from "next/router";
 import { useSelector } from "react-redux";
 import { Building2 }        from "lucide-react";
@@ -137,7 +137,7 @@ const DepartmentDetailPage: NextPageWithLayout = () => {
           onClose={() => { setMemberEditOpen(false); setSelectedMember(null); }}
           onSave={handleUpdateMemberRole}
           currentRole={selectedMember.role}
-          currentDepartmentId={(selectedMember as any).department?._id ?? (selectedMember as any).departmentId ?? ""}
+          currentDepartmentId={(selectedMember as Member & { department?: { _id?: string }; departmentId?: string }).department?._id ?? (selectedMember as Member & { department?: { _id?: string }; departmentId?: string }).departmentId ?? ""}
           memberName={selectedMember.username || selectedMember.email || "Member"}
         />
       )}

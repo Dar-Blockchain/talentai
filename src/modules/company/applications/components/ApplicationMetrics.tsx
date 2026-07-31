@@ -26,7 +26,7 @@ const ApplicationMetrics = memo<Props>(({ metrics }) => {
           <div>
             {!metrics
               ? <Skeleton className="h-7 w-12 mb-1" />
-              : <div className="text-[1.4rem] font-extrabold text-slate-900 leading-none">{fmt((metrics as any)[key])}</div>
+              : <div className="text-[1.4rem] font-extrabold text-slate-900 leading-none">{fmt(metrics[key as keyof typeof metrics])}</div>
             }
             <div className="text-[0.68rem] font-semibold text-slate-400 uppercase tracking-wider mt-1">{t(i18nKey)}</div>
           </div>

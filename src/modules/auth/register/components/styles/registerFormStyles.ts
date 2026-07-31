@@ -1,4 +1,4 @@
-import { ACCENT, ACCENT2 } from "@/modules/auth/shared/types";
+import { ACCENT } from "@/modules/auth/shared/types";
 
 export const compactFieldSx = {
   "& .MuiInputLabel-root": { color: "#6B7280", fontFamily: "Poppins", fontWeight: 500, fontSize: { xs: "0.73rem", sm: "0.75rem" } },

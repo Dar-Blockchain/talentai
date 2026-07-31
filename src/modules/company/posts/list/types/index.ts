@@ -19,6 +19,7 @@ export interface JobPost {
     location?: string;
     employmentType?: string;
     workMode?: string;
+    department?: string;
   };
   user?: { _id: string };
   applicationsCount?: number;

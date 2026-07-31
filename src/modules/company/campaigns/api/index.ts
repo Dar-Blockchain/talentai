@@ -7,8 +7,8 @@ import type {
 } from "../types";
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const clean = (p: Record<string, any>): Record<string, any> =>
-  Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined && v !== "" && v !== null));
+const clean = <T extends object>(p: T): Partial<T> =>
+  Object.fromEntries(Object.entries(p).filter(([, v]) => v !== undefined && v !== "" && v !== null)) as Partial<T>;
 
 // ─── List & metrics ───────────────────────────────────────────────────────────
 
@@ -119,9 +119,9 @@ export const apiFetchEmployeeCampaigns = async (params: {
   if (period)            p.period            = period;
   const res = await axiosInstance.get(`internal-campaigns/employee/${userId}`, { params: p });
   const json = res.data;
-  const raw: any[] = json.data ?? [];
+  const raw: (Partial<EmployeeCampaignEntry> & { _id?: string; id?: string })[] = json.data ?? [];
   return {
-    data:  raw.map((item) => ({ ...item, campaignId: item.campaignId ?? item._id ?? item.id })),
+    data:  raw.map((item) => ({ ...item, campaignId: (item.campaignId ?? item._id ?? item.id) as string })) as EmployeeCampaignEntry[],
     total: json.pagination?.total ?? raw.length,
     pages: json.pagination?.pages ?? 1,
     page:  json.pagination?.page  ?? page,

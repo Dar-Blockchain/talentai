@@ -5,6 +5,7 @@ import {
 
 export const CANDIDATE_MESSAGES_BASE_PATH = MESSAGES_BASE_PATH;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 export const getCandidateChatBasePath = (_role?: string | null) => MESSAGES_BASE_PATH;
 
 export const getCandidateChatConversationPath = (

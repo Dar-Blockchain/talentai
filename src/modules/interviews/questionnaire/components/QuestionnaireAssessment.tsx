@@ -17,8 +17,9 @@ interface QuestionnaireAssessmentProps {
 const QuestionnaireAssessment: React.FC<QuestionnaireAssessmentProps> = ({
   campaign, participantId, isLoggedIn, onBack, onComplete,
 }) => {
-  const questions = (campaign.module as any)?.config?.questions ?? [];
-  const showResults = (campaign.module as any)?.config?.showResultsToParticipants !== false;
+  const questionnaireConfig = campaign.module.type === 'QUESTIONNAIRE' ? campaign.module.config : null;
+  const questions = questionnaireConfig?.questions ?? [];
+  const showResults = questionnaireConfig?.showResultsToParticipants !== false;
 
   const { mutate: startQuestionnaire } = useStartQuestionnaireMutation();
 

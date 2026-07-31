@@ -4,7 +4,7 @@ import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { X as CloseIcon, Play as PlayArrowIcon, CheckCircle2 as CheckCircleOutlineIcon, Hourglass as HourglassEmptyIcon, Circle as RadioButtonUncheckedIcon } from "lucide-react";
-import { PostAssessment } from "./AssessmentCard";
+import { PostAssessment, PostAssessmentStep } from "./AssessmentCard";
 
 interface StepInfoModalProps {
   open: boolean;
@@ -65,7 +65,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
 
   // Find the current step details from the steps array
   const currentStepData = steps.find(
-    (s: any) => s.stepId?._id === currentStep?._id || s.stepId?.id === currentStep?._id
+    (s: PostAssessmentStep) => s.stepId?._id === currentStep?._id || s.stepId?.id === currentStep?._id
   );
 
   const stepLabel =
@@ -76,13 +76,13 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
 
   // Calculate overall progress
   const completedSteps = steps.filter(
-    (s: any) => s.status === "done" || s.status === "passed"
+    (s: PostAssessmentStep) => s.status === "done" || s.status === "passed"
   ).length;
   const progressPercent = steps.length > 0 ? (completedSteps / steps.length) * 100 : 0;
 
   // Sort steps by order
   const sortedSteps = [...steps].sort(
-    (a: any, b: any) => (a.stepId?.order ?? 999) - (b.stepId?.order ?? 999)
+    (a: PostAssessmentStep, b: PostAssessmentStep) => (a.stepId?.order ?? 999) - (b.stepId?.order ?? 999)
   );
 
   const jobTitle = assessment.post?.jobDetails?.title || "Job Application";
@@ -140,7 +140,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
 
             {/* Steps list */}
             <div className="flex flex-col gap-2">
-              {sortedSteps.map((step: any, index: number) => {
+              {sortedSteps.map((step: PostAssessmentStep, index: number) => {
                 const isCurrentStep =
                   step.stepId?._id === currentStep?._id ||
                   step.stepId?.id === currentStep?._id;
@@ -231,7 +231,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                       Required Skills
                     </p>
                     <div className="flex flex-wrap gap-1">
-                      {requiredSkills.map((skill: any, i: number) => (
+                      {requiredSkills.map((skill, i) => (
                         <Badge
                           key={skill._id || i}
                           variant="outline"
@@ -251,7 +251,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                       Soft Skills
                     </p>
                     <div className="flex flex-wrap gap-1">
-                      {softSkills.map((skill: any, i: number) => (
+                      {softSkills.map((skill, i) => (
                         <Badge
                           key={skill._id || i}
                           variant="outline"

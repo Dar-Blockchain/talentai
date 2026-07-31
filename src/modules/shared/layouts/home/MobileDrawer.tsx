@@ -90,7 +90,7 @@ const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => 
   </p>
 );
 
-const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, userId, unreadMessageCount = 0 }) => {
+const MobileDrawer: React.FC<MobileDrawerProps> = ({ open, onClose, unreadMessageCount = 0 }) => {
   const { t } = useTranslation("common");
   const router   = useRouter();
   const { isAuthenticated } = useAuthContext();

@@ -2,6 +2,7 @@ import type React from 'react';
 import type {
   InterviewConfig, InterviewMessage, AgentState, SpeechPhase,
   Coverage, RealTimeReport, ConnectionStatus, InterviewStatus, CameraStatus,
+  InterviewJobData,
 } from './interview';
 import type { Socket } from 'socket.io-client';
 import type { ConnectedUserEntity } from '@/store/slices/userSlice';
@@ -104,7 +105,7 @@ export interface UseAudioTranscriptionOptions {
   interviewConfig: InterviewConfig;
   interviewStatus: string;
   showNotification: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
-  jobData?: any;
+  jobData?: InterviewJobData | null;
   /** True while the camera has a live video track. While false, the mic is muted
    *  (silence sent instead of real audio), spoken turns are ignored, and any
    *  answer ready to submit is held until the camera comes back — then auto-sent. */
@@ -218,7 +219,7 @@ export interface UseInterviewSessionOptions {
   interviewConfig: InterviewConfig;
   setInterviewConfig: (config: InterviewConfig) => void;
   authUser: ConnectedUserEntity | null;
-  jobData?: any;
+  jobData?: InterviewJobData | null;
   notify: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
   /** Socket.IO namespace to connect to. Defaults to '/interview'. */
   namespace?: string;

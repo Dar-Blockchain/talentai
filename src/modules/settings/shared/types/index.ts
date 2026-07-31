@@ -60,18 +60,32 @@ export interface SettingsProfile {
   };
 
   quota?: number;
-  skills?: any[] | null;
-  softSkills?: any[] | null;
-  planUsage?: any;
+  skills?: unknown[] | null;
+  softSkills?: unknown[] | null;
+  planUsage?: unknown;
   isPublicProfile?: boolean;
   _id?: string;
 }
 
+export interface SettingsCompanyMembershipCompany {
+  _id?: string;
+  username?: string;
+  email?: string;
+  user_image?: string;
+  profile?: SettingsProfile;
+}
+
+export interface SettingsCompanyMembership {
+  _id?: string;
+  role?: string;
+  company?: SettingsCompanyMembershipCompany;
+}
+
 export interface ProfileApiResponse {
-  user?: any;
-  profile?: any;
-  planLimits?: any;
-  companyMembership?: any;
+  user?: SettingsUserEntity;
+  profile?: SettingsProfile;
+  planLimits?: unknown;
+  companyMembership?: SettingsCompanyMembership;
 }
 
 export interface UserProfile {

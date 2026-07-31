@@ -22,6 +22,33 @@ const fmtDuration = (ms: number) => {
   return m > 0 ? `${m}m ${s}s` : `${s}s`;
 };
 
+// ── Loosely-typed report shapes ─────────────────────────────────────────────
+// The report payload comes from an untyped API response, and individual
+// fields (e.g. coverage indicators) can be either plain strings or objects
+// depending on the backend version — `unknown` + narrowing mirrors that.
+interface CoverageAreaEntry {
+  percentage?: number;
+  questionsAsked?: number;
+  aiAnalysis?: { reasoning?: string };
+  indicators?: unknown[];
+}
+
+interface ConversationTurn {
+  question?: string;
+  response?: string;
+  targetArea?: string;
+  evaluation?: { qualityScore?: number };
+}
+
+// Mirrors `x.name || x` on a value that may be a string or an object with a
+// `name` field, without resorting to `any`.
+const indicatorKey = (ind: unknown): unknown => {
+  const named = (ind as { name?: unknown })?.name;
+  return named || ind;
+};
+const indicatorCovered = (ind: unknown): boolean | undefined =>
+  (ind as { covered?: boolean })?.covered;
+
 // ── Sub-components ────────────────────────────────────────────────────────────
 const Badge = ({ label, icon, color, bg, border, className }: {
   label: string; icon?: React.ReactNode; color?: string; bg?: string; border?: string; className?: string;
@@ -226,7 +253,7 @@ export default function SkillInterviewReport({ interviewId }: { interviewId: str
                   {t('report.sections.coverage_areas')}
                 </SectionHeader>
                 <div className="flex flex-col gap-5">
-                  {Object.entries(coverage.areas).map(([key, area]: [string, any]) => {
+                  {Object.entries(coverage.areas as Record<string, CoverageAreaEntry>).map(([key, area]) => {
                     const pct = area?.percentage ?? 0;
                     const col = scoreColor(pct);
                     return (
@@ -246,21 +273,22 @@ export default function SkillInterviewReport({ interviewId }: { interviewId: str
                         {area?.aiAnalysis?.reasoning && (
                           <p className="text-[0.74rem] text-gray-400 leading-relaxed mt-2 italic">{area.aiAnalysis.reasoning}</p>
                         )}
-                        {area?.indicators?.length > 0 && (
+                        {area?.indicators && area.indicators.length > 0 && (
                           <div className="flex flex-wrap gap-1.5 mt-2.5">
-                            {(area.indicators as any[])
-                              .filter((ind: any, i: number, arr: any[]) =>
-                                arr.findIndex((x: any) => (x.name || x) === (ind.name || ind)) === i)
-                              .map((ind: any, idx: number) => {
-                                const name = (ind.name || ind as string)
+                            {area.indicators
+                              .filter((ind, i, arr) =>
+                                arr.findIndex((x) => indicatorKey(x) === indicatorKey(ind)) === i)
+                              .map((ind, idx) => {
+                                const name = String(indicatorKey(ind))
                                   .replace(/^AI-detected:\s*/i, '').replace(/_/g, ' ')
                                   .replace(/\b\w/g, (c: string) => c.toUpperCase());
+                                const covered = indicatorCovered(ind);
                                 return (
                                   <span key={idx} className={cn(
                                     'inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[0.68rem] font-medium border',
-                                    ind.covered ? 'text-emerald-600 border-emerald-200' : 'text-gray-400 bg-gray-50 border-gray-100'
-                                  )} style={ind.covered ? { backgroundColor: 'rgba(16,185,129,0.08)' } : undefined}>
-                                    {ind.covered
+                                    covered ? 'text-emerald-600 border-emerald-200' : 'text-gray-400 bg-gray-50 border-gray-100'
+                                  )} style={covered ? { backgroundColor: 'rgba(16,185,129,0.08)' } : undefined}>
+                                    {covered
                                       ? <CheckCircle2 size={10} className="text-emerald-500 shrink-0" />
                                       : <Circle size={10} className="text-gray-300 shrink-0" />}
                                     {name}
@@ -283,7 +311,7 @@ export default function SkillInterviewReport({ interviewId }: { interviewId: str
                   {t('report.sections.score_breakdown')}
                 </SectionHeader>
                 <div className="flex flex-col gap-4">
-                  {Object.entries(fr.scores).filter(([, v]) => v != null).map(([key, val]: [string, any]) => {
+                  {Object.entries(fr.scores as Record<string, number>).filter(([, v]) => v != null).map(([key, val]) => {
                     const pct = Math.round(val);
                     const col = scoreColor(pct);
                     return (
@@ -467,13 +495,13 @@ export default function SkillInterviewReport({ interviewId }: { interviewId: str
             )}
 
             {/* ══ Q&A ═══════════════════════════════════════════════════════ */}
-            {(data?.interviewData as any)?.conversation?.length > 0 && (
+            {data?.interviewData?.conversation?.length > 0 && (
               <div className="bg-white rounded-3xl border border-gray-100 p-6 md:p-8 mb-4 shadow-sm">
                 <SectionHeader icon={<MessageSquare size={14} className="text-indigo-500" />}>
                   {t('report.sections.qa')}
                 </SectionHeader>
                 <div className="flex flex-col gap-3">
-                  {((data?.interviewData as any).conversation as any[]).map((turn: any, i: number) => (
+                  {(data?.interviewData?.conversation as ConversationTurn[]).map((turn, i) => (
                     <div key={i} className="rounded-2xl border border-gray-100 overflow-hidden">
                       <div className="flex items-start gap-3 p-4 bg-gray-50 border-b border-gray-100">
                         <div className="w-6 h-6 rounded-full bg-indigo-100 border border-indigo-200 flex items-center justify-center shrink-0 mt-0.5">

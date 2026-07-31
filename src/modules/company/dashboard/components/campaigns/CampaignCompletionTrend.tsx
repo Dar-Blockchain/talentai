@@ -68,7 +68,7 @@ const CampaignCompletionTrend = memo(() => {
             <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
             <XAxis dataKey="label" tick={{ fontFamily: "Poppins", fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fontFamily: "Poppins", fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} allowDecimals={false} />
-            <RechartsTooltip {...ChartTooltip} labelFormatter={(v) => v} formatter={(v: any) => [v, t("campaigns_dashboard.trend.completed", "Completed")]} />
+            <RechartsTooltip {...ChartTooltip} labelFormatter={(v) => v} formatter={(v: number) => [v, t("campaigns_dashboard.trend.completed", "Completed")]} />
             <Area type="monotone" dataKey="count" stroke="#10B981" fill="url(#campaignTrendGrad)" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
           </AreaChart>
         </ResponsiveContainer>

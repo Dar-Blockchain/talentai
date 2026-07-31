@@ -19,7 +19,7 @@ const EmployeeSettingsPage = dynamic(
 
 const SettingsShell: React.FC = () => {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
-  const role = (user as any)?.role;
+  const role = user?.role;
 
   if (role === "Candidate") return <CandidateSettingsPage />;
   if (role === "Company")   return <CompanySettingsPage />;

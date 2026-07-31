@@ -70,18 +70,19 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({ open, onClose, plan, on
     setError(null);
 
     if (isEdit) {
-      const { name, ...updates } = form;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { name: _name, ...updates } = form;
       updatePlan(
         { name: plan!.name, updates },
         {
           onSuccess: () => onSaved(form.name, 'updated'),
-          onError: (err: any) => setError(err?.message || 'Failed to update plan.'),
+          onError: (err: Error) => setError(err?.message || 'Failed to update plan.'),
         },
       );
     } else {
       createPlan(form, {
         onSuccess: () => onSaved(form.name, 'created'),
-        onError: (err: any) => setError(err?.message || 'Failed to create plan.'),
+        onError: (err: Error) => setError(err?.message || 'Failed to create plan.'),
       });
     }
   };

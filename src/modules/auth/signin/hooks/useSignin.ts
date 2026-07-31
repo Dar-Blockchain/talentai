@@ -45,9 +45,11 @@ export function useSignin(onOtpSent?: (email: string) => void) {
           router.push(dest);
         }
       });
-    } catch (err: any) {
-      if (err?.name !== "AbortError")
-        showToast({ message: err?.message ?? "Sign in failed. Please try again.", severity: "error" });
+    } catch (err) {
+      const name = err instanceof Error ? err.name : undefined;
+      const message = err instanceof Error ? err.message : undefined;
+      if (name !== "AbortError")
+        showToast({ message: message ?? "Sign in failed. Please try again.", severity: "error" });
     }
   };
 

@@ -68,7 +68,13 @@ const SkillCard: React.FC<SkillCardProps> = ({ value, icon, title, description, 
 
 // ─── Main modal ───────────────────────────────────────────────────────────────
 
-const AssessmentModal = ({ type, open, onClose }: any) => {
+interface AssessmentModalProps {
+  type?: "soft" | "technical" | "";
+  open: boolean;
+  onClose: () => void;
+}
+
+const AssessmentModal = ({ type, open, onClose }: AssessmentModalProps) => {
   const router  = useRouter();
   const profile = useSelector((state: RootState) => state.user.connectedUser.profile);
 

@@ -4,9 +4,10 @@ import { getLevelFromNumber, getSoftSkillLevelLabel, type Skill } from '@/module
 import { useTranslation } from 'react-i18next';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { SectionCard, SectionTitle } from './JobPanelShared';
+import type { JobDetails } from '../../types/api';
 
 interface JobDetailsColumnProps {
-  jd: any;
+  jd: JobDetails;
   technicalSkills: Skill[];
   softSkills: Skill[];
 }

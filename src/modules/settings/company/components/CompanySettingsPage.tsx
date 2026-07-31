@@ -20,8 +20,6 @@ import {
   Building2, MapPin, Key, CreditCard, Globe, Users, Tag, Settings as SettingsOutlined, Calculator,
 } from "lucide-react";
 
-const TEAL = "#0D9488";
-
 const CompanySettingsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCompanyProfile");

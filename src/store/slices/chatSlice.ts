@@ -3,7 +3,7 @@ import { chatService } from "@/services/chatService";
 
 // ─── Types ───────────────────────────────────────────────
 
-interface Participant {
+export interface Participant {
   _id: string;
   firstName?: string;
   lastName?: string;
@@ -19,18 +19,18 @@ interface Participant {
   };
 }
 
-interface Message {
+export interface Message {
   _id: string;
   text: string;
   sender: {
     _id: string;
     email?: string;
-    profile?: any;
+    profile?: unknown;
   };
   receiver: {
     _id: string;
     email?: string;
-    profile?: any;
+    profile?: unknown;
   };
   isRead: boolean;
   createdAt: string;
@@ -40,7 +40,7 @@ interface Message {
   blockedReason?: "email" | "phone";
 }
 
-interface Conversation {
+export interface Conversation {
   _id: string;
   participants: Participant[];
   lastMessage?: {
@@ -89,8 +89,8 @@ export const fetchConversations = createAsyncThunk(
   async (params: { limit?: number } | undefined, { rejectWithValue }) => {
     try {
       return await chatService.fetchConversations(params) as Conversation[];
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Error fetching conversations");
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : "Error fetching conversations");
     }
   }
 );
@@ -101,8 +101,8 @@ export const fetchConversation = createAsyncThunk(
   async (conversationId: string, { rejectWithValue }) => {
     try {
       return await chatService.fetchConversation(conversationId) as Conversation;
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Error fetching conversation");
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : "Error fetching conversation");
     }
   }
 );
@@ -113,8 +113,8 @@ export const fetchMessages = createAsyncThunk(
   async (conversationId: string, { rejectWithValue }) => {
     try {
       return await chatService.fetchMessages(conversationId) as Message[];
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Error fetching messages");
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : "Error fetching messages");
     }
   }
 );
@@ -128,8 +128,8 @@ export const sendMessage = createAsyncThunk(
   ) => {
     try {
       return await chatService.sendMessage(payload);
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Error sending message");
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : "Error sending message");
     }
   }
 );
@@ -140,8 +140,8 @@ export const markConversationRead = createAsyncThunk(
   async (conversationId: string, { rejectWithValue }) => {
     try {
       return await chatService.markConversationRead(conversationId);
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Error marking conversation as read");
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : "Error marking conversation as read");
     }
   }
 );
@@ -152,8 +152,8 @@ export const deleteMessage = createAsyncThunk(
   async (messageId: string, { rejectWithValue }) => {
     try {
       return await chatService.deleteMessage(messageId);
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Error deleting message");
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : "Error deleting message");
     }
   }
 );
@@ -164,15 +164,15 @@ export const deleteConversation = createAsyncThunk(
   async (conversationId: string, { rejectWithValue }) => {
     try {
       return await chatService.deleteConversation(conversationId);
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Error deleting conversation");
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : "Error deleting conversation");
     }
   }
 );
 
 // Create or find a conversation between two users
 export const createOrFindConversation = createAsyncThunk<
-  any,
+  Conversation,
   { candidateId: string; companyId: string },
   { rejectValue: string }
 >(
@@ -180,8 +180,8 @@ export const createOrFindConversation = createAsyncThunk<
   async ({ candidateId, companyId }, { rejectWithValue }) => {
     try {
       return await chatService.createOrFindConversation(candidateId, companyId);
-    } catch (error: any) {
-      return rejectWithValue(error.message || "Error creating conversation");
+    } catch (error: unknown) {
+      return rejectWithValue(error instanceof Error ? error.message : "Error creating conversation");
     }
   }
 );
@@ -200,7 +200,7 @@ const chatSlice = createSlice({
         state.messages.push(msg);
       }
       // Update conversations list last message
-      const convId = String(msg.conversationId || (msg as any).conversation || "");
+      const convId = String(msg.conversationId || msg.conversation || "");
       const conv = state.conversations.find((c) => String(c._id) === convId);
       if (conv) {
         if (!msg.deliveryBlocked) {
@@ -315,10 +315,12 @@ const chatSlice = createSlice({
         }
       })
       // ---- DELETE MESSAGE ----
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .addCase(deleteMessage.fulfilled, (state, action) => {
         // Message removed via WebSocket removeMessage action
       })
       // ---- DELETE CONVERSATION ----
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       .addCase(deleteConversation.fulfilled, (state, action) => {
         // Conversation removed via WebSocket removeConversation action
       });

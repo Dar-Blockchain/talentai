@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Mic as MicOutlined, Check as CheckOutlined } from "lucide-react";
@@ -78,9 +79,9 @@ const InterviewLanguagesModal: React.FC<Props> = ({ open, isLoading, onConfirm, 
                       <CheckOutlined size={10} color="#fff" />
                     </div>
                   )}
-                  <img
-                    src={`https://flagcdn.com/w40/${lang.flag}.png`}
-                    srcSet={`https://flagcdn.com/w80/${lang.flag}.png 2x`}
+                  <Image
+                    src={`https://flagcdn.com/w80/${lang.flag}.png`}
+                    unoptimized
                     width={28} height={20} alt={lang.label}
                     className="block rounded-[2px]"
                   />

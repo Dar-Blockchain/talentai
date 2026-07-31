@@ -25,7 +25,7 @@ const THRESHOLD_MARKS = [
 ];
 
 const PostPreview = ({ generating = false }: PostPreviewProps) => {
-  const { t, i18n } = useTranslation("posts");
+  const { i18n } = useTranslation("posts");
   const dispatch = useDispatch();
   const { generatedPost, generatedLanguage, thresholdScore } = useSelector((state: RootState) => state.postGeneration, shallowEqual);
 

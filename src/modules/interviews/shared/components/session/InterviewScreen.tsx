@@ -3,7 +3,6 @@ import { useRouter } from 'next/router';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { type RootState } from '@/store/store';
-import { Progress } from '@/modules/shared/ui/shadcn/progress';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import QuestionPanel from './QuestionPanel';
 import CameraPreview from './CameraPreview';
@@ -17,7 +16,7 @@ import SecurityModals from '../modals/SecurityModals';
 import ConfirmLeaveModal from './ConfirmLeaveModal';
 import FeedbackModal from './FeedbackModal';
 import { interviewScreenStyles } from '../../styles/interviewScreen.styles';
-import { type Coverage, type InterviewMessage, type InterviewConfig } from '../../types/interview';
+import { type Coverage, type InterviewMessage, type InterviewConfig, type InterviewJobData } from '../../types/interview';
 import { type UseInterviewSocketReturn } from '../../types/hooks';
 import { type UseAudioTranscriptionReturn } from '../../types/hooks';
 import { type UseInterviewTimerReturn } from '../../types/hooks';
@@ -43,7 +42,7 @@ interface InterviewScreenProps {
     skipQuestion: () => void;
   };
   configData: {
-    jobData: any;
+    jobData: InterviewJobData | null;
     interviewConfig: InterviewConfig | null;
   };
   /** Overrides the header's computed job/assessment title (e.g. campaign title + module type for campaign interviews). */

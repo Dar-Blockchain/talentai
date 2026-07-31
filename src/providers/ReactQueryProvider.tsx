@@ -1,5 +1,6 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
+import type { AxiosError } from "axios";
 
 export const createQueryClient = () =>
   new QueryClient({
@@ -17,9 +18,9 @@ export const createQueryClient = () =>
         //   (e.g. logout flow aborts in-flight requests). Retrying after the
         //   abort window closes triggers spurious "session expired" toasts.
         // - 4xx responses — auth/validation failures that won't self-heal.
-        retry: (failureCount, error: any) => {
+        retry: (failureCount, error: AxiosError) => {
           if (error?.code === "ERR_CANCELED" || error?.name === "CanceledError") return false;
-          if (error?.response?.status >= 400 && error?.response?.status < 500) return false;
+          if (error?.response?.status && error.response.status >= 400 && error.response.status < 500) return false;
           return failureCount < 1;
         },
 

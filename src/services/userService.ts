@@ -1,7 +1,7 @@
 import axiosInstance from '@/utils/axiosInstance';
 
 export const userService = {
-  updateProfile: async (userId: string, payload: any) => {
+  updateProfile: async (userId: string, payload: Record<string, unknown>) => {
     const res = await axiosInstance.put(`profiles/${userId}`, payload);
     return res.data;
   },

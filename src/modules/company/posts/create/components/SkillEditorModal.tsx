@@ -9,7 +9,7 @@ import LevelField from "./skill-editor/LevelField";
 import PercentageField from "./skill-editor/PercentageField";
 import ModalActions from "./skill-editor/ModalActions";
 
-interface LocalSkill {
+export interface LocalSkill {
   name: string;
   level: string | number | null;
   percentage: number;
@@ -56,14 +56,12 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
     }
     if (skillType === "hard") {
       const hardSkill = { name: localSkill.name, level: numericLevel, percentage: localSkill.percentage, category: "" };
-      mode === "edit"
-        ? dispatch(editHardSkill({ index: index as number, updated: hardSkill }))
-        : dispatch(addHardSkill(hardSkill));
+      if (mode === "edit") dispatch(editHardSkill({ index: index as number, updated: hardSkill }));
+      else dispatch(addHardSkill(hardSkill));
     } else {
       const softSkill = { name: localSkill.name, level: numericLevel, percentage: localSkill.percentage };
-      mode === "edit"
-        ? dispatch(editSoftSkill({ index: index as number, updated: softSkill }))
-        : dispatch(addSoftSkill(softSkill));
+      if (mode === "edit") dispatch(editSoftSkill({ index: index as number, updated: softSkill }));
+      else dispatch(addSoftSkill(softSkill));
     }
     onClose();
   };

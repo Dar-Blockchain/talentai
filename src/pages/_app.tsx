@@ -58,7 +58,7 @@ const poppins = Poppins({
 function DbLanguageSync() {
   const userId   = useSelector((state: RootState) => state.user.connectedUser.user?._id);
   const language = useSelector(
-    (state: RootState) => (state.user.connectedUser.user as any)?.language as string | undefined,
+    (state: RootState) => state.user.connectedUser.user?.language,
   );
   const { isAuthenticated } = useAuthState();
   const { i18n }            = useTranslation();
@@ -101,7 +101,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
   // whether a profile fetch is needed. Without this guard, on a cold reload we
   // dispatch getMyProfile() immediately (user=null), then rehydration populates
   // user from localStorage — two fetches for identical data.
-  const isRehydrated = useSelector((state: any) => Boolean(state._persist?.rehydrated));
+  const isRehydrated = useSelector((state: RootState) => Boolean(state._persist?.rehydrated));
 
   const dispatch = useDispatch<typeof store.dispatch>();
   const router   = useRouter();
@@ -211,7 +211,7 @@ function AuthWrapper({ children }: { children: React.ReactNode }) {
 // in place instead of unmounting/remounting it — only the page content
 // (`children`) swaps out. Pages without `getLayout` render unwrapped, exactly
 // as before.
-export type NextPageWithLayout<P = {}, IP = P> = NextPage<P, IP> & {
+export type NextPageWithLayout<P = object, IP = P> = NextPage<P, IP> & {
   getLayout?: (page: ReactElement) => ReactNode;
 };
 

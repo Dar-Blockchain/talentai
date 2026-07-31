@@ -5,7 +5,6 @@ import { Users as GroupsOutlined, Users as GroupsRounded, UserCircle as PeopleAl
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import {
-  COMPANY_CANDIDATE_CHAT_PATH,
   COMPANY_TEAM_CHAT_PATH,
   type CompanyChatChannel,
 } from "@/modules/chat/shared/constants/companyChannels";

@@ -95,10 +95,11 @@ const CurrencyDropdown: React.FC<Props> = ({ currencies, value, onChange, placeh
           role="combobox"
           tabIndex={0}
           aria-expanded={open}
+          aria-controls="currency-portal"
           aria-haspopup="listbox"
           aria-label={placeholder}
           onClick={() => (open ? setOpen(false) : openDropdown())}
-          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); open ? setOpen(false) : openDropdown(); } else if (e.key === "Escape") { setOpen(false); } }}
+          onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); if (open) setOpen(false); else openDropdown(); } else if (e.key === "Escape") { setOpen(false); } }}
           className={cn(
             "flex h-10 cursor-pointer select-none items-center justify-between rounded-lg bg-white px-3 transition-colors",
             "focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0891B2] focus-visible:outline-offset-2",

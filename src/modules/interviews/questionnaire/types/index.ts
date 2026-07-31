@@ -54,7 +54,7 @@ export interface JobQuestionsResponse {
   }>;
   questions: string[];
   totalQuestions: number;
-  testedSkills: any[];
+  testedSkills: unknown[];
 }
 
 // Status types

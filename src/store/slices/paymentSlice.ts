@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk } from "@reduxjs/toolkit";
+import type { AxiosError } from "axios";
 import { paymentService } from "@/services/paymentService";
 import { RootState } from "../store";
 
@@ -137,8 +138,9 @@ export const verifyPayment = createAsyncThunk<Payment, { sessionId: string }, { 
   async ({ sessionId }, { rejectWithValue }) => {
     try {
       return await paymentService.verifyPayment(sessionId) as Payment;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to verify payment");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Failed to verify payment");
     }
   }
 );
@@ -148,8 +150,9 @@ export const cancelSubscription = createAsyncThunk<void, { subscriptionId: strin
   async ({ subscriptionId, reason }, { rejectWithValue }) => {
     try {
       await paymentService.cancelSubscription(subscriptionId, reason);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to cancel subscription");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Failed to cancel subscription");
     }
   }
 );
@@ -159,8 +162,9 @@ export const enableAutoRenew = createAsyncThunk<void, { subscriptionId: string }
   async ({ subscriptionId }, { rejectWithValue }) => {
     try {
       await paymentService.enableAutoRenew(subscriptionId);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to enable auto-renewal");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Failed to enable auto-renewal");
     }
   }
 );
@@ -170,8 +174,9 @@ export const fetchCompanyPaymentHistory = createAsyncThunk<Payment[], void, { re
   async (_, { rejectWithValue }) => {
     try {
       return await paymentService.fetchCompanyPaymentHistory() as Payment[];
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch payment history");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Failed to fetch payment history");
     }
   }
 );
@@ -181,8 +186,9 @@ export const fetchActiveSubscription = createAsyncThunk<ActiveSubscription, void
   async (_, { rejectWithValue }) => {
     try {
       return await paymentService.fetchActiveSubscription() as ActiveSubscription;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "No active subscription");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "No active subscription");
     }
   }
 );
@@ -203,8 +209,9 @@ export const fetchCompanySubscriptions = createAsyncThunk<CompanySubscription[],
   async (_, { rejectWithValue }) => {
     try {
       return await paymentService.fetchCompanySubscriptions() as CompanySubscription[];
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch subscriptions");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Failed to fetch subscriptions");
     }
   }
 );
@@ -214,8 +221,9 @@ export const fetchCombinedSubscriptionDetails = createAsyncThunk<CombinedSubscri
   async (_, { rejectWithValue }) => {
     try {
       return await paymentService.fetchCombinedSubscriptionDetails() as CombinedSubscriptionDetails;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "No active subscriptions");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "No active subscriptions");
     }
   }
 );
@@ -225,8 +233,9 @@ export const fetchSubscriptionDetails = createAsyncThunk<SubscriptionDetails, st
   async (subscriptionId, { rejectWithValue }) => {
     try {
       return await paymentService.fetchSubscriptionDetails(subscriptionId) as SubscriptionDetails;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to fetch subscription details");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Failed to fetch subscription details");
     }
   }
 );
@@ -240,8 +249,9 @@ export const checkSubscriptionLimit = createAsyncThunk<
   async ({ companyProfileId, limitType }, { rejectWithValue }) => {
     try {
       return await paymentService.checkSubscriptionLimit(companyProfileId, limitType) as LimitCheck;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to check limit");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Failed to check limit");
     }
   }
 );
@@ -255,8 +265,9 @@ export const createCheckoutSession = createAsyncThunk<
   async (planId, { rejectWithValue }) => {
     try {
       return await paymentService.createCheckoutSession(planId) as { url: string; sessionId: string; paymentId: string };
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to create checkout session");
+    } catch (error: unknown) {
+      const axiosError = error as AxiosError<{ message?: string }>;
+      return rejectWithValue(axiosError.response?.data?.message || axiosError.message || "Failed to create checkout session");
     }
   }
 );

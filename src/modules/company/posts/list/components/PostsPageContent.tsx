@@ -62,7 +62,7 @@ const PostsPageContent: React.FC = () => {
     if (hasNoPlan || postsAtLimit) { setPlanModalOpen(true); return; }
     router.push("/company/posts/create");
   };
-  const totalCount = (pagination as any)?.total ?? posts.length;
+  const totalCount = pagination?.total ?? posts.length;
 
   return (
     <div>
@@ -78,7 +78,7 @@ const PostsPageContent: React.FC = () => {
       <PostsStats />
 
       <JobPostsList
-        jobs={posts as any[]} loading={loading} error={error}
+        jobs={posts} loading={loading} error={error}
         hasFilters={hasFilters} page={page} pagination={pagination}
         onPageChange={setPage}
         onDelete={deleteHook.handleOpen}

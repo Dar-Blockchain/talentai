@@ -97,7 +97,22 @@ export interface JobQuestionsResponse {
   }>;
   questions: string[];
   totalQuestions: number;
-  testedSkills: any[];
+  testedSkills: unknown[];
+}
+
+/**
+ * Loosely-typed job post shape shared by the interview screen/header/audio hook.
+ * Different callers (post-interview flow, campaign flow) pass different concrete
+ * job post shapes (or null), so this only declares the fields actually read here.
+ */
+export interface InterviewJobData {
+  _id?: string;
+  title?: string;
+  companyName?: string;
+  createdBy?: { name?: string };
+  user?: { username?: string };
+  jobDetails?: { title?: string };
+  interviewLanguages?: string[];
 }
 
 // Status types

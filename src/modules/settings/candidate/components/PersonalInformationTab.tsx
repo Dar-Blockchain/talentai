@@ -28,7 +28,7 @@ interface PersonalInformationTabProps {
   onSave:         () => void;
   onCancel:       () => void;
   onEditToggle:   () => void;
-  onCvUpdated?:   (filename: string, cvAnalysis?: any) => void;
+  onCvUpdated?:   (filename: string, cvAnalysis?: unknown) => void;
   onCvDeleted?:   () => void;
 }
 
@@ -40,7 +40,7 @@ interface SectionHeaderProps {
   actions?: React.ReactNode;
 }
 
-const SectionHeader: React.FC<SectionHeaderProps> = ({ title, subtitle, actions }) => (
+const SectionHeader: React.FC<SectionHeaderProps> = ({ title, actions }) => (
   <div className="flex items-center justify-between gap-2 px-3 py-2 bg-primary-light/50 border border-primary-border rounded-xl border-l-[3px] border-l-primary">
     <p className="text-xs font-bold text-primary-dark uppercase tracking-wide truncate">{title}</p>
     <div className="shrink-0">{actions}</div>

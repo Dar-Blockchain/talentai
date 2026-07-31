@@ -5,10 +5,10 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import JobPostCard from "./JobPostCard";
-import type { StatusFilter, SortOption, PaginationInfo } from "../types";
+import type { PaginationInfo, JobPost } from "../types";
 
 interface JobPostsListProps {
-  jobs: any[];
+  jobs: JobPost[];
   loading: boolean;
   error: string | null;
   hasFilters: boolean;
@@ -98,7 +98,7 @@ const JobPostsList = memo<JobPostsListProps>(({
   return (
     <div>
       <div className={`grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3 ${pagination.totalPages > 1 ? "mb-6" : "mb-0"}`}>
-        {jobs.map((job: any, i: number) => (
+        {jobs.map((job, i: number) => (
           <JobPostCard key={job._id} job={job} index={i} onDelete={onDelete} onViewDetails={onViewDetails} onPublish={onPublish} />
         ))}
       </div>

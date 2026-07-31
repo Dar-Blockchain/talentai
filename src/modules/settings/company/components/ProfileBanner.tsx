@@ -1,16 +1,18 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import Image from "next/image";
 import { Pencil, Save, X, UploadCloud, MapPin, Globe, Users, Check } from "lucide-react";
 import { Spinner } from "@/modules/settings/shared/components";
 import { TEAL } from "@/modules/settings/shared/constants";
+import type { UserProfile } from "@/modules/settings/shared/types";
 
 interface Props {
-  profile: any;
+  profile: UserProfile;
   loading: boolean;
   uploadingImage: boolean;
   isEditing: boolean;
   showEditActions?: boolean;
-  onStartEdit: (value: any) => void;
+  onStartEdit: () => void;
   onCancelEdit: () => void;
   onSaveEdit: () => void;
   onImageUpload: (e: React.ChangeEvent<HTMLInputElement>) => void;
@@ -88,10 +90,12 @@ const ProfileBanner: React.FC<Props> = ({ profile, loading, uploadingImage, isEd
               <Spinner size={22} />
             </div>
           ) : (previewUrl || profile.avatar) ? (
-            <img
-              src={previewUrl || profile.avatar}
+            <Image
+              src={(previewUrl || profile.avatar) as string}
               alt={displayName}
-              className="w-full h-full rounded-[13px] object-cover"
+              fill
+              className="rounded-[13px] object-cover"
+              unoptimized
             />
           ) : (
             <div className="w-full h-full rounded-[13px] flex items-center justify-center text-white font-extrabold text-[28px] bg-teal-600">

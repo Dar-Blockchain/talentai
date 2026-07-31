@@ -180,9 +180,10 @@ const NewCampaignPage: NextPageWithLayout = () => {
       const campaign = await createMutation.mutateAsync(payload);
       showToast({ message: "Campaign created successfully", severity: "success" });
       router.push(`/company/campaigns/${campaign._id}`);
-    } catch (error: any) {
+    } catch (error: unknown) {
+      const axiosError = error as { message?: string; response?: { data?: { message?: string } } };
       showToast({
-        message: error?.message || error?.response?.data?.message || "Something went wrong",
+        message: axiosError?.message || axiosError?.response?.data?.message || "Something went wrong",
         severity: "error",
       });
     }

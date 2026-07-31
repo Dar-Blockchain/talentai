@@ -10,6 +10,7 @@ const InterviewLoadingScreen: React.FC<InterviewLoadingScreenProps> = ({
   subtitle = 'Please wait a moment…',
 }) => (
   <div className="flex-1 flex items-center justify-center flex-col gap-0 px-4 min-h-[60vh]">
+    {/* eslint-disable-next-line @next/next/no-img-element -- animated GIF must not be re-encoded/optimized by next/image */}
     <img
       src="/gif/loading.gif"
       alt="Loading…"

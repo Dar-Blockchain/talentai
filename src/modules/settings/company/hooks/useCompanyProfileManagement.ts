@@ -22,8 +22,24 @@ const buildAvatarUrl = (...images: (string | undefined)[]): string => {
   return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${img}` : '';
 };
 
+interface CompanyLikeData {
+  size?: string;
+  requiredExperienceLevel?: string;
+  name?: string;
+  location?: string;
+  language?: string;
+  phone?: string;
+  address?: string;
+  linkedin?: string;
+  personalWebsite?: string;
+  industry?: string;
+  website?: string;
+  employmentType?: string;
+  email?: string;
+}
+
 const buildSyncedProfile = (
-  companyData: any,
+  companyData: CompanyLikeData,
   extra: {
     username: string;
     email: string;
@@ -83,7 +99,7 @@ const toFormValues = (p: UserProfile): CompanyProfileFormValues => ({
 
 const initialProfile: UserProfile = buildSyncedProfile(
   {},
-  { username: '', email: '', avatarUrl: '' } as any
+  { username: '', email: '', avatarUrl: '' }
 );
 
 // ─── Hook ─────────────────────────────────────────────────────────────────────
@@ -104,7 +120,7 @@ export const useCompanyProfileManagement = () => {
   const userId            = user?._id || user?.id;
 
   const loading = isLoading || updateMutation.isPending || uploadMutation.isPending;
-  const error   = (fetchError as any)?.message ?? null;
+  const error   = (fetchError instanceof Error ? fetchError.message : null) ?? null;
 
   const form = useForm<CompanyProfileFormValues>({
     resolver: zodResolver(companyProfileSchema),
@@ -217,8 +233,9 @@ export const useCompanyProfileManagement = () => {
         await uploadMutation.mutateAsync({ userId: effectiveUserId, file });
         setSaveSuccess(true);
         showToast({ message: 'Profile picture updated successfully!', severity: 'success' });
-      } catch (err: any) {
-        showToast({ message: err?.message || 'Failed to upload image', severity: 'error' });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : undefined;
+        showToast({ message: message || 'Failed to upload image', severity: 'error' });
       } finally {
         setUploadingImage(false);
       }
@@ -254,8 +271,9 @@ export const useCompanyProfileManagement = () => {
         setSaveSuccess(true);
         showToast({ message: 'Profile updated successfully!', severity: 'success' });
         succeeded = true;
-      } catch (err: any) {
-        showToast({ message: err?.message || 'Failed to update profile', severity: 'error' });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : undefined;
+        showToast({ message: message || 'Failed to update profile', severity: 'error' });
       }
     })();
 
@@ -274,8 +292,9 @@ export const useCompanyProfileManagement = () => {
         if (!effectiveUserId) throw new Error('User not found');
         await updateMutation.mutateAsync({ userId: effectiveUserId, payload: { language: lang } });
         showToast({ message: 'Language updated successfully!', severity: 'success' });
-      } catch (err: any) {
-        showToast({ message: err?.message || 'Failed to update language', severity: 'error' });
+      } catch (err: unknown) {
+        const message = err instanceof Error ? err.message : undefined;
+        showToast({ message: message || 'Failed to update language', severity: 'error' });
       }
     },
     [showToast, isEmployee, companyMembership, userId, updateMutation]

@@ -34,7 +34,7 @@ interface PostInterviewAssessmentData {
   company: { _id: string; username?: string; email?: string };
   interviewData?: {
     finalReport?: {
-      coverage?: { overall?: number; areas?: Record<string, any> };
+      coverage?: { overall?: number; areas?: Record<string, { percentage?: number }> };
       scores?: { overall?: number };
       recommendations?: string[];
       summary?: string;
@@ -120,7 +120,11 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
   }), [results, debounced, scoreTab]);
 
   const handleArchiveToggle = useCallback((a: PostInterviewAssessmentData) => {
-    a.archived ? unarchiveMutation.mutate(a._id) : archiveMutation.mutate(a._id);
+    if (a.archived) {
+      unarchiveMutation.mutate(a._id);
+    } else {
+      archiveMutation.mutate(a._id);
+    }
   }, [archiveMutation, unarchiveMutation]);
 
   const handleDeleteRequest = useCallback((a: PostInterviewAssessmentData) => { setDeleteTarget(a); }, []);
@@ -311,7 +315,7 @@ const PostInterviewAssessments: React.FC<PostInterviewAssessmentsProps> = ({ aut
                   <div className="px-6 mt-5">
                     <span className="text-[10.5px] uppercase tracking-[1.2px] text-slate-500">Coverage Areas</span>
                     <div className="flex flex-wrap gap-2 mt-1.5">
-                      {Object.entries(selectedAssessment.interviewData.finalReport.coverage.areas).map(([name, d]: [string, any]) => {
+                      {Object.entries(selectedAssessment.interviewData.finalReport.coverage.areas).map(([name, d]: [string, { percentage?: number }]) => {
                         const pct = d.percentage || 0;
                         const c   = pct >= 70 ? '#10b981' : pct >= 50 ? '#f59e0b' : '#ef4444';
                         return (

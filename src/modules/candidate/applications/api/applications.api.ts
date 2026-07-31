@@ -1,5 +1,5 @@
 import axiosInstance from '@/utils/axiosInstance';
-import type { ApplicationsParams } from '../types/application.types';
+import type { ApplicationsParams, CandidateApplicationDetail } from '../types/application.types';
 
 export async function fetchCandidateApplications(params: ApplicationsParams = {}) {
   const q = new URLSearchParams();
@@ -23,7 +23,7 @@ export async function fetchCandidateApplicationStats() {
 
 export async function fetchApplicationById(id: string) {
   const res = await axiosInstance.get(`job-applications/${id}`);
-  return (res.data?.data ?? res.data) as any;
+  return (res.data?.data ?? res.data) as CandidateApplicationDetail;
 }
 
 export async function withdrawCandidateApplication(applicationId: string) {

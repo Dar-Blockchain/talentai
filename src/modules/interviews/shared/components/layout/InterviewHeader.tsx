@@ -21,9 +21,9 @@ const InterviewHeader: React.FC = () => {
         <Image
           src="/logo.svg"
           alt="TalentAI"
-          width={130}
+          width={122}
           height={34}
-          style={{ objectFit: 'contain', height: 34, width: 'auto' }}
+          style={{ objectFit: 'contain', height: 34, width: 122 }}
           priority
         />
       </Link>

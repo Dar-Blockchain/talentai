@@ -3,6 +3,8 @@ import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import type { TooltipProps } from "recharts";
+import type { Props as RechartsLabelProps } from "recharts/types/component/Label";
 import { cn } from "@/lib/utils";
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import { KpiCard, TrendRangeFilter, toApiRange, formatTrendDateRange, type TrendRangeTab } from "./KpiAtoms";
@@ -22,6 +24,13 @@ interface Props {
   postId?: string; tab: TrendRangeTab; rangeValue: number;
   onRangeChange: (tab: TrendRangeTab, value: number) => void;
   createdAt?: string | null;
+}
+
+interface ChartDatum {
+  month: string;
+  manualTotalHours: number;
+  aiTotalHours: number;
+  savedTotalHours: number;
 }
 
 // Human-readable duration: "1h 20m", "45m", or "1h" — never a raw decimal like "0.83h".
@@ -110,15 +119,15 @@ function SplitRow({
 // the full stacked total (interview + analysis), not just the top segment's value.
 const makeStackTotalLabel = (
   color: string, lastIndex: number, formatter: (v: number) => string,
-  totalOf: (payload: any) => number,
+  totalOf: (payload: ChartDatum) => number,
 ) =>
-  (props: any) => {
-    const { x, y, width, index, payload } = props;
+  function StackTotalLabel(props: RechartsLabelProps) {
+    const { x = 0, y = 0, width = 0, index = 0, payload } = props as RechartsLabelProps & { payload?: ChartDatum };
     if (index !== lastIndex || !payload) return null;
     const total = totalOf(payload);
     if (!total) return null;
     return (
-      <text x={x + width / 2} y={y} dy={-6} textAnchor="middle" fontSize={10} fontWeight={700} fill={color} fontFamily="Poppins">
+      <text x={Number(x) + Number(width) / 2} y={Number(y)} dy={-6} textAnchor="middle" fontSize={10} fontWeight={700} fill={color} fontFamily="Poppins">
         {formatter(total)}
       </text>
     );
@@ -199,10 +208,10 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue, onRange
   // (Manual / TalentAI / Time Saved), hours and cost inline together, mirroring
   // the three solid bars exactly. Full interview/analysis detail stays in the
   // cards above instead of being repeated here.
-  const ChartTooltipContent = ({ active, payload, label }: any) => {
+  const ChartTooltipContent = ({ active, payload, label }: TooltipProps<number, string>) => {
     if (!active || !payload?.length) return null;
-    const row  = payload[0]?.payload;
-    const cost = costByMonth.get(label);
+    const row  = payload[0]?.payload as ChartDatum | undefined;
+    const cost = label != null ? costByMonth.get(String(label)) : undefined;
     if (!row) return null;
     return (
       <div style={{ ...ChartTooltip.contentStyle, backgroundColor: WHITE, opacity: 1 }} className="px-3.5 py-2.5 min-w-52">

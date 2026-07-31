@@ -45,7 +45,7 @@ export const useInterviewConfig = ({ jobId: propJobId }: Omit<UseInterviewConfig
     if (!router.isReady || jobId) return;
 
     const urlParams: URLParams = {
-      type:        router.query.type        as any,
+      type:        router.query.type        as URLParams['type'],
       skill:       router.query.skill       as string,
       proficiency: router.query.proficiency as string,
       category:    router.query.category    as string,

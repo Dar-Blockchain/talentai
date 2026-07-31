@@ -8,7 +8,7 @@ interface Props {
   label: string;
   onDelete?: () => void;
   onClick?: () => void;
-  sx?: any;
+  sx?: React.CSSProperties;
 }
 
 const SkillChip: React.FC<Props> = ({ label, onDelete, onClick }) => (

@@ -4,6 +4,8 @@ import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Building2 as DepartmentOutlined, Plus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, LabelList, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
+import type { TooltipProps } from "recharts";
+import type { Props as RechartsLabelProps } from "recharts/types/component/Label";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { ZoneHeading, KpiCard } from "./KpiAtoms";
@@ -40,7 +42,7 @@ const EMPTY_PLACEHOLDER: Bucket[] = [
 
 // Tooltip with a colored vertical "line" indicator next to the value,
 // instead of a dot or dashed swatch.
-const LineIndicatorTooltip = ({ active, payload }: any) => {
+const LineIndicatorTooltip = ({ active, payload }: TooltipProps<number, string>) => {
   if (!active || !payload?.length || !payload[0].payload?.name) return null;
   const { name, count, color } = payload[0].payload as Bucket;
   return (
@@ -59,14 +61,14 @@ const LineIndicatorTooltip = ({ active, payload }: any) => {
 
 // Name label: white on a filled (count > 0) bar, department-colored text
 // when the bar itself has no background (count === 0).
-const NameLabel = (buckets: Bucket[]) => (props: any) => {
-  const { x, y, width, height, index } = props;
-  const bucket = buckets[index];
+const NameLabel = (buckets: Bucket[]) => function NameLabelRenderer(props: RechartsLabelProps) {
+  const { x = 0, y = 0, height = 0, index = 0 } = props;
+  const bucket = buckets[Number(index)];
   if (!bucket) return null;
   return (
     <text
-      x={x + 10}
-      y={y + height / 2}
+      x={Number(x) + 10}
+      y={Number(y) + Number(height) / 2}
       dy={4}
       fill={bucket.count > 0 ? "#fff" : bucket.color}
       style={{ fontFamily: "Poppins", fontSize: 12, fontWeight: 600 }}

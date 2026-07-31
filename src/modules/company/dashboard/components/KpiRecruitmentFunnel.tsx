@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { TrendingUp as TrendingUpOutlined } from "lucide-react";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
+import type { Formatter } from "recharts/types/component/DefaultTooltipContent";
 import { ZoneHeading, KpiCard, Delta } from "./KpiAtoms";
 import { ChartTooltip, GRAY, T } from "../utils/kpiTokens";
 import type { KpiFunnelData } from "../types";
@@ -105,7 +106,11 @@ const KpiRecruitmentFunnel = memo<Props>(({ data, loading }) => {
                 <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
                 <XAxis dataKey="month" tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} allowDecimals={false} />
-                <RechartsTooltip {...ChartTooltip} formatter={(v: any, key: any) => [v, seriesLabel(key)]} cursor={{ stroke: "#E2E8F0", strokeWidth: 1 }} />
+                <RechartsTooltip
+                  {...ChartTooltip}
+                  formatter={((v, key) => [v, seriesLabel(String(key))]) as Formatter<number, string>}
+                  cursor={{ stroke: "#E2E8F0", strokeWidth: 1 }}
+                />
                 {TREND_KEYS.map((key) => (
                   <Line
                     key={key}

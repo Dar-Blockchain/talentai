@@ -27,8 +27,8 @@ const AdminSkillsBarChart = ({ skillsData }: { skillsData: Array<{ skill: string
           label={{ value: 'Number of Users', angle: -90, position: 'insideLeft', style: { textAnchor: 'middle', fill: '#64748B', fontSize: 12 } }}
        />
         <RechartsTooltip
-          formatter={(value: any) => [value, 'Users']}
-          labelFormatter={(label: any) => `Skill: ${label}`}
+          formatter={(value: number | string) => [value, 'Users']}
+          labelFormatter={(label: string | number) => `Skill: ${label}`}
           contentStyle={{
             fontFamily: 'Poppins',
             fontSize: 12,

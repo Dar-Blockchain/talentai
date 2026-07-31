@@ -29,6 +29,7 @@ class NotificationSoundManager {
     return this.audio;
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   play(_type?: NotificationType): void {
     if (!this.enabled || typeof window === 'undefined') return;
     try {
@@ -39,6 +40,7 @@ class NotificationSoundManager {
     } catch { /* ignore */ }
   }
 
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   test(_type?: NotificationType): void {
     const prev   = this.enabled;
     this.enabled = true;

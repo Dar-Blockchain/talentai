@@ -2,13 +2,14 @@ import React from "react";
 import { useTranslation } from "react-i18next";
 import { Briefcase as WorkOutlined } from "lucide-react";
 import { getPostSkills } from '@/modules/company/posts/utils/postHelpers';
+import type { JobDetail } from "@/modules/company/posts/details/types";
 import ThresholdCard from "./overview/ThresholdCard";
 import OverviewCard from "./overview/OverviewCard";
 import SkillsCard from "./overview/SkillsCard";
 import BulletListCard from "./overview/BulletListCard";
 
 interface Props {
-  job: any;
+  job: JobDetail | null | undefined;
   canEdit: boolean;
   onEdit: () => void;
 }

@@ -1,4 +1,4 @@
-import React, { useRef, useState, useEffect } from "react";
+import React, { useRef, useState } from "react";
 import { MapPin, Users, UploadCloud } from "lucide-react";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Spinner } from "@/modules/settings/shared/components";

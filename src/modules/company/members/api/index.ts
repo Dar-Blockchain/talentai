@@ -118,7 +118,7 @@ export const memberApi = {
     return res.data.data || res.data;
   },
 
-  updateEmployeePermissions: async (memberId: string, permissions: any) => {
+  updateEmployeePermissions: async (memberId: string, permissions: Record<string, unknown>) => {
     const res = await axiosInstance.put(`employee-permissions/${memberId}`, permissions);
     return res.data.data || res.data;
   },

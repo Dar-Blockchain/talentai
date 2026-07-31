@@ -51,9 +51,9 @@ const Footer: React.FC = () => {
             <Image
               src="/logo.svg"
               alt="TalentAI"
-              width={130}
+              width={129}
               height={36}
-              className="h-9 w-auto object-contain"
+              className="h-9 w-32.25 object-contain"
             />
           </div>
           <p className="text-[11px] text-gray-500 leading-[1.5] mb-1">

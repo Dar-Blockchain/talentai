@@ -1,25 +1,29 @@
 import { softSkillLevels } from "@/modules/shared/constants/skills";
+import type { JobDetail, JobSalaryInfo } from "@/modules/company/posts/details/types";
 
 export interface Skill {
   name: string;
   level?: number;
   type: 'technical' | 'soft';
-  importance?: string;
+  importance?: string | number;
 }
-export const getJobSkills = (job: any): string[] => {
+
+type SkillSource = Pick<JobDetail, "skillAnalysis"> | null | undefined;
+
+export const getJobSkills = (job: SkillSource): string[] => {
   if (!job?.skillAnalysis) return [];
 
   const skills: string[] = [];
 
   if (job.skillAnalysis.requiredSkills) {
     skills.push(
-      ...job.skillAnalysis.requiredSkills.map((skill: any) => skill.name)
+      ...job.skillAnalysis.requiredSkills.map((skill) => skill.name)
     );
   }
 
   if (job.skillAnalysis.softSkills) {
     skills.push(
-      ...job.skillAnalysis.softSkills.map((skill: any) => skill.name)
+      ...job.skillAnalysis.softSkills.map((skill) => skill.name)
     );
   }
 
@@ -42,7 +46,7 @@ export const getSoftSkillLevelLabel = (value?: number) => {
   return level ? level.label : "";
 };
 
-export const formatSalary = (salary: any) => {
+export const formatSalary = (salary: JobSalaryInfo | null | undefined) => {
   if (!salary) return "";
 
   const currencyMap: { [key: string]: string } = {
@@ -57,10 +61,10 @@ export const formatSalary = (salary: any) => {
 };
 
 
-export const getHardSkills = (job: any): Skill[] => {
+export const getHardSkills = (job: SkillSource): Skill[] => {
   if (!job) return [];
 
-  return (job.skillAnalysis?.requiredSkills || []).map((skill: any) => ({
+  return (job.skillAnalysis?.requiredSkills || []).map((skill) => ({
     name: skill.name,
     level: skill.level,
     type: 'technical',
@@ -68,10 +72,10 @@ export const getHardSkills = (job: any): Skill[] => {
   }));
 };
 
-export const getSoftSkills = (job: any): Skill[] => {
+export const getSoftSkills = (job: SkillSource): Skill[] => {
   if (!job) return [];
 
-  return (job.skillAnalysis?.softSkills || []).map((skill: any) => ({
+  return (job.skillAnalysis?.softSkills || []).map((skill) => ({
     name: skill.name,
     level: skill.level,
     type: 'soft',
@@ -79,7 +83,7 @@ export const getSoftSkills = (job: any): Skill[] => {
   }));
 };
 
-export const getPostSkills = (job: any): Skill[] => [
+export const getPostSkills = (job: SkillSource): Skill[] => [
   ...getHardSkills(job),
   ...getSoftSkills(job),
 ];

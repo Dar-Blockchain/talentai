@@ -1,6 +1,5 @@
 import type { ChatShellConversation, ChatShellMessage } from "@/modules/chat/shared/types/shell";
 import type { Participant } from "@/modules/chat/shared/components/helpers";
-import { CHAT_LAST_MESSAGE_BLOCKED_PREVIEW } from "@/modules/chat/shared/constants/contactPolicy";
 import { normalizeConversationUnreadCount } from "@/modules/chat/shared/utils/normalizeConversationUnread";
 
 const minimalParticipant = (_id: string): Participant => ({

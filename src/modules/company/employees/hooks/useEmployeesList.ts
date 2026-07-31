@@ -1,6 +1,6 @@
 import { useState, useCallback, useRef, useMemo } from "react";
-import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
+import axios from "axios";
 import {
   useMembersQuery, useInvitationsQuery, useMemberStatsQuery,
   useDepartmentsQuery, useInviteEmployeeMutation, useUpdateRoleMutation,
@@ -10,6 +10,7 @@ import type { ExtendedMember } from "../types";
 import { useToast } from "@/hooks/useToast";
 import { useRolePermissions } from "./useRolePermissions";
 import type { RoleFilter, SortOption } from "@/modules/company/employees/components/list";
+import type { Department } from "@/modules/company/departments/types";
 
 const PAGE_SIZE = 12;
 
@@ -21,10 +22,9 @@ const SORT_MAP: Record<SortOption, { sortBy?: "name" | "date"; order?: "asc" | "
 
 export function useEmployeesList() {
   const { t }         = useTranslation("dashboard");
-  const router        = useRouter();
   const { showToast } = useToast();
 
-  const { isEmployee, canInvite, canAssignRoles, canRemove, canManagePerms } = useRolePermissions();
+  const { canInvite, canAssignRoles, canRemove, canManagePerms } = useRolePermissions();
 
   const inviteMut   = useInviteEmployeeMutation();
   const updateRoleMut = useUpdateRoleMutation();
@@ -68,18 +68,19 @@ export function useEmployeesList() {
   const { data: statsRaw,       isLoading: fetchingStats }            = useMemberStatsQuery();
   const { data: deptsRaw }                                            = useDepartmentsQuery();
 
-  const members       = (membersRaw as any)?.members     ?? [];
-  const pageTotal     = (membersRaw as any)?.total       ?? 0;
-  const invitations   = Array.isArray(invitationsRaw)    ? invitationsRaw : [];
+  const members       = membersRaw?.members               ?? [];
+  const pageTotal     = membersRaw?.total                  ?? 0;
+  const invitations   = Array.isArray(invitationsRaw)      ? invitationsRaw : [];
   const stats         = statsRaw ?? null;
-  const departments   = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
+  const departments: Department[] =
+    (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as { data?: Department[] } | undefined)?.data) ?? [];
   const error         = membersError ? String(membersError) : null;
 
   const handleAddMember = useCallback(async (email: string, role: string, departmentId?: string) => {
     try {
       await inviteMut.mutateAsync({ email, role, departmentId });
       showToast({ message: t("pages.employees.invited_success"), severity: "success" });
-    } catch (err: any) {
+    } catch (err) {
       // Re-throw original error so err.response.data is accessible in the modal
       throw err;
     }
@@ -109,15 +110,17 @@ export function useEmployeesList() {
         setDetailMember(null);
         showToast({ message: t("pages.employees.deleted_success"), severity: "success" });
       },
-      onError: (err: any) => {
-        const msg = err?.response?.data?.message ?? t("pages.employees.toast_delete_failed");
+      onError: (err) => {
+        const msg = axios.isAxiosError<{ message?: string }>(err)
+          ? err.response?.data?.message ?? t("pages.employees.toast_delete_failed")
+          : t("pages.employees.toast_delete_failed");
         showToast({ message: msg, severity: "error" });
       },
     });
   }, [removeMut, selectedMember, showToast, t]);
 
-  const active = (members as any[]).filter((m) => m.status === "active").length;
-  const owners = (members as any[]).filter((m) => m.role === "Owner").length;
+  const active = members.filter((m) => m.status === "active").length;
+  const owners = members.filter((m) => m.role === "Owner").length;
 
   return {
     members: members as ExtendedMember[], pageTotal, loading, fetchingMembers, error,

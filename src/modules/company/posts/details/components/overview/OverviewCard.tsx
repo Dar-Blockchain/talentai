@@ -1,4 +1,5 @@
 import React from "react";
+import Image from "next/image";
 import { useTranslation } from "react-i18next";
 import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined, Mic as MicOutlined, Building2 as DepartmentOutlined } from "lucide-react";
 import { Card } from "@/modules/shared/ui/shadcn/card";
@@ -6,10 +7,11 @@ import { LANG_META } from "@/modules/shared/constants/languages";
 import { formatSalary } from '@/modules/company/posts/utils/postHelpers';
 import { formatDate } from "@/utils/functions";
 import { useDepartmentList } from "@/modules/company/departments/hooks";
+import type { JobDetailFields } from "@/modules/company/posts/details/types";
 import SectionTitle from "./SectionTitle";
 
 interface Props {
-  jd: any;
+  jd: JobDetailFields;
   createdAt?: string;
   interviewLanguages: string[];
 }
@@ -73,7 +75,7 @@ const OverviewCard: React.FC<Props> = ({ jd, createdAt, interviewLanguages }) =>
             if (!meta) return null;
             return (
               <div key={code} className="inline-flex items-center gap-1 rounded-lg border px-2.5 py-1" style={{ backgroundColor: "#F0FDFA", borderColor: "#99F6E4" }}>
-                <img src={`https://flagcdn.com/w40/${meta.flag}.png`} srcSet={`https://flagcdn.com/w80/${meta.flag}.png 2x`} width={20} height={14} alt={meta.label} style={{ borderRadius: 2, display: "block" }} />
+                <Image src={`https://flagcdn.com/w80/${meta.flag}.png`} unoptimized width={20} height={14} alt={meta.label} style={{ borderRadius: 2, display: "block" }} />
                 <span className="text-[11.5px] font-semibold" style={{ color: "#0D9488" }}>{meta.label}</span>
               </div>
             );

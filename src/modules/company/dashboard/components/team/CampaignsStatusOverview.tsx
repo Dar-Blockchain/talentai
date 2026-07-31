@@ -7,7 +7,19 @@ import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { KpiCard } from "../KpiAtoms";
 
 const STALE = 60_000;
-const sel = (r: any) => r.data?.data ?? r.data;
+
+const STATUS_KEYS = ["active", "draft", "paused", "closed", "expired"] as const;
+
+interface CampaignMetrics extends Record<(typeof STATUS_KEYS)[number], number> {
+  total: number;
+}
+
+// The API sometimes wraps the payload as `{ data: T }` and sometimes returns
+// `T` directly, so we accept `unknown` here and cast to the declared shape.
+const sel = (r: { data: unknown }): CampaignMetrics => {
+  const body = r.data as { data?: CampaignMetrics } | undefined;
+  return (body?.data ?? body) as CampaignMetrics;
+};
 const fetchCampaignMetrics = () => axiosInstance.get("internal-campaigns/metrics").then(sel);
 
 const STATUS_COLORS: Record<string, string> = {
@@ -17,8 +29,6 @@ const STATUS_COLORS: Record<string, string> = {
   closed: "#64748B",
   expired: "#EF4444",
 };
-
-const STATUS_KEYS = ["active", "draft", "paused", "closed", "expired"] as const;
 
 const CampaignsStatusOverview = memo(() => {
   const { t } = useTranslation("dashboard");

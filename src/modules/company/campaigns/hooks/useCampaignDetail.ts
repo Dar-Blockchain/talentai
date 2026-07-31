@@ -38,8 +38,9 @@ export function useCampaignDetail(id: string | string[] | undefined) {
       await deleteMut.mutateAsync(cId);
       showToast({ message: t(`${toastBase}.deleted_success`), severity: "success" });
       router.push("/company/campaigns");
-    } catch (e: any) {
-      showToast({ message: e?.message || t(`${toastBase}.delete_failed`), severity: "error" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : undefined;
+      showToast({ message: message || t(`${toastBase}.delete_failed`), severity: "error" });
     }
   }, [deleteMut, router, showToast, t]);
 
@@ -50,8 +51,9 @@ export function useCampaignDetail(id: string | string[] | undefined) {
         message: t(`${toastBase}.status_updated`, { status: t(`pages.campaigns.status.${status}`) }),
         severity: "success",
       });
-    } catch (e: any) {
-      showToast({ message: e?.message || t(`${toastBase}.status_failed`), severity: "error" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : undefined;
+      showToast({ message: message || t(`${toastBase}.status_failed`), severity: "error" });
     }
   }, [statusMut, showToast, t]);
 
@@ -63,8 +65,9 @@ export function useCampaignDetail(id: string | string[] | undefined) {
     try {
       await updateMut.mutateAsync({ module: { type: moduleType, config } as CampaignModule });
       showToast({ message: t(`${toastBase}.module_saved`), severity: "success" });
-    } catch (e: any) {
-      showToast({ message: e?.message || t(`${toastBase}.module_save_failed`), severity: "error" });
+    } catch (e: unknown) {
+      const message = e instanceof Error ? e.message : undefined;
+      showToast({ message: message || t(`${toastBase}.module_save_failed`), severity: "error" });
     }
   }, [updateMut, showToast, t]);
 

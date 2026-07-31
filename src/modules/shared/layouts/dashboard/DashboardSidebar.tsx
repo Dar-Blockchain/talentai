@@ -3,6 +3,7 @@
 import React, { useCallback } from "react";
 import { X, LogOut, ChevronLeft, ChevronRight } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSelector, useDispatch } from "react-redux";
 import { RootState, AppDispatch } from "@/store/store";
 import { usePermissionsQuery } from "@/modules/company/employees/queries";
@@ -59,7 +60,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const profile           = useSelector((state: RootState) => state.user.connectedUser.profile);
   const user              = useSelector((state: RootState) => state.user.connectedUser.user);
-  const companyMembership = useSelector((state: RootState) => state.user.connectedUser.companyMembership);
   const planLimits        = useSelector((state: RootState) => state.user.connectedUser.planLimits);
   const combinedDetails   = useSelector(selectCombinedDetails);
   const { data: employeePermissions } = usePermissionsQuery(
@@ -75,7 +75,7 @@ const Sidebar: React.FC<SidebarProps> = ({
       // Only trial
       return combinedDetails.subscriptions[0]?.planName ?? null;
     }
-    return (planLimits as any)?.name ?? null;
+    return (planLimits as { name?: string } | null)?.name ?? null;
   }, [combinedDetails, planLimits, t]);
 
   const isEmployee  = user?.role === "Employee";
@@ -199,7 +199,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         >
           {/* Logo — only visible when expanded */}
           {!isCollapsed && (
-            <img src="/logo.svg" alt="TalentAI" onClick={handleGoHome} className="h-8 cursor-pointer" />
+            <Image src="/logo.svg" alt="TalentAI" onClick={handleGoHome} className="h-8 w-28.75 cursor-pointer" width={115} height={32} priority />
           )}
 
           {/* Collapse toggle */}

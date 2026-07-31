@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { useRouter } from "next/router";
+import Image from "next/image";
 import { useTranslation } from "react-i18next";
+import type { TOptions } from "i18next";
 import {
   MapPin,
   Calendar,
@@ -142,9 +143,8 @@ interface Props {
 
 const ApplicationDetail: React.FC<Props> = ({ id }) => {
   const { t } = useTranslation("dashboard");
-  const s = (k: string, opts?: any) =>
+  const s = (k: string, opts?: TOptions) =>
     t(`candidate.application_detail.${k}`, opts) as string;
-  const router = useRouter();
 
   const [withdrawOpen,   setWithdrawOpen]   = useState(false);
 
@@ -167,9 +167,10 @@ const ApplicationDetail: React.FC<Props> = ({ id }) => {
     try {
       await reactivate(id);
       emitToast({ message: "Application reactivated successfully.", severity: "success" });
-    } catch (err: any) {
-      const msg = err?.response?.data?.error || "Failed to reactivate application.";
-      const isNoCv = err?.response?.status === 422;
+    } catch (err) {
+      const axiosErr = err as { response?: { status?: number; data?: { error?: string } } };
+      const msg = axiosErr?.response?.data?.error || "Failed to reactivate application.";
+      const isNoCv = axiosErr?.response?.status === 422;
       emitToast({
         message: isNoCv
           ? "Upload a CV in Settings → Resume before reactivating."
@@ -192,7 +193,7 @@ const ApplicationDetail: React.FC<Props> = ({ id }) => {
   const salary = fmtSalary(jd.salary);
   const rawStatus = (app?.status || "visited") as ApplicationStatus;
   const sc = STATUS_CLASSES[rawStatus] ?? STATUS_CLASSES.visited;
-  const isScheduled = rawStatus === ("interview_scheduled" as any);
+  const isScheduled = (rawStatus as string) === "interview_scheduled";
   const score = app?.matchScore ?? app?.cvAnalysis?.analysisScore ?? null;
   const appliedDate = fmtDate(app?.appliedAt || app?.createdAt);
 
@@ -259,10 +260,12 @@ const ApplicationDetail: React.FC<Props> = ({ id }) => {
               <div className="flex items-start gap-3">
                 <div className="size-12 rounded-xl bg-gray-50 border border-gray-100 flex items-center justify-center shrink-0">
                   {company.logo ? (
-                    <img
+                    <Image
                       src={`${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}`}
                       className="size-10 object-contain rounded-lg"
                       alt=""
+                      width={40}
+                      height={40}
                     />
                   ) : (
                     <Building2 className="size-5 text-gray-300" />

@@ -23,6 +23,14 @@ import { ROLES } from "@/modules/shared/constants/employee";
 import { useVerifyOtp, useOtpFlow } from "@/modules/auth/shared/hooks";
 import { authApi } from "@/modules/auth/shared/api";
 
+interface InvitationDetails {
+  email?: string;
+  role?: string;
+  company?: { name?: string; email?: string };
+  invitedBy?: { name?: string };
+  expiresAt?: string;
+}
+
 // Map legacy backend role strings → ROLES array value
 const ROLE_VALUE_MAP: Record<string, string> = {
   RH:         "hr",
@@ -96,8 +104,9 @@ const JoinTeamPage: React.FC = () => {
       localStorage.setItem("userType", "Employee");
       otpFlow.timer.start();
       setStep("otp");
-    } catch (err: any) {
-      const msg = err?.response?.data?.message ?? err?.message ?? "Failed to accept invitation. Please try again.";
+    } catch (err: unknown) {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = axiosErr?.response?.data?.message ?? axiosErr?.message ?? "Failed to accept invitation. Please try again.";
       setAcceptError(msg);
     }
   };
@@ -151,9 +160,10 @@ const JoinTeamPage: React.FC = () => {
   }
 
   // ── Resolve role + company ────────────────────────────────────────────────
-  const roleStr     = (inv as any).role as string | undefined;
+  const invDetails  = inv as InvitationDetails;
+  const roleStr     = invDetails.role;
   const role        = resolveRole(roleStr);
-  const companyName = (inv as any).company?.name || (inv as any).invitedBy?.name || (inv as any).company?.email || "Your Company";
+  const companyName = invDetails.company?.name || invDetails.invitedBy?.name || invDetails.company?.email || "Your Company";
   const RoleIcon    = role.Icon;
 
   return (
@@ -201,11 +211,11 @@ const JoinTeamPage: React.FC = () => {
           {inv.email && (
             <InfoRow icon={<Mail />} label="Email" value={inv.email} iconColor="#0891B2" />
           )}
-          {(inv as any).expiresAt && (
+          {invDetails.expiresAt && (
             <InfoRow
               icon={<Clock />}
               label="Expires"
-              value={new Date((inv as any).expiresAt).toLocaleDateString("en-US", {
+              value={new Date(invDetails.expiresAt).toLocaleDateString("en-US", {
                 month: "short", day: "numeric", year: "numeric",
               })}
               iconColor="var(--color-muted-foreground, #94a3b8)"

@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import Image from "next/image";
 import { Check } from "lucide-react";
 import { useLanguage, type LanguageOption } from "@/hooks/useLanguage";
 import {
@@ -17,9 +18,9 @@ interface Props {
 
 
 const Flag: React.FC<{ code: string; label: string; size?: number }> = ({ code, label, size = 18 }) => (
-  <img
-    src={`https://flagcdn.com/w40/${code}.png`}
-    srcSet={`https://flagcdn.com/w80/${code}.png 2x`}
+  <Image
+    src={`https://flagcdn.com/w80/${code}.png`}
+    unoptimized
     width={size}
     height={Math.round(size * 0.72)}
     alt={label}

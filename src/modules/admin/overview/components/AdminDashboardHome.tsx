@@ -8,6 +8,7 @@ import {
   useAdminStatsQuery, useAdminUsersForMapQuery, useAdminUserGrowthQuery, useSkillDistribution,
   useAdminRevenueSummaryQuery, useAdminRecentSignupsQuery,
 } from '../queries';
+import type { AdminMapUser } from '../types';
 import AdminHeader from './AdminHeader';
 import AdminStatsCards from './AdminStatsCards';
 import AdminWorldMap from './AdminWorldMap';
@@ -62,7 +63,7 @@ const AdminDashboardHome: React.FC = () => {
   const skillDistribution = useSkillDistribution(stats?.hardSkillsPercentage, stats?.softSkillsPercentage);
 
   const processUserLocations = useMemo(() => {
-    const locationMap = new Map<string, { count: number; users: any[] }>();
+    const locationMap = new Map<string, { count: number; users: AdminMapUser[] }>();
     allUsersForMap.forEach((user) => {
       if (user.Localisation) {
         const locationParts = user.Localisation.split(',').map((part: string) => part.trim());

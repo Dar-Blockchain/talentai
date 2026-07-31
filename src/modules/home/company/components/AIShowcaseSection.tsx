@@ -124,8 +124,8 @@ const AIShowcaseSection: React.FC = () => {
                     >
                       <Counter
                         target={s.target}
-                        prefix={(s as any).prefix}
-                        suffix={(s as any).suffix}
+                        prefix={s.prefix}
+                        suffix={s.suffix}
                         started={started}
                       />
                     </span>

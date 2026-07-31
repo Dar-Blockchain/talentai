@@ -3,6 +3,7 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { type RootState } from '@/store/store';
 import { useCampaignInterviewConfig, type CampaignModuleType } from '../hooks/useCampaignInterviewConfig';
+import type { InterviewConfig } from '../../shared/types/interview';
 import { useInterviewSession } from '../../shared/hooks/useInterviewSession';
 import InterviewScreen from '../../shared/components/session/InterviewScreen';
 import InterviewLoadingScreen from '../../shared/components/layout/InterviewLoadingScreen';
@@ -41,8 +42,8 @@ export default function CampaignInterviewFlow({
   } = useCampaignInterviewConfig(overrides);
 
   const session = useInterviewSession({
-    interviewConfig: interviewConfig as any,
-    setInterviewConfig: setInterviewConfig as any,
+    interviewConfig,
+    setInterviewConfig: setInterviewConfig as (config: InterviewConfig) => void,
     authUser,
     jobData: null,
     namespace: '/campaign-interview',
@@ -76,7 +77,7 @@ export default function CampaignInterviewFlow({
   return (
     <InterviewScreen
       session={session}
-      configData={{ jobData: null, interviewConfig: interviewConfig as any }}
+      configData={{ jobData: null, interviewConfig }}
       titleOverride={sessionTitle}
       backLabel={t('back_to_campaign')}
       onBack={onBack}

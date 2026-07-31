@@ -1,10 +1,40 @@
 type ToastFn = (params: { message: string; severity: "error" | "success" | "info" | "warning" }) => void;
 
+interface ValidationSalary {
+  currency?: string;
+  min?: number | string | null;
+  max?: number | string | null;
+}
+
+interface ValidationSkillItem {
+  percentage?: number;
+}
+
+interface ValidationJobDetails {
+  title?: string;
+  experienceLevel?: string;
+  description?: string;
+  employmentType?: string;
+  workMode?: string;
+  location?: string;
+  salary?: ValidationSalary;
+  requirements?: unknown[];
+  responsibilities?: unknown[];
+}
+
+interface ValidationPostData {
+  jobDetails?: ValidationJobDetails;
+  skillAnalysis?: {
+    requiredSkills?: ValidationSkillItem[];
+    softSkills?: ValidationSkillItem[];
+  };
+}
+
 /* =========================
    AI POST – STEP 0
 ========================= */
 export const validateAIPostStep0 = (
-  generatedPost: any,
+  generatedPost: ValidationPostData | null | undefined,
   showToast: ToastFn
 ): boolean => {
   const jobDetails = generatedPost?.jobDetails;
@@ -78,7 +108,7 @@ export const validateAIPostStep0 = (
    MANUAL POST – STEP 0
 ========================= */
 export const validateManualPostStep0 = (
-  manualPost: any,
+  manualPost: ValidationPostData | null | undefined,
   showToast: ToastFn
 ): boolean => {
   const jobDetails = manualPost?.jobDetails;
@@ -104,7 +134,7 @@ export const validateManualPostStep0 = (
 /* =========================
    SHARED SALARY VALIDATION
 ========================= */
-const validateSalary = (salary: any, showToast: ToastFn, employmentType?: string): boolean => {
+const validateSalary = (salary: ValidationSalary | null | undefined, showToast: ToastFn, employmentType?: string): boolean => {
   const isInternship = employmentType === "Internship";
 
   if (!salary?.currency) {
@@ -145,7 +175,7 @@ const validateSalary = (salary: any, showToast: ToastFn, employmentType?: string
 ========================= */
 
 export const validateEditPost = (
-  values: any,
+  values: ValidationPostData | null | undefined,
   showToast: ToastFn,
   creationType?: string
 ): boolean => {

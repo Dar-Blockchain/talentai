@@ -7,6 +7,7 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import SkillInterviewCard from "@/modules/candidate/interviews/components/SkillInterviewCard";
 import { useSkillAssessmentsQuery } from "@/modules/candidate/interviews/queries/useInterviewsQuery";
+import type { SkillInterviewAssessment } from "@/modules/candidate/interviews/types/interview.types";
 import SectionHeader from "./SectionHeader";
 
 const SkillSkeleton = () => (
@@ -32,7 +33,7 @@ const scoreBg = (n: number) =>
   n >= 60 ? "bg-primary-light border-primary-border" :
   n >= 40 ? "bg-warning/10 border-warning/20" : "bg-danger/10 border-danger/20";
 
-const getSkillScore = (a: any): number =>
+const getSkillScore = (a: SkillInterviewAssessment): number =>
   a.interviewData?.finalReport?.scores?.overall ??
   (a.interviewData?.finalReport?.coverage?.overall ?? 0);
 

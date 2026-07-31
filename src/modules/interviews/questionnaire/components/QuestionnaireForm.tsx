@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
 import { Textarea } from '@/modules/shared/ui/shadcn/textarea';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
 import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
@@ -18,6 +18,7 @@ import {
   X as CloseIcon,
 } from 'lucide-react';
 import { Question, QuestionType } from '@/modules/company/campaigns/types/campaign';
+import axios, { type AxiosError } from 'axios';
 import axiosInstance from '@/utils/axiosInstance';
 import { QuestionnaireResultsPanel } from './QuestionnaireResultsPanel';
 
@@ -330,8 +331,11 @@ const QuestionnaireForm: React.FC<Props> = ({ campaignId, campaignTitle, partici
       // Clear draft from localStorage on successful submit
       try { localStorage.removeItem(draftKey); } catch {}
       setDone(true);
-    } catch (err: any) {
-      setError(err?.response?.data?.error ?? 'Submission failed. Please try again.');
+    } catch (err) {
+      const message = axios.isAxiosError(err)
+        ? (err as AxiosError<{ error?: string }>).response?.data?.error
+        : undefined;
+      setError(message ?? 'Submission failed. Please try again.');
     } finally {
       setSubmitting(false);
     }

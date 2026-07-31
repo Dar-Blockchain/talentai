@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import { RootState } from "@/store/store";
 import DashboardStats      from "./DashboardStats";
 import RecentApplications  from "./RecentApplications";
 import QuickActionCard     from "./QuickActionCard";
@@ -7,7 +8,7 @@ import SkillsSnapshot      from "./SkillsSnapshot";
 import AssessmentModal     from "@/modules/candidate/interviews/components/AssessmentModal";
 
 const CandidateDashboard: React.FC = () => {
-  const connectedUser = useSelector((state: any) => state.user.connectedUser);
+  const connectedUser = useSelector((state: RootState) => state.user.connectedUser);
   const firstName     = connectedUser?.profile?.firstName || connectedUser?.user?.firstName || "";
 
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -22,7 +23,7 @@ const CandidateDashboard: React.FC = () => {
               Welcome back, {firstName}
             </h1>
             <p className="text-[0.75rem] text-gray-400 mt-0.5">
-              Here's what's happening with your job search
+              Here&apos;s what&apos;s happening with your job search
             </p>
           </div>
         )}

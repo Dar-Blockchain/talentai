@@ -89,8 +89,14 @@ const EditCampaignModal = memo<Props>(({ open, campaign, onClose, onSaved }) => 
       } as Partial<Campaign>);
       onSaved(updated);
       onClose();
-    } catch (e: any) {
-      setError(e?.message || t(`${m}.error_save_failed`));
+    } catch (e: unknown) {
+      const message =
+        e instanceof Error
+          ? e.message
+          : typeof e === "object" && e !== null && "message" in e
+            ? String((e as { message?: unknown }).message)
+            : undefined;
+      setError(message || t(`${m}.error_save_failed`));
     }
   }, [title, description, deadline, anonymityMode, accessMethod, moduleChanged, moduleType, campaign, updateMut, onSaved, onClose, t, m]);
 

@@ -9,7 +9,17 @@ import { KpiCard } from "../KpiAtoms";
 import { ChartTooltip, GRAY } from "../../utils/kpiTokens";
 
 const STALE = 60_000;
-const sel = (r: any) => r.data?.data ?? r.data;
+
+interface DepartmentStats {
+  byDepartment?: Array<{ name: string; members: number }>;
+}
+
+// The API sometimes wraps the payload as `{ data: T }` and sometimes returns
+// `T` directly, so we accept `unknown` here and cast to the declared shape.
+const sel = (r: { data: unknown }): DepartmentStats => {
+  const body = r.data as { data?: DepartmentStats } | undefined;
+  return (body?.data ?? body) as DepartmentStats;
+};
 const fetchDepartmentStats = () => axiosInstance.get("departments/stats").then(sel);
 
 const BAR_COLOR = "#0EA5E9";
@@ -35,7 +45,7 @@ const MembersByDepartment = memo(() => {
             <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
             <XAxis type="number" allowDecimals={false} tick={{ fontFamily: "Poppins", fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} />
             <YAxis type="category" dataKey="name" width={110} tick={{ fontFamily: "Poppins", fontSize: 11, fill: GRAY }} axisLine={false} tickLine={false} />
-            <RechartsTooltip {...ChartTooltip} formatter={(v: any) => [v, t("team.by_department.members", "Members")]} />
+            <RechartsTooltip {...ChartTooltip} formatter={(v: number) => [v, t("team.by_department.members", "Members")]} />
             <Bar dataKey="members" radius={[0, 6, 6, 0]} barSize={16}>
               {byDepartment.map((_, i) => <Cell key={i} fill={BAR_COLOR} fillOpacity={1 - i * 0.07} />)}
             </Bar>

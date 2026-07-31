@@ -10,7 +10,7 @@ import { resolveUploadUrl } from "@/utils/resolveUploadUrl";
 import { pickLocalized } from "@/utils/pickLocalized";
 import { useLanguage } from "@/hooks/useLanguage";
 import { SITE_URL, OG_IMAGE, LOGO_URL } from "@/modules/shared/constants";
-import { ArrowLeft, Newspaper, Eye } from "lucide-react";
+import { ArrowLeft, Eye } from "lucide-react";
 
 /** Backfills any relative "/uploads/..." src left over from posts saved before
  * uploads were stored as absolute URLs — new posts already store absolute URLs. */

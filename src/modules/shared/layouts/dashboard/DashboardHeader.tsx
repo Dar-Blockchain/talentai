@@ -46,9 +46,9 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen, hideMenuButto
             <Image
               src="/logo.svg"
               alt="TalentAI"
-              width={130}
+              width={129}
               height={36}
-              className="h-9 w-auto object-contain"
+              className="h-9 w-32.25 object-contain"
               priority
             />
           </Link>

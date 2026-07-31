@@ -1,4 +1,4 @@
-import React, { memo, useCallback, useMemo, useRef, useState } from "react";
+import React, { memo, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   Search, ArrowDownUp, Users, Briefcase, CalendarDays,
@@ -14,7 +14,6 @@ import {
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
-import { cn } from "@/lib/utils";
 
 interface Props {
   searchInput: string;

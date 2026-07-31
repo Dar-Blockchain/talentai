@@ -4,6 +4,7 @@ import type {
   FetchMembersFilters,
   AddMemberPayload,
   UpdateRolePayload,
+  Invitation,
 } from "@/modules/company/members/types";
 
 export const employeesApi = {
@@ -133,6 +134,6 @@ export const employeesApi = {
     const res = await axiosInstance.get(
       `company-invitations/byDepartment/${departmentId}`,
     );
-    return (res.data.invitations || res.data) as any[];
+    return (res.data.invitations || res.data) as Invitation[];
   },
 };

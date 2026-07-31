@@ -120,7 +120,7 @@ export const buildSyncedProfile = (reduxProfile?: ConnectedUserProfile, user?: C
     personalWebsite: reduxProfile?.personalWebsite || reduxProfile?.contactInformation?.personalWebsite || '',
     location: reduxProfile?.location || reduxProfile?.contactInformation?.location || '',
     avatar: getAvatarUrl(reduxProfile, userData),
-    resume: (reduxProfile as any)?.resume || '',
+    resume: (reduxProfile as ConnectedUserProfile & { resume?: string })?.resume || '',
     profileType: (isCompany ? 'Company' : 'Candidate') as 'Candidate' | 'Company',
     companyName: reduxProfile?.companyDetails?.name || '',
     name: reduxProfile?.companyDetails?.name || '',

@@ -4,6 +4,7 @@ import { useSelector } from "react-redux";
 import { useRouter } from "next/router";
 import { Mail, MessageCircle, X, Send, CheckCircle2 } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
+import axios from "axios";
 import axiosInstance from "@/utils/axiosInstance";
 import { RootState } from "@/store/store";
 import {
@@ -17,7 +18,6 @@ import {
   DialogContent,
 } from "@/modules/shared/ui/shadcn/dialog";
 import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
-import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 
 function initials(first?: string | null, last?: string | null) {
@@ -96,8 +96,10 @@ const ContactCandidateModal: React.FC<ContactCandidateModalProps> = ({ open, tar
       });
       setSent(true);
       setTimeout(onClose, 2000);
-    } catch (e: any) {
-      setError(e.response?.data?.error || e.message || t("pages.applications.contact_modal.error_email"));
+    } catch (e) {
+      const fallback = e instanceof Error ? e.message : undefined;
+      const apiError = axios.isAxiosError<{ error?: string }>(e) ? e.response?.data?.error : undefined;
+      setError(apiError || fallback || t("pages.applications.contact_modal.error_email"));
     } finally {
       setSending(false);
     }

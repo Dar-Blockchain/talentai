@@ -9,9 +9,10 @@ import CardQrDialog from "./cards/CardQrDialog";
 import { getDaysLeft, getPostShareLink, copyToClipboard } from "../utils";
 import { useToast } from "@/hooks/useToast";
 import { useDepartmentList } from "@/modules/company/departments/hooks";
+import type { JobPost } from "../types";
 
 interface JobPostCardProps {
-  job: any;
+  job: JobPost;
   index?: number;
   onDelete: (id: string) => void;
   onViewDetails: (id: string) => void;

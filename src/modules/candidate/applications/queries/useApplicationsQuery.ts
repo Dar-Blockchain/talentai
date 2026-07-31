@@ -32,7 +32,7 @@ export const useApplicationsQuery = (params: ApplicationsParams = {}) =>
   });
 
 export const useApplicationStatsQuery = () =>
-  useQuery<CandidateStats & { success?: boolean; monthly?: any[] }>({
+  useQuery<CandidateStats & { success?: boolean; monthly?: Record<string, unknown>[] }>({
     queryKey:  APPLICATION_KEYS.stats(),
     queryFn:   fetchCandidateApplicationStats,
     staleTime: 60_000,

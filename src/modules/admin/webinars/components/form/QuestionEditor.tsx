@@ -317,7 +317,7 @@ export function QuestionEditor({
               ))}
               {q.options.length === 0 && (
                 <p className="text-[11px] text-slate-300 italic">
-                  No options yet — click "Add option"
+                  No options yet — click &quot;Add option&quot;
                 </p>
               )}
               {q.options.length === 1 && (

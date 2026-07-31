@@ -37,6 +37,7 @@ import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 import { cn } from "@/lib/utils";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
+import type { JobDetail } from "@/modules/company/posts/details/types";
 
 const DOT = <span className="text-[12px] text-[#D1D5DB]">·</span>;
 
@@ -52,7 +53,7 @@ const actionBtnClass =
   "flex h-9 cursor-pointer items-center gap-1.5 rounded-[10px] border-[1.5px] px-3.5 transition-colors duration-150";
 
 interface Props {
-  job: any;
+  job: JobDetail;
   isOwner: boolean;
   activeTab: "details" | "applications";
   menuAnchor: HTMLElement | null;

@@ -1,5 +1,6 @@
 import { useState, useCallback } from "react";
 import { useRouter } from "next/router";
+import axios from "axios";
 import { useSelector } from "react-redux";
 import { RootState } from "@/store/store";
 import {
@@ -20,7 +21,7 @@ export function useEmployeeDetail(id: string | undefined) {
   const updateRoleMut = useUpdateRoleMutation();
   const removeMut     = useRemoveMemberMutation();
 
-  const memberData = (memberRaw as any)?.data ?? memberRaw;
+  const memberData = (memberRaw as { data?: ExtendedMember } | undefined)?.data ?? memberRaw;
   const member     = (memberData as ExtendedMember | null) ?? null;
 
   const [editModalOpen,    setEditModalOpen]    = useState(false);
@@ -49,8 +50,10 @@ export function useEmployeeDetail(id: string | undefined) {
         showToast({ message: "Team member removed successfully!", severity: "success" });
         router.push("/company/employees");
       },
-      onError: (err: any) => {
-        const msg = err?.response?.data?.message ?? "Failed to remove member";
+      onError: (err) => {
+        const msg = axios.isAxiosError<{ message?: string }>(err)
+          ? err.response?.data?.message ?? "Failed to remove member"
+          : "Failed to remove member";
         showToast({ message: msg, severity: "error" });
       },
     });

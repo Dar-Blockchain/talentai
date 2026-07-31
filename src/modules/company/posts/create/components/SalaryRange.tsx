@@ -6,7 +6,7 @@ import CurrencyDropdown from "./salary-range/CurrencyDropdown";
 import SalaryInput from "./salary-range/SalaryInput";
 
 interface SalaryRangeProps {
-  salaryRange: { currency: string; min: number; max: number };
+  salaryRange: { currency: string; min: number | string; max: number | string };
   onSalaryChange: (field: "min" | "max" | "currency", value: number | string) => void;
   errors?: { currency?: string; min?: string; max?: string };
   currencies?: { value: string; label: string }[];
@@ -33,7 +33,7 @@ const SalaryRange: React.FC<SalaryRangeProps> = ({
       value = value.replace(/^0+/, "");
       // For non-internship roles, treat empty input as empty (not 0)
       if (value === "") {
-        onSalaryChange(field, isInternship ? 0 : ("" as any));
+        onSalaryChange(field, isInternship ? 0 : "");
         return;
       }
       onSalaryChange(field, Number(value));

@@ -128,7 +128,11 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
   }), [results, debounced, scoreTab]);
 
   const handleArchiveToggle = useCallback((a: SkillInterviewAssessmentData) => {
-    a.archived ? unarchiveMutation.mutate(a._id) : archiveMutation.mutate(a._id);
+    if (a.archived) {
+      unarchiveMutation.mutate(a._id);
+    } else {
+      archiveMutation.mutate(a._id);
+    }
   }, [archiveMutation, unarchiveMutation]);
 
   const handleDeleteRequest = useCallback((a: SkillInterviewAssessmentData) => { setDeleteTarget(a); }, []);

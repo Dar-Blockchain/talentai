@@ -20,7 +20,7 @@ import { DEFAULT_EMPLOYEE_PERMISSIONS } from "@/modules/company/employees/types/
 import type { EmployeePermission } from "@/modules/company/employees/types/permissions";
 import type { ExtendedMember } from "@/modules/company/employees/types";
 import { employeesApi } from "@/modules/company/employees/api";
-import { PURPLE, ROLE_STYLES, STATUS_STYLES, pickPalette, fmtDate } from "@/modules/company/employees/constants";
+import { ROLE_STYLES, STATUS_STYLES, pickPalette, fmtDate } from "@/modules/company/employees/constants";
 import DetailTab from "./DetailTab";
 import OverviewTab from "./OverviewTab";
 import PermissionsTab from "./PermissionsTab";
@@ -96,10 +96,10 @@ const EmployeeDetail: React.FC<EmployeeDetailProps> = memo(({
 
   const handleSavePermissions = useCallback(() => {
     updatePermMut.mutate(permissions, {
-      onSuccess: (updated: any) => {
+      onSuccess: (updated) => {
         setSaved(true);
-        const p = (updated as any)?.data ?? updated;
-        if (p) setPermissions(p as Partial<EmployeePermission>);
+        const p = updated?.data ?? updated;
+        if (p) setPermissions(p);
         setTimeout(() => setSaved(false), 2500);
       },
     });

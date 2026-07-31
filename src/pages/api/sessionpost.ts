@@ -63,7 +63,8 @@ export default async function handler(
           success: true
         });
 
-      } catch (sdkError: any) {
+      } catch (sdkErrorRaw: unknown) {
+        const sdkError = sdkErrorRaw as { name?: string; message?: string; status?: number; code?: string };
         console.error('❌ AssemblyAI SDK Error:', {
           name: sdkError?.name,
           message: sdkError?.message,
@@ -113,11 +114,11 @@ export default async function handler(
       allowed: ['GET', 'POST']
     });
 
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('❌ Unexpected error in session API:', error);
     return res.status(500).json({
       error: 'Server error',
-      details: error?.message || 'Unknown error',
+      details: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 }

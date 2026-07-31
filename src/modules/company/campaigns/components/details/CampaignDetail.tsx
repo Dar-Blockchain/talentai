@@ -87,7 +87,7 @@ const CampaignDetail: React.FC<Props> = memo(
 
     const deleteMut = useDeleteCampaignMutation();
     const participantsTotal = campaign.participantCount ?? 0;
-    const sessionsTotal = (campaign as any).sessionCount ?? 0;
+    const sessionsTotal = campaign.sessionCount ?? 0;
     const deleteLoading = deleteMut.isPending;
 
     const participantStatusLabel = useCallback(

@@ -127,8 +127,8 @@ export const ELIGIBILITY_CFG: Record<EligibilityStatus, {
     iconCls:  'text-amber-500',
     title:    "You've already completed this campaign",
     subtitle: (c) =>
-      (c as any)?.score != null
-        ? `Your score: ${(c as any).score}/100. Great work!`
+      c?.score != null
+        ? `Your score: ${c.score}/100. Great work!`
         : 'You have already submitted your responses.',
   },
   error: {

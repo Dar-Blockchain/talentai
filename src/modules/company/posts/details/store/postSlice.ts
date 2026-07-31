@@ -1,27 +1,24 @@
 import { createSlice, createAsyncThunk, PayloadAction } from "@reduxjs/toolkit";
 import { postService } from "../api/postService";
+import type { JobDetail } from "../types";
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-interface PaginationState {
-  total: number; page: number; limit: number;
-  totalPages: number; hasNextPage: boolean; hasPrevPage: boolean;
+interface UpdatePostResult {
+  success: boolean;
+  jobData: JobDetail;
 }
 
 interface PostDetailsState {
-  steps: any[];
-  currentJob: any | null;
+  steps: unknown[];
+  currentJob: JobDetail | null;
   currentJobLoading: boolean;
   currentJobError: string | null;
-  savePost: { loading: boolean; error: string | null; savedPost: any };
-  assessmentDetails:    { assessment: any | null; stepsData: any | null; loading: boolean; error: string | null };
+  savePost: { loading: boolean; error: string | null; savedPost: UpdatePostResult | null };
+  assessmentDetails:    { assessment: unknown | null; stepsData: unknown | null; loading: boolean; error: string | null };
 }
 
 // ── Initial state ─────────────────────────────────────────────────────────────
-
-const defaultPagination: PaginationState = {
-  total: 0, page: 1, limit: 10, totalPages: 0, hasNextPage: false, hasPrevPage: false,
-};
 
 const initialState: PostDetailsState = {
   steps: [],
@@ -34,27 +31,32 @@ const initialState: PostDetailsState = {
 
 // ── Thunks ────────────────────────────────────────────────────────────────────
 
+interface ApiErrorLike {
+  response?: { data?: { message?: string } };
+  message?: string;
+}
+
 export const fetchJobById = createAsyncThunk(
   "postDetails/fetchJobById",
   async (jobId: string, { rejectWithValue }) => {
     try { return await postService.fetchJobById(jobId); }
-    catch (err: any) { return rejectWithValue(err.response?.data?.message || err.message || "Error fetching job"); }
+    catch (e: unknown) { const err = e as ApiErrorLike; return rejectWithValue(err.response?.data?.message || err.message || "Error fetching job"); }
   }
 );
 
 export const updateJobDetails = createAsyncThunk(
   "postDetails/updatePost",
-  async ({ jobId, jobData }: { jobId: string | number; jobData: any }, { rejectWithValue }) => {
+  async ({ jobId, jobData }: { jobId: string | number; jobData: Partial<JobDetail> }, { rejectWithValue }) => {
     try { return await postService.updatePost(jobId, jobData); }
-    catch (err: any) { return rejectWithValue(err.response?.data?.message || err.message || "Error updating post"); }
+    catch (e: unknown) { const err = e as ApiErrorLike; return rejectWithValue(err.response?.data?.message || err.message || "Error updating post"); }
   }
 );
 
-export const fetchAssessmentDetails = createAsyncThunk<{ assessment: any; stepsData: any | null }, string>(
+export const fetchAssessmentDetails = createAsyncThunk<{ assessment: unknown; stepsData: unknown | null }, string>(
   "postDetails/fetchAssessmentDetails",
   async (id, { rejectWithValue }) => {
     try { return await postService.fetchAssessmentDetails(id); }
-    catch (err: any) { return rejectWithValue(err.response?.data?.message || err.message || "Error fetching assessment details"); }
+    catch (e: unknown) { const err = e as ApiErrorLike; return rejectWithValue(err.response?.data?.message || err.message || "Error fetching assessment details"); }
   }
 );
 
@@ -70,7 +72,7 @@ const postDetailsSlice = createSlice({
   extraReducers: (builder) => {
     builder
       .addCase(fetchJobById.pending,   (state) => { state.currentJobLoading = true;  state.currentJobError = null; state.currentJob = null; })
-      .addCase(fetchJobById.fulfilled, (state, action: PayloadAction<any>) => { state.currentJobLoading = false; state.currentJob = action.payload; })
+      .addCase(fetchJobById.fulfilled, (state, action: PayloadAction<JobDetail>) => { state.currentJobLoading = false; state.currentJob = action.payload; })
       .addCase(fetchJobById.rejected,  (state, action) => { state.currentJobLoading = false; state.currentJobError = action.payload as string; })
 
       .addCase(updateJobDetails.pending,   (state) => { state.savePost.loading = true;  state.savePost.error = null; })
@@ -101,4 +103,9 @@ export const selectAssessmentDetailsLoading       = (s: S) => s.postDetails.asse
 export const selectAssessmentDetailsError         = (s: S) => s.postDetails.assessmentDetails.error;
 
 export const selectSavePostLoading                = (s: S) => s.postDetails.savePost.loading;
-export const selectSavedPostId                    = (s: S) => (s.postDetails.savePost.savedPost?.data?._id as string) ?? null;
+export const selectSavedPostId                    = (s: S) => {
+  // `savedPost` is `{ success, jobData }` — this selector predates that shape and has
+  // never matched it at runtime; kept as-is (always resolves to null) to avoid behavior changes.
+  const saved = s.postDetails.savePost.savedPost as unknown as { data?: { _id?: string } } | null;
+  return saved?.data?._id ?? null;
+};

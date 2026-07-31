@@ -3,6 +3,7 @@ import { useDispatch } from 'react-redux';
 import type { AppDispatch } from '@/store/store';
 import { setConnectedUser } from '@/store/slices/userSlice';
 import { profileKeys } from '@/modules/settings/shared';
+import type { ProfileApiResponse } from '@/modules/settings/shared/types';
 import { candidateApi } from '../api';
 
 export const useCandidateProfile = () =>
@@ -21,7 +22,7 @@ export const useUpdateCandidateProfile = () => {
     onSuccess: (data) => {
       if (!data?.profile) return;
       dispatch(setConnectedUser({ profile: data.profile }));
-      queryClient.setQueryData(profileKeys.me, (old: any) =>
+      queryClient.setQueryData(profileKeys.me, (old: ProfileApiResponse | undefined) =>
         old ? { ...old, profile: data.profile } : old
       );
     },
@@ -37,7 +38,7 @@ export const useUploadCandidateAvatar = () => {
     onSuccess: (data) => {
       if (!data?.profile) return;
       dispatch(setConnectedUser({ profile: data.profile }));
-      queryClient.setQueryData(profileKeys.me, (old: any) =>
+      queryClient.setQueryData(profileKeys.me, (old: ProfileApiResponse | undefined) =>
         old ? { ...old, profile: data.profile } : old
       );
     },

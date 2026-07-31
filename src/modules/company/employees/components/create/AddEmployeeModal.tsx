@@ -24,6 +24,8 @@ import {
 import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
 import { cn } from "@/lib/utils";
 import { emailSchema } from "@/lib/validation/email";
+import type { Department } from "@/modules/company/departments/types";
+import axios from "axios";
 
 type RoleOption = typeof ROLES[number];
 
@@ -45,7 +47,8 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
   );
 
   const { data: deptsRaw, isLoading: departmentsLoading } = useDepartmentsQuery();
-  const departments = (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
+  const departments: Department[] =
+    (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as { data?: Department[] } | undefined)?.data) ?? [];
 
   const [email,        setEmail]        = useState("");
   const [role,         setRole]         = useState<RoleOption>(ROLES.find(r => r.value === "hr")!);
@@ -94,8 +97,8 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
     try {
       await onSave(email, role.value, departmentId || undefined);
       onClose();
-    } catch (err: any) {
-      const data = err?.response?.data;
+    } catch (err) {
+      const data = axios.isAxiosError<{ code?: string; message?: string }>(err) ? err.response?.data : undefined;
       const code = data?.code ?? null;
       const msg =
         code === "EMAIL_ALREADY_EXISTS" ? m("error_email_exists") :
@@ -180,7 +183,7 @@ const AddEmployeeModal: React.FC<AddEmployeeModalProps> = React.memo(({
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="__none__">{m("no_department")}</SelectItem>
-                {departments.map((d: any) => (
+                {departments.map((d) => (
                   <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
                 ))}
               </SelectContent>

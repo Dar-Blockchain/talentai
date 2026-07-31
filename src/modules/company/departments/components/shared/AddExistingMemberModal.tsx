@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback, useMemo } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { UserCog, Search, X, Building2, Loader2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import {

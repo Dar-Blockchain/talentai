@@ -1,18 +1,21 @@
 import { InterviewConfig } from '../../shared/types/interview';
+import type { JobSalaryInfo } from '@/modules/company/posts/details/types';
 
 // ─── Job Post ──────────────────────────────────────────────────────────────────
 
-export interface JobSalary {
-  min?: number;
-  max?: number;
-  currency?: string;
-  period?: string;
-}
+/** @deprecated use `JobSalaryInfo` from `@/modules/company/posts/details/types` — kept as an alias so existing imports keep working. */
+export type JobSalary = JobSalaryInfo;
 
 export interface JobPostSkill {
   name: string;
   level?: string;
   type?: 'technical' | 'soft';
+}
+
+export interface JobSkillAnalysisEntry {
+  name: string;
+  level?: number;
+  percentage?: number;
 }
 
 export interface JobDetails {
@@ -22,7 +25,7 @@ export interface JobDetails {
   responsibilities?: string;
   workMode?: string;
   employmentType?: string;
-  salary?: JobSalary;
+  salary?: JobSalaryInfo;
   skills?: JobPostSkill[];
   technicalSkills?: JobPostSkill[];
   softSkills?: JobPostSkill[];
@@ -37,6 +40,11 @@ export interface JobPost {
   company?: { _id?: string; companyName?: string };
   profile?: { _id: string };
   jobDetails?: JobDetails;
+  /** Present on posts that went through AI skill extraction; read by `getPostSkills`. */
+  skillAnalysis?: {
+    requiredSkills?: JobSkillAnalysisEntry[];
+    softSkills?: JobSkillAnalysisEntry[];
+  };
   creationType?: 'regular' | 'standard';
   archived?: boolean;
   expirationDate?: string;
@@ -66,7 +74,7 @@ export interface PostAssessment {
     interviewType?: string;
     finalReport?: {
       scores?: { overall?: number };
-      coverage?: { overall?: number; areas?: Record<string, any> };
+      coverage?: { overall?: number; areas?: Record<string, unknown> };
       summary?: string;
       recommendations?: string[];
       aiAnalysis?: { strongestAreas?: string[]; weakestAreas?: string[]; recommendedFocus?: string[] };
@@ -83,7 +91,7 @@ export interface PostAssessment {
     };
     analytics?: { duration?: number; messageCount?: number; completedAreas?: number; totalAreas?: number; coveragePercentage?: number };
   };
-  candidatePostStepProgress?: any;
+  candidatePostStepProgress?: unknown;
   createdAt: string;
   updatedAt?: string;
   assessmentsCount?: number;

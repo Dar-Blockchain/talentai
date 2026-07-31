@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import { ArrowRight, Clock, Ban, DollarSign, AlertTriangle, CalendarClock, TrendingDown } from "lucide-react";
 import { Button }   from "@/modules/shared/ui/shadcn/button";
 import { motion, useInView, useMotionValue, useTransform, animate } from "framer-motion";

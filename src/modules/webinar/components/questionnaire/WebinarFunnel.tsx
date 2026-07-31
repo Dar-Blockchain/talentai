@@ -31,7 +31,7 @@ const hasAnswer = (v: unknown) => (Array.isArray(v) ? v.length > 0 : v !== undef
  * mounts, either via the register form or a resumed submission, so this
  * component owns only the step-by-step progress through it.
  */
-export function WebinarFunnel({ webinar, lang, initialContact, initialSubmissionId, initialConsent, welcomeBack }: {
+export function WebinarFunnel({ webinar, lang, initialContact, initialSubmissionId, welcomeBack }: {
   webinar: WebinarData;
   lang: "fr" | "en";
   initialContact: WebinarContact;

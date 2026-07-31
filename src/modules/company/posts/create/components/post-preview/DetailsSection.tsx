@@ -1,4 +1,5 @@
 import { TrendingUp as TrendingUpIcon, Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Building2 as DepartmentOutlined } from "lucide-react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
@@ -52,7 +53,7 @@ const DetailsSection = ({ title, employmentType, workMode, department, experienc
             <SelectContent>
               {contractTypes.map((c) => (
                 <SelectItem key={c} value={c} className="text-[13px]">
-                  {optionLabel(labelT as any, c, EMPLOYMENT_OPTION_KEY)}
+                  {optionLabel(labelT as TFunction<"posts">, c, EMPLOYMENT_OPTION_KEY)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -70,7 +71,7 @@ const DetailsSection = ({ title, employmentType, workMode, department, experienc
             <SelectContent>
               {workModes.map((m) => (
                 <SelectItem key={m} value={m} className="text-[13px]">
-                  {optionLabel(labelT as any, m, WORK_MODE_OPTION_KEY)}
+                  {optionLabel(labelT as TFunction<"posts">, m, WORK_MODE_OPTION_KEY)}
                 </SelectItem>
               ))}
             </SelectContent>
@@ -107,14 +108,14 @@ const DetailsSection = ({ title, employmentType, workMode, department, experienc
           <SelectContent>
             {experienceLevels.map((l) => (
               <SelectItem key={l} value={l} className="text-[13px]">
-                {optionLabel(labelT as any, l, EXPERIENCE_OPTION_KEY)}
+                {optionLabel(labelT as TFunction<"posts">, l, EXPERIENCE_OPTION_KEY)}
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       </div>
 
-      <SalaryRange salaryRange={salary as any} onSalaryChange={(field, value) => dispatch(updateJobSalaryField({ field, value }))} employmentType={employmentType} />
+      <SalaryRange salaryRange={salary} onSalaryChange={(field, value) => dispatch(updateJobSalaryField({ field, value }))} employmentType={employmentType} />
     </Card>
   );
 };

@@ -8,7 +8,7 @@ import DeleteCvDialog from "./DeleteCvDialog";
 
 interface Props {
   resumeFilename: string | null | undefined;
-  onUpdated: (filename: string, cvAnalysis?: any) => void;
+  onUpdated: (filename: string, cvAnalysis?: unknown) => void;
   onDeleted: () => void;
   compact?: boolean;
 }
@@ -47,8 +47,9 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
       await candidateApi.deleteResume();
       onDeleted();
       emitToast({ message: "CV removed.", severity: "success" });
-    } catch (err: any) {
-      setError(err?.response?.data?.error || err?.response?.data?.message || "Failed to remove CV. Please try again.");
+    } catch (err: unknown) {
+      const e = err as { response?: { data?: { error?: string; message?: string } } };
+      setError(e?.response?.data?.error || e?.response?.data?.message || "Failed to remove CV. Please try again.");
     } finally {
       setDeleting(false);
     }
@@ -71,10 +72,11 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
       onUpdated(filename, cvAnalysis);
       emitToast({ message: "CV uploaded and analysed successfully.", severity: "success" });
       setTimeout(() => setProgress(0), 800);
-    } catch (err: any) {
+    } catch (err: unknown) {
       clearInterval(tick);
       setProgress(0);
-      setError(err?.response?.data?.error || "Upload failed. Please try again.");
+      const e = err as { response?: { data?: { error?: string } } };
+      setError(e?.response?.data?.error || "Upload failed. Please try again.");
     } finally {
       setUploading(false);
       if (inputRef.current) inputRef.current.value = "";

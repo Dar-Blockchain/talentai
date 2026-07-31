@@ -41,7 +41,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
           onSaved(plan.name, 'updated');
           setTogglingName(null);
         },
-        onError: (err: any) => {
+        onError: (err: Error) => {
           onError(err?.message || 'Failed to update plan.');
           setTogglingName(null);
         },

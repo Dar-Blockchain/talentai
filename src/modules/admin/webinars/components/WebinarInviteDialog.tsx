@@ -101,7 +101,7 @@ export function WebinarInviteDialog({
               <h2 className="text-[17px] font-black text-slate-900">Invite people</h2>
             </DialogTitle>
             {webinarTitle && (
-              <p className="text-[12px] text-slate-400 mt-0.5">to "{webinarTitle}"</p>
+              <p className="text-[12px] text-slate-400 mt-0.5">to &quot;{webinarTitle}&quot;</p>
             )}
           </div>
           <Button

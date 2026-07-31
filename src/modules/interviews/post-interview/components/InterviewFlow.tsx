@@ -36,7 +36,7 @@ export default function InterviewFlow({ jobId: propJobId, onPhaseChange }: Inter
 
   useEffect(() => { onPhaseChange?.(step); }, [step, onPhaseChange]);
 
-  const { interviewConfig, setInterviewConfig, jobData, isJobLoading, isConfigLoading } = useInterviewConfig({
+  const { interviewConfig, setInterviewConfig, jobData, isConfigLoading } = useInterviewConfig({
     jobId: propJobId !== undefined ? propJobId : undefined,
   });
 

@@ -13,6 +13,11 @@ import { MODULE_META } from './constants';
 import { daysLeft, computeDeadlineBadge, resolveEligibility } from './helpers';
 import type { EligibilityStatus } from './types';
 
+interface ApiErrorLike {
+  response?: { data?: { message?: string; error?: string } };
+  message?: string;
+}
+
 export function useCampaignSession() {
   const router         = useRouter();
   const { campaignId } = router.query as { campaignId?: string };
@@ -69,8 +74,9 @@ export function useCampaignSession() {
         if (c.accessMethod === 'LINK' && c.anonymityMode === 'NOMINATIVE' && !isLoggedIn) {
           setShowIdentity(true);
         }
-      } catch (err: any) {
-        setFetchError(err?.response?.data?.message ?? err?.message ?? 'Failed to load campaign');
+      } catch (err) {
+        const e = err as ApiErrorLike;
+        setFetchError(e?.response?.data?.message ?? e?.message ?? 'Failed to load campaign');
         setEligibility('error');
       } finally {
         setLoading(false);
@@ -148,8 +154,9 @@ export function useCampaignSession() {
       } else {
         router.push(`/employee/campaigns/${resolvedId}`);
       }
-    } catch (err: any) {
-      setJoinError(err?.response?.data?.error ?? err?.response?.data?.message ?? err?.message ?? 'Failed to join campaign');
+    } catch (err) {
+      const e = err as ApiErrorLike;
+      setJoinError(e?.response?.data?.error ?? e?.response?.data?.message ?? e?.message ?? 'Failed to join campaign');
       setJoining(false);
     }
   }, [campaign, campaignId, token, isLoggedIn, profile, user, name, email, router]);

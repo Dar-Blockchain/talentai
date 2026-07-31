@@ -23,9 +23,9 @@ const BrandLeftPanel: React.FC<Props> = ({ tKey, flex = "0 0 45%" }) => {
           <Image
             src="/logo.svg"
             alt="TalentAI"
-            width={148}
+            width={129}
             height={36}
-            className="h-9 w-auto object-contain"
+            className="h-9 w-32.25 object-contain"
             priority
           />
         </NextLink>

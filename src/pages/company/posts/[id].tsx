@@ -14,6 +14,7 @@ import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
 
 const PostDetailsPage: NextPageWithLayout = () => {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const { t } = useTranslation("posts");
 
   const {

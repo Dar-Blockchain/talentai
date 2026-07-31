@@ -120,7 +120,6 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
   const {
     secondsLeft,
     isExpired,
-    isRunning,
     start: startTimer,
     clear: clearTimer,
   } = usePersistentCountdown({ ttl: CODE_TTL, storageKey: CODE_EXPIRY_KEY });
@@ -190,24 +189,8 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
         // not found → nudge them to register
         setApiError(t("onboarding.not_found_hint"));
       }
-    } catch (e: any) {
-      setApiError(e?.message ?? t("onboarding.error_generic"));
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  // "visit the login page" in company error → send OTP to that email and go to OTP step
-  const handleCompanyLoginInModal = async () => {
-    const trimmed = signinEmail.trim().toLowerCase();
-    setRoleError("");
-    setApiError("");
-    setLoading(true);
-    try {
-      await authApi.signin(trimmed);
-      goToOtp(trimmed);
-    } catch (e: any) {
-      setApiError(e?.message ?? t("onboarding.error_generic"));
+    } catch (e) {
+      setApiError(e instanceof Error ? e.message : t("onboarding.error_generic"));
     } finally {
       setLoading(false);
     }
@@ -274,19 +257,19 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
       await authApi.register(fd);
       setAnalyzingCv(false);
       goToOtp(email);
-    } catch (e: any) {
+    } catch (e) {
       setAnalyzingCv(false);
-      const msg = (e?.message ?? "").toLowerCase();
+      const msg = (e instanceof Error ? e.message : "").toLowerCase();
       if (msg.includes("already exists") || msg.includes("sign in")) {
         // Already verified → sign them in instead
         try {
           await authApi.signin(email);
           goToOtp(email);
-        } catch (e2: any) {
-          setApiError(e2?.message ?? t("onboarding.error_generic"));
+        } catch (e2) {
+          setApiError(e2 instanceof Error ? e2.message : t("onboarding.error_generic"));
         }
       } else {
-        setApiError(e?.message ?? t("onboarding.error_registration"));
+        setApiError(e instanceof Error ? e.message : t("onboarding.error_registration"));
       }
     } finally {
       setLoading(false);
@@ -370,8 +353,8 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
     try {
       await authApi.signin(otpEmail);
       startTimer();
-    } catch (e: any) {
-      setApiError(e?.message ?? t("onboarding.error_resend"));
+    } catch (e) {
+      setApiError(e instanceof Error ? e.message : t("onboarding.error_resend"));
     } finally {
       setLoading(false);
     }
@@ -433,6 +416,7 @@ const OnboardingModal: React.FC<OnboardingModalProps> = ({
 
             {/* logo */}
             <div className="flex justify-center mb-3">
+              {/* eslint-disable-next-line @next/next/no-img-element -- intrinsic-height-only sizing; avoiding next/image to not change layout behavior */}
               <img
                 src="/logo.svg"
                 alt="TalentAI"

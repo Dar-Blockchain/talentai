@@ -3,10 +3,10 @@ import { Video, Timer } from 'lucide-react';
 import { Button } from '@/modules/shared/ui/shadcn/button';
 import InterviewTimer from './InterviewTimer';
 import { useTranslation } from 'react-i18next';
-import { type InterviewConfig } from '../../types/interview';
+import { type InterviewConfig, type InterviewJobData } from '../../types/interview';
 
 interface Props {
-  jobData?: any;
+  jobData?: InterviewJobData | null;
   interviewConfig?: InterviewConfig | null;
   /** Overrides the computed job/assessment title (e.g. campaign title + module type for campaign interviews). */
   titleOverride?: string;

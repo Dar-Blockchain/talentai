@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from "react";
 import { TrendingUp as TrendingUpIcon } from "lucide-react";
 import Image from "next/image";
-import { useForm, Controller } from "react-hook-form";
+import { useForm, Controller, Path } from "react-hook-form";
 import { useUpdatePostMutation } from "@/modules/company/posts/details/queries";
 import { useToast } from "@/hooks/useToast";
 import { validateEditPost } from "@/validations/postValidation";
 import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
-import SkillEditorModal from "@/modules/company/posts/create/components/SkillEditorModal";
+import SkillEditorModal, { LocalSkill } from "@/modules/company/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/modules/company/posts/shared/constants";
 import { useDepartmentList } from "@/modules/company/departments/hooks";
 import { Button } from "@/modules/shared/ui/shadcn/button";
@@ -14,6 +14,7 @@ import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
 import { DatePicker } from "@/modules/shared/ui/DatePicker";
+import type { JobDetail, JobSalaryInfo } from "@/modules/company/posts/details/types";
 import EditSkillsSection from "./edit/EditSkillsSection";
 import EditThresholdScore from "./edit/EditThresholdScore";
 
@@ -23,9 +24,38 @@ const labelClass = "leading-[42px] text-[12px] font-medium text-[rgba(84,98,116,
 
 const sectionTitleClass = "text-[20px] font-semibold text-[rgba(84,98,116,1)]";
 
+// ── Form types ────────────────────────────────────────────────────────────────
+
+/** Skill shape once loaded into the edit form — level/percentage are always resolved to numbers here. */
+interface EditSkillEntry {
+  name: string;
+  level: number;
+  percentage: number;
+}
+
+interface EditPostFormValues {
+  jobDetails: {
+    title: string;
+    workMode: string;
+    employmentType: string;
+    department: string;
+    experienceLevel: string;
+    description: string;
+    requirements: string[];
+    responsibilities: string[];
+    salary: JobSalaryInfo;
+  };
+  skillAnalysis: {
+    requiredSkills?: EditSkillEntry[];
+    softSkills?: EditSkillEntry[];
+  };
+  expirationDate: string;
+  thresholdScore: number;
+}
+
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
-const getInitialValues = (job: any) => ({
+const getInitialValues = (job: JobDetail | null | undefined): EditPostFormValues => ({
   jobDetails: {
     title:           job?.jobDetails?.title           || "",
     workMode:        job?.jobDetails?.workMode        || "",
@@ -37,7 +67,8 @@ const getInitialValues = (job: any) => ({
     responsibilities: job?.jobDetails?.responsibilities || [],
     salary:          job?.jobDetails?.salary          || { min: 0, max: 0, currency: "USD" },
   },
-  skillAnalysis:  job?.skillAnalysis  || {},
+  // API skill entries may omit level/percentage; the edit form always works with resolved numbers.
+  skillAnalysis:  (job?.skillAnalysis as EditPostFormValues["skillAnalysis"]) || {},
   expirationDate: job?.expirationDate || "",
   thresholdScore: job?.thresholdScore ?? 50,
 });
@@ -45,7 +76,7 @@ const getInitialValues = (job: any) => ({
 // ── Component ─────────────────────────────────────────────────────────────────
 
 interface Props {
-  job: any;
+  job: JobDetail | null | undefined;
   onCancel: () => void;
   onSaveSuccess?: () => void;
 }
@@ -60,15 +91,15 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [selectedType,  setSelectedType]  = useState<"soft" | "hard">("hard");
 
-  const { register, handleSubmit, control, watch, setValue, reset } = useForm({
+  const { register, handleSubmit, control, watch, setValue, reset } = useForm<EditPostFormValues>({
     defaultValues: getInitialValues(job),
   });
 
   useEffect(() => { if (job) reset(getInitialValues(job)); }, [job, reset]);
 
-  const salary:         any   = watch("jobDetails.salary");
-  const requiredSkills: any[] = watch("skillAnalysis.requiredSkills") || [];
-  const softSkills:     any[] = watch("skillAnalysis.softSkills")     || [];
+  const salary:         JobSalaryInfo    = watch("jobDetails.salary");
+  const requiredSkills: EditSkillEntry[] = watch("skillAnalysis.requiredSkills") || [];
+  const softSkills:     EditSkillEntry[] = watch("skillAnalysis.softSkills")     || [];
 
   // ── Skill handlers ───────────────────────────────────────────────────────────
 
@@ -81,24 +112,26 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
   };
 
   const handleDelete = (index: number, type: "hard" | "soft") => {
-    const field   = type === "hard" ? "skillAnalysis.requiredSkills" : "skillAnalysis.softSkills";
+    const field: Path<EditPostFormValues> = type === "hard" ? "skillAnalysis.requiredSkills" : "skillAnalysis.softSkills";
     const updated = [...(type === "hard" ? requiredSkills : softSkills)];
     updated.splice(index, 1);
-    setValue(field as any, updated);
+    setValue(field, updated);
   };
 
-  const handleSaveSkill = (skill: any) => {
-    const field   = selectedType === "hard" ? "skillAnalysis.requiredSkills" : "skillAnalysis.softSkills";
+  const handleSaveSkill = (skill: LocalSkill) => {
+    // SkillEditorModal always resolves `level` to a number before calling onSave.
+    const resolved: EditSkillEntry = { name: skill.name, level: Number(skill.level), percentage: skill.percentage };
+    const field: Path<EditPostFormValues> = selectedType === "hard" ? "skillAnalysis.requiredSkills" : "skillAnalysis.softSkills";
     const updated = [...(selectedType === "hard" ? requiredSkills : softSkills)];
-    if (selectedIndex === null) updated.push(skill);
-    else updated[selectedIndex] = skill;
-    setValue(field as any, updated);
+    if (selectedIndex === null) updated.push(resolved);
+    else updated[selectedIndex] = resolved;
+    setValue(field, updated);
     setOpen(false);
   };
 
   // ── Submit ───────────────────────────────────────────────────────────────────
 
-  const onSubmit = async (values: any) => {
+  const onSubmit = async (values: EditPostFormValues) => {
     if (!validateEditPost(values, showToast, job?.creationType)) return;
     try {
       await updateMut.mutateAsync({
@@ -111,8 +144,9 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
       onCancel();
       showToast({ message: "Post details updated successfully", severity: "success" });
       onSaveSuccess?.();
-    } catch (err: any) {
-      showToast({ message: err?.message ?? "Failed to update post. Please try again.", severity: "error" });
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : undefined;
+      showToast({ message: message ?? "Failed to update post. Please try again.", severity: "error" });
     }
   };
 
@@ -251,7 +285,7 @@ const EditPostDetails: React.FC<Props> = ({ job, onCancel, onSaveSuccess }) => {
 
         <SalaryRange
           salaryRange={salary}
-          onSalaryChange={(field, value) => setValue(`jobDetails.salary.${field}` as any, value)}
+          onSalaryChange={(field, value) => setValue(`jobDetails.salary.${field}` as Path<EditPostFormValues>, value)}
           employmentType={watch("jobDetails.employmentType")}
         />
 

@@ -1,12 +1,12 @@
 import React from "react";
 import { Target as TrackChangesOutlined } from "lucide-react";
-import { Controller, Control } from "react-hook-form";
+import { Controller, Control, FieldValues, Path } from "react-hook-form";
 import { Slider } from "@/modules/shared/ui/shadcn/slider";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
-interface Props {
-  control: Control<any>;
+interface Props<TFieldValues extends FieldValues> {
+  control: Control<TFieldValues>;
 }
 
 const MARKS = [
@@ -15,7 +15,7 @@ const MARKS = [
   { value: 100, label: "100%" },
 ];
 
-const EditThresholdScore: React.FC<Props> = ({ control }) => (
+const EditThresholdScore = <TFieldValues extends FieldValues>({ control }: Props<TFieldValues>) => (
   <div className="mt-6">
     <div className="mb-2 flex items-center gap-2">
       <TrackChangesOutlined size={16} color={TEAL} />
@@ -28,7 +28,7 @@ const EditThresholdScore: React.FC<Props> = ({ control }) => (
     </p>
 
     <Controller
-      name="thresholdScore"
+      name={"thresholdScore" as Path<TFieldValues>}
       control={control}
       render={({ field }) => {
         const score = field.value as number;

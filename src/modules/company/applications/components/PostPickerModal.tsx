@@ -8,8 +8,6 @@ import { TEAL } from "./constants";
 import {
   Dialog,
   DialogContent,
-  DialogHeader,
-  DialogTitle,
 } from "@/modules/shared/ui/shadcn/dialog";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
 import { Button } from "@/modules/shared/ui/shadcn/button";

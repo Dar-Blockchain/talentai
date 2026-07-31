@@ -1,4 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
+import type { FaceLandmarker } from '@mediapipe/tasks-vision';
+
+type FaceApiModule = typeof import('@vladmandic/face-api');
 
 // MediaPipe FaceLandmarker — used only for FACE COUNT (multi-face detection).
 const MEDIAPIPE_WASM_URL =
@@ -67,7 +70,7 @@ export const useIdentityGuard = ({
   showNotification,
 }: UseIdentityGuardOptions): UseIdentityGuardReturn => {
   const rafRef = useRef<number | null>(null);
-  const landmarkerRef = useRef<any>(null);
+  const landmarkerRef = useRef<FaceLandmarker | null>(null);
   const lastCheckRef = useRef(0);
   const noFaceTicksRef = useRef(0);
   const multiFaceTicksRef = useRef(0);
@@ -82,7 +85,7 @@ export const useIdentityGuard = ({
   const identityCheckInProgressRef = useRef(false);
   const lastIdentityCheckRef = useRef(0);
   const faceapiReadyRef = useRef(false);
-  const faceapiRef = useRef<any>(null);
+  const faceapiRef = useRef<FaceApiModule | null>(null);
 
   // Callbacks change identity on every render of the parent — pin them in refs
   // so the init effect isn't torn down and rebuilt on every render.
@@ -265,7 +268,7 @@ export const useIdentityGuard = ({
         setStatus('loading-wasm');
         setLastError(null);
         console.info(LOG, 'importing @mediapipe/tasks-vision');
-        const vision: any = await import('@mediapipe/tasks-vision');
+        const vision = await import('@mediapipe/tasks-vision');
         if (cancelled) return;
         console.info(LOG, 'resolving WASM fileset');
         const fileset = await vision.FilesetResolver.forVisionTasks(MEDIAPIPE_WASM_URL);
@@ -286,7 +289,7 @@ export const useIdentityGuard = ({
           }),
           (async () => {
             try {
-              const faceapi: any = await import('@vladmandic/face-api');
+              const faceapi: FaceApiModule = await import('@vladmandic/face-api');
               await Promise.all([
                 faceapi.nets.tinyFaceDetector.loadFromUri(FACEAPI_MODEL_URL),
                 faceapi.nets.faceLandmark68Net.loadFromUri(FACEAPI_MODEL_URL),
@@ -360,8 +363,8 @@ export const useIdentityGuard = ({
           rafRef.current = requestAnimationFrame(tick);
         };
         rafRef.current = requestAnimationFrame(tick);
-      } catch (err: any) {
-        const msg = err?.message || String(err);
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
         setStatus('failed');
         setLastError(msg);
         console.error(LOG, 'INIT FAILED — face check disabled', err);

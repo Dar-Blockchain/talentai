@@ -5,7 +5,7 @@ import { setCookie } from 'cookies-next';
 import { LANGUAGE_COOKIE, RTL_LANGUAGES, SUPPORTED_LANGUAGES, type SupportedLanguage } from '@/i18n/config';
 import { SUPPORTED_LANGS } from '@/modules/shared/constants/languages';
 import { updateProfile } from '@/store/slices/userSlice';
-import type { RootState } from '@/store/store';
+import type { RootState, AppDispatch } from '@/store/store';
 
 export interface LanguageOption {
   code:  SupportedLanguage;
@@ -33,7 +33,7 @@ export function normalizeLangCode(raw?: string | null): SupportedLanguage | null
 
 export function useLanguage() {
   const { i18n } = useTranslation();
-  const dispatch = useDispatch<any>();
+  const dispatch = useDispatch<AppDispatch>();
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
 
   const raw = i18n.language ?? 'en';

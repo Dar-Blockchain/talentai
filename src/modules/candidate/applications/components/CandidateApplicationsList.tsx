@@ -10,7 +10,8 @@ import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
-import type { SortBy } from "@/modules/candidate/applications/types/application.types";
+import type { SortBy, CandidateApplication } from "@/modules/candidate/applications/types/application.types";
+import type { TOptions } from "i18next";
 import { buildInterviewUrl } from "@/lib/interviewSession";
 import { emitToast } from "@/utils/toastEmitter";
 import {
@@ -61,7 +62,7 @@ const CardSkeleton = () => (
 
 const CandidateApplicationsList: React.FC = () => {
   const { t }  = useTranslation("dashboard");
-  const s      = (k: string, opts?: any) => t(`candidate.my_applications.${k}`, opts) as string;
+  const s      = (k: string, opts?: TOptions) => t(`candidate.my_applications.${k}`, opts) as string;
   const router = useRouter();
 
   const [page,         setPage]         = useState(1);
@@ -133,12 +134,13 @@ const CandidateApplicationsList: React.FC = () => {
     try {
       await reactivate(reactivateId);
       emitToast({ message: "Application reactivated successfully.", severity: "success" });
-    } catch (err: any) {
-      const isNoCv = err?.response?.status === 422;
+    } catch (err) {
+      const axiosErr = err as { response?: { status?: number; data?: { error?: string } } };
+      const isNoCv = axiosErr?.response?.status === 422;
       emitToast({
         message: isNoCv
           ? "Upload a CV in Settings → Resume before reactivating."
-          : err?.response?.data?.error || "Failed to reactivate application.",
+          : axiosErr?.response?.data?.error || "Failed to reactivate application.",
         severity: "error",
       });
     } finally {
@@ -146,7 +148,7 @@ const CandidateApplicationsList: React.FC = () => {
     }
   };
 
-  const handleCardClick = (app: any) => {
+  const handleCardClick = (app: CandidateApplication) => {
     const status = (app.status || "").toLowerCase();
     if (status === "visited" && app.post?._id)
       router.push(buildInterviewUrl({ type: "post", jobId: app.post._id }));
@@ -355,7 +357,7 @@ const CandidateApplicationsList: React.FC = () => {
           <ApplicationsEmpty title={s("empty_title")} subtitle={s("empty_subtitle")} />
         ) : (
           <div className="flex flex-col gap-2 p-3">
-            {applications.map((app: any, i: number) => (
+            {applications.map((app: CandidateApplication, i: number) => (
               <ApplicationCard
                 key={app._id || i}
                 app={app}

@@ -8,7 +8,8 @@ interface SkillDetailsColumnProps {
   skill: string;
 }
 
-export default function SkillDetailsColumn({ skill: _ }: SkillDetailsColumnProps) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars -- `skill` kept in the public prop signature though unused internally
+export default function SkillDetailsColumn({ skill }: SkillDetailsColumnProps) {
   const { t } = useTranslation('modules/interview/skill-interview');
 
   const raw = {

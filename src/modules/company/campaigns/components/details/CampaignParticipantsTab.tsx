@@ -429,6 +429,18 @@ interface AddDialogProps {
   onClose: () => void;
 }
 
+interface Department {
+  _id: string;
+  name: string;
+}
+
+interface NonParticipantsPayload {
+  data?: NonParticipant[];
+  employees?: NonParticipant[];
+  members?: NonParticipant[];
+  total?: number;
+}
+
 const AddParticipantDialog = memo<AddDialogProps>(
   ({ open, campaignId, onClose }) => {
     const { t } = useTranslation("dashboard");
@@ -464,17 +476,18 @@ const AddParticipantDialog = memo<AddDialogProps>(
     const { data: deptsRaw } = useDepartmentsQuery();
     const addMut = useAddParticipantMutation(campaignId);
 
-    const nonParticipantsData =
-      (nonParticipantsRaw as any)?.data ?? nonParticipantsRaw;
-    const employees =
+    const nonParticipantsData = (
+      nonParticipantsRaw as unknown as { data?: NonParticipantsPayload } | undefined
+    )?.data ?? (nonParticipantsRaw as unknown as NonParticipantsPayload | undefined);
+    const employees: NonParticipant[] =
       nonParticipantsData?.employees ??
       nonParticipantsData?.members ??
-      nonParticipantsData ??
+      (nonParticipantsData as unknown as NonParticipant[] | undefined) ??
       [];
     const total = nonParticipantsData?.total ?? 0;
     const error = queryError ? String(queryError) : null;
-    const departments =
-      (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as any)?.data) ?? [];
+    const departments: Department[] =
+      (Array.isArray(deptsRaw) ? deptsRaw : (deptsRaw as { data?: Department[] })?.data) ?? [];
 
     const handleSearchChange = useCallback((value: string) => {
       setSearch(value);
@@ -504,7 +517,7 @@ const AddParticipantDialog = memo<AddDialogProps>(
 
     const hasFilters = !!debouncedSearch || !!department || !!role;
     const activeDeptLabel = department
-      ? (departments as any[]).find((d) => d._id === department)?.name
+      ? departments.find((d) => d._id === department)?.name
       : null;
     const activeRoleLabel = role
       ? ROLES.find((r) => r.value === role)?.label
@@ -586,7 +599,7 @@ const AddParticipantDialog = memo<AddDialogProps>(
                   <SelectItem value="__all__">
                     {t(`${pp}.all_departments`)}
                   </SelectItem>
-                  {(departments as any[]).map((d) => (
+                  {departments.map((d) => (
                     <SelectItem key={d._id} value={d._id}>
                       {d.name}
                     </SelectItem>
@@ -656,13 +669,13 @@ const AddParticipantDialog = memo<AddDialogProps>(
               <div className="m-4 rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
                 {error}
               </div>
-            ) : loading && (employees as any[]).length === 0 ? (
+            ) : loading && employees.length === 0 ? (
               <div className="py-1">
                 {SKELETON_ROWS_8.map((_, i) => (
                   <PickerRowSkeleton key={i} />
                 ))}
               </div>
-            ) : (employees as any[]).length === 0 ? (
+            ) : employees.length === 0 ? (
               <div className="text-center py-14 px-6">
                 <div className="flex items-center justify-center size-14 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-200 mx-auto mb-3">
                   <Users className="size-6 text-muted-foreground" />
@@ -696,7 +709,7 @@ const AddParticipantDialog = memo<AddDialogProps>(
                   <EmployeePickerRow
                     key={emp._id}
                     employee={emp}
-                    isLast={i === (employees as any[]).length - 1}
+                    isLast={i === employees.length - 1}
                     onAdd={handleAdd}
                     adding={addingId === emp._id}
                     disabled={!!(addMut.isPending && addingId !== emp._id)}
@@ -967,13 +980,13 @@ const CampaignParticipantsTab = memo<Props>(
             <div className="rounded-xl border border-destructive/30 bg-destructive/10 px-3 py-2.5 text-sm text-destructive">
               {error}
             </div>
-          ) : loading && (participants as any[]).length === 0 ? (
+          ) : loading && participants.length === 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3.5">
               {SKELETON_CARDS.map((_, i) => (
                 <CardSkeleton key={i} />
               ))}
             </div>
-          ) : (participants as any[]).length === 0 ? (
+          ) : participants.length === 0 ? (
             <div className="bg-background border border-border rounded-2xl text-center py-16">
               <div className="flex items-center justify-center size-14 rounded-2xl bg-muted mx-auto mb-3">
                 <Users className="size-6 text-muted-foreground" />

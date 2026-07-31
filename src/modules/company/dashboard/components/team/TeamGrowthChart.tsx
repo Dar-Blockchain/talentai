@@ -7,13 +7,26 @@ import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { UserPlus as PersonAddOutlined, Mail as MailOutlined } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { KpiCard } from "../KpiAtoms";
-import { ChartTooltip, GRAY, T } from "../../utils/kpiTokens";
+import { ChartTooltip, GRAY } from "../../utils/kpiTokens";
 
 const STALE = 60_000;
-const selMember = (r: any) => r.data?.stats ?? r.data?.data ?? r.data;
-const fetchMemberStats = () => axiosInstance.get("company-memberships/memberships/stats").then(selMember);
 
 interface TrendPoint { date: string; count: number }
+
+interface MemberStatsResponse {
+  total?: number;
+  memberships?: { total?: number; trend?: TrendPoint[] };
+  invitations?: { total?: number };
+}
+
+// The API sometimes wraps the payload (`{ stats: T }` / `{ data: T }`) and
+// sometimes returns `T` directly, so we accept `unknown` here and cast to
+// the declared shape.
+const selMember = (r: { data: unknown }): MemberStatsResponse => {
+  const body = r.data as { stats?: MemberStatsResponse; data?: MemberStatsResponse } | undefined;
+  return (body?.stats ?? body?.data ?? body) as MemberStatsResponse;
+};
+const fetchMemberStats = () => axiosInstance.get("company-memberships/memberships/stats").then(selMember);
 
 const fmtDate = (d: string) => {
   const parsed = new Date(d);
@@ -75,7 +88,7 @@ const TeamGrowthChart = memo(() => {
             <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" vertical={false} />
             <XAxis dataKey="label" tick={{ fontFamily: "Poppins", fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} interval="preserveStartEnd" />
             <YAxis tick={{ fontFamily: "Poppins", fontSize: 10, fill: GRAY }} axisLine={false} tickLine={false} allowDecimals={false} />
-            <RechartsTooltip {...ChartTooltip} labelFormatter={(v) => v} formatter={(v: any) => [v, t("team.growth.new_members", "New members")]} />
+            <RechartsTooltip {...ChartTooltip} labelFormatter={(v) => v} formatter={(v: number) => [v, t("team.growth.new_members", "New members")]} />
             <Area type="monotone" dataKey="count" stroke="#A855F7" fill="url(#teamGrowthGrad)" strokeWidth={2.5} dot={false} activeDot={{ r: 4 }} />
           </AreaChart>
         </ResponsiveContainer>

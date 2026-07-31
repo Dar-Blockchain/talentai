@@ -29,6 +29,10 @@ export interface CandidateApplication {
   interviewLink?: string;
 }
 
+export interface CandidateApplicationDetail extends CandidateApplication {
+  cvAnalysis?: { analysisScore?: number };
+}
+
 export interface ApplicationsPagination {
   currentPage: number;
   totalPages: number;

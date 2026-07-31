@@ -55,12 +55,12 @@ interface Message {
   sender: {
     _id: string;
     email?: string;
-    profile?: any;
+    profile?: Participant["profile"];
   };
   receiver: {
     _id: string;
     email?: string;
-    profile?: any;
+    profile?: Participant["profile"];
   };
   isRead: boolean;
   createdAt: string;

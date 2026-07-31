@@ -17,7 +17,8 @@ import {
   leaveTeamConversationRoom,
 } from "@/modules/chat/team-chat/realtime/teamChatSocket";
 import { toChatShellMessage } from "@/modules/chat/team-chat/utils/mappers";
-import type { TeamMessage } from "@/modules/chat/team-chat/types";
+import type { TeamConversation, TeamMessage } from "@/modules/chat/team-chat/types";
+import type { ChatShellMessage } from "@/modules/chat/shared/types/shell";
 
 export const useTeamChatRealtime = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -58,7 +59,7 @@ export const useTeamChatRealtime = () => {
     const socket = connectTeamChatSocket(currentUserId);
     if (!socket) return;
 
-    const handleIncomingMessage = (payload: { message: any; conversationId: string }) => {
+    const handleIncomingMessage = (payload: { message: TeamMessage; conversationId: string }) => {
       const { currentUserId: uid, pathname, role, dispatch: d, queryClient: qc } = latestRef.current;
       if (!uid) return;
 
@@ -122,9 +123,10 @@ export const useTeamChatRealtime = () => {
           { queryKey: [...teamChatKeys.all, "messages", conversationId] },
           (old: unknown) => {
             if (!Array.isArray(old)) return old;
-            if (old.some((m: any) => String(m._id) === msgId)) return old;
-            return [...old, normalized].sort(
-              (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            const list = old as ChatShellMessage[];
+            if (list.some((m) => String(m._id) === msgId)) return old;
+            return [...list, normalized].sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
             );
           },
         );
@@ -179,9 +181,9 @@ export const useTeamChatRealtime = () => {
       qc.removeQueries({ queryKey: teamChatKeys.conversation(id) });
       qc.setQueriesData(
         { queryKey: [...teamChatKeys.all, "conversations"] },
-        (old) => {
+        (old: unknown) => {
           if (!Array.isArray(old)) return old;
-          return old.filter((c: any) => String(c._id) !== id);
+          return (old as TeamConversation[]).filter((c) => String(c._id) !== id);
         },
       );
       qc.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });

@@ -2,8 +2,8 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
-import { useSelector, useDispatch } from "react-redux";
-import { RootState, AppDispatch } from "@/store/store";
+import { useDispatch } from "react-redux";
+import { AppDispatch } from "@/store/store";
 import { setUserType } from "@/store/slices/userSlice";
 import { LayoutDashboard, Settings, LogOut } from "lucide-react";
 import {
@@ -39,15 +39,12 @@ const UserDropdownMenu: React.FC<UserDropdownMenuProps> = ({
   initials   = "U",
   isCompany   = false,
   isEmployee  = false,
-  isCandidate = false,
   onDashboard,
   onClose,
 }) => {
   const { t }    = useTranslation("common");
   const dispatch = useDispatch<AppDispatch>();
   const router   = useRouter();
-
-  const { user } = useSelector((state: RootState) => state.user.connectedUser);
 
   const go = (path: string) => { router.push(path); onClose?.(); };
 

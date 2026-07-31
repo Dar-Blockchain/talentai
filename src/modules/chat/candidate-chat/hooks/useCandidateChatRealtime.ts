@@ -24,7 +24,7 @@ import {
 } from "@/modules/chat/candidate-chat/realtime/candidateChatSocket";
 import { normalizeCandidateSocketMessage } from "@/modules/chat/candidate-chat/realtime/normalizeSocketMessage";
 import { toChatShellMessage } from "@/modules/chat/candidate-chat/utils/mappers";
-import type { CandidateMessage } from "@/modules/chat/candidate-chat/types";
+import type { CandidateConversation, CandidateMessage } from "@/modules/chat/candidate-chat/types";
 
 const isCandidateChatUser = (role?: string | null) =>
   role === "Company" || role === "Candidate";
@@ -132,9 +132,10 @@ export const useCandidateChatRealtime = () => {
           { queryKey: candidateChatKeys.messages(conversationId) },
           (old: unknown) => {
             if (!Array.isArray(old)) return old;
-            if (old.some((m: any) => String(m._id) === msgId)) return old;
-            return [...old, normalized].sort(
-              (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            const list = old as CandidateMessage[];
+            if (list.some((m) => String(m._id) === msgId)) return old;
+            return [...list, normalized].sort(
+              (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
             );
           },
         );
@@ -220,9 +221,11 @@ export const useCandidateChatRealtime = () => {
         d(removeCandidateConversation(conversationId));
         qc.setQueriesData(
           { queryKey: [...candidateChatKeys.all, "conversations"] },
-          (old) => {
+          (old: unknown) => {
             if (!Array.isArray(old)) return old;
-            return old.filter((c: any) => String(c._id) !== String(conversationId));
+            return (old as CandidateConversation[]).filter(
+              (c) => String(c._id) !== String(conversationId),
+            );
           },
         );
       }

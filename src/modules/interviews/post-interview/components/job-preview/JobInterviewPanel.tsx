@@ -3,9 +3,10 @@ import { getPostSkills, type Skill } from '@/modules/company/posts/utils/postHel
 import JobHeaderCard from "./JobHeaderCard";
 import JobDetailsColumn from "./JobDetailsColumn";
 import JobApplyPanel from "./JobApplyPanel";
+import type { JobPost } from "../../types/api";
 
 export interface JobPreviewPanelProps {
-  jobData: any;
+  jobData: JobPost | null;
   onStartInterview?: () => void;
   isConfigLoading?: boolean;
 }

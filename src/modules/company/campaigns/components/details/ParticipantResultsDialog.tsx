@@ -64,12 +64,12 @@ const ParticipantResultsDialog = memo<Props>(({ open, campaignId, participantId,
   const error = queryError ? t(`${sp}.load_failed`) : null;
 
   const response  = data?.response ?? null;
-  const module    = data?.campaign?.module;
+  const campaignModule = data?.campaign?.module;
   const questions = useMemo(
-    () => (module?.type === "QUESTIONNAIRE" ? module.config?.questions ?? [] : []),
-    [module],
+    () => (campaignModule?.type === "QUESTIONNAIRE" ? campaignModule.config?.questions ?? [] : []),
+    [campaignModule],
   );
-  const aiScoringEnabled = module?.type !== "QUESTIONNAIRE" || module.config?.aiScoringEnabled !== false;
+  const aiScoringEnabled = campaignModule?.type !== "QUESTIONNAIRE" || campaignModule.config?.aiScoringEnabled !== false;
   const recommendation = response?.aiReport?.recommendation ? RECOMMENDATION_META[response.aiReport.recommendation] : null;
   const completedDate = fmtDate(data?.participant?.completedAt, i18n.language);
 

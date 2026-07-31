@@ -18,11 +18,16 @@ import {
 } from "@/modules/shared/ui/shadcn/popover";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 import { cn } from "@/lib/utils";
+import type { ChatShellConversation } from "@/modules/chat/shared/types/shell";
+import type { Participant } from "@/modules/chat/shared/components/helpers";
 
 interface HeaderMessagesDropdownProps {
   userId:             string | undefined;
   unreadMessageCount: number;
 }
+
+/** Participant, plus the optional avatar field the messages dropdown displays. */
+type DropdownParticipant = Participant & { profilePicture?: string };
 
 const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
   userId,
@@ -43,12 +48,12 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
     conversationsQuery.refetch();
   };
 
-  const getOtherParticipant = (conversation: any) => {
+  const getOtherParticipant = (conversation: ChatShellConversation): DropdownParticipant | null => {
     if (!conversation?.participants || !userId) return null;
-    return conversation.participants.find((p: any) => p._id !== userId);
+    return (conversation.participants.find((p) => p._id !== userId) as DropdownParticipant | undefined) ?? null;
   };
 
-  const getDisplayName = (participant: any) => {
+  const getDisplayName = (participant: DropdownParticipant | null) => {
     if (!participant) return "Unknown User";
     if (participant.profile?.type === "Company" && participant.profile?.companyDetails?.name) {
       return participant.profile.companyDetails.name;
@@ -63,7 +68,7 @@ const HeaderMessagesDropdown: React.FC<HeaderMessagesDropdownProps> = ({
     return "Unknown User";
   };
 
-  const getInitial = (participant: any) => {
+  const getInitial = (participant: DropdownParticipant | null) => {
     if (!participant) return "U";
     const firstName = participant.profile?.firstName || participant.firstName || "";
     if (firstName) return firstName.charAt(0).toUpperCase();

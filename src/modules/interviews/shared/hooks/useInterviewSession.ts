@@ -1,6 +1,6 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { useDispatch } from 'react-redux';
-import { Coverage, InterviewMessage } from '../types/interview';
+import { Coverage, InterviewMessage, type InterviewStatus } from '../types/interview';
 import type {
   InterviewStartedData,
   InterviewEndedData,
@@ -47,7 +47,7 @@ export function useInterviewSession({
 
   const isFinishingRef        = useRef(false);
   const finishTimerRef        = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const setInterviewStatusRef = useRef<(s: any) => void>(() => {});
+  const setInterviewStatusRef = useRef<(s: InterviewStatus) => void>(() => {});
 
   const handleInterviewStarted = useCallback((data: InterviewStartedData) => {
     timerRef.current?.startTimer(data.config.duration || 20);
@@ -62,7 +62,8 @@ export function useInterviewSession({
   }, [interviewConfig, setInterviewConfig]);
 
   const handleInterviewMessage = useCallback((message: InterviewMessage) => {
-    const { reasoning: _reasoning, ...safeMessage } = message as any;
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars -- stripped intentionally so `reasoning` is never stored/displayed
+    const { reasoning: _reasoning, ...safeMessage } = message;
 
     if (safeMessage.type === 'end_interview') {
       isFinishingRef.current = true;
@@ -193,7 +194,7 @@ export function useInterviewSession({
     namespace,
   });
 
-  const camera = useCamera({ showNotification: notify as any });
+  const camera = useCamera({ showNotification: notify });
 
   const cameraGuard = useCameraGuard({
     streamRef: camera.streamRef,
@@ -232,7 +233,7 @@ export function useInterviewSession({
   const timer = useInterviewTimer({
     interviewStatus: socket.interviewStatus,
     onTimeUp: useCallback(() => { endInterviewRef.current(); }, []),
-    showNotification: notify as any,
+    showNotification: notify,
   });
 
   const security = useSecurityMonitoring({

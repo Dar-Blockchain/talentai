@@ -85,7 +85,11 @@ const PostsManagement: React.FC = () => {
   const updateThresholdMutation  = useUpdatePostThresholdMutation();
 
   const handleArchiveToggle = useCallback((post: AdminPost) => {
-    post.archived ? unarchiveMutation.mutate(post._id) : archiveMutation.mutate(post._id);
+    if (post.archived) {
+      unarchiveMutation.mutate(post._id);
+    } else {
+      archiveMutation.mutate(post._id);
+    }
   }, [archiveMutation, unarchiveMutation]);
 
   const handleDeleteRequest  = useCallback((post: AdminPost) => { setDeleteTarget(post); }, []);

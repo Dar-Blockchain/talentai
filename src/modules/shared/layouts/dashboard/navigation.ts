@@ -5,7 +5,6 @@ import {
   Users,
   SlidersHorizontal,
   Building2,
-  Settings,
   CreditCard,
   MessageCircle,
   Bell,

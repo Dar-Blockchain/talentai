@@ -14,6 +14,26 @@ import {
   ExternalLink as OpenInNewOutlined,
 } from "lucide-react";
 
+export interface PostAssessmentStep {
+  _id?: string;
+  status?: string;
+  stepId?: {
+    _id?: string;
+    id?: string;
+    order?: number;
+    data?: {
+      label?: string;
+      type?: string;
+      config?: { title?: string; description?: string; interviewType?: string };
+    };
+  };
+}
+
+export interface PostAssessmentStepProgress {
+  currentStep?: { _id?: string };
+  steps?: PostAssessmentStep[];
+}
+
 export interface PostAssessment {
   _id: string;
   candidate?: string | { _id: string; username?: string; email?: string };
@@ -22,8 +42,8 @@ export interface PostAssessment {
     _id: string;
     jobDetails?: { title?: string; description?: string };
     skillAnalysis?: {
-      requiredSkills?: { name: string; category?: string; level?: string; importance?: string }[];
-      softSkills?: { name: string; level?: string }[];
+      requiredSkills?: { _id?: string; name: string; category?: string; level?: string; importance?: string }[];
+      softSkills?: { _id?: string; name: string; level?: string }[];
     };
     user?: { companyName?: string };
     status?: string;
@@ -33,14 +53,14 @@ export interface PostAssessment {
     interviewType?: string;
     finalReport?: {
       scores?: { overall?: number };
-      coverage?: { overall?: number; areas?: Record<string, any> };
+      coverage?: { overall?: number; areas?: Record<string, unknown> };
       summary?: string;
       recommendations?: string[];
       aiAnalysis?: { strongestAreas?: string[]; weakestAreas?: string[]; recommendedFocus?: string[] };
     };
     analytics?: { duration?: number; messageCount?: number; completedAreas?: number; totalAreas?: number; coveragePercentage?: number };
   };
-  candidatePostStepProgress?: any;
+  candidatePostStepProgress?: PostAssessmentStepProgress;
   createdAt: string;
   updatedAt?: string;
   assessmentsCount?: number;
@@ -57,12 +77,12 @@ export const getScore = (a: PostAssessment): number =>
   a.interviewData?.finalReport?.scores?.overall ?? a.interviewData?.finalReport?.coverage?.overall ?? a.interviewData?.analytics?.coveragePercentage ?? 0;
 
 export const hasPendingSteps = (a: PostAssessment): boolean =>
-  a.candidatePostStepProgress?.steps?.some((s: any) => s.status === "pending" || s.status === "inProgress") ?? false;
+  a.candidatePostStepProgress?.steps?.some((s) => s.status === "pending" || s.status === "inProgress") ?? false;
 
 export const allStepsCompleted = (a: PostAssessment): boolean => {
   const steps = a.candidatePostStepProgress?.steps;
   if (!steps?.length) return getScore(a) >= 50;
-  return steps.every((s: any) => s.status === "done" || s.status === "passed");
+  return steps.every((s) => s.status === "done" || s.status === "passed");
 };
 
 export const isCompleted = (a: PostAssessment): boolean =>
@@ -81,7 +101,7 @@ const AssessmentCard: React.FC<AssessmentCardProps> = ({ assessment, onViewDetai
   const quotaFull  = quota >= 5;
 
   const jobTitle    = assessment.post?.jobDetails?.title || s("job_application");
-  const company     = assessment.company as any;
+  const company     = assessment.company;
   const companyName = company?.companyName || company?.username || assessment.post?.user?.companyName || "";
   const logoUrl     = company?.logo ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}` : undefined;
 

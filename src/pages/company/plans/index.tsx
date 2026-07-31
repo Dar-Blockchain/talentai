@@ -11,6 +11,7 @@ import {
 } from "@/modules/company/plans/components";
 import { getDashboardLayout, PageHeader } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
+import type { PlanLimit } from "@/store/slices/planLimitsSlice";
 
 const PlansPage: NextPageWithLayout = function PlansPage() {
   const { t } = useTranslation("dashboard");
@@ -65,7 +66,7 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
         <LoadingState message={t("pages.subscription.loading", "Loading plans…")} color="#0D9488" />
       ) : (
         <div className="mt-1 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
-          {sortedPlans.map((plan: any) => (
+          {sortedPlans.map((plan: PlanLimit) => (
             <PlanCard
               key={plan._id}
               plan={plan}
