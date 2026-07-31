@@ -11,6 +11,7 @@ managementServer.pem
 # AWS and Kubernetes configurations
 *.yaml
 *.yml
+!.github/workflows/*.yml
 frontend-service.yaml
 frontend-deployment.yaml
 frontend-service-account.yaml
