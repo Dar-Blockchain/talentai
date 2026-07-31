@@ -374,6 +374,15 @@ export default function InterviewScreen({
 
       <ConfirmLeaveModal open={confirmOpen} onConfirm={handleConfirmLeave} onCancel={handleCancelLeave} />
 
+      <SecurityModals
+        showFirstViolationModal={security.showFirstViolationModal}
+        showSecurityModal={security.showSecurityModal}
+        violationType={security.violationType}
+        securityViolationCount={security.securityViolationCount}
+        onDismissFirst={() => security.setShowFirstViolationModal(false)}
+        onReturnToDashboard={() => router.push(dashboardPath)}
+      />
+
       <GDPRConsentModal
         open={!camera.consentGiven}
         onAccept={camera.giveConsent}
