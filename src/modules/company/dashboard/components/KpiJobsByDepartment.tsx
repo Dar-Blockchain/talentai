@@ -1,9 +1,11 @@
 "use client";
 import React, { memo, useMemo } from "react";
+import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { Building2 as DepartmentOutlined } from "lucide-react";
+import { Building2 as DepartmentOutlined, Plus } from "lucide-react";
 import { BarChart, Bar, XAxis, YAxis, LabelList, Tooltip as RechartsTooltip, ResponsiveContainer, Cell } from "recharts";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { ZoneHeading, KpiCard } from "./KpiAtoms";
 import { BORDER } from "../utils/kpiTokens";
 import { useKpiJobsByDepartmentQuery } from "../queries";
@@ -27,10 +29,19 @@ const buildBuckets = (rows: KpiDepartmentRow[]): Bucket[] =>
     .sort((a, b) => b.count - a.count)
     .map((r, i) => ({ name: r.name, count: r.count, color: SLOT_COLORS[i % SLOT_COLORS.length] }));
 
+// Three faint, unlabeled bars so an empty account still reads as "a bar
+// chart with nothing in it yet" instead of a blank card — same treatment as
+// the other KPI charts (see KpiRecruitmentFunnel / KpiManualVsTalentAiHours).
+const EMPTY_PLACEHOLDER: Bucket[] = [
+  { name: "", count: 0, color: "#E2E8F0" },
+  { name: "", count: 0, color: "#E2E8F0" },
+  { name: "", count: 0, color: "#E2E8F0" },
+];
+
 // Tooltip with a colored vertical "line" indicator next to the value,
 // instead of a dot or dashed swatch.
 const LineIndicatorTooltip = ({ active, payload }: any) => {
-  if (!active || !payload?.length) return null;
+  if (!active || !payload?.length || !payload[0].payload?.name) return null;
   const { name, count, color } = payload[0].payload as Bucket;
   return (
     <div
@@ -67,6 +78,7 @@ const NameLabel = (buckets: Bucket[]) => (props: any) => {
 
 const KpiJobsByDepartment = memo(() => {
   const { t } = useTranslation("dashboard");
+  const router = useRouter();
   const isHR = useIsHR();
   const { data, isLoading } = useKpiJobsByDepartmentQuery(isHR);
 
@@ -91,41 +103,57 @@ const KpiJobsByDepartment = memo(() => {
       <ZoneHeading icon={DepartmentOutlined} label={t("pages.kpi.zone_department_title", "Jobs by Department")} color={ACCENT} />
       <KpiCard className="flex-1 flex flex-col" contentClassName="flex-1 flex flex-col min-h-0">
         <div className="flex flex-1 min-h-0 flex-col gap-4">
-          <p className="text-center text-[11px] text-slate-400">
-            {t("pages.kpi.zone_department_subtitle", "Open and past job posts grouped by department — visible to HR only")}
-          </p>
+          <div className="flex items-center justify-between gap-3">
+            <p className="flex-1 text-center text-[11px] text-slate-400">
+              {t("pages.kpi.zone_department_subtitle", "Open and past job posts grouped by department — visible to HR only")}
+            </p>
+            <Button
+              size="xs"
+              variant="outline"
+              className="h-7 gap-1 rounded-full text-[11px] font-semibold shrink-0"
+              onClick={() => router.push("/company/departments")}
+            >
+              <Plus size={13} />
+              {t("pages.kpi.zone_department_add", "Add Department")}
+            </Button>
+          </div>
           {isLoading ? (
             <Skeleton className="w-full rounded-[10px]" style={{ height: MIN_HEIGHT }} />
-          ) : isEmpty ? (
-            <div className="flex items-center justify-center" style={{ height: MIN_HEIGHT }}>
-              <span className="text-[0.82rem] text-slate-400">{t("pages.kpi.zone_department_empty", "No job posts assigned to a department yet")}</span>
-            </div>
           ) : (
             <div className="flex-1 min-h-0 overflow-y-auto pr-1">
-              <ResponsiveContainer width="100%" height={chartHeight}>
+              <ResponsiveContainer width="100%" height={isEmpty ? MIN_HEIGHT : chartHeight}>
                 <BarChart
-                  data={buckets}
+                  data={isEmpty ? EMPTY_PLACEHOLDER : buckets}
                   layout="vertical"
                   margin={{ top: 4, right: 28, left: 4, bottom: 4 }}
                   barCategoryGap="24%"
                 >
                   <XAxis type="number" hide allowDecimals={false} />
                   <YAxis type="category" dataKey="name" hide />
-                  <RechartsTooltip content={<LineIndicatorTooltip />} cursor={{ fill: "#F8FAFC" }} />
+                  {!isEmpty && <RechartsTooltip content={<LineIndicatorTooltip />} cursor={{ fill: "#F8FAFC" }} />}
                   {/* minPointSize reserves room for the label even at 0; the
                       Cell fill is transparent there so no background shows. */}
-                  <Bar dataKey="count" radius={[8, 8, 8, 8]} maxBarSize={32} minPointSize={minPointSize}>
-                    {buckets.map((b, i) => <Cell key={i} fill={b.count > 0 ? b.color : "transparent"} />)}
-                    <LabelList dataKey="name" content={nameLabel} />
-                    <LabelList
-                      dataKey="count"
-                      position="right"
-                      fill="#0f172a"
-                      style={{ fontFamily: "Poppins", fontSize: 12, fontWeight: 700 }}
-                    />
+                  <Bar dataKey="count" radius={[8, 8, 8, 8]} maxBarSize={32} minPointSize={isEmpty ? 36 : minPointSize}>
+                    {(isEmpty ? EMPTY_PLACEHOLDER : buckets).map((b, i) => (
+                      <Cell key={i} fill={isEmpty ? b.color : b.count > 0 ? b.color : "transparent"} />
+                    ))}
+                    {!isEmpty && <LabelList dataKey="name" content={nameLabel} />}
+                    {!isEmpty && (
+                      <LabelList
+                        dataKey="count"
+                        position="right"
+                        fill="#0f172a"
+                        style={{ fontFamily: "Poppins", fontSize: 12, fontWeight: 700 }}
+                      />
+                    )}
                   </Bar>
                 </BarChart>
               </ResponsiveContainer>
+              {isEmpty && (
+                <div className="text-center text-[0.78rem] text-slate-400 -mt-4">
+                  {t("pages.kpi.zone_department_empty", "No job posts assigned to a department yet")}
+                </div>
+              )}
             </div>
           )}
         </div>

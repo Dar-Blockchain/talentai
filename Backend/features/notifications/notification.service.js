@@ -23,8 +23,22 @@ async function createSystemNotification(recipientId, content) {
   return notification;
 }
 
+const DUPLICATE_NOTIFICATION_WINDOW_MS = 30 * 1000;
+
 async function createNotification(recipientId, content, type, category = 'system', link = null) {
   if (!recipientId || !content) throw new Error('Recipient ID and content are required.');
+
+  // Safety net against duplicate inserts from client-side double-submits
+  // (e.g. the OTP verification race producing two identical welcome
+  // notifications) — skip creating an identical, near-simultaneous
+  // notification for the same recipient instead of returning two rows.
+  const recentDuplicate = await Notification.findOne({
+    recipient: recipientId,
+    content,
+    type,
+    createdAt: { $gte: new Date(Date.now() - DUPLICATE_NOTIFICATION_WINDOW_MS) },
+  }).sort({ createdAt: -1 });
+  if (recentDuplicate) return recentDuplicate;
 
   const notification = new Notification({
     recipient: recipientId,

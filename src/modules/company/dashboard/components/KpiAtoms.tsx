@@ -152,14 +152,15 @@ export const Delta = memo<{ cur: number; prev: number }>(({ cur, prev }) => {
 });
 Delta.displayName = "Delta";
 
-export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?: string }>(
-  ({ icon: Icon, label, color = "#0D9488" }) => (
+export const ZoneHeading = memo<{ icon: React.ElementType; label: string; color?: string; action?: React.ReactNode }>(
+  ({ icon: Icon, label, color = "#0D9488", action }) => (
     <div className="flex items-center gap-3 mb-5">
       <div className="w-8 h-8 rounded-[9px] flex items-center justify-center shrink-0" style={{ background: `${color}18` }}>
         <Icon size={17} color={color} />
       </div>
       <span className="font-semibold text-[15px] text-slate-900 tracking-tight">{label}</span>
       <div className="flex-1 h-px bg-slate-200" />
+      {action}
     </div>
   ),
 );

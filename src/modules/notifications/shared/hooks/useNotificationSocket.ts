@@ -47,8 +47,14 @@ const makeInstantNotification = (
   icon:      type,
 });
 
-const prependNotification = (old: NotificationsData | undefined, notif: NotificationItem): NotificationsData | undefined => {
-  if (!old) return old;
+const prependNotification = (old: NotificationsData, notif: NotificationItem): NotificationsData => {
+  // Guard against double-insertion: a socket 'notification' event queued while
+  // the initial GET /GetMyNotification is in flight gets replayed once that
+  // fetch resolves (see applyOrQueue/pendingRef below). If the fetched data
+  // already includes this notification (it was persisted before the fetch
+  // returned), replaying the prepend on top of it would duplicate it in the UI
+  // even though only one row exists in the database.
+  if (old.notifications.some(n => n.id === notif.id)) return old;
   return {
     ...old,
     notifications:    [notif, ...old.notifications],
@@ -80,6 +86,36 @@ export const useNotificationSocket = (userId: string | undefined) => {
   const socketRef = useRef<Socket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Events can arrive before useNotificationsQuery's initial fetch resolves
+  // (the socket connects independently of any component mounting the query).
+  // Queue updaters instead of dropping them, then replay in order once the
+  // cache actually has data.
+  const pendingRef = useRef<Array<(data: NotificationsData) => NotificationsData>>([]);
+
+  const applyOrQueue = (updater: (data: NotificationsData) => NotificationsData) => {
+    const current = qc.getQueryData<NotificationsData>(NOTIF_KEYS.active());
+    if (current) {
+      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), updater(current));
+    } else {
+      pendingRef.current.push(updater);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = qc.getQueryCache().subscribe(event => {
+      if (event.type !== 'updated' || !pendingRef.current.length) return;
+      const key = event.query.queryKey;
+      const isActiveKey = key.length === NOTIF_KEYS.active().length && key.every((k, i) => k === NOTIF_KEYS.active()[i]);
+      if (!isActiveKey) return;
+      const data = event.query.state.data as NotificationsData | undefined;
+      if (!data) return;
+      const queued = pendingRef.current;
+      pendingRef.current = [];
+      qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), queued.reduce((acc, fn) => fn(acc), data));
+    });
+    return unsubscribe;
+  }, [qc]);
+
   useEffect(() => {
     if (!userId) return;
 
@@ -105,7 +141,7 @@ export const useNotificationSocket = (userId: string | undefined) => {
 
       socket.on('notification', (payload: RawNotification) => {
         const notif = mapToNotificationItem(payload);
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
+        applyOrQueue(old => prependNotification(old, notif));
         playNotificationSound(notif.type);
         if (toastEnabled && shouldShowToast(notif.message)) emitToast({ message: notif.message, severity: notif.type });
       });
@@ -113,8 +149,7 @@ export const useNotificationSocket = (userId: string | undefined) => {
       socket.on('notificationDeleted', (payload: NotificationIdPayload) => {
         const id = payload.id ?? payload.notificationId ?? '';
         if (!id) return;
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-          if (!old) return old;
+        applyOrQueue(old => {
           const target = old.notifications.find(n => n.id === id);
           if (!target) return old;
           return {
@@ -129,8 +164,7 @@ export const useNotificationSocket = (userId: string | undefined) => {
       socket.on('notificationArchived', (payload: NotificationIdPayload) => {
         const id = payload.id ?? payload._id ?? '';
         if (!id) return;
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-          if (!old) return old;
+        applyOrQueue(old => {
           const target = old.notifications.find(n => n.id === id);
           if (!target) return old;
           return {
@@ -148,34 +182,27 @@ export const useNotificationSocket = (userId: string | undefined) => {
       });
 
       socket.on('unreadCountUpdated', (payload: UnreadCountPayload) => {
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-          if (!old) return old;
-          return { ...old, unreadCount: payload.unreadCount ?? 0 };
-        });
+        applyOrQueue(old => ({ ...old, unreadCount: payload.unreadCount ?? 0 }));
       });
 
       socket.on('notificationRead', (payload: NotificationIdPayload) => {
         const id = payload.id ?? payload.notificationId ?? payload._id ?? '';
         if (!id) return;
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-          if (!old) return old;
-          return { ...old, notifications: old.notifications.map(n => n.id === id ? { ...n, isRead: true } : n) };
-        });
+        applyOrQueue(old => ({ ...old, notifications: old.notifications.map(n => n.id === id ? { ...n, isRead: true } : n) }));
       });
 
       socket.on('allNotificationsDeleted', () => {
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-          if (!old) return old;
-          return { ...old, notifications: [], nonArchivedCount: 0, archivedCount: 0, unreadCount: 0 };
-        });
+        applyOrQueue(old => ({ ...old, notifications: [], nonArchivedCount: 0, archivedCount: 0, unreadCount: 0 }));
+        qc.setQueryData(NOTIF_KEYS.archived(), []);
+      });
+
+      socket.on('allArchivedNotificationsDeleted', () => {
+        applyOrQueue(old => ({ ...old, archivedCount: 0 }));
         qc.setQueryData(NOTIF_KEYS.archived(), []);
       });
 
       socket.on('notificationsMarkedRead', () => {
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => {
-          if (!old) return old;
-          return { ...old, notifications: old.notifications.map(n => ({ ...n, isRead: true })), unreadCount: 0 };
-        });
+        applyOrQueue(old => ({ ...old, notifications: old.notifications.map(n => ({ ...n, isRead: true })), unreadCount: 0 }));
       });
 
       socket.on('interview_completed', (payload: InterviewCompletedPayload) => {
@@ -187,7 +214,7 @@ export const useNotificationSocket = (userId: string | undefined) => {
           ? `You completed your ${typeLabel} interview${jobSuffix}. Your results are now available in your dashboard.`
           : `You completed your interview${jobSuffix}. Your results are now available in your dashboard.`;
         const notif = makeInstantNotification('success', 'Interview Completed', message);
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
+        applyOrQueue(old => prependNotification(old, notif));
         playNotificationSound('success');
         if (toastEnabled) emitToast({ message, severity: 'success' });
       });
@@ -195,7 +222,7 @@ export const useNotificationSocket = (userId: string | undefined) => {
       socket.on('new_match', (payload: MessagePayload) => {
         const message = payload.message ?? 'A new candidate matches your job posting.';
         const notif   = makeInstantNotification('info', 'New Match Found', message);
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
+        applyOrQueue(old => prependNotification(old, notif));
         playNotificationSound('info');
         if (toastEnabled) emitToast({ message, severity: 'info' });
       });
@@ -203,7 +230,7 @@ export const useNotificationSocket = (userId: string | undefined) => {
       socket.on('purchase_successful', (payload: MessagePayload) => {
         const message = payload.message ?? 'Candidate profile purchased successfully.';
         const notif   = makeInstantNotification('success', 'Purchase Successful', message);
-        qc.setQueryData<NotificationsData>(NOTIF_KEYS.active(), old => prependNotification(old, notif));
+        applyOrQueue(old => prependNotification(old, notif));
         playNotificationSound('success');
         if (toastEnabled) emitToast({ message, severity: 'success' });
       });

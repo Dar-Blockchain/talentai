@@ -42,6 +42,7 @@ export function useOtpFlow({ storageKey, verifyMutation, resendMutation }: UseOt
   }, []);
 
   const verifyCode = async (email: string) => {
+    if (verifyMutation.isPending) return;
     const code = otp.otpCode.join("");
     if (code.length < OTP_CODE_LENGTH) return;
 

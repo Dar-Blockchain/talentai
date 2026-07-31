@@ -122,6 +122,7 @@ skills
   - If a years signal FOLLOWS a skill (e.g. "React, 2 years" or "Python and NestJS for 7 years"), apply it to the skill IMMEDIATELY BEFORE it.
   - Never assign a years signal to a skill separated from it by another skill name.
   - Unless the description explicitly says "each" or "both" (e.g. "Python and NestJS, 7 years each"), do not apply the same years to multiple skills.
+  - GENERAL/FIELD-LEVEL YEARS: If a years signal is NOT attached to any single named skill but instead describes the overall role or field (e.g. "Next.js, CSS, React js, need a developer with 5 years in this field/skills"), apply that SAME years value to EVERY explicitly named skill in the list. This only applies to skills the description actually names — never to skills you infer with no signal at all.
 - softSkills MUST contain 1 to 2 items — never return an empty array.
   Always infer soft skills from the job context even if not explicitly stated. Use the role type, seniority, and skills to determine what matters most:
   - Senior/Expert roles → prefer "Technical Leadership", "Problem Solving", "Mentoring"

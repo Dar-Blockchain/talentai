@@ -11,6 +11,7 @@ import { LanguageTab } from "@/modules/settings/shared";
 import { User, Globe, Bell, Eye, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CvSection from "./CvSection";
+import CandidateSettingsSkeleton from "./CandidateSettingsSkeleton";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/modules/shared/ui/shadcn/drawer";
@@ -32,7 +33,7 @@ const CandidateSettingsPage: React.FC = () => {
   }));
 
   const {
-    activeTab, isEditing, profile, loading,
+    activeTab, isEditing, profile, loading, isInitialLoading,
     uploadingImage, saveSuccess, userId,
     companyMembership, isPublicProfile,
     control, formErrors,
@@ -53,6 +54,8 @@ const CandidateSettingsPage: React.FC = () => {
     setLocalIsPublic(newVisibility);
     await updateVisibilityMutation.mutateAsync({ userId, isPublicProfile: newVisibility });
   }, [updateVisibilityMutation, userId]);
+
+  if (isInitialLoading) return <CandidateSettingsSkeleton />;
 
   const displayName = profile.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`

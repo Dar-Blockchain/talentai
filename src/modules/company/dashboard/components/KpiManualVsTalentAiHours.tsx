@@ -331,14 +331,17 @@ const KpiManualVsTalentAiHours = memo<Props>(({ postId, tab, rangeValue, onRange
 
       {loading ? (
         <Skeleton className="w-full h-[160px] rounded-[10px]" />
-      ) : isNoData ? (
-        <div className="h-[160px] flex items-center justify-center">
-          <span className="text-[0.82rem] text-slate-400">{t("hoursComparison.no_data", "No data yet")}</span>
-        </div>
       ) : (
         <>
-          <div className="mb-2 text-[11px] font-semibold text-slate-500">
-            {t("hoursComparison.chart_title", "Trend over time: manual vs. TalentAI vs. time saved")}
+          <div className="mb-2 flex items-center gap-2 flex-wrap">
+            <span className="text-[11px] font-semibold text-slate-500">
+              {t("hoursComparison.chart_title", "Trend over time: manual vs. TalentAI vs. time saved")}
+            </span>
+            {isNoData && (
+              <span className="text-[10.5px] text-slate-400">
+                · {t("hoursComparison.no_data", "No data yet")}
+              </span>
+            )}
           </div>
           <ResponsiveContainer width="100%" height={160}>
             <BarChart data={chartData} margin={{ top: 24, right: 12, left: 4, bottom: 0 }} barGap={4} barCategoryGap="24%">

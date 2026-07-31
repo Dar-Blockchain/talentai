@@ -186,6 +186,7 @@ export const useProfileManagement = () => {
     isEditing,
     profile,
     loading,
+    isInitialLoading: isLoading,
     uploadingImage,
     saveSuccess,
     userId,

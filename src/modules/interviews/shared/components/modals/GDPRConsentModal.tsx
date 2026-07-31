@@ -2,7 +2,7 @@ import React from 'react';
 import { Lock, CheckCircle2, Shield } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import {
-  Dialog, DialogContent,
+  Dialog, DialogContent, DialogTitle, DialogDescription,
 } from '@/modules/shared/ui/shadcn/dialog';
 
 interface GDPRConsentModalProps {
@@ -33,12 +33,16 @@ const GDPRConsentModal: React.FC<GDPRConsentModalProps> = ({ open, onAccept, onD
               <Shield size={22} color="#16A34A" />
             </div>
             <div>
-              <p className="font-sans font-extrabold text-[1.05rem] text-[#0F172A] leading-tight tracking-tight">
-                {t('gdpr.privacy_title')}
-              </p>
-              <p className="font-sans text-[0.8rem] text-[#64748B] mt-1 leading-snug">
-                {t('gdpr.integrity_title')}
-              </p>
+              <DialogTitle asChild>
+                <p className="font-sans font-extrabold text-[1.05rem] text-[#0F172A] leading-tight tracking-tight">
+                  {t('gdpr.privacy_title')}
+                </p>
+              </DialogTitle>
+              <DialogDescription asChild>
+                <p className="font-sans text-[0.8rem] text-[#64748B] mt-1 leading-snug">
+                  {t('gdpr.integrity_title')}
+                </p>
+              </DialogDescription>
             </div>
           </div>
 

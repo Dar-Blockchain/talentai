@@ -3,7 +3,7 @@ import {
   type ChatConversationRoomConfig,
 } from "@/modules/chat/shared";
 
-const teamChatSocket = createNamespaceSocket({ namespacePath: "/team-chat" });
+const teamChatSocket = createNamespaceSocket({ namespacePath: "/chat" });
 
 export const connectTeamChatSocket = teamChatSocket.connect;
 export const getTeamChatSocket = teamChatSocket.getSocket;

@@ -8,6 +8,7 @@ import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { useCompanyProfileManagement } from "../hooks";
 import ProfileBanner from "./ProfileBanner";
+import CompanySettingsSkeleton from "./CompanySettingsSkeleton";
 import CompanyInfoTab from "./CompanyInfoTab";
 import ApiKeysTab from "./ApiKeysTab";
 import CostSettingsTab from "./CostSettingsTab";
@@ -26,7 +27,7 @@ const CompanySettingsPage: React.FC = () => {
   useCompanyAccess("canViewCompanyProfile");
   const user     = useSelector((s: RootState) => s.user.connectedUser.user);
   const {
-    profile, loading, uploadingImage, isEmployee, isEditing, control,
+    profile, loading, isInitialLoading, uploadingImage, isEmployee, isEditing, control,
     handleInputChange, handleImageUpload, handleSaveProfile, handleSaveLanguage, handleCancel,
     setIsEditing,
   } = useCompanyProfileManagement();
@@ -34,6 +35,8 @@ const CompanySettingsPage: React.FC = () => {
 
   const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
   const [tab, setTab] = useState("0");
+
+  if (isInitialLoading) return <CompanySettingsSkeleton />;
 
   const handleTabChange = (v: string) => {
     if (isEditing) { setIsEditing(false); handleCancel(); }

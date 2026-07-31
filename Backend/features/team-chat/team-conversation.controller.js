@@ -58,7 +58,7 @@ module.exports.deleteConversation = async (req, res) => {
 
     try {
       const io = socket.getIO();
-      const teamChatNamespace = io.of('/team-chat');
+      const teamChatNamespace = io.of('/chat');
       teamChatNamespace.to(`user:${userId}`).emit('team_conversation_hidden', { conversationId: result.conversationId, hiddenBy: userId });
     } catch (socketError) {
       console.error('Team chat conversation hide socket emit failed:', socketError);

@@ -18,7 +18,6 @@ const { router: notificationSystemRouter } = require("../features/notifications"
 const { stripeRouter } = require("../features/billing/payments");
 const SkillInterviewAssessmentRoutes = require("../features/interviews/skill-interview/skill-interview.routes");
 const { router: chatRouter } = require("../features/chat");
-const { router: teamChatRouter } = require("../features/team-chat");
 const { router: planLimitsRouter } = require("../features/billing/plans");
 const { subscriptionRouter } = require("../features/billing/subscriptions");
 const { router: internalCampaignRoutes } = require('../features/campaigns');
@@ -72,7 +71,6 @@ function registerRoutes(app) {
     next();
   };
   app.use("/chat", noChatCache, chatRouter);
-  app.use("/team-chat", noChatCache, teamChatRouter);
 
   // Notifications
   app.use("/notification", notificationSystemRouter);

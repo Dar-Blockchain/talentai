@@ -5,15 +5,18 @@ import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components
 import { Spinner } from "@/modules/settings/shared/components";
 import { Section, InfoRow, TEAL, useEmployeeSettings } from "@/modules/settings/employee";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import EmployeeSettingsSkeleton from "./EmployeeSettingsSkeleton";
 
 const EmployeeSettingsPage: React.FC = () => {
   const {
-    user, companyMembership, fileRef,
+    user, companyMembership, isInitialLoading, fileRef,
     displayName, avatarUrl, initials,
     username, savingName, nameSaved, nameError, uploadingImg,
     setUsername, setNameError,
     handleSaveName, handleAvatarChange,
   } = useEmployeeSettings();
+
+  if (isInitialLoading) return <EmployeeSettingsSkeleton />;
 
   return (
     <>

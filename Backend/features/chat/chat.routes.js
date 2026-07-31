@@ -3,8 +3,13 @@ const router = express.Router();
 const conversationController = require('./conversation.controller');
 const messageController = require('./message.controller');
 const { requireAuth } = require('../../middleware/security/auth.middleware');
+const { controledAcces } = require('../../middleware/authorize.middleware');
+const { router: teamChatRouter } = require('../team-chat');
 
 router.use(requireAuth);
+
+// Internal team (colleague-to-colleague) chat, nested under the same router.
+router.use('/team', controledAcces(['Company', 'Employee']), teamChatRouter);
 
 router.post('/conversations', conversationController.findOrCreateConversation);
 router.get('/conversations', conversationController.getUserConversations);

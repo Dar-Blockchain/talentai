@@ -10,12 +10,15 @@ const SCHEMA_DEFAULTS = Object.fromEntries(
 );
 
 // Returns the company's settings, creating a row with defaults on first access.
+// Uses an atomic upsert so concurrent dashboard KPI requests for a brand-new
+// company (which all race to create the same row) don't throw a duplicate-key
+// error against the unique companyId index.
 module.exports.getOrCreateSettings = async (companyId) => {
-  let settings = await CompanySettings.findOne({ companyId }).lean();
-  if (!settings) {
-    const created = await CompanySettings.create({ companyId });
-    settings = created.toObject();
-  }
+  const settings = await CompanySettings.findOneAndUpdate(
+    { companyId },
+    { $setOnInsert: { companyId } },
+    { new: true, upsert: true }
+  ).lean();
   return { ...SCHEMA_DEFAULTS, ...settings };
 };
 

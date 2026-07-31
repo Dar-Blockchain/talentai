@@ -5,7 +5,7 @@ import { useEmployeeProfile, useUpdateEmployeeUsername, useUploadEmployeeAvatar 
 export const useEmployeeSettings = () => {
   const { showToast } = useToast();
 
-  const { data: settingsData } = useEmployeeProfile();
+  const { data: settingsData, isLoading } = useEmployeeProfile();
   const updateUsernameMutation = useUpdateEmployeeUsername();
   const uploadAvatarMutation   = useUploadEmployeeAvatar();
 
@@ -70,6 +70,7 @@ export const useEmployeeSettings = () => {
     user,
     profile,
     companyMembership,
+    isInitialLoading: isLoading,
     fileRef,
     displayName,
     avatarUrl,

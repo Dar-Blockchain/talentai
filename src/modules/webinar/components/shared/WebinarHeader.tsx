@@ -1,13 +1,33 @@
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
-import { ArrowLeft, Globe } from "lucide-react";
-import { scrollToRegister } from "@/modules/webinar/utils/scrollToRegister";
-import { WebinarSubmitButton } from "@/modules/webinar/components/landing/WebinarSubmitButton";
+import Link from "next/link";
+import { ArrowLeft, Check } from "lucide-react";
+import { SUPPORTED_LANGS } from "@/modules/shared/constants/languages";
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { cn } from "@/lib/utils";
 import i18n from "@/i18n/config";
 
+const Flag: React.FC<{ code: string; label: string; size?: number }> = ({
+  code,
+  label,
+  size = 20,
+}) => (
+  <img
+    src={`https://flagcdn.com/w40/${code}.png`}
+    srcSet={`https://flagcdn.com/w80/${code}.png 2x`}
+    width={size}
+    height={Math.round(size * 0.72)}
+    alt={label}
+    className="rounded-[3px] block shrink-0 object-cover shadow-[0_1px_2px_rgba(0,0,0,0.15)]"
+  />
+);
+
 interface WebinarHeaderProps {
-  /** Anchor id (without "#") of the registration card to scroll to. Omit to render logo-only (e.g. on the funnel step, which is itself the registration flow). */
-  ctaTargetId?: string;
   /** Renders a "back to landing" button on the right instead of the CTA — used on the funnel step, which has no registration form of its own. */
   onBack?: () => void;
   backLabel?: string;
@@ -25,7 +45,6 @@ interface WebinarHeaderProps {
  * door away from registering.
  */
 const WebinarHeader: React.FC<WebinarHeaderProps> = ({
-  ctaTargetId,
   onBack,
   backLabel,
   sticky = true,
@@ -33,40 +52,88 @@ const WebinarHeader: React.FC<WebinarHeaderProps> = ({
   onToggleLang,
 }) => {
   const t = i18n.getFixedT(lang, "webinar");
+  const [langOpen, setLangOpen] = useState(false);
 
   return (
     <header
       className={`${sticky ? "sticky top-0 z-50" : ""} bg-white/95 backdrop-blur-sm border-b border-slate-100`}
     >
       <div className="max-w-[1200px] mx-auto px-3 sm:px-4 md:px-8 h-14 sm:h-16 flex items-center justify-between gap-2">
-        <Image
-          src="/logo.svg"
-          alt="TalentAI"
-          width={130}
-          height={36}
-          className="h-6 sm:h-8 w-auto object-contain shrink-0"
-          priority
-        />
+        <Link href="/" className="shrink-0">
+          <Image
+            src="/logo.svg"
+            alt="TalentAI"
+            width={130}
+            height={36}
+            className="h-6 sm:h-8 w-auto object-contain"
+            priority
+          />
+        </Link>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {onToggleLang && (
-            <button
-              onClick={onToggleLang}
-              title={lang === "fr" ? t("header.switchToEnglish") : t("header.switchToFrench")}
-              className="inline-flex items-center gap-1 sm:gap-1.5 rounded-xl border border-slate-200 px-2 py-1 sm:px-2.5 sm:py-1.5 font-sans text-[13px] sm:text-[15px] leading-none font-medium tracking-[-0.01em] text-[#10453F] hover:border-[#6AD39C] hover:bg-[#6AD39C]/10 transition-colors shrink-0"
+            <DropdownMenu
+              open={langOpen}
+              onOpenChange={setLangOpen}
+              modal={false}
             >
-              <Globe size={13} className="shrink-0" />
-              {lang === "fr" ? "EN" : "FR"}
-            </button>
-          )}
+              <DropdownMenuTrigger asChild>
+                <button
+                  className={cn(
+                    "inline-flex items-center justify-center rounded-lg cursor-pointer focus:outline-none transition-all duration-200 size-8 sm:size-9",
+                    "bg-gray-100 border border-gray-200 hover:bg-gray-200 hover:border-gray-300",
+                    langOpen && "bg-gray-200 border-gray-300",
+                  )}
+                >
+                  <span className="text-[15px] leading-none select-none text-gray-600">
+                    文
+                  </span>
+                </button>
+              </DropdownMenuTrigger>
 
-          {ctaTargetId && (
-            <WebinarSubmitButton
-              href={`#${ctaTargetId}`}
-              onClick={scrollToRegister}
-              label={t("header.cta")}
-              className="h-8 sm:h-11 px-3 sm:px-7 text-[12.5px] sm:text-[15px] gap-1 sm:gap-2 [&_svg]:size-3.5 sm:[&_svg]:size-4"
-            />
+              <DropdownMenuContent
+                align="end"
+                sideOffset={7}
+                className="w-[156px] p-1.5 rounded-xl bg-white border border-gray-200 shadow-[0_8px_24px_rgba(0,0,0,0.10),_0_2px_6px_rgba(0,0,0,0.05)]"
+              >
+                {SUPPORTED_LANGS.map((l) => {
+                  const active = l.code === lang;
+                  return (
+                    <DropdownMenuItem
+                      key={l.code}
+                      onClick={() => {
+                        setLangOpen(false);
+                        if (!active) onToggleLang();
+                      }}
+                      className={cn(
+                        "flex items-center gap-2.5 rounded-lg px-2.5 py-2 cursor-pointer focus:outline-none transition-colors duration-100",
+                        active
+                          ? "bg-gray-100 focus:bg-gray-100"
+                          : "hover:bg-gray-50 focus:bg-gray-50",
+                      )}
+                    >
+                      <Flag code={l.flag} label={l.label} size={20} />
+                      <span
+                        className={cn(
+                          "flex-1 text-[13px]",
+                          active
+                            ? "font-semibold text-gray-900"
+                            : "font-normal text-gray-600",
+                        )}
+                      >
+                        {l.label}
+                      </span>
+                      {active && (
+                        <Check
+                          className="size-3 text-gray-500 shrink-0"
+                          strokeWidth={2.5}
+                        />
+                      )}
+                    </DropdownMenuItem>
+                  );
+                })}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
 
           {onBack && (
