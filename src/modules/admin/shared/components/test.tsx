@@ -1,7 +1,7 @@
 import React from "react";
 
 function test() {
-  return <div>test</div>;
+  return <div>update it </div>;
 }
 
 export default test;
