@@ -5,12 +5,14 @@ on:
     branches:
       - talentai-dev
       - talentai-preprod
+      - talentai-prod
     paths-ignore:
       - "Backend/**"
   pull_request:
     branches:
       - talentai-dev
       - talentai-preprod
+      - talentai-prod
     paths-ignore:
       - "Backend/**"
 
