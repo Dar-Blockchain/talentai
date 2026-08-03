@@ -23,13 +23,14 @@ An AI-powered talent management platform that automates hiring, skills assessmen
 
 ## Overview
 
-TalentAI is a full-stack SaaS platform built for companies to streamline talent acquisition and employee assessment. It combines real-time AI interviews, configurable assessment campaigns, and a rich analytics layer into a single unified workspace — covering the full lifecycle from job post creation to candidate hire and employee skills development.
+TalentAI is a full-stack SaaS platform built for companies to streamline talent acquisition and employee assessment, It combines real-time AI interviews, configurable assessment campaigns, and a rich analytics layer into a single unified workspace — covering the full lifecycle from job post creation to candidate hire and employee skills development.
 
 ---
 
 ## Features
 
 ### For Companies
+
 - **AI-Generated Job Posts** — describe a role and get a fully structured post with skills, requirements, and responsibilities auto-generated
 - **Assessment Campaigns** — launch Skills Mapping, Enablement, Productivity Diagnostic, or Custom campaigns targeting employees or candidates
 - **AI Interviews** — real-time voice-based AI interviews with live transcription, dynamic follow-up questions, and automated scoring
@@ -43,11 +44,13 @@ TalentAI is a full-stack SaaS platform built for companies to streamline talent 
 - **Notifications** — real-time event notifications across all user types
 
 ### For Candidates
+
 - **Candidate Dashboard** — overview of applications, interviews, and skill assessments
 - **Skill Interviews** — on-demand AI-powered skill assessments with detailed feedback reports
 - **Application Tracking** — view application status, assessment results, and interview history
 
 ### For Employees
+
 - **Campaign Participation** — receive and complete assigned assessment campaigns
 - **Skills Portal** — run self-initiated skill interviews and track growth over time
 - **Team Chat** — communicate with colleagues within the platform
@@ -84,39 +87,39 @@ The platform uses a feature-based module structure on both ends. The frontend or
 
 ### Frontend
 
-| Layer | Technology |
-|---|---|
-| Framework | Next.js 15 (Pages Router) |
-| Language | TypeScript 5 |
-| UI Components | MUI v7 + shadcn/ui + Radix UI |
-| Styling | TailwindCSS v4 + Emotion |
-| State — Server | TanStack Query v5 |
+| Layer          | Technology                    |
+| -------------- | ----------------------------- |
+| Framework      | Next.js 15 (Pages Router)     |
+| Language       | TypeScript 5                  |
+| UI Components  | MUI v7 + shadcn/ui + Radix UI |
+| Styling        | TailwindCSS v4 + Emotion      |
+| State — Server | TanStack Query v5             |
 | State — Client | Redux Toolkit + Redux Persist |
-| Forms | React Hook Form + Zod |
-| Charts | Recharts |
-| Animations | Framer Motion |
-| Real-time | Socket.io-client |
-| i18n | i18next + react-i18next |
-| Maps | React Leaflet |
-| PDF Export | jsPDF + html2canvas |
+| Forms          | React Hook Form + Zod         |
+| Charts         | Recharts                      |
+| Animations     | Framer Motion                 |
+| Real-time      | Socket.io-client              |
+| i18n           | i18next + react-i18next       |
+| Maps           | React Leaflet                 |
+| PDF Export     | jsPDF + html2canvas           |
 
 ### Backend
 
-| Layer | Technology |
-|---|---|
-| Runtime | Node.js |
-| Framework | Express 4 |
-| Database | MongoDB via Mongoose |
-| Cache / Queue | Redis |
-| Real-time | Socket.io |
-| Auth | JWT + Google OAuth |
-| AI — Interviews | AWS Bedrock + OpenAI |
-| Payments | Stripe |
-| Email | Nodemailer |
-| File Uploads | Multer |
-| Job Scheduling | Agenda + node-cron |
-| CV Parsing | pdf-parse |
-| API Docs | Swagger (swagger-jsdoc + swagger-ui-express) |
+| Layer           | Technology                                   |
+| --------------- | -------------------------------------------- |
+| Runtime         | Node.js                                      |
+| Framework       | Express 4                                    |
+| Database        | MongoDB via Mongoose                         |
+| Cache / Queue   | Redis                                        |
+| Real-time       | Socket.io                                    |
+| Auth            | JWT + Google OAuth                           |
+| AI — Interviews | AWS Bedrock + OpenAI                         |
+| Payments        | Stripe                                       |
+| Email           | Nodemailer                                   |
+| File Uploads    | Multer                                       |
+| Job Scheduling  | Agenda + node-cron                           |
+| CV Parsing      | pdf-parse                                    |
+| API Docs        | Swagger (swagger-jsdoc + swagger-ui-express) |
 
 ---
 
@@ -256,11 +259,11 @@ talentai/
 
 ## User Roles
 
-| Role | Description |
-|---|---|
-| **Admin** | Platform-level administrator |
-| **Company** | Company owner — full access to all company features |
-| **Employee** | Company staff member with granular permission controls |
+| Role          | Description                                                     |
+| ------------- | --------------------------------------------------------------- |
+| **Admin**     | Platform-level administrator                                    |
+| **Company**   | Company owner — full access to all company features             |
+| **Employee**  | Company staff member with granular permission controls          |
 | **Candidate** | Job applicant with access to their application and skill portal |
 
 Employees have a fine-grained permission model. Permissions such as `canCreateJobPosts`, `canInviteMembers`, `canAssignRoles`, `canDeleteDepartment`, and `canRemoveEmployee` are toggled individually per employee by the Company owner.
@@ -274,6 +277,7 @@ Employees have a fine-grained permission model. Permissions such as `canCreateJo
 Real-time voice interviews are orchestrated through a Socket.io event pipeline. The backend streams audio via AssemblyAI for live transcription, feeds responses through a multi-stage AI engine (question generation → memory → coverage analysis → decision engine), and produces a structured report with per-skill scores and a hire/no-hire recommendation.
 
 Supported contexts:
+
 - **Skill Interviews** — candidate self-assessment on demand
 - **Post Interviews** — linked to a specific job application
 - **Campaign Interviews** — triggered as part of a company assessment campaign
@@ -283,6 +287,7 @@ Supported contexts:
 Campaigns are the primary tool for mass employee or candidate assessment. Each campaign has one **module** (AI Interview, Skill Test, Questionnaire, or Training Path) and one of four **types** (Skills Mapping, Enablement, Productivity Diagnostic, Custom).
 
 Access modes:
+
 - `ACCOUNTS` — requires a platform login
 - `LINK` — public shareable link with optional participant anonymity
 
@@ -297,6 +302,7 @@ Stripe integration handles subscriptions and one-time payments, with webhook sup
 ### Real-Time Chat
 
 Two chat systems run in parallel over separate Socket.io namespaces:
+
 - **Team Chat** — internal messaging between company employees
 - **Candidate Chat** — communication between companies and job applicants
 
