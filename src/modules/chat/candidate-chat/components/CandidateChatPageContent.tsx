@@ -2,9 +2,7 @@ import React, { memo, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
-import { Box } from "@mui/material";
-import PersonSearchOutlined from "@mui/icons-material/PersonSearchOutlined";
-import ForumOutlined from "@mui/icons-material/ForumOutlined";
+import { UserSearch as PersonSearchOutlined, MessagesSquare as ForumOutlined } from "lucide-react";
 import { RootState } from "@/store/store";
 import CompanyHubChatFrame from "@/modules/chat/shared/components/CompanyHubChatFrame";
 import CompanyHubMintChatShell from "@/modules/chat/shared/components/CompanyHubMintChatShell";
@@ -12,44 +10,18 @@ import { useCandidateChatSession } from "@/modules/chat/candidate-chat/hooks/use
 import { getCandidateChatBasePath } from "@/modules/chat/candidate-chat/utils/routes";
 
 // Static icon nodes — defined outside the component so they never get recreated.
+const titleIconClass = "flex h-9 w-9 items-center justify-center rounded-xl text-[#10B981] bg-[#ECFDF5] border border-[rgba(52,211,153,0.25)] shadow-[0_4px_20px_rgba(15,23,42,0.05)]";
+
 const companyTitleIcon = (
-  <Box
-    aria-hidden
-    sx={{
-      width: 36,
-      height: 36,
-      borderRadius: "12px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "#10B981",
-      bgcolor: "#ECFDF5",
-      border: "1px solid rgba(52, 211, 153, 0.25)",
-      boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
-    }}
-  >
-    <PersonSearchOutlined sx={{ fontSize: 20 }} />
-  </Box>
+  <div aria-hidden className={titleIconClass}>
+    <PersonSearchOutlined size={20} />
+  </div>
 );
 
 const candidateTitleIcon = (
-  <Box
-    aria-hidden
-    sx={{
-      width: 36,
-      height: 36,
-      borderRadius: "12px",
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      color: "#10B981",
-      bgcolor: "#ECFDF5",
-      border: "1px solid rgba(52, 211, 153, 0.25)",
-      boxShadow: "0 4px 20px rgba(15, 23, 42, 0.05)",
-    }}
-  >
-    <ForumOutlined sx={{ fontSize: 20 }} />
-  </Box>
+  <div aria-hidden className={titleIconClass}>
+    <ForumOutlined size={20} />
+  </div>
 );
 
 interface CandidateChatPageContentProps {

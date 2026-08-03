@@ -56,10 +56,9 @@ export interface SettingsProfile {
     address?: string;
     personalWebsite?: string;
     requiredExperienceLevel?: string;
-    requiredSkills?: string[];
     language?: string;
   };
-  requiredSkills?: string[];
+
   quota?: number;
   skills?: any[] | null;
   softSkills?: any[] | null;
@@ -73,4 +72,38 @@ export interface ProfileApiResponse {
   profile?: any;
   planLimits?: any;
   companyMembership?: any;
+}
+
+export interface UserProfile {
+  // Editable fields
+  username: string;
+  email: string;
+  requiredExperienceLevel: string;
+  targetRole: string;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  country: string;
+  language: string;
+  timezone: string;
+  // Contact Information fields
+  phone?: string;
+  address?: string;
+  linkedinUrl?: string;
+  linkedin?: string;
+  website?: string;
+  githubUrl?: string;
+  personalWebsite?: string;
+  location?: string;
+  // Display-only fields
+  avatar?: string;
+  resume?: string;
+  profileType?: 'Candidate' | 'Company';
+  // Company-specific fields (all editable)
+  companyName?: string;
+  name?: string;
+  industry?: string;
+  companySize?: string;
+  size?: string;
+  employmentType?: string;
 }

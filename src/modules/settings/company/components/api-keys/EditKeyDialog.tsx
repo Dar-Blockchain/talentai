@@ -2,11 +2,12 @@ import React, { useEffect } from "react";
 import { useTranslation } from "react-i18next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button, CircularProgress, Dialog, DialogTitle, Divider } from "@mui/material";
 import type { ApiKey } from "@/modules/settings/company/types";
+import { Spinner } from "@/modules/settings/shared/components";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { keyFormSchema, DEFAULT_FORM, type KeyFormState } from "../../schemas/apiKeySchema";
 import { KeyFormFields, DialogForm } from "./KeyFormFields";
-import { cancelBtnSx, saveBtnSx } from "./styles";
+import { cancelBtnClass, saveBtnClass } from "./styles";
 
 type Props = {
   editingKey: ApiKey | null;
@@ -36,21 +37,25 @@ const EditKeyDialog: React.FC<Props> = ({ editingKey, onClose, onSubmit }) => {
   }, [editingKey, reset]);
 
   return (
-    <Dialog open={!!editingKey} onClose={onClose} maxWidth="sm" fullWidth slotProps={{ paper: { sx: { borderRadius: "16px" } } }}>
-      <DialogTitle sx={{ fontSize: "1rem", fontWeight: 700, pb: 1 }}>
-        {t("pages.settings.api_keys.edit_title")}
-      </DialogTitle>
-      <Divider />
-      <DialogForm fields={<KeyFormFields control={control} errors={errors} />}>
-        <Button onClick={onClose} size="small" sx={cancelBtnSx}>
-          {t("pages.settings.api_keys.actions.cancel")}
-        </Button>
-        <Button onClick={handleSubmit(onSubmit)} size="small" disabled={isSubmitting} sx={saveBtnSx}>
-          {isSubmitting
-            ? <CircularProgress size={14} sx={{ color: "#fff" }} />
-            : t("pages.settings.api_keys.actions.save")}
-        </Button>
-      </DialogForm>
+    <Dialog open={!!editingKey} onOpenChange={(o) => { if (!o) onClose(); }}>
+      <DialogContent showCloseButton={false} className="max-w-sm w-full rounded-2xl overflow-hidden p-0">
+        <div className="px-6 pt-5 pb-3">
+          <span className="text-[1rem] font-bold text-gray-900">
+            {t("pages.settings.api_keys.edit_title")}
+          </span>
+        </div>
+        <hr className="border-gray-200" />
+        <DialogForm fields={<KeyFormFields control={control} errors={errors} />}>
+          <button type="button" onClick={onClose} className={cancelBtnClass}>
+            {t("pages.settings.api_keys.actions.cancel")}
+          </button>
+          <button type="button" onClick={handleSubmit(onSubmit)} disabled={isSubmitting} className={saveBtnClass}>
+            {isSubmitting
+              ? <Spinner size={14} className="border-white/40 border-t-white" />
+              : t("pages.settings.api_keys.actions.save")}
+          </button>
+        </DialogForm>
+      </DialogContent>
     </Dialog>
   );
 };

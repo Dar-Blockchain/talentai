@@ -110,7 +110,27 @@ export const useTeamChatRealtime = () => {
         viewerIsViewingConversation,
       }));
 
-      // addTeamMessage already updates conversations and messages in Redux via applyIncomingMessage.
+      // addTeamMessage only pushes into Redux's `messages` when this conversation
+      // is the one currently open (applyIncomingMessage). If the viewer is on a
+      // different page, the message never lands there — so also patch the React
+      // Query cache for this conversation directly. Without this, the messages
+      // query (staleTime: Infinity, never auto-refetches) keeps serving the old
+      // cached list forever, and reopening the conversation later never shows a
+      // message that arrived while the viewer was elsewhere.
+      if (conversationId) {
+        qc.setQueriesData(
+          { queryKey: [...teamChatKeys.all, "messages", conversationId] },
+          (old: unknown) => {
+            if (!Array.isArray(old)) return old;
+            if (old.some((m: any) => String(m._id) === msgId)) return old;
+            return [...old, normalized].sort(
+              (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            );
+          },
+        );
+      }
+
+      // addTeamMessage already updates conversations in Redux via applyIncomingMessage.
       // Only invalidate unreadCount to sync the server total.
       qc.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
 

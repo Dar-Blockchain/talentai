@@ -1,48 +1,53 @@
 import React from "react";
-import { Box, Button, CircularProgress } from "@mui/material";
-import EditOutlined from "@mui/icons-material/EditOutlined";
-import SaveOutlined from "@mui/icons-material/SaveOutlined";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
-import { TEAL, TEAL_BG, TEAL_BORDER } from "../constants";
+import { Pencil, Save, X } from "lucide-react";
+import Spinner from "./Spinner";
 
 interface EditActionsProps {
-  isEditing: boolean;
-  loading: boolean;
-  onEdit: () => void;
-  onCancel: () => void;
-  onSave: () => void;
+  isEditing:  boolean;
+  loading:    boolean;
+  onEdit:     () => void;
+  onCancel:   () => void;
+  onSave:     () => void;
+  disabled?:  boolean;
 }
 
-const EditActions: React.FC<EditActionsProps> = ({ isEditing, loading, onEdit, onCancel, onSave }) =>
+const EditActions: React.FC<EditActionsProps> = ({ isEditing, loading, onEdit, onCancel, onSave, disabled }) =>
   !isEditing ? (
-    <Button
-      size="small"
-      startIcon={<EditOutlined sx={{ fontSize: 14 }} />}
+    <button
+      type="button"
       onClick={onEdit}
-      sx={{ textTransform: "none", borderRadius: 2, fontWeight: 600, fontSize: "12px", color: TEAL, border: `1px solid ${TEAL_BORDER}`, "&:hover": { bgcolor: TEAL_BG } }}
+      disabled={disabled}
+      className="inline-flex items-center gap-1.5 rounded-lg border border-primary-border px-2.5 py-1.5 text-xs font-semibold text-primary-dark hover:bg-primary-light transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
     >
-      Edit
-    </Button>
+      <Pencil size={13} />
+      <span className="hidden sm:inline">Edit</span>
+    </button>
   ) : (
-    <Box sx={{ display: "flex", gap: 1 }}>
-      <Button
-        size="small"
-        startIcon={<CloseOutlined sx={{ fontSize: 14 }} />}
+    <div className="flex gap-1.5">
+      <button
+        type="button"
         onClick={onCancel}
-        sx={{ textTransform: "none", borderRadius: 2, fontWeight: 600, fontSize: "12px", color: "#6B7280", border: "1px solid #E5E7EB" }}
+        className="inline-flex items-center gap-1 rounded-lg border border-border px-2.5 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted transition-colors cursor-pointer"
       >
-        Cancel
-      </Button>
-      <Button
-        size="small" variant="contained"
-        startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: 14 }} />}
+        <X size={13} />
+        <span className="hidden sm:inline">Cancel</span>
+      </button>
+      <button
+        type="button"
         onClick={onSave}
         disabled={loading}
-        sx={{ textTransform: "none", borderRadius: 2, fontWeight: 600, fontSize: "12px", bgcolor: TEAL, "&:hover": { bgcolor: "#0F766E" } }}
+        className="inline-flex items-center gap-1 rounded-lg bg-primary-dark px-2.5 py-1.5 text-xs font-semibold text-white hover:bg-primary-dark/90 disabled:opacity-60 transition-colors cursor-pointer"
       >
-        {loading ? <CircularProgress size={14} color="inherit" /> : "Save"}
-      </Button>
-    </Box>
+        {loading ? (
+          <Spinner size={13} className="border-white/40 border-t-white" />
+        ) : (
+          <>
+            <Save size={13} />
+            <span className="hidden sm:inline">Save</span>
+          </>
+        )}
+      </button>
+    </div>
   );
 
 export default EditActions;

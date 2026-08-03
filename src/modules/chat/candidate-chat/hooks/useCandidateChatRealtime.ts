@@ -121,8 +121,27 @@ export const useCandidateChatRealtime = () => {
         viewerIsViewingConversation,
       }));
 
+      // addCandidateMessage only pushes into Redux's `messages` when this conversation
+      // is the one currently open. If the viewer is on a different page, the message
+      // never lands there — so also patch the React Query cache for this conversation
+      // directly. Without this, the messages query (staleTime: Infinity, never
+      // auto-refetches) keeps serving the old cached list forever, and reopening the
+      // conversation later never shows a message that arrived while elsewhere.
+      if (conversationId) {
+        qc.setQueriesData(
+          { queryKey: candidateChatKeys.messages(conversationId) },
+          (old: unknown) => {
+            if (!Array.isArray(old)) return old;
+            if (old.some((m: any) => String(m._id) === msgId)) return old;
+            return [...old, normalized].sort(
+              (a: any, b: any) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime(),
+            );
+          },
+        );
+      }
+
       // addCandidateMessage already updates conversations (lastMessage preview, sort order,
-      // unreadCount) and messages in Redux. Only invalidate unreadCount to sync the server total.
+      // unreadCount) in Redux. Only invalidate unreadCount to sync the server total.
       qc.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
 
       if (!shouldNotify) return;

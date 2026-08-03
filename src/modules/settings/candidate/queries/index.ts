@@ -19,13 +19,11 @@ export const useUpdateCandidateProfile = () => {
     mutationFn: ({ userId, payload }: { userId: string; payload: Record<string, unknown> }) =>
       candidateApi.updateProfile(userId, payload),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data?.user              ?? null,
-        profile:           data?.profile           ?? null,
-        planLimits:        data?.planLimits        ?? null,
-        companyMembership: data?.companyMembership ?? null,
-      }));
-      queryClient.invalidateQueries({ queryKey: profileKeys.me });
+      if (!data?.profile) return;
+      dispatch(setConnectedUser({ profile: data.profile }));
+      queryClient.setQueryData(profileKeys.me, (old: any) =>
+        old ? { ...old, profile: data.profile } : old
+      );
     },
   });
 };
@@ -37,13 +35,11 @@ export const useUploadCandidateAvatar = () => {
     mutationFn: ({ userId, file }: { userId: string; file: File }) =>
       candidateApi.uploadAvatar(userId, file),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data?.user              ?? null,
-        profile:           data?.profile           ?? null,
-        planLimits:        data?.planLimits        ?? null,
-        companyMembership: data?.companyMembership ?? null,
-      }));
-      queryClient.invalidateQueries({ queryKey: profileKeys.me });
+      if (!data?.profile) return;
+      dispatch(setConnectedUser({ profile: data.profile }));
+      queryClient.setQueryData(profileKeys.me, (old: any) =>
+        old ? { ...old, profile: data.profile } : old
+      );
     },
   });
 };
@@ -51,7 +47,8 @@ export const useUploadCandidateAvatar = () => {
 export const useUpdateCandidateVisibility = () => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (isPublicProfile: boolean) => candidateApi.updateVisibility(isPublicProfile),
+    mutationFn: ({ userId, isPublicProfile }: { userId: string; isPublicProfile: boolean }) =>
+      candidateApi.updateVisibility(userId, isPublicProfile),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: profileKeys.me });
     },

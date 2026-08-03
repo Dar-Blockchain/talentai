@@ -11,8 +11,19 @@ export const usePersistentCountdown = ({
   storageKey,
   onExpire,
 }: Options) => {
-  const [secondsLeft, setSecondsLeft] = useState(0);
-  const [hasExpired, setHasExpired] = useState(false);
+  const [secondsLeft, setSecondsLeft] = useState(() => {
+    if (typeof window === 'undefined') return 0;
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return 0;
+    const remaining = Math.max(0, Math.floor((Number(stored) - Date.now()) / 1000));
+    return remaining;
+  });
+  const [hasExpired, setHasExpired] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const stored = localStorage.getItem(storageKey);
+    if (!stored) return false;
+    return Number(stored) <= Date.now();
+  });
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const clear = useCallback(() => {

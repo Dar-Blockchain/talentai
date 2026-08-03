@@ -1,14 +1,18 @@
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import type { RootState } from "@/store/store";
 import type { CandidateConversation, CandidateMessage } from "@/modules/chat/candidate-chat/types";
+// Imported from their concrete files (not the `@/modules/chat/shared` barrel):
+// that barrel also re-exports heavy chat UI shells + the socket.io client
+// factory, and this slice is combined into the root reducer that `_app.tsx`
+// loads eagerly — a barrel import here would drag all of that into the
+// shared `_app` chunk on every route.
 import {
   applyIncomingMessage,
   dedupeMessages,
-  resolveMessagePayload,
   sortConversationsByRecent,
-  type ChatShellConversation,
-  type ChatShellMessage,
-} from "@/modules/chat/shared";
+} from "@/modules/chat/shared/store/chatShellState";
+import { resolveMessagePayload } from "@/modules/chat/shared/utils/resolveMessagePayload";
+import type { ChatShellConversation, ChatShellMessage } from "@/modules/chat/shared/types/shell";
 import {
   toChatShellConversation,
   toChatShellMessage,

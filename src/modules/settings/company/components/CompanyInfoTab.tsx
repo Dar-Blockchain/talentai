@@ -1,14 +1,13 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Divider, Typography } from "@mui/material";
 import { Controller, Control } from "react-hook-form";
 import { COMPANY_SIZES } from "@/modules/settings/shared/constants";
 import { getAllCountryNames } from "@/utils/countryMappings";
-import AppInput from "@/modules/shared/ui/AppInput";
-import AppSelect from "@/modules/shared/ui/AppSelect";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import AppAutocomplete from "@/modules/shared/ui/AppAutocomplete";
-import { UserProfile } from "@/types/profile";
 import { CompanyProfileFormValues } from "../schemas/companyProfileSchema";
+import { UserProfile } from "../../shared";
 
 interface Props {
   profile: UserProfile;
@@ -17,19 +16,10 @@ interface Props {
 }
 
 const SectionHeader = ({ title, subtitle }: { title: string; subtitle: string }) => (
-  <Box
-    sx={{
-      px: 2,
-      py: 1.5,
-      bgcolor: "#F9FAFB",
-      border: "1px solid #E5E7EB",
-      borderRadius: 2,
-      borderLeft: "3px solid #0D9488",
-    }}
-  >
-    <Typography sx={{ fontSize: "0.9rem", fontWeight: 700, color: "#111827" }}>{title}</Typography>
-    <Typography sx={{ fontSize: "0.78rem", color: "#9CA3AF", mt: 0.25 }}>{subtitle}</Typography>
-  </Box>
+  <div className="px-4 py-3 bg-gray-50 border border-gray-200 rounded-lg border-l-[3px] border-l-teal-600">
+    <p className="text-[0.9rem] font-bold text-gray-900">{title}</p>
+    <p className="text-[0.78rem] text-gray-400 mt-1">{subtitle}</p>
+  </div>
 );
 
 const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
@@ -47,38 +37,44 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
   );
 
   return (
-    <Box sx={{ p: { xs: 2, md: 3 }, display: "flex", flexDirection: "column", gap: 3 }}>
+    <div className="p-4 md:p-6 flex flex-col gap-6">
 
       {/* ── Company Information ── */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <div className="flex flex-col gap-5">
         <SectionHeader
           title={t("pages.settings.company_info.title")}
           subtitle={t("pages.settings.company_info.subtitle")}
         />
 
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           {/* Email — read-only, not managed by RHF */}
-          <AppInput
-            label={t("pages.settings.company_info.email_label")}
-            value={profile.email || ""}
-            disabled
-            sx={{ gridColumn: "1 / -1" }}
-          />
+          <label className="flex flex-col gap-1.5 sm:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+              {t("pages.settings.company_info.email_label")}
+            </span>
+            <Input value={profile.email || ""} disabled />
+          </label>
 
           {/* Company Name */}
           <Controller
             name="name"
             control={control}
             render={({ field, fieldState }) => (
-              <AppInput
-                label={t("pages.settings.company_info.name_label")}
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-                disabled={!isEditing}
-                placeholder={t("pages.settings.company_info.name_placeholder")}
-                error={fieldState.error?.message || ""}
-                sx={{ gridColumn: "1 / -1" }}
-              />
+              <label className="flex flex-col gap-1.5 sm:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.company_info.name_label")}
+                </span>
+                <Input
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  disabled={!isEditing}
+                  placeholder={t("pages.settings.company_info.name_placeholder")}
+                  aria-invalid={!!fieldState.error}
+                />
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </label>
             )}
           />
 
@@ -87,16 +83,24 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
             name="industry"
             control={control}
             render={({ field, fieldState }) => (
-              <AppSelect
-                label={t("pages.settings.company_info.industry_label")}
-                value={field.value}
-                onChange={(val) => field.onChange(val)}
-                options={industryOptions}
-                disabled={!isEditing}
-                placeholder={t("pages.settings.company_info.industry_placeholder")}
-                error={fieldState.error?.message || ""}
-                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" } }}
-              />
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.company_info.industry_label")}
+                </span>
+                <Select value={field.value} onValueChange={field.onChange} disabled={!isEditing}>
+                  <SelectTrigger className="w-full" aria-invalid={!!fieldState.error}>
+                    <SelectValue placeholder={t("pages.settings.company_info.industry_placeholder")} />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {industryOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </div>
             )}
           />
 
@@ -105,25 +109,33 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
             name="size"
             control={control}
             render={({ field, fieldState }) => (
-              <AppSelect
-                label={t("pages.settings.company_info.size_label")}
-                value={field.value}
-                onChange={(val) => field.onChange(val)}
-                options={sizeOptions}
-                disabled={!isEditing}
-                error={fieldState.error?.message || ""}
-                columns={3}
-                sx={{ gridColumn: { xs: "1 / -1", sm: "auto" } }}
-              />
+              <div className="flex flex-col gap-1.5">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.company_info.size_label")}
+                </span>
+                <Select value={field.value} onValueChange={field.onChange} disabled={!isEditing}>
+                  <SelectTrigger className="w-full" aria-invalid={!!fieldState.error}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {sizeOptions.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </div>
             )}
           />
-        </Box>
-      </Box>
+        </div>
+      </div>
 
-      <Divider sx={{ borderColor: "#E5E7EB" }} />
+      <hr className="border-gray-200" />
 
       {/* ── Contact & Presence ── */}
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+      <div className="flex flex-col gap-5">
         <SectionHeader
           title="Contact & Presence"
           subtitle="Location, social links, and work preferences"
@@ -147,21 +159,27 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
         />
 
         {/* LinkedIn & Website */}
-        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 2.5 }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
           <Controller
             name="linkedin"
             control={control}
             render={({ field, fieldState }) => (
-              <AppInput
-                label={t("pages.settings.contact.linkedin_label")}
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-                disabled={!isEditing}
-                placeholder="https://linkedin.com/company/yourcompany"
-                type="url"
-                error={fieldState.error?.message || ""}
-                sx={{ gridColumn: "1 / -1" }}
-              />
+              <label className="flex flex-col gap-1.5 sm:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.contact.linkedin_label")}
+                </span>
+                <Input
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  disabled={!isEditing}
+                  placeholder="https://linkedin.com/company/yourcompany"
+                  type="url"
+                  aria-invalid={!!fieldState.error}
+                />
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </label>
             )}
           />
 
@@ -169,21 +187,27 @@ const CompanyInfoTab: React.FC<Props> = ({ profile, isEditing, control }) => {
             name="website"
             control={control}
             render={({ field, fieldState }) => (
-              <AppInput
-                label={t("pages.settings.contact.website_label")}
-                value={field.value}
-                onChange={(e) => field.onChange(e.target.value)}
-                disabled={!isEditing}
-                placeholder="https://yourcompany.com"
-                type="url"
-                error={fieldState.error?.message || ""}
-                sx={{ gridColumn: "1 / -1" }}
-              />
+              <label className="flex flex-col gap-1.5 sm:col-span-2">
+                <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
+                  {t("pages.settings.contact.website_label")}
+                </span>
+                <Input
+                  value={field.value}
+                  onChange={(e) => field.onChange(e.target.value)}
+                  disabled={!isEditing}
+                  placeholder="https://yourcompany.com"
+                  type="url"
+                  aria-invalid={!!fieldState.error}
+                />
+                {fieldState.error?.message && (
+                  <span className="text-[11px] text-red-500">{fieldState.error.message}</span>
+                )}
+              </label>
             )}
           />
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

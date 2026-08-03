@@ -1,6 +1,6 @@
-import { UserProfile } from '@/types/profile';
 import { ConnectedUserEntity, ConnectedUserProfile } from '@/store/slices/userSlice';
 import { contactInformationSchema } from '../schemas';
+import { UserProfile } from '../../shared';
 
 export const VALID_TABS = ['personal', 'contact', 'preferences', 'language', 'notifications', 'visibility'];
 
@@ -29,7 +29,6 @@ export const initialProfile: UserProfile = {
   companySize: '',
   size: '',
   employmentType: 'Remote',
-  requiredSkills: [],
 };
 
 const CANDIDATE_CONTACT_FIELDS: Array<keyof UserProfile> = [
@@ -94,8 +93,8 @@ export const hasCandidateContactChanges = (current: UserProfile, saved: UserProf
 
 const getAvatarUrl = (reduxProfile?: ConnectedUserProfile, userData?: ConnectedUserEntity) => {
   const base = process.env.NEXT_PUBLIC_API_BASE_URL;
-  if (reduxProfile?.user_image) return `${base}images/Users/${reduxProfile.user_image}`;
-  if (userData?.user_image) return `${base}images/Users/${userData.user_image}`;
+  if (reduxProfile?.user_image) return `${base}uploads/images/${reduxProfile.user_image}`;
+  if (userData?.user_image) return `${base}uploads/images/${userData.user_image}`;
   return '';
 };
 
@@ -121,6 +120,7 @@ export const buildSyncedProfile = (reduxProfile?: ConnectedUserProfile, user?: C
     personalWebsite: reduxProfile?.personalWebsite || reduxProfile?.contactInformation?.personalWebsite || '',
     location: reduxProfile?.location || reduxProfile?.contactInformation?.location || '',
     avatar: getAvatarUrl(reduxProfile, userData),
+    resume: (reduxProfile as any)?.resume || '',
     profileType: (isCompany ? 'Company' : 'Candidate') as 'Candidate' | 'Company',
     companyName: reduxProfile?.companyDetails?.name || '',
     name: reduxProfile?.companyDetails?.name || '',
@@ -128,6 +128,5 @@ export const buildSyncedProfile = (reduxProfile?: ConnectedUserProfile, user?: C
     companySize: reduxProfile?.companyDetails?.size || '',
     size: reduxProfile?.companyDetails?.size || '',
     employmentType: reduxProfile?.companyDetails?.employmentType || 'Remote',
-    requiredSkills: reduxProfile?.requiredSkills || [],
   };
 };

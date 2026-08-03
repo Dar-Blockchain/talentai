@@ -4,7 +4,7 @@
         xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9
           http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">
 
-  <!-- ── Home ────────────────────────────────────────────────────────────────── -->
+  <!-- ── Primary landing page ─────────────────────────────────────────────── -->
   <url>
     <loc>https://talentai.bid/</loc>
     <lastmod>2026-07-01</lastmod>
@@ -12,7 +12,7 @@
     <priority>1.0</priority>
   </url>
 
-  <!-- ── Demo ────────────────────────────────────────────────────────────────── -->
+  <!-- ── Demo ──────────────────────────────────────────────────────────────── -->
   <url>
     <loc>https://talentai.bid/demo</loc>
     <lastmod>2026-07-01</lastmod>
@@ -20,7 +20,15 @@
     <priority>0.9</priority>
   </url>
 
-  <!-- ── Legal ───────────────────────────────────────────────────────────────── -->
+  <!-- ── Blog ──────────────────────────────────────────────────────────────── -->
+  <url>
+    <loc>https://talentai.bid/blog</loc>
+    <lastmod>2026-07-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+
+  <!-- ── Legal ─────────────────────────────────────────────────────────────── -->
   <url>
     <loc>https://talentai.bid/privacy</loc>
     <lastmod>2026-07-01</lastmod>

@@ -1,34 +1,36 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Chip, IconButton, Switch, Tooltip, Typography } from "@mui/material";
-import DeleteOutlined  from "@mui/icons-material/DeleteOutlined";
-import EditOutlined    from "@mui/icons-material/EditOutlined";
-import KeyOutlined     from "@mui/icons-material/KeyOutlined";
-import RefreshOutlined from "@mui/icons-material/RefreshOutlined";
-import type { SvgIconComponent } from "@mui/icons-material";
+import { Trash2, Pencil, Key, RefreshCw, type LucideIcon } from "lucide-react";
 import type { ApiKey } from "@/modules/settings/company/types";
+import { Switch } from "@/modules/shared/ui/shadcn/switch";
 import { TEAL, TEAL_BG, fmtDate } from "@/modules/settings/shared/constants";
 
 // ─── Local sub-components ─────────────────────────────────────────────────────
 
 const MetaText = ({ children }: { children: React.ReactNode }) => (
-  <Typography sx={{ fontSize: "0.68rem", color: "#9CA3AF" }}>{children}</Typography>
+  <span className="text-[0.68rem] text-gray-400">{children}</span>
 );
 
 const ActionButton = ({
   title, icon: Icon, onClick, color, hoverBg,
 }: {
   title: string;
-  icon: SvgIconComponent;
+  icon: LucideIcon;
   onClick: () => void;
   color: string;
   hoverBg: string;
 }) => (
-  <Tooltip title={title}>
-    <IconButton size="small" onClick={onClick} sx={{ color, "&:hover": { bgcolor: hoverBg } }}>
-      <Icon sx={{ fontSize: 16 }} />
-    </IconButton>
-  </Tooltip>
+  <button
+    type="button"
+    title={title}
+    onClick={onClick}
+    className="rounded-md p-1.5 transition-colors"
+    style={{ color }}
+    onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = hoverBg)}
+    onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
+  >
+    <Icon size={16} />
+  </button>
 );
 
 // ─── KeyCard ──────────────────────────────────────────────────────────────────
@@ -45,38 +47,42 @@ const KeyCard: React.FC<Props> = ({ apiKey: k, onEdit, onDelete, onToggle, onReg
   const { t } = useTranslation("dashboard");
 
   return (
-    <Box sx={{ border: "1px solid #E5E7EB", borderRadius: "12px", p: 2, display: "flex", alignItems: "center", gap: 2, flexWrap: "wrap" }}>
+    <div className="border border-gray-200 rounded-xl p-4 flex items-center gap-4 flex-wrap">
 
       {/* Status icon */}
-      <Box sx={{ width: 36, height: 36, borderRadius: "9px", bgcolor: k.isActive ? TEAL_BG : "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-        <KeyOutlined sx={{ fontSize: 17, color: k.isActive ? TEAL : "#9CA3AF" }} />
-      </Box>
+      <div
+        className="w-9 h-9 rounded-[9px] flex-shrink-0 flex items-center justify-center"
+        style={{ backgroundColor: k.isActive ? TEAL_BG : "#F3F4F6" }}
+      >
+        <Key size={17} style={{ color: k.isActive ? TEAL : "#9CA3AF" }} />
+      </div>
 
       {/* Info */}
-      <Box sx={{ flex: 1, minWidth: 0 }}>
+      <div className="flex-1 min-w-0">
 
         {/* Name + badges */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
-          <Typography sx={{ fontSize: "0.88rem", fontWeight: 700, color: "#111827" }}>{k.name}</Typography>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-[0.88rem] font-bold text-gray-900">{k.name}</span>
           {k.serviceName && (
-            <Chip label={k.serviceName} size="small" sx={{ height: 18, fontSize: "0.62rem", fontWeight: 600, bgcolor: "#F3F4F6", color: "#374151" }} />
+            <span className="inline-flex h-[18px] items-center px-2 rounded-full text-[0.62rem] font-semibold bg-gray-100 text-gray-700">{k.serviceName}</span>
           )}
-          <Chip
-            label={k.isActive ? t("pages.settings.api_keys.active") : t("pages.settings.api_keys.disabled_label")}
-            size="small"
-            sx={{ height: 18, fontSize: "0.62rem", fontWeight: 700, bgcolor: k.isActive ? "rgba(13,148,136,0.08)" : "#F3F4F6", color: k.isActive ? TEAL : "#9CA3AF" }}
-          />
-        </Box>
+          <span
+            className="inline-flex h-[18px] items-center px-2 rounded-full text-[0.62rem] font-bold"
+            style={{ backgroundColor: k.isActive ? "rgba(13,148,136,0.08)" : "#F3F4F6", color: k.isActive ? TEAL : "#9CA3AF" }}
+          >
+            {k.isActive ? t("pages.settings.api_keys.active") : t("pages.settings.api_keys.disabled_label")}
+          </span>
+        </div>
 
         {/* Scopes */}
-        <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5, mt: 0.6 }}>
+        <div className="flex flex-wrap gap-1.5 mt-1.5">
           {k.scopes.map((s) => (
-            <Chip key={s} label={s} size="small" sx={{ height: 17, fontSize: "0.6rem", bgcolor: "#EFF6FF", color: "#2563EB" }} />
+            <span key={s} className="inline-flex h-[17px] items-center px-1.5 rounded-full text-[0.6rem] bg-blue-50 text-blue-600">{s}</span>
           ))}
-        </Box>
+        </div>
 
         {/* Meta row */}
-        <Box sx={{ display: "flex", gap: 2, mt: 0.5, flexWrap: "wrap" }}>
+        <div className="flex gap-4 mt-1 flex-wrap">
           {k.keyPreview && <MetaText>{t("pages.settings.api_keys.key_preview",    { preview: k.keyPreview })}</MetaText>}
           <MetaText>{t("pages.settings.api_keys.rate_limit_label", { count: k.rateLimit })}</MetaText>
           {k.expiresAt  && <MetaText>{t("pages.settings.api_keys.expires_label",   { date: fmtDate(k.expiresAt) })}</MetaText>}
@@ -86,22 +92,23 @@ const KeyCard: React.FC<Props> = ({ apiKey: k, onEdit, onDelete, onToggle, onReg
               ? t("pages.settings.api_keys.ips_label", { ips: k.ipWhitelist.join(", ") })
               : `IPs: ${t("pages.settings.api_keys.ips_all")}`}
           </MetaText>
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       {/* Actions */}
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.5, flexShrink: 0 }}>
-        <Tooltip title={k.isActive ? t("pages.settings.api_keys.toggle_disable") : t("pages.settings.api_keys.toggle_enable")}>
-          <Switch size="small" checked={k.isActive} onChange={() => onToggle(k.id, k.isActive)}
-            sx={{ "& .MuiSwitch-switchBase.Mui-checked": { color: TEAL }, "& .MuiSwitch-switchBase.Mui-checked + .MuiSwitch-track": { bgcolor: TEAL } }}
-          />
-        </Tooltip>
-        <ActionButton title={t("pages.settings.api_keys.regenerate_tooltip")} icon={RefreshOutlined} onClick={() => onRegenerate(k.id)} color="#F59E0B" hoverBg="#FFFBEB" />
-        <ActionButton title={t("pages.settings.api_keys.edit_tooltip")}       icon={EditOutlined}    onClick={() => onEdit(k)}           color={TEAL}    hoverBg={TEAL_BG} />
-        <ActionButton title={t("pages.settings.api_keys.delete_tooltip")}     icon={DeleteOutlined}  onClick={() => onDelete(k)}         color="#EF4444" hoverBg="#FEF2F2" />
-      </Box>
+      <div className="flex items-center gap-1 flex-shrink-0">
+        <Switch
+          size="sm"
+          checked={k.isActive}
+          title={k.isActive ? t("pages.settings.api_keys.toggle_disable") : t("pages.settings.api_keys.toggle_enable")}
+          onCheckedChange={() => onToggle(k.id, k.isActive)}
+        />
+        <ActionButton title={t("pages.settings.api_keys.regenerate_tooltip")} icon={RefreshCw} onClick={() => onRegenerate(k.id)} color="#F59E0B" hoverBg="#FFFBEB" />
+        <ActionButton title={t("pages.settings.api_keys.edit_tooltip")}       icon={Pencil}     onClick={() => onEdit(k)}           color={TEAL}    hoverBg={TEAL_BG} />
+        <ActionButton title={t("pages.settings.api_keys.delete_tooltip")}     icon={Trash2}     onClick={() => onDelete(k)}         color="#EF4444" hoverBg="#FEF2F2" />
+      </div>
 
-    </Box>
+    </div>
   );
 };
 

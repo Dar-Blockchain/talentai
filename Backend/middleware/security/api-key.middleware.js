@@ -1,240 +1,191 @@
-const ApiKey = require("../../models/ApiKey.model");
-const User = require("../../models/User.model");
+const ApiKey = require("../../features/api-keys/api-key.model");
+const User   = require("../../features/users/user.model");
 const { createClient } = require("redis");
 
-// Initialiser le client Redis
-let redisClient = null;
+// ─── Redis client ─────────────────────────────────────────────────────────────
 
-/**
- * Get or create Redis client
- */
+let redisClient = null;
+let redisAvailable = false;
+
 async function getRedisClient() {
   if (!redisClient) {
     redisClient = createClient({
-      host: process.env.REDIS_HOST || "localhost",
-      port: process.env.REDIS_PORT || 6379,
+      socket: {
+        host: process.env.REDIS_HOST || "localhost",
+        port: parseInt(process.env.REDIS_PORT || "6379", 10),
+      },
     });
-    redisClient.on("error", (err) => console.error("Redis Client Error", err));
-    if (!redisClient.isOpen) {
+    redisClient.on("error", (err) => {
+      redisAvailable = false;
+      console.error("Redis Client Error:", err.message);
+    });
+    redisClient.on("ready", () => { redisAvailable = true; });
+    try {
       await redisClient.connect();
+      redisAvailable = true;
+    } catch (err) {
+      redisAvailable = false;
+      console.error("Redis connect failed:", err.message);
     }
   }
-  return redisClient;
+  return { client: redisClient, available: redisAvailable };
 }
 
-/**
- * Get the real client IP address (handles proxies)
- */
+// ─── In-process fallback rate limiter (used when Redis is down) ───────────────
+// Simple token-bucket per API key ID, stored in process memory.
+// Resets automatically via Map TTL cleanup.
+
+const _fallbackBuckets = new Map(); // keyId → { count, resetAt }
+
+function fallbackRateLimit(keyId, limit) {
+  const now = Date.now();
+  const hourMs = 60 * 60 * 1000;
+  let bucket = _fallbackBuckets.get(keyId);
+
+  if (!bucket || now >= bucket.resetAt) {
+    bucket = { count: 0, resetAt: now + hourMs };
+    _fallbackBuckets.set(keyId, bucket);
+  }
+
+  bucket.count++;
+  const remaining = Math.max(0, limit - bucket.count);
+  const exceeded  = bucket.count > limit;
+
+  return { count: bucket.count, remaining, resetAt: new Date(bucket.resetAt).toISOString(), exceeded };
+}
+
+// Periodically clean up expired buckets (every hour)
+setInterval(() => {
+  const now = Date.now();
+  for (const [key, bucket] of _fallbackBuckets) {
+    if (now >= bucket.resetAt) _fallbackBuckets.delete(key);
+  }
+}, 60 * 60 * 1000);
+
+// ─── Shared rate-limit enforcement ───────────────────────────────────────────
+
+async function enforceRateLimit(req, res, apiKeyDoc) {
+  const limit = apiKeyDoc.rateLimit;
+  const keyId = apiKeyDoc._id.toString();
+  let count, remaining, resetAt, exceeded;
+
+  const { client, available } = await getRedisClient();
+
+  if (available) {
+    try {
+      const hour           = Math.floor(Date.now() / (1000 * 60 * 60));
+      const rateLimitKey   = `api-key:${keyId}:hour:${hour}`;
+      count                = await client.incr(rateLimitKey);
+      if (count === 1) await client.expire(rateLimitKey, 3600);
+      resetAt   = new Date(hour * 1000 * 60 * 60 + 3600 * 1000).toISOString();
+      remaining = Math.max(0, limit - count);
+      exceeded  = count > limit;
+    } catch (err) {
+      // Redis went down mid-request — fall back to in-process
+      console.error("Redis rate-limit error, using fallback:", err.message);
+      ({ count, remaining, resetAt, exceeded } = fallbackRateLimit(keyId, limit));
+    }
+  } else {
+    // Redis unavailable — use in-process bucket (fail-closed, not fail-open)
+    ({ count, remaining, resetAt, exceeded } = fallbackRateLimit(keyId, limit));
+  }
+
+  res.set("X-RateLimit-Limit",     limit);
+  res.set("X-RateLimit-Remaining", remaining);
+  res.set("X-RateLimit-Reset",     resetAt);
+
+  if (exceeded) {
+    res.status(429).json({ success: false, message: "Rate limit exceeded", rateLimit: limit, remaining: 0, resetAt });
+    return false;
+  }
+  return true;
+}
+
+// ─── IP helpers ───────────────────────────────────────────────────────────────
+
 function getClientIp(req) {
-  // Check for IP from proxy headers
   const forwarded = req.headers["x-forwarded-for"];
-  if (forwarded) {
-    // x-forwarded-for can contain multiple IPs, get the first one
-    return forwarded.split(",")[0].trim();
-  }
-
-  // Check other proxy headers
-  if (req.headers["x-real-ip"]) {
-    return req.headers["x-real-ip"];
-  }
-
-  // Check CF-Connecting-IP (Cloudflare)
-  if (req.headers["cf-connecting-ip"]) {
-    return req.headers["cf-connecting-ip"];
-  }
-
-  // Fallback to req.ip or connection.remoteAddress
-  return req.ip || req.connection.remoteAddress || req.socket.remoteAddress || "unknown";
+  if (forwarded) return forwarded.split(",")[0].trim();
+  if (req.headers["x-real-ip"]) return req.headers["x-real-ip"];
+  if (req.headers["cf-connecting-ip"]) return req.headers["cf-connecting-ip"];
+  return req.ip || req.connection?.remoteAddress || req.socket?.remoteAddress || "unknown";
 }
 
-/**
- * Normalize IP address (handle IPv6-mapped IPv4)
- */
 function normalizeIp(ip) {
-  // Handle IPv6-mapped IPv4 addresses like ::ffff:192.168.1.1
-  if (ip && ip.startsWith("::ffff:")) {
-    return ip.substring(7);
-  }
-  return ip;
+  return ip?.startsWith("::ffff:") ? ip.substring(7) : ip;
 }
+
+// ─── verifyApiKey middleware ──────────────────────────────────────────────────
 
 /**
  * Middleware to verify API key
  * Usage:
- * - In header: Authorization: Bearer sk_xxxxx
- * - In query: ?apiKey=sk_xxxxx
- * - In custom header: X-API-Key: sk_xxxxx
+ * - Authorization: Bearer sk_xxxxx
+ * - X-API-Key: sk_xxxxx
  */
 const verifyApiKey = async (req, res, next) => {
   try {
     let apiKey = null;
     let isApiKeyFormat = false;
 
-    // Check different sources for API key
     if (req.headers.authorization) {
       const parts = req.headers.authorization.split(" ");
       if (parts.length === 2 && parts[0] === "Bearer") {
         apiKey = parts[1];
-        // Check if it's an API key (starts with sk_)
         isApiKeyFormat = apiKey.startsWith("sk_");
       }
     } else if (req.headers["x-api-key"]) {
       apiKey = req.headers["x-api-key"];
       isApiKeyFormat = true;
-    } else if (req.query.apiKey) {
-      apiKey = req.query.apiKey;
-      isApiKeyFormat = true;
     }
 
-    // If no key or not an API key format, skip
-    if (!apiKey || !isApiKeyFormat) {
-      return next();
-    }
+    if (!apiKey || !isApiKeyFormat) return next();
 
-    // It's an API key, validate it
-    const keyHash = ApiKey.hashKey(apiKey);
+    const keyHash  = ApiKey.hashKey(apiKey);
     const apiKeyDoc = await ApiKey.findOne({ keyHash });
 
-    if (!apiKeyDoc) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid API key",
-      });
-    }
+    if (!apiKeyDoc)             return res.status(401).json({ success: false, message: "Invalid API key" });
+    if (!apiKeyDoc.isActive)    return res.status(401).json({ success: false, message: "API key disabled" });
+    if (apiKeyDoc.expiresAt && new Date() > apiKeyDoc.expiresAt)
+                                return res.status(401).json({ success: false, message: "API key expired" });
 
-    // Check if key is active
-    if (!apiKeyDoc.isActive) {
-      return res.status(401).json({
-        success: false,
-        message: "API key disabled",
-      });
-    }
-
-    // Check expiration
-    if (apiKeyDoc.expiresAt && new Date() > apiKeyDoc.expiresAt) {
-      return res.status(401).json({
-        success: false,
-        message: "API key expired",
-      });
-    }
-
-    // Check IP whitelist (optional)
-    if (apiKeyDoc.ipWhitelist && apiKeyDoc.ipWhitelist.length > 0) {
+    if (apiKeyDoc.ipWhitelist?.length) {
       const clientIp = normalizeIp(getClientIp(req));
-      const isIpAllowed = apiKeyDoc.ipWhitelist.some(whitelistedIp => {
-        return normalizeIp(whitelistedIp) === clientIp;
-      });
-
-      if (!isIpAllowed) {
-        return res.status(403).json({
-          success: false,
-          message: "IP not whitelisted",
-          clientIp: clientIp,
-          allowedIps: apiKeyDoc.ipWhitelist,
-        });
-      }
+      if (!apiKeyDoc.ipWhitelist.some((ip) => normalizeIp(ip) === clientIp))
+        return res.status(403).json({ success: false, message: "IP not whitelisted" });
     }
 
-    // ===== CHECK RATE LIMIT =====
-    try {
-      const redis = await getRedisClient();
-      const now = new Date();
-      const hour = Math.floor(now.getTime() / (1000 * 60 * 60)); // Current hour
-      const rateLimitKey = `api-key:${apiKeyDoc._id}:hour:${hour}`;
-      
-      // Increment request counter for this hour
-      const requestCount = await redis.incr(rateLimitKey);
-      
-      // If first request of the hour, set expiration to 1 hour
-      if (requestCount === 1) {
-        await redis.expire(rateLimitKey, 3600);
-      }
-      
-      // Check if rate limit is exceeded
-      if (requestCount > apiKeyDoc.rateLimit) {
-        res.set("X-RateLimit-Limit", apiKeyDoc.rateLimit);
-        res.set("X-RateLimit-Remaining", "0");
-        res.set("X-RateLimit-Reset", new Date(hour * 1000 * 60 * 60 + 3600 * 1000).toISOString());
-        
-        return res.status(429).json({
-          success: false,
-          message: "Rate limit exceeded",
-          rateLimit: apiKeyDoc.rateLimit,
-          remaining: 0,
-          resetAt: new Date(hour * 1000 * 60 * 60 + 3600 * 1000).toISOString(),
-        });
-      }
-      
-      // Add rate limit info to response headers
-      res.set("X-RateLimit-Limit", apiKeyDoc.rateLimit);
-      res.set("X-RateLimit-Remaining", apiKeyDoc.rateLimit - requestCount);
-      res.set("X-RateLimit-Reset", new Date(hour * 1000 * 60 * 60 + 3600 * 1000).toISOString());
-    } catch (rateLimitError) {
-      console.error("Error checking rate limit:", rateLimitError);
-      // Don't block request if Redis is down, but log the error
-    }
+    const allowed = await enforceRateLimit(req, res, apiKeyDoc);
+    if (!allowed) return;
 
-    // Load user with all data
     const user = await User.findById(apiKeyDoc.userId)
       .populate("profile")
       .populate("companyMembership")
       .populate("notifications");
 
-    // Add key and user to request context
-    req.apiKey = apiKeyDoc;
-    req.userId = apiKeyDoc.userId.toString();
-    req.user = user;
+    req.apiKey      = apiKeyDoc;
+    req.userId      = apiKeyDoc.userId.toString();
+    req.user        = user;
     req.isApiKeyAuth = true;
 
-    // Update lastUsed
     apiKeyDoc.lastUsed = new Date();
     await apiKeyDoc.save();
 
     next();
   } catch (error) {
-    console.error("Error verifying API key:", error);
-    res.status(500).json({
-      success: false,
-      message: "Error verifying API key",
-      error: error.message,
-    });
+    console.error("Error verifying API key:", error.message);
+    res.status(500).json({ success: false, message: "Internal server error" });
   }
 };
 
-/**
- * Middleware to verify scopes/permissions
- * Usage: checkScope(['read:posts', 'write:posts'])
- */
-const checkScope = (requiredScopes) => {
-  return (req, res, next) => {
-    if (!req.isApiKeyAuth) {
-      return next(); // Let other auth middlewares handle it
-    }
+// ─── checkScope middleware ────────────────────────────────────────────────────
 
-    const apiKey = req.apiKey;
-
-    // Check if all required scopes are present
-    const hasAllScopes = requiredScopes.every((scope) =>
-      apiKey.scopes.includes(scope)
-    );
-
-    if (!hasAllScopes) {
-      return res.status(403).json({
-        success: false,
-        message: "Insufficient permissions",
-        requiredScopes,
-        availableScopes: apiKey.scopes,
-      });
-    }
-
-    next();
-  };
+const checkScope = (requiredScopes) => (req, res, next) => {
+  if (!req.isApiKeyAuth) return next();
+  const hasAllScopes = requiredScopes.every((s) => req.apiKey.scopes.includes(s));
+  if (!hasAllScopes)
+    return res.status(403).json({ success: false, message: "Insufficient permissions", requiredScopes, availableScopes: req.apiKey.scopes });
+  next();
 };
 
-module.exports = {
-  verifyApiKey,
-  checkScope,
-  getRedisClient,
-  getClientIp,
-  normalizeIp,
-};
+module.exports = { verifyApiKey, checkScope, getRedisClient, getClientIp, normalizeIp, enforceRateLimit };

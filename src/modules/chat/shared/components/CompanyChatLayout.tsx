@@ -1,8 +1,8 @@
 import React from "react";
-import { Box } from "@mui/material";
+import { cn } from "@/lib/utils";
 import CompanyChatTopNav from "@/modules/chat/shared/components/CompanyChatTopNav";
 import type { CompanyChatChannel } from "@/modules/chat/shared/constants/companyChannels";
-import { companyChatSx } from "@/modules/chat/shared/styles/companyChat";
+import { companyChatCn } from "@/modules/chat/shared/styles/companyChat";
 
 interface CompanyChatLayoutProps {
   activeChannel: CompanyChatChannel;
@@ -10,15 +10,10 @@ interface CompanyChatLayoutProps {
 }
 
 const CompanyChatLayout: React.FC<CompanyChatLayoutProps> = ({ activeChannel, children }) => (
-  <Box
-    sx={{
-      ...companyChatSx.workspace,
-      ...(activeChannel === "team" ? companyChatSx.workspaceTeamDense : {}),
-    }}
-  >
+  <div className={cn(companyChatCn.workspace, activeChannel === "team" && companyChatCn.workspaceTeamDense)}>
     <CompanyChatTopNav activeChannel={activeChannel} />
-    <Box sx={companyChatSx.content}>{children}</Box>
-  </Box>
+    <div className={companyChatCn.content}>{children}</div>
+  </div>
 );
 
 export default CompanyChatLayout;

@@ -53,6 +53,8 @@
   "card": {
     "untitled": "Untitled Position",
     "copied": "Copied!",
+    "applications_one": "{{count}} application",
+    "applications_other": "{{count}} applications",
     "days_left": "{{count}}d left",
     "expired_badge": "Expired",
     "status": {
@@ -122,6 +124,8 @@
       "btn_generate": "Generate Job Post with AI",
       "btn_generating": "Generating Post…",
       "error_prompt": "Please describe the role",
+      "error_invalid_input": "Your input contains inappropriate or unrecognizable content. Please revise it.",
+      "error_insufficient_detail": "Please provide more details about the role so AI can understand what you need.",
       "error_salary_required": "Currency, min and max are required",
       "error_salary_max": "Max salary must be greater than min",
       "error_required": "Required"
@@ -139,6 +143,7 @@
       "labels": {
         "employment_type": "Employment Type",
         "work_mode": "Work Mode",
+        "department": "Department (optional)",
         "currency": "Currency",
         "experience_level": "Experience Level",
         "expires": "Expires",
@@ -155,6 +160,7 @@
         "select": "Select",
         "select_employment_type": "Select employment type",
         "select_work_mode": "Select work mode",
+        "select_department": "Select department (optional)",
         "select_currency": "Select currency",
         "select_experience_level": "Select experience level",
         "select_skill_level": "Experience level",
@@ -177,14 +183,12 @@
         "experience_expert": "Expert"
       },
       "hard_skill_levels": {
-        "1": "Entry Level",
         "2": "Junior",
         "3": "Mid Level",
         "4": "Senior",
         "5": "Expert"
       },
       "soft_skill_levels": {
-        "1": "Entry-level",
         "2": "Junior",
         "3": "Mid-level",
         "4": "Senior",
@@ -261,12 +265,12 @@
       "download": "Download QR"
     },
     "tooltips": {
-      "cannot_edit_published": "Cannot edit — post is already published",
+      "cannot_edit_published": "Cannot edit — candidates have already applied to this post",
       "cannot_edit_passed": "Cannot edit — candidates have already passed this interview"
     },
     "menu": {
       "edit_title": "Edit Post",
-      "edit_desc_published": "Only editable while draft",
+      "edit_desc_published": "Cannot edit once applications exist",
       "edit_desc_draft": "Modify job details",
       "delete_title": "Delete Post",
       "delete_desc": "Permanently remove"

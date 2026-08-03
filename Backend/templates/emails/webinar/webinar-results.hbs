@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{webinarTitle}} — {{#if isEn}}Your TalentAI results{{else}}Vos résultats TalentAI{{/if}}</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f0f4f8;font-family:'Segoe UI',Arial,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0f4f8;padding:32px 0;">
+    <tr>
+      <td align="center">
+        <table width="620" cellpadding="0" cellspacing="0" style="background-color:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,0.08);">
+
+          <!-- Logo header -->
+          <tr>
+            <td style="background-color:#ffffff;padding:20px 28px;border-bottom:1px solid #E5E7EB;">
+              <img src="cid:logo" alt="TalentAI" height="28" style="display:block;border:0;outline:none;">
+            </td>
+          </tr>
+
+          <!-- Green accent bar -->
+          <tr>
+            <td height="4" bgcolor="#0D9488" style="height:4px;background-color:#0D9488;font-size:0;line-height:0;">&nbsp;</td>
+          </tr>
+
+          <!-- Hero -->
+          <tr>
+            <td style="padding:40px 36px 8px 36px;">
+              <p style="margin:0 0 6px 0;font-size:12px;font-weight:700;color:#6AD39C;text-transform:uppercase;letter-spacing:1.5px;">{{webinarTitle}}</p>
+              <h1 style="margin:0 0 12px 0;font-size:26px;font-weight:800;color:#0F172A;line-height:1.2;">
+                {{#if isEn}}{{nom}}, here is your AI maturity result 🎯{{else}}{{nom}}, voici votre résultat de maturité IA 🎯{{/if}}
+              </h1>
+              <p style="margin:0;font-size:15px;color:#64748B;line-height:1.6;">
+                {{#if isEn}}Thanks for taking part. Here's your personalised AI maturity snapshot.{{else}}Merci d'avoir participé. Voici votre profil de maturité IA personnalisé.{{/if}}
+              </p>
+            </td>
+          </tr>
+
+          <!-- Webinar info bar -->
+          <tr>
+            <td style="padding:20px 36px 0 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F8FAFC;border:1px solid #E2E8F0;border-radius:12px;overflow:hidden;">
+                <tr>
+                  <td style="padding:16px 20px;">
+                    <table cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding-right:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">Webinar</p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">{{webinarTitle}}</p>
+                        </td>
+                        {{#if webinarDate}}
+                        <td style="padding-right:28px;border-left:1px solid #E2E8F0;padding-left:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">Date</p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">{{webinarDate}}</p>
+                        </td>
+                        {{/if}}
+                        <td style="border-left:1px solid #E2E8F0;padding-left:28px;">
+                          <p style="margin:0;font-size:10px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1px;">
+                            {{#if isEn}}Format{{else}}Format{{/if}}
+                          </p>
+                          <p style="margin:4px 0 0 0;font-size:14px;font-weight:700;color:#0F172A;">
+                            {{#if isEn}}Live session · Free{{else}}Live session · Gratuit{{/if}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- Overall score + maturity badge -->
+          <tr>
+            <td style="padding:28px 36px 0 36px;text-align:center;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF9;border:1px solid #CCFBEE;border-radius:16px;">
+                <tr><td style="padding:24px;text-align:center;">
+                  <p style="margin:0;font-size:44px;font-weight:900;color:#0D9488;line-height:1;">{{total100}}<span style="font-size:16px;font-weight:700;color:#5EEAD4;">/100</span></p>
+                  <p style="margin:10px 0 0 0;display:inline-block;padding:6px 16px;border-radius:999px;background:#0D9488;color:#ffffff;font-size:12px;font-weight:700;letter-spacing:0.3px;">{{maturityLevel}}</p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+
+          <!-- 4 sub-score pillars -->
+          <tr>
+            <td style="padding:20px 36px 0 36px;">
+              <p style="margin:0 0 12px 0;font-size:11px;font-weight:700;color:#94A3B8;text-transform:uppercase;letter-spacing:1.2px;">{{#if isEn}}Your profile{{else}}Votre profil{{/if}}</p>
+              <table width="100%" cellpadding="0" cellspacing="0">
+                {{#each subScores}}
+                <tr>
+                  <td style="padding:6px 0;">
+                    <table width="100%" cellpadding="0" cellspacing="0"><tr>
+                      <td style="font-size:12.5px;color:#334155;font-weight:600;padding-bottom:4px;" colspan="2">{{this.label}}</td>
+                    </tr>
+                    <tr>
+                      <td style="background:#F1F5F9;border-radius:6px;height:8px;">
+                        <table cellpadding="0" cellspacing="0" width="{{this.value}}%" style="max-width:100%;"><tr><td bgcolor="#0D9488" style="background-color:#0D9488;height:8px;border-radius:6px;font-size:0;line-height:0;">&nbsp;</td></tr></table>
+                      </td>
+                      <td width="34" style="font-size:11px;font-weight:700;color:#0D9488;text-align:right;padding-left:8px;">{{this.value}}/12</td>
+                    </tr></table>
+                  </td>
+                </tr>
+                {{/each}}
+              </table>
+            </td>
+          </tr>
+
+          <!-- Strength + vigilance -->
+          {{#if strength}}
+          <tr>
+            <td style="padding:22px 36px 0 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#F0FDF4;border:1px solid #BBF7D0;border-radius:12px;">
+                <tr><td style="padding:14px 18px;">
+                  <p style="margin:0;font-size:10px;font-weight:700;color:#15803D;text-transform:uppercase;letter-spacing:1px;">{{#if isEn}}Strength{{else}}Point fort{{/if}}</p>
+                  <p style="margin:4px 0 0 0;font-size:13px;color:#166534;line-height:1.5;">{{strength.optionLabel}} — <span style="color:#4D7C0F;">{{strength.questionLabel}}</span></p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+          {{#if vigilance}}
+          <tr>
+            <td style="padding:10px 36px 0 36px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="background:#FFFBEB;border:1px solid #FDE68A;border-radius:12px;">
+                <tr><td style="padding:14px 18px;">
+                  <p style="margin:0;font-size:10px;font-weight:700;color:#B45309;text-transform:uppercase;letter-spacing:1px;">{{#if isEn}}Point of vigilance{{else}}Point de vigilance{{/if}}</p>
+                  <p style="margin:4px 0 0 0;font-size:13px;color:#92400E;line-height:1.5;">{{vigilance.optionLabel}} — <span style="color:#B45309;">{{vigilance.questionLabel}}</span></p>
+                </td></tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- CTA — only shown if admin set a webinar link. Table + bgcolor
+               attribute (not just CSS) so the button survives email clients
+               that strip style attributes/gradients -->
+          {{#if webinarLink}}
+          <tr>
+            <td style="padding:28px 36px 0 36px;text-align:center;">
+              <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto;">
+                <tr>
+                  <td bgcolor="#0D9488" align="center" style="background-color:#0D9488;border-radius:12px;">
+                    <a href="{{webinarLink}}" style="display:inline-block;color:#ffffff;text-decoration:none;font-size:15px;font-weight:700;padding:14px 32px;letter-spacing:0.3px;font-family:'Segoe UI',Arial,sans-serif;">
+                      {{#if isEn}}Join the webinar →{{else}}Rejoindre le webinar →{{/if}}
+                    </a>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>
+          {{/if}}
+
+          <!-- Soft CTA — replay/join link already above; this is a low-pressure
+               invite to a 1:1 (fixed Calendly link, same as the marketing site) -->
+          <tr>
+            <td style="padding:14px 36px 0 36px;text-align:center;">
+              <p style="margin:0 0 10px 0;font-size:12.5px;color:#94A3B8;">
+                {{#if isEn}}Want to go deeper on your results?{{else}}Envie d'aller plus loin sur vos résultats ?{{/if}}
+              </p>
+              <a href="{{bookingLink}}" style="display:inline-block;color:#0D9488;text-decoration:none;font-size:13px;font-weight:700;border:1px solid #99F6E4;border-radius:10px;padding:10px 22px;">
+                {{#if isEn}}Book a 1:1 conversation{{else}}Réserver un échange 1:1{{/if}}
+              </a>
+            </td>
+          </tr>
+
+          <!-- Footer -->
+          <tr>
+            <td style="padding:32px 36px;text-align:center;border-top:1px solid #F1F5F9;margin-top:28px;">
+              <p style="margin:0 0 4px 0;font-size:12px;color:#94A3B8;">{{#if isEn}}TalentAI · Confidential data · No spam{{else}}TalentAI · Données confidentielles · Aucun spam{{/if}}</p>
+              <p style="margin:0;font-size:11px;color:#CBD5E1;">{{#if isEn}}© {{year}} TalentAI. All rights reserved.{{else}}© {{year}} TalentAI. Tous droits réservés.{{/if}}</p>
+            </td>
+          </tr>
+
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>

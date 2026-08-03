@@ -36,8 +36,25 @@
     "total": "Total",
     "active": "Active",
     "drafts": "Drafts",
+    "paused": "Paused",
     "closed_expired": "Closed/Expired",
     "completed_participants": "Completed Participants"
+  },
+
+  "employee_stats": {
+    "total": "Total",
+    "invited": "Invited",
+    "in_progress": "In Progress",
+    "completed": "Completed"
+  },
+
+  "my_campaigns": {
+    "title": "My Campaigns",
+    "subtitle": "Track your assigned campaigns, assessments, and learning paths.",
+    "empty_title": "No campaigns here",
+    "empty_invited": "You have been invited to join campaigns.",
+    "empty_in_progress": "No campaigns in progress right now.",
+    "empty_completed": "You haven't completed any campaigns yet."
   },
 
   "empty": {
@@ -88,7 +105,7 @@
     "target_participants_one": "Target participants: <strong>{{count}}</strong> participant",
     "target_participants_other": "Target participants: <strong>{{count}}</strong> participants",
     "access_public_link": "Public link",
-    "access_accounts_only": "Accounts only",
+    "access_accounts_only": "Employees only",
     "privacy_anonymous": "Anonymous",
     "privacy_nominative": "Nominative",
     "menu_section_change_status": "Change Status",
@@ -97,7 +114,14 @@
       "PAUSED": "Pause",
       "CLOSED": "Close"
     },
-    "menu_delete": "Delete Campaign"
+    "menu_delete": "Delete Campaign",
+    "employee_start": "Start Campaign",
+    "employee_continue": "Continue",
+    "employee_paused": "Campaign paused",
+    "employee_closed": "Campaign closed",
+    "employee_expired": "Deadline passed",
+    "employee_show_results": "Show Results",
+    "employee_view_details": "View Details"
   },
 
   "modals": {
@@ -132,13 +156,21 @@
     "back_company": "Campaigns",
     "back_employee": "My Campaigns",
     "edit": "Edit",
-    "delete": "Delete",
+    "edit_tooltip": "Edit campaign details",
     "edit_draft_only_tooltip": "Editing is only available while the campaign is in Draft.",
-    "activate_blocked_tooltip": "Configure the module before activating this campaign.",
+    "delete": "Delete",
     "module_not_configured_badge": "Not configured",
     "module_not_configured_tooltip": "Module not configured — required before activating.",
     "deadline_passed": "Deadline passed",
     "days_left_short": "{{count}}d left",
+    "participants_count_one": "{{count}} participant",
+    "participants_count_other": "{{count}} participants",
+    "created_on": "Created {{date}}",
+    "fact_created": "Created",
+    "copy_link_tooltip": "Copy the public link to share with participants",
+    "copy_link_button": "Copy Link",
+    "link_copied": "Link copied",
+    "link_copy_failed": "Failed to copy link",
     "employee_deadline_passed": "Deadline passed",
     "employee_campaign_paused": "Campaign paused",
     "employee_campaign_closed": "Campaign closed",
@@ -156,7 +188,8 @@
     "stats_expired": "Expired",
     "tab_overview": "Overview",
     "tab_participants": "Participants",
-    "tab_sessions": "Sessions",
+    "tab_sessions": "Assessments",
+    "tab_configuration": "Configuration",
     "breadcrumb_results": "Results",
     "setup_banner": {
       "title": "This campaign is not visible to participants yet",
@@ -168,6 +201,7 @@
     "setup_step1_desc_done": "Module is configured and ready.",
     "setup_step1_desc_pending": "Set up the assessment module so participants know what to expect.",
     "setup_configure_now": "Configure now",
+    "setup_edit_configuration": "Edit configuration",
     "setup_step2_title": "Step 2 — Activate Campaign",
     "setup_step2_desc_ready": "Ready to go! Activate the campaign to make it visible to participants.",
     "setup_step2_desc_wait": "Complete step 1 first, then activate the campaign.",
@@ -185,7 +219,7 @@
     "responses_identified": "Responses are identified",
     "access_method_label": "Access Method",
     "access_public_link": "Public Link",
-    "access_accounts_only": "Accounts Only",
+    "access_accounts_only": "Employees Only",
     "access_link_and_accounts": "Link & Accounts",
     "access_sub_link": "Anyone with the link",
     "access_sub_accounts": "Registered users only",
@@ -242,10 +276,17 @@
         "option_placeholder": "Option {{n}}",
         "add_option": "Add Option",
         "add_question": "Add Question",
+        "correct_answer_hint": "Optional. Mark the correct option(s) to score this question automatically instead of relying on AI.",
+        "mark_correct_single_aria": "Mark option {{n}} as the correct answer",
+        "mark_correct_multi_aria": "Mark option {{n}} as a correct answer",
         "qtype_TEXT": "Text",
         "qtype_SINGLE_CHOICE": "Single Choice",
         "qtype_MULTIPLE_CHOICE": "Multiple Choice",
-        "qtype_RATING": "Rating"
+        "qtype_RATING": "Rating",
+        "ai_scoring_label": "AI Scoring",
+        "ai_scoring_hint": "Let AI score and summarize responses after submission",
+        "show_results_label": "Show Results to Participants",
+        "show_results_hint": "Let participants view their score and AI report after completing"
       },
       "skill_test": {
         "skill_to_assess": "Skill to assess",
@@ -263,7 +304,9 @@
         "category_ai": "AI",
         "category_marketing": "Marketing",
         "category_qa": "QA",
-        "category_business": "Business"
+        "category_business": "Business",
+        "show_results_label": "Show Results to Participants",
+        "show_results_hint": "Let participants view their score after completing"
       },
       "ai_interview": {
         "agent_prompt": "Agent prompt",
@@ -272,7 +315,9 @@
         "duration_placeholder": "e.g. 30",
         "scoring_criteria": "Scoring criteria",
         "criterion_placeholder": "Criterion {{n}}",
-        "add_criterion": "Add criterion"
+        "add_criterion": "Add criterion",
+        "show_results_label": "Show Results to Participants",
+        "show_results_hint": "Let participants view their score after completing"
       },
       "training_path": {
         "empty": "No resources yet. Add your first resource.",
@@ -330,15 +375,47 @@
       "module_type_label": "Module Type",
       "coming_soon": "Coming Soon",
       "module_change_warning": "Changing the module type will <strong>reset the current configuration</strong>. You'll need to reconfigure it after saving.",
+      "current_questions_one": "{{count}} question configured",
+      "current_questions_other": "{{count}} questions configured",
+      "current_prompt": "Agent Prompt",
       "anonymity_label": "Anonymity",
       "access_method_label": "Access Method",
-      "accounts_only": "Accounts Only",
+      "accounts_only": "Employees Only",
       "public_link": "Public Link",
       "cancel": "Cancel",
       "save": "Save Changes",
       "saving": "Saving…",
       "error_title_required": "Title is required.",
       "error_save_failed": "Failed to save changes."
+    },
+    "overview": {
+      "participant_status_title": "Participant Status",
+      "no_participants": "No participants yet",
+      "status": {
+        "completed": "Completed",
+        "in_progress": "In Progress",
+        "invited": "Invited",
+        "dropped": "Dropped",
+        "not_completed": "Not completed"
+      },
+      "total_label": "total",
+      "key_metrics_title": "Key Metrics",
+      "stat_participants": "Participants",
+      "stat_completed": "Completed",
+      "stat_completion_rate": "Completion Rate",
+      "stat_in_progress": "In Progress",
+      "stat_dropped": "Dropped",
+      "top_performers_title": "Top Performers",
+      "recent_activity_title": "Recent Activity",
+      "module_configuration_title": "Module Configuration",
+      "questions_count_one": "{{count}} Question",
+      "questions_count_other": "{{count}} Questions",
+      "agent_prompt_label": "Agent Prompt",
+      "agent_prompt_configured": "Agent prompt configured",
+      "skill_assessed_label": "Skill Assessed",
+      "skill_summary": "Skill: {{skill}}",
+      "resources_count_one": "{{count}} Resource",
+      "resources_count_other": "{{count}} Resources"
     },
     "participants": {
       "participant_status": {
@@ -355,8 +432,10 @@
       "search_placeholder": "Search by name or email…",
       "department_filter": "Department",
       "role_filter": "Role",
+      "no_department": "No department",
       "all_departments": "All departments",
       "all_roles": "All roles",
+      "all_statuses": "All statuses",
       "filters_label": "Filters:",
       "empty_filtered_title": "No employees match your filters",
       "empty_all_added_title": "All employees are already in this campaign",
@@ -370,11 +449,6 @@
       "toolbar_total": "total",
       "search_participants_placeholder": "Search participants…",
       "add_participant_tooltip": "Add",
-      "col_hash": "#",
-      "col_participant": "Participant",
-      "col_status": "Status",
-      "col_role": "Role",
-      "col_actions": "Actions",
       "empty_search_title": "No participants match your search",
       "empty_title": "No participants yet",
       "empty_search_hint": "Try a different name or email.",
@@ -389,27 +463,35 @@
         "COMPLETED": "Completed",
         "EXPIRED": "Expired"
       },
-      "matches_search_one": "{{count}} session matches your search",
-      "matches_search_other": "{{count}} sessions match your search",
-      "total_sessions_one": "{{count}} session total",
-      "total_sessions_other": "{{count}} sessions total",
       "search_placeholder": "Search by participant…",
-      "col_participant": "Participant",
-      "col_status": "Status",
-      "col_score": "Score",
-      "col_duration": "Duration",
-      "col_completed": "Completed",
-      "col_actions": "Actions",
-      "duration_minutes": "{{n}} min",
       "empty_search_title": "No sessions match your search",
       "empty_title": "No sessions yet",
       "empty_search_hint": "Try a different name.",
       "empty_hint": "Sessions will appear here once participants start.",
       "anonymous": "Anonymous",
       "identity_hidden": "Identity hidden",
-      "results": "Results",
+      "show_results_button": "Show Results",
+      "sort": {
+        "newest": "Newest first",
+        "highest_score": "Highest score",
+        "lowest_score": "Lowest score"
+      },
       "dialog_title": "Results — {{name}}",
-      "load_failed": "Failed to load results"
+      "load_failed": "Failed to load results",
+      "results_dialog": {
+        "title": "Assessment Results",
+        "tab_summary": "Summary",
+        "tab_details": "Details",
+        "tab_transcript": "Transcript",
+        "ai_summary_label": "AI Summary",
+        "empty_title": "No response submitted yet",
+        "ai_scoring_disabled_note": "AI scoring is disabled for this questionnaire.",
+        "recommendation_label": "Recommendation",
+        "strengths_label": "Strengths",
+        "areas_for_improvement_label": "Areas for Improvement",
+        "transcript_agent": "Interviewer",
+        "transcript_candidate": "Candidate"
+      }
     }
   },
 

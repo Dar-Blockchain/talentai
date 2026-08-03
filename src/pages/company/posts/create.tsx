@@ -1,36 +1,37 @@
-import React from "react";
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import { Box, Typography } from "@mui/material";
-import LockOutlined from "@mui/icons-material/LockOutlined";
+﻿import React from "react";
+import { Lock as LockOutlined } from "lucide-react";
 import Link from "next/link";
-import CreatePostPage from "@/modules/posts/create/components/CreatePostPage";
-import { useCreatePostPage } from "@/modules/posts/create/hooks";
+import CreatePostPage from "@/modules/company/posts/create/components/CreatePostPage";
+import { useCreatePostPage } from "@/modules/company/posts/create/hooks";
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
-const CreatePage: React.FC = () => {
+const CreatePage: NextPageWithLayout = () => {
   const { postsUsed, postsLimit, atLimit } = useCreatePostPage();
 
   return (
-    <DashboardLayout>
+    <>
       {atLimit ? (
-        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 400, gap: 2, textAlign: "center" }}>
-          <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: "#FEF2F2", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <LockOutlined sx={{ fontSize: 30, color: "#EF4444" }} />
-          </Box>
-          <Typography sx={{ fontWeight: 700, fontSize: "1.2rem", color: "#111827" }}>Post limit reached</Typography>
-          <Typography sx={{ color: "#6B7280", fontSize: "0.9rem", maxWidth: 360 }}>
+        <div className="flex flex-col items-center justify-center gap-4 text-center min-h-[400px]">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[#FEF2F2]">
+            <LockOutlined size={30} color="#EF4444" />
+          </div>
+          <p className="text-[1.2rem] font-bold text-[#111827]">Post limit reached</p>
+          <p className="max-w-[360px] text-[0.9rem] text-[#6B7280]">
             You have used {postsUsed} of {postsLimit} job posts on your current plan. Upgrade your plan to create more posts.
-          </Typography>
+          </p>
           <Link href="/company/plans">
-            <Box component="button" sx={{ mt: 1, px: 3, py: 1.2, bgcolor: "#0D9488", color: "#fff", border: "none", borderRadius: "10px", fontWeight: 700, fontSize: "0.9rem", cursor: "pointer", "&:hover": { opacity: 0.9 } }}>
+            <button className="mt-1 rounded-[10px] border-none bg-[#0D9488] px-6 py-2.5 text-[0.9rem] font-bold text-white cursor-pointer hover:opacity-90">
               Upgrade Plan
-            </Box>
+            </button>
           </Link>
-        </Box>
+        </div>
       ) : (
         <CreatePostPage />
       )}
-    </DashboardLayout>
+    </>
   );
 };
+CreatePage.getLayout = getDashboardLayout;
 
 export default CreatePage;

@@ -30,18 +30,27 @@ export type UpdateApiKeyPayload = Partial<
   Pick<ApiKey, 'name' | 'serviceName' | 'scopes' | 'rateLimit' | 'expiresAt' | 'ipWhitelist'>
 >;
 
+// ─── Cost settings (manual vs TalentAI comparison) ────────────────────────────
+
+export interface CostSettings {
+  currency:                 string;
+  manualCostPerCandidate:   number;
+  aiCostPerInterview:       number;
+  interviewDurationMinutes: number;
+}
+
+export type UpdateCostSettingsPayload = Partial<CostSettings>;
+
 // ─── API request / response types ─────────────────────────────────────────────
 
 export interface UpdateProfilePayload {
-  name?: string;
-  industry?: string;
-  size?: string;
-  employmentType?: string;
   language?: string;
-  requiredSkills?: string[];
-  requiredExperienceLevel?: string;
   targetRole?: string;
   companyDetails?: {
+    name?: string;
+    industry?: string;
+    size?: string;
+    employmentType?: string;
     location?: string;
     linkedin?: string;
     website?: string;

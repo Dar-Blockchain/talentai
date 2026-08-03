@@ -1,10 +1,8 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useRouter } from 'next/router';
-import { SelectChangeEvent } from '@mui/material';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useToast } from '@/hooks/useToast';
-import { UserProfile } from '@/types/profile';
 import { normalizeLangCode } from '@/hooks/useLanguage';
 import { companyProfileSchema, CompanyProfileFormValues } from '../schemas/companyProfileSchema';
 import {
@@ -12,6 +10,7 @@ import {
   useUpdateSettingsProfile,
   useUploadSettingsAvatar,
 } from '../queries';
+import { UserProfile } from '../../shared';
 
 // ─── Pure helpers (outside hook — never recreated) ───────────────────────────
 
@@ -20,7 +19,7 @@ const normalizeCompanySize = (size?: string): string =>
 
 const buildAvatarUrl = (...images: (string | undefined)[]): string => {
   const img = images.find(Boolean);
-  return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${img}` : '';
+  return img ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${img}` : '';
 };
 
 const buildSyncedProfile = (
@@ -31,7 +30,6 @@ const buildSyncedProfile = (
     avatarUrl: string;
     requiredExperienceLevel?: string;
     targetRole?: string;
-    requiredSkills?: any[];
     language?: string;
     phone?: string;
     address?: string;
@@ -69,7 +67,6 @@ const buildSyncedProfile = (
     size: normalizedSize,
     website: extra.website || companyData?.website || '',
     employmentType: companyData?.employmentType || 'Remote',
-    requiredSkills: extra.requiredSkills || companyData?.requiredSkills || [],
   };
 };
 
@@ -149,7 +146,6 @@ export const useCompanyProfileManagement = () => {
         email:                   companyUser.email || companyData?.email || '',
         avatarUrl:               buildAvatarUrl(companyUser.user_image),
         requiredExperienceLevel: companyProfile?.requiredExperienceLevel,
-        requiredSkills:          companyProfile?.requiredSkills || companyData?.requiredSkills,
       });
     } else {
       if (!reduxProfile) return;
@@ -161,7 +157,6 @@ export const useCompanyProfileManagement = () => {
         avatarUrl:               buildAvatarUrl(reduxProfile.user_image, user.user_image),
         requiredExperienceLevel: reduxProfile?.requiredExperienceLevel,
         targetRole:              reduxProfile?.targetRole,
-        requiredSkills:          reduxProfile?.requiredSkills || companyData?.requiredSkills,
         language:                reduxProfile?.language,
         phone:                   reduxProfile.companyDetails?.phone,
         address:                 reduxProfile.companyDetails?.address,
@@ -191,7 +186,7 @@ export const useCompanyProfileManagement = () => {
     setProfile((prev) => ({ ...prev, [field]: value }));
   }, []);
 
-  const handleSelectChange = useCallback((event: SelectChangeEvent<string>, field: keyof UserProfile) => {
+  const handleSelectChange = useCallback((event: { target: { value: string } }, field: keyof UserProfile) => {
     setProfile((prev) => ({ ...prev, [field]: event.target.value }));
   }, []);
 
@@ -241,21 +236,18 @@ export const useCompanyProfileManagement = () => {
       try {
         if (!effectiveUserId) throw new Error('User not found');
 
-        const companyDetails: Record<string, string> = {};
-        if (data.location) companyDetails.location = data.location;
-        if (data.linkedin) companyDetails.linkedin  = data.linkedin;
-        if (data.website)  companyDetails.website   = data.website;
-        if (data.phone)    companyDetails.phone     = data.phone;
-
         const updatePayload = {
-          name:                    data.name?.trim() || '',
-          industry:                data.industry,
-          size:                    data.size,
-          employmentType:          data.employmentType,
-          language:                currentProfile.language || 'en',
-          requiredSkills:          currentProfile.requiredSkills || [],
-          requiredExperienceLevel: currentProfile.requiredExperienceLevel,
-          ...(Object.keys(companyDetails).length > 0 && { companyDetails }),
+          language: currentProfile.language || 'en',
+          companyDetails: {
+            name:           data.name?.trim() || '',
+            industry:       data.industry,
+            size:           data.size,
+            employmentType: data.employmentType,
+            ...(data.location && { location: data.location }),
+            ...(data.linkedin && { linkedin: data.linkedin }),
+            ...(data.website  && { website:  data.website }),
+            ...(data.phone    && { phone:    data.phone }),
+          },
         };
 
         await updateMutation.mutateAsync({ userId: effectiveUserId, payload: updatePayload });
@@ -301,6 +293,7 @@ export const useCompanyProfileManagement = () => {
     isEmployee,
     profile,
     loading,
+    isInitialLoading: isLoading,
     error,
     uploadingImage,
     saveSuccess,

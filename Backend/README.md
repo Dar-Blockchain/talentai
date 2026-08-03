@@ -119,7 +119,6 @@ Backend/
 
 #### User Profiles
 - `POST /api/profiles` - Create or update a user profile
-- `GET /api/profiles/me` - Get your own profile
 - `GET /api/profiles/:userId` - Get a profile by ID
 - `GET /api/profiles` - Get all profiles
 - `DELETE /api/profiles` - Delete your profile

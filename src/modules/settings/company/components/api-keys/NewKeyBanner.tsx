@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Alert, Box, IconButton, Tooltip, Typography } from "@mui/material";
-import ContentCopyOutlined from "@mui/icons-material/ContentCopyOutlined";
+import { Copy, X } from "lucide-react";
 
 type Props = {
   newKey: string;
@@ -14,25 +13,29 @@ const NewKeyBanner: React.FC<Props> = ({ newKey, copied, onCopy, onDismiss }) =>
   const { t } = useTranslation("dashboard");
 
   return (
-    <Alert
-      severity="success"
-      onClose={onDismiss}
-      sx={{ mb: 2.5, borderRadius: "10px", fontSize: "0.82rem", "& .MuiAlert-message": { width: "100%" } }}
-      action={
-        <Tooltip title={copied ? t("pages.settings.api_keys.copied") : t("pages.settings.api_keys.copy")}>
-          <IconButton size="small" onClick={() => onCopy(newKey)}>
-            <ContentCopyOutlined sx={{ fontSize: 16 }} />
-          </IconButton>
-        </Tooltip>
-      }
-    >
-      <Typography sx={{ fontSize: "0.78rem", fontWeight: 700, mb: 0.5 }}>
-        {t("pages.settings.api_keys.banner_title")}
-      </Typography>
-      <Box sx={{ fontFamily: "monospace", fontSize: "0.8rem", bgcolor: "#F0FDF4", px: 1.5, py: 0.75, borderRadius: "6px", wordBreak: "break-all" }}>
+    <div className="mb-5 rounded-[10px] bg-green-50 border border-green-200 px-4 py-3 text-[0.82rem]">
+      <div className="flex items-start justify-between gap-2">
+        <p className="text-[0.78rem] font-bold text-green-800 mb-1.5">
+          {t("pages.settings.api_keys.banner_title")}
+        </p>
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            type="button"
+            title={copied ? t("pages.settings.api_keys.copied") : t("pages.settings.api_keys.copy")}
+            onClick={() => onCopy(newKey)}
+            className="rounded-md p-1 text-green-700 hover:bg-green-100"
+          >
+            <Copy size={16} />
+          </button>
+          <button type="button" onClick={onDismiss} className="rounded-md p-1 text-green-700 hover:bg-green-100">
+            <X size={16} />
+          </button>
+        </div>
+      </div>
+      <div className="font-mono text-[0.8rem] bg-green-100/60 px-3 py-1.5 rounded-md break-all text-green-900">
         {newKey}
-      </Box>
-    </Alert>
+      </div>
+    </div>
   );
 };
 

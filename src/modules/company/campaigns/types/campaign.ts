@@ -1,0 +1,239 @@
+export type CampaignType =
+  | "PRODUCTIVITY_DIAGNOSTIC"
+  | "SKILLS_MAPPING"
+  | "ENABLEMENT"
+  | "CUSTOM";
+
+export type CampaignStatus =
+  | "DRAFT"
+  | "ACTIVE"
+  | "PAUSED"
+  | "CLOSED"
+  | "EXPIRED";
+
+export type AnonymityMode = "ANONYMOUS" | "NOMINATIVE";
+export type AccessMethod = "LINK" | "ACCOUNTS";
+export type ModuleType =
+  | "QUESTIONNAIRE"
+  | "AI_INTERVIEW"
+  | "SKILL_TEST"
+  | "TRAINING_PATH";
+
+export interface Campaign {
+  _id: string;
+  company: string;
+  title: string;
+  type?: CampaignType;
+  description?: string;
+  status: CampaignStatus;
+  anonymityMode: AnonymityMode;
+  module: CampaignModule;
+  accessMethod: AccessMethod;
+  linkToken?: string | null;
+  targetEmployeeCount?: number;
+  deadline?: string;
+  participantCount?: number;
+  completedCount?: number;
+  sessionCount?: number;
+  statusBreakdown?: {
+    invited: number;
+    inProgress: number;
+    completed: number;
+    dropped: number;
+  };
+  participantStatus?: ParticipantStatus;
+  targetDepartment?: string | null;
+  progress?: number;
+  score?: number;
+  completedAt?: string;
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CreateCampaignForm {
+  title: string;
+  // type: CampaignType; // TODO: re-enable campaign type selection
+  // customType?: string;
+  description: string;
+  anonymityMode: AnonymityMode;
+  module: ModuleType;
+  accessMethod: AccessMethod;
+  deadline?: string;
+}
+
+export interface CreateCampaignPayload {
+  title: string;
+  // type: CampaignType; // TODO: re-enable campaign type selection
+  // customType?: string;
+  description: string;
+  anonymityMode: AnonymityMode;
+  module: CampaignModule;
+  accessMethod: AccessMethod;
+  deadline?: string;
+  participants?: string[];
+}
+
+export interface CampaignsResponse {
+  data: Campaign[];
+  pagination: Pagination;
+}
+
+export interface Pagination {
+  page: number;
+  limit: number;
+  total: number;
+  pages: number;
+}
+
+export interface CampaignMetrics {
+  total: number;
+  active: number;
+  draft: number;
+  closed: number;
+  paused: number;
+  expired: number;
+  trend?: { date: string; count: number }[];
+}
+
+export type QuestionType = "TEXT" | "SINGLE_CHOICE" | "MULTIPLE_CHOICE" | "RATING";
+
+export interface Question {
+  question: string;
+  type: QuestionType;
+  options?: string[];
+  /** Indexes into `options` that are correct. SINGLE_CHOICE: 0-1 entries, MULTIPLE_CHOICE: 0-N entries. Absent/empty falls back to AI grading. */
+  correctOptionIndexes?: number[];
+}
+
+export interface QuestionnaireModule {
+  type: "QUESTIONNAIRE";
+  config: {
+    questions: Question[];
+    aiScoringEnabled?: boolean;
+    showResultsToParticipants?: boolean;
+  } | null;
+}
+
+export interface AIInterviewModule {
+  type: "AI_INTERVIEW";
+  config: {
+    agentPrompt: string;
+    showResultsToParticipants?: boolean;
+  } | null;
+}
+
+export interface SkillTestModule {
+  type: "SKILL_TEST";
+  config: {
+    skill: string;
+    showResultsToParticipants?: boolean;
+  } | null;
+}
+
+export interface TrainingPathModule {
+  type: "TRAINING_PATH";
+  config: {
+    resources: LearningResource[];
+  } | null;
+}
+
+export interface LearningResource {
+  type: "LINK" | "DOCUMENT" | "COURSE" | "VIDEO";
+  title: string;
+  url: string;
+  estimatedTime?: number;
+}
+
+export type CampaignModule =
+  | QuestionnaireModule
+  | AIInterviewModule
+  | SkillTestModule
+  | TrainingPathModule;
+
+// ─── Participants ─────────────────────────────────────────────────────────────
+
+export type ParticipantStatus = "INVITED" | "IN_PROGRESS" | "COMPLETED" | "DROPPED";
+
+export interface CampaignParticipant {
+  _id: string;
+  employeeId?: string;
+  anonymousToken?: string;
+  linkAccessToken?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
+  role?: string;
+  department?: { id: string; name: string };
+  status: ParticipantStatus;
+  accessedAt?: string;
+  completedAt?: string;
+  score?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+// ─── Non-participants (employees not yet in a campaign) ───────────────────────
+
+export interface NonParticipant {
+  _id: string;
+  membershipId: string;
+  firstName: string;
+  lastName: string;
+  email: string | null;
+  username: string | null;
+  role: string | null;
+  department: { id: string; name: string } | null;
+}
+
+// ─── Sessions ─────────────────────────────────────────────────────────────────
+
+export type SessionStatus = "PENDING" | "IN_PROGRESS" | "COMPLETED" | "EXPIRED";
+
+export interface CampaignSession {
+  _id: string;
+  isAnonymous?: boolean;
+  participant?: {
+    _id?: string;
+    firstName?: string;
+    lastName?: string;
+    username?: string;
+    email?: string;
+  };
+  status: SessionStatus;
+  startedAt?: string;
+  completedAt?: string;
+  score?: number;
+}
+
+// ─── Participant results ───────────────────────────────────────────────────────
+
+export interface CampaignResponseAnswer {
+  questionId: string;
+  answer: string | number | string[];
+  score?: number;
+}
+
+export interface CampaignResponse {
+  _id: string;
+  moduleType: ModuleType;
+  answers?: CampaignResponseAnswer[];
+  interviewTranscript?: { role: string; message: string; timestamp?: string }[];
+  testResults?: { score?: number; maxScore?: number; breakdown?: { area: string; label: string; score: number }[] };
+  aiScore?: number | null;
+  aiSummary?: string | null;
+  aiReport?: {
+    strengths?: string[];
+    areasForImprovement?: string[];
+    recommendation?: "strong_hire" | "hire" | "consider" | "reject" | null;
+  };
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ParticipantResults {
+  campaign: { _id: string; title: string; type?: CampaignType; module: CampaignModule };
+  participant: { _id: string; status: ParticipantStatus; completedAt?: string; score?: number | null };
+  response: CampaignResponse | null;
+  resultsHidden?: boolean;
+}

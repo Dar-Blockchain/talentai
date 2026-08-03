@@ -1,8 +1,29 @@
 {
   "loading": "Chargement de l'entretien…",
+  "invalid_link": {
+    "title": "Lien d'entretien invalide",
+    "desc": "Ce lien est invalide ou a expiré. Veuillez vérifier que l'URL est correcte et réessayer.",
+    "back": "Retour",
+    "retry": "Réessayer"
+  },
+  "checking": {
+    "title": "Vérification de votre accès",
+    "subtitle": "Vérification de votre éligibilité avant le chargement de l'entretien."
+  },
+  "no_link": {
+    "title": "Aucun lien d'entretien fourni",
+    "desc": "Cette page nécessite un lien d'entretien valide. Veuillez utiliser le lien fourni par l'entreprise pour accéder à votre entretien.",
+    "action": "Accéder au tableau de bord"
+  },
   "company_only": {
-    "title": "Cet entretien est réservé aux candidats",
-    "redirecting": "Redirection vers votre tableau de bord…"
+    "title": "Cette page n'est pas disponible pour votre compte",
+    "desc": "Le parcours d'entretien est conçu pour les comptes Candidat. Votre compte entreprise n'a pas accès à cette section.",
+    "action": "Mon tableau de bord"
+  },
+  "employee_blocked": {
+    "title": "Cette page n'est pas disponible pour votre compte",
+    "desc": "Le parcours d'entretien est conçu pour les comptes Candidat. Votre compte employé n'a pas accès à cette section.",
+    "action": "Mon tableau de bord"
   },
   "archived": {
     "title": "Ce poste n'est plus disponible",
@@ -15,7 +36,14 @@
   "completed": {
     "title": "Vous avez déjà complété cet entretien",
     "desc_pre": "Votre évaluation pour",
-    "desc_post": "a déjà été soumise. L'équipe de recrutement examinera vos résultats et reviendra vers vous."
+    "desc_post": "a déjà été soumise. L'équipe de recrutement examinera vos résultats et reviendra vers vous.",
+    "fallback_position": "ce poste"
+  },
+  "under_threshold": {
+    "title": "Entretien non disponible",
+    "desc_pre": "Votre score de correspondance CV (",
+    "desc_mid": ") est inférieur au score minimum requis de ",
+    "desc_post": " pour ce poste. Seuls les candidats atteignant le seuil peuvent accéder à l'entretien."
   },
   "limit": {
     "badge": "Entretiens suspendus",
@@ -24,6 +52,11 @@
     "contact": "Si vous pensez qu'il s'agit d'une erreur, veuillez contacter le recruteur directement.",
     "go_back": "← Retour",
     "go_home": "Accueil"
+  },
+  "no_cv": {
+    "title": "CV requis pour accéder à cet entretien",
+    "desc": "Cet entretien nécessite un CV pour que l'IA puisse évaluer votre profil. Veuillez téléverser votre CV dans vos paramètres et revenir.",
+    "action": "Téléverser mon CV"
   },
   "back_to_dashboard": "Retour au tableau de bord",
   "connection": {

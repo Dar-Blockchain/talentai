@@ -11,9 +11,12 @@
   "cancel_error": "Échec de l'annulation de l'invitation",
   "toast_invite_failed": "Échec de l'envoi de l'invitation",
   "header": {
-    "total": "Total",
-    "employees": "Employés",
-    "invitations": "Invitations"
+    "total": "Taille de l'équipe",
+    "total_hint": "Employés actifs + invitations en attente",
+    "employees": "Employés actifs",
+    "employees_hint": "Membres ayant rejoint votre équipe",
+    "invitations": "Invitations en attente",
+    "invitations_hint": "Invitations envoyées, non encore acceptées"
   },
   "list": {
     "tab_employees": "Employés",
@@ -75,6 +78,8 @@
     "sent": "Envoyé le {{date}}",
     "invited_as": "Invité en tant que",
     "resend": "Renvoyer",
+    "resending": "Envoi…",
+    "resend_available_in": "Disponible dans {{time}}",
     "cancel": "Annuler"
   },
   "modals": {
@@ -92,7 +97,10 @@
       "no_roles_match": "Aucun rôle ne correspond à « {{term}} »",
       "cancel": "Annuler",
       "sending": "Envoi…",
-      "send_invitation": "Envoyer l'invitation"
+      "send_invitation": "Envoyer l'invitation",
+      "error_generic": "Échec de l'envoi de l'invitation. Veuillez réessayer.",
+      "error_email_exists": "Cet e-mail correspond à un compte déjà enregistré et ne peut pas être invité.",
+      "error_invitation_pending": "Une invitation est déjà en attente pour cet e-mail. Rendez-vous dans l'onglet Invitations pour la renvoyer ou l'annuler."
     },
     "edit": {
       "title": "Modifier le membre",

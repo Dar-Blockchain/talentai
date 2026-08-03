@@ -1,0 +1,17 @@
+{
+  "back_to_campaign": "Back to campaign",
+  "loading": {
+    "title": "Loading campaign interview…",
+    "subtitle": "Setting up your session, please wait."
+  },
+  "preview": {
+    "skill_title": "Technical Skill Assessment",
+    "skill_desc": "A conversational technical interview that evaluates your skills through structured questions across fundamentals, practical usage, and advanced topics.",
+    "ai_title": "AI Behavioral Interview",
+    "ai_desc": "A structured behavioral interview that assesses your experience, competencies, and situational judgment through an AI-guided conversation.",
+    "duration": "Approximately 20 minutes",
+    "microphone": "Microphone access required",
+    "start": "Start Interview",
+    "login_required": "Sign in to start"
+  }
+}

@@ -1,11 +1,11 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useDispatch } from 'react-redux';
-import { settingsApi, apiKeysApi } from '../api';
-import { apiKeysKeys } from './keys';
+import { settingsApi, apiKeysApi, costSettingsApi } from '../api';
+import { apiKeysKeys, costSettingsKeys } from './keys';
 import { profileKeys } from '@/modules/settings/shared';
 import { setConnectedUser } from '@/store/slices/userSlice';
 import type { AppDispatch } from '@/store/store';
-import type { UpdateProfilePayload, CreateApiKeyPayload, UpdateApiKeyPayload } from '../types';
+import type { UpdateProfilePayload, CreateApiKeyPayload, UpdateApiKeyPayload, UpdateCostSettingsPayload } from '../types';
 
 // ─── Fetch profile ────────────────────────────────────────────────────────────
 
@@ -26,13 +26,11 @@ export const useUpdateSettingsProfile = () => {
     mutationFn: ({ userId, payload }: { userId: string; payload: UpdateProfilePayload }) =>
       settingsApi.updateProfile(userId, payload),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data.user,
-        profile:           data.profile,
-        planLimits:        data.planLimits        ?? null,
-        companyMembership: data.companyMembership ?? null,
-      }));
-      queryClient.invalidateQueries({ queryKey: profileKeys.me });
+      if (!data?.profile) return;
+      dispatch(setConnectedUser({ profile: data.profile }));
+      queryClient.setQueryData(profileKeys.me, (old: any) =>
+        old ? { ...old, profile: data.profile } : old
+      );
     },
   });
 };
@@ -47,13 +45,11 @@ export const useUploadSettingsAvatar = () => {
     mutationFn: ({ userId, file }: { userId: string; file: File }) =>
       settingsApi.uploadAvatar(userId, file),
     onSuccess: (data) => {
-      dispatch(setConnectedUser({
-        user:              data?.user              ?? null,
-        profile:           data?.profile           ?? null,
-        planLimits:        data?.planLimits        ?? null,
-        companyMembership: data?.companyMembership ?? null,
-      }));
-      queryClient.invalidateQueries({ queryKey: profileKeys.me });
+      if (!data?.profile) return;
+      dispatch(setConnectedUser({ profile: data.profile }));
+      queryClient.setQueryData(profileKeys.me, (old: any) =>
+        old ? { ...old, profile: data.profile } : old
+      );
     },
   });
 };
@@ -104,5 +100,29 @@ export const useRegenerateApiKey = () => {
   return useMutation({
     mutationFn: (id: string) => apiKeysApi.regenerate(id),
     onSuccess: () => queryClient.invalidateQueries({ queryKey: apiKeysKeys.list }),
+  });
+};
+
+// ─── Cost settings (manual vs TalentAI comparison) ─────────────────────────────
+
+export const useCostSettings = () =>
+  useQuery({
+    queryKey: costSettingsKeys.all,
+    queryFn:  costSettingsApi.fetch,
+    staleTime: 60 * 1000,
+  });
+
+export const useUpdateCostSettings = () => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (payload: UpdateCostSettingsPayload) => costSettingsApi.update(payload),
+    onSuccess: (data) => {
+      queryClient.setQueryData(costSettingsKeys.all, data);
+      // The hiring dashboard's hours/cost comparison cards read these same
+      // rates server-side — invalidate them so a saved change shows up there
+      // without waiting for their own staleTime to expire.
+      queryClient.invalidateQueries({ queryKey: ['kpi', 'hoursComparison'] });
+      queryClient.invalidateQueries({ queryKey: ['kpi', 'costComparison'] });
+    },
   });
 };

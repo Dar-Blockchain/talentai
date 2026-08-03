@@ -13,8 +13,6 @@ export default async function handler(
   try {
     // Handle temporary token generation for streaming
     if (req.method === 'POST' && req.body.action === 'generate_token') {
-      console.log('🔑 Generating AssemblyAI streaming token...');
-
       // Get API key from environment
       const apiKey = process.env.ASSEMBLYAI_API_KEY;
 
@@ -25,12 +23,6 @@ export default async function handler(
           details: 'AssemblyAI API key is not configured. Please set ASSEMBLYAI_API_KEY in .env.local',
         });
       }
-
-      // Validate API key format
-      console.log('📋 API Key Info:');
-      console.log('  - Length:', apiKey.length);
-      console.log('  - Preview:', `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`);
-      console.log('  - Starts with 5?', apiKey.startsWith('5'));
 
       if (!apiKey.startsWith('5')) {
         console.error('❌ Invalid API key format - AssemblyAI keys must start with "5"');
@@ -51,14 +43,11 @@ export default async function handler(
       try {
         // Import AssemblyAI SDK
         const { AssemblyAI } = await import('assemblyai');
-        console.log('✅ AssemblyAI SDK loaded successfully');
 
         // Create client
         const client = new AssemblyAI({
           apiKey: apiKey,
         });
-
-        console.log('🔐 Requesting temporary token from AssemblyAI...');
 
         // Generate temporary token for streaming
         const token = await client.realtime.createTemporaryToken({
@@ -68,10 +57,6 @@ export default async function handler(
         if (!token) {
           throw new Error('No token returned from AssemblyAI');
         }
-
-        console.log('✅ Token generated successfully!');
-        console.log('  - Token length:', token.length);
-        console.log('  - Token preview:', `${token.substring(0, 20)}...${token.substring(token.length - 10)}`);
 
         return res.status(200).json({
           token,
