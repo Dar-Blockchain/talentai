@@ -31,6 +31,7 @@ const usersRouter = require('../features/users').userRouter;
 const skillRouter = require('../features/skills/skill.routes');
 const { webinarAgentRouter, webinarRouter } = require('../features/webinar-agent');
 const { blogRouter } = require('../features/blog');
+const systemRouter = require('../features/system/system.routes');
 
 /**
  * Register all routes on the Express app
@@ -104,6 +105,9 @@ function registerRoutes(app) {
 
   // Blog (public read + admin CRUD)
   app.use('/blog', blogRouter);
+
+  // System (public, no auth)
+  app.use('/api/system', systemRouter);
 }
 
 module.exports = {
