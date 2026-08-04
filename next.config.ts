@@ -12,17 +12,25 @@ const nextConfig: NextConfig = {
       },
     ];
   },
-  reactStrictMode: false, // Temporarily disabled to debug duplicate API calls
+  reactStrictMode: true,
   output: 'standalone',
   outputFileTracingRoot: process.cwd(),
   devIndicators: {
-    position: "bottom-right",
+    position: "bottom-left",
   },
   images: {
     remotePatterns: [
       {
         protocol: 'https',
         hostname: 'app.talentai.bid',
+        pathname: '/**',
+      },
+      {
+        // Blog cover/content images are uploaded to the API and resolved via
+        // resolveUploadUrl() against NEXT_PUBLIC_API_BASE_URL — localhost in dev.
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
         pathname: '/**',
       },
     ],
@@ -46,6 +54,17 @@ const nextConfig: NextConfig = {
       net: false,
       tls: false,
     };
+
+    // @vladmandic/face-api's own bundled ESM file uses a dynamic `require()`
+    // internally — harmless (it's inside the library, not our code), but
+    // webpack can't statically analyze it and warns on every build.
+    config.ignoreWarnings = [
+      ...(config.ignoreWarnings || []),
+      {
+        module: /node_modules\/@vladmandic\/face-api/,
+        message: /Critical dependency: require function is used in a way in which dependencies cannot be statically extracted/,
+      },
+    ];
 
     return config;
   },

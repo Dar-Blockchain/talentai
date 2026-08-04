@@ -1,55 +1,62 @@
 import i18n, { type InitOptions } from 'i18next';
 import { initReactI18next } from 'react-i18next';
-import LanguageDetector from 'i18next-browser-languagedetector';
+import { getToken } from '@/modules/auth/shared/utils/token';
 
-// ── EN ──────────────────────────────────────────────
-import enCommon     from '../../public/locales/en/shared/common.json';
-import enAuth       from '../../public/locales/en/shared/auth.json';
-import enDashboard  from '../../public/locales/en/shared/dashboard.json';
-import enDashboardCandidate from '../../public/locales/en/modules/candidates/candidate.json';
-import enPosts      from '../../public/locales/en/modules/company/posts.json';
-import enCampaign   from '../../public/locales/en/modules/campaigns/campaign.json';
-import enInterview  from '../../public/locales/en/shared/interview.json';
-import enHome       from '../../public/locales/en/shared/home.json';
-import enLegal      from '../../public/locales/en/shared/legal.json';
-import enEmployees  from '../../public/locales/en/modules/employees/employees.json';
-import enDepartments from '../../public/locales/en/modules/departments/departments.json';
-import enSubscription from '../../public/locales/en/modules/company/subscription.json';
-import enInterviewHr from '../../public/locales/en/modules/interview/interview.json';
-import enInterviewResults from '../../public/locales/en/modules/interview/results.json';
-import enInterviewApply from '../../public/locales/en/modules/interview/apply.json';
-import enChat from '../../public/locales/en/shared/chat.json';
-import enTeamChat from '../../public/locales/en/modules/company/teamChat.json';
-import enCandidateChat from '../../public/locales/en/modules/candidates/candidateChat.json';
-import enCompanyChat from '../../public/locales/en/modules/company/companyChat.json';
-
-// ── FR ──────────────────────────────────────────────
-import frCommon     from '../../public/locales/fr/shared/common.json';
-import frAuth       from '../../public/locales/fr/shared/auth.json';
-import frDashboard  from '../../public/locales/fr/shared/dashboard.json';
-import frDashboardCandidate from '../../public/locales/fr/modules/candidates/candidate.json';
-import frPosts      from '../../public/locales/fr/modules/company/posts.json';
-import frCampaign   from '../../public/locales/fr/modules/campaigns/campaign.json';
-import frInterview  from '../../public/locales/fr/shared/interview.json';
-import frHome       from '../../public/locales/fr/shared/home.json';
-import frLegal      from '../../public/locales/fr/shared/legal.json';
-import frEmployees  from '../../public/locales/fr/modules/employees/employees.json';
-import frDepartments from '../../public/locales/fr/modules/departments/departments.json';
-import frSubscription from '../../public/locales/fr/modules/company/subscription.json';
-import frInterviewHr from '../../public/locales/fr/modules/interview/interview.json';
-import frInterviewResults from '../../public/locales/fr/modules/interview/results.json';
-import frInterviewApply from '../../public/locales/fr/modules/interview/apply.json';
-import frChat from '../../public/locales/fr/shared/chat.json';
-import frTeamChat from '../../public/locales/fr/modules/company/teamChat.json';
-import frCandidateChat from '../../public/locales/fr/modules/candidates/candidateChat.json';
-import frCompanyChat from '../../public/locales/fr/modules/company/companyChat.json';
+// ─── Static imports — all bundles available synchronously ─────────────────
+import commonEn from '../../public/locales/en/shared/common.json';
+import commonFr from '../../public/locales/fr/shared/common.json';
+import homeEn from '../../public/locales/en/shared/home.json';
+import homeFr from '../../public/locales/fr/shared/home.json';
+import authEn from '../../public/locales/en/shared/auth.json';
+import authFr from '../../public/locales/fr/shared/auth.json';
+import legalEn from '../../public/locales/en/shared/legal.json';
+import legalFr from '../../public/locales/fr/shared/legal.json';
+import interviewSharedEn from '../../public/locales/en/shared/interview.json';
+import interviewSharedFr from '../../public/locales/fr/shared/interview.json';
+import chatEn from '../../public/locales/en/shared/chat.json';
+import chatFr from '../../public/locales/fr/shared/chat.json';
+import postsEn from '../../public/locales/en/modules/company/posts.json';
+import postsFr from '../../public/locales/fr/modules/company/posts.json';
+import teamChatEn from '../../public/locales/en/modules/company/teamChat.json';
+import teamChatFr from '../../public/locales/fr/modules/company/teamChat.json';
+import companyChatEn from '../../public/locales/en/modules/company/companyChat.json';
+import companyChatFr from '../../public/locales/fr/modules/company/companyChat.json';
+import candidateChatEn from '../../public/locales/en/modules/candidates/candidateChat.json';
+import candidateChatFr from '../../public/locales/fr/modules/candidates/candidateChat.json';
+import notificationsEn from '../../public/locales/en/modules/notifications/notifications.json';
+import notificationsFr from '../../public/locales/fr/modules/notifications/notifications.json';
+import interviewEn from '../../public/locales/en/modules/interview/interview.json';
+import interviewFr from '../../public/locales/fr/modules/interview/interview.json';
+import interviewResultsEn from '../../public/locales/en/modules/interview/results.json';
+import interviewResultsFr from '../../public/locales/fr/modules/interview/results.json';
+import interviewApplyEn from '../../public/locales/en/modules/interview/apply.json';
+import interviewApplyFr from '../../public/locales/fr/modules/interview/apply.json';
+import skillInterviewEn from '../../public/locales/en/modules/interview/skill-interview.json';
+import skillInterviewFr from '../../public/locales/fr/modules/interview/skill-interview.json';
+import campaignInterviewEn from '../../public/locales/en/modules/interview/campaign-interview.json';
+import campaignInterviewFr from '../../public/locales/fr/modules/interview/campaign-interview.json';
+// Dashboard composite parts
+import dashboardEn from '../../public/locales/en/shared/dashboard.json';
+import dashboardFr from '../../public/locales/fr/shared/dashboard.json';
+import employeesEn from '../../public/locales/en/modules/employees/employees.json';
+import employeesFr from '../../public/locales/fr/modules/employees/employees.json';
+import departmentsEn from '../../public/locales/en/modules/departments/departments.json';
+import departmentsFr from '../../public/locales/fr/modules/departments/departments.json';
+import campaignEn from '../../public/locales/en/modules/campaigns/campaign.json';
+import campaignFr from '../../public/locales/fr/modules/campaigns/campaign.json';
+import subscriptionEn from '../../public/locales/en/modules/company/subscription.json';
+import subscriptionFr from '../../public/locales/fr/modules/company/subscription.json';
+import candidateEn from '../../public/locales/en/modules/candidates/candidate.json';
+import candidateFr from '../../public/locales/fr/modules/candidates/candidate.json';
+import webinarEn from '../../public/locales/en/modules/webinar/webinar.json';
+import webinarFr from '../../public/locales/fr/modules/webinar/webinar.json';
 
 export const SUPPORTED_LANGUAGES = ['en', 'fr'] as const;
 export type SupportedLanguage = (typeof SUPPORTED_LANGUAGES)[number];
 
 export const LANGUAGE_COOKIE = 'talentai_lang';
 
-export const NAMESPACES = ['common', 'auth', 'dashboard', 'posts', 'interview', 'home', 'legal'] as const;
+export const NAMESPACES = ['common', 'auth', 'dashboard', 'posts', 'interview', 'home', 'legal', 'webinar'] as const;
 export type Namespace = (typeof NAMESPACES)[number];
 
 // RTL languages — extend this list when Arabic is added: ['ar']
@@ -57,10 +64,6 @@ export const RTL_LANGUAGES: SupportedLanguage[] = [];
 
 /**
  * Per-locale JSON under `public/locales/{lng}/modules/` merges into `dashboard.pages`.
- * e.g. `modules/employees/employees.json` → `pages.employees`,
- * `modules/departments/departments.json` → `pages.departments`,
- * `modules/campaigns/campaign.json` → `pages.campaigns`,
- * `modules/company/subscription.json` → `pages.subscription`.
  */
 function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>(
   dashboard: D,
@@ -83,61 +86,97 @@ function mergeDashboardPageBundles<D extends { pages: Record<string, unknown> }>
   };
 }
 
-const options: InitOptions = {
-  resources: {
-    en: {
-      common:    enCommon,
-      auth:      enAuth,
-      dashboard: mergeDashboardPageBundles(enDashboard, enEmployees, enDepartments, enCampaign, enSubscription, enDashboardCandidate),
-      posts:     enPosts,
-      interview: enInterview,
-      home:      enHome,
-      legal:     enLegal,
-      'modules/interview/hr':      enInterviewHr,
-      'modules/interview/results': enInterviewResults,
-      'modules/interview/apply':   enInterviewApply,
-      'shared/chat':               enChat,
-      'modules/company/teamChat': enTeamChat,
-      'modules/candidates/candidateChat': enCandidateChat,
-      'modules/company/companyChat': enCompanyChat,
-    },
-    fr: {
-      common:    frCommon,
-      auth:      frAuth,
-      dashboard: mergeDashboardPageBundles(frDashboard, frEmployees, frDepartments, frCampaign, frSubscription, frDashboardCandidate),
-      posts:     frPosts,
-      interview: frInterview,
-      home:      frHome,
-      legal:     frLegal,
-      'modules/interview/hr':      frInterviewHr,
-      'modules/interview/results': frInterviewResults,
-      'modules/interview/apply':   frInterviewApply,
-      'shared/chat':               frChat,
-      'modules/company/teamChat': frTeamChat,
-      'modules/candidates/candidateChat': frCandidateChat,
-      'modules/company/companyChat': frCompanyChat,
-    },
-  },
+/**
+ * Synchronously determine the correct starting language before React renders.
+ * Priority: manual key (explicit user choice, always wins) → persisted Redux user language (auth) → 'en'
+ */
+function getInitialLanguage(): string {
+  if (typeof window === 'undefined') return 'en';
 
+  const manual = localStorage.getItem('talentai_lang_manual');
+  if (manual === 'fr' || manual === 'en') return manual;
+
+  const hasToken = !!getToken();
+  if (!hasToken) return 'en';
+
+  try {
+    const raw = localStorage.getItem('persist:root');
+    if (raw) {
+      const root = JSON.parse(raw);
+      if (root.user) {
+        const userState = JSON.parse(root.user);
+        const lang = userState?.connectedUser?.user?.language;
+        if (lang === 'fr' || lang === 'en') return lang;
+      }
+    }
+  } catch { /* ignore parse errors */ }
+
+  return 'en';
+}
+
+const resources: InitOptions['resources'] = {
+  en: {
+    common: commonEn,
+    home: homeEn,
+    auth: authEn,
+    legal: legalEn,
+    interview: interviewSharedEn,
+    'shared/chat': chatEn,
+    posts: postsEn,
+    'modules/company/teamChat': teamChatEn,
+    'modules/company/companyChat': companyChatEn,
+    'modules/candidates/candidateChat': candidateChatEn,
+    'modules/notifications/notifications': notificationsEn,
+    'modules/interview/interview': interviewEn,
+    'modules/interview/results': interviewResultsEn,
+    'modules/interview/apply': interviewApplyEn,
+    'modules/interview/skill-interview': skillInterviewEn,
+    'modules/interview/campaign-interview': campaignInterviewEn,
+    webinar: webinarEn,
+    dashboard: mergeDashboardPageBundles(
+      dashboardEn as any,
+      employeesEn,
+      departmentsEn,
+      campaignEn,
+      subscriptionEn,
+      candidateEn,
+    ),
+  },
+  fr: {
+    common: commonFr,
+    home: homeFr,
+    auth: authFr,
+    legal: legalFr,
+    interview: interviewSharedFr,
+    'shared/chat': chatFr,
+    posts: postsFr,
+    'modules/company/teamChat': teamChatFr,
+    'modules/company/companyChat': companyChatFr,
+    'modules/candidates/candidateChat': candidateChatFr,
+    'modules/notifications/notifications': notificationsFr,
+    'modules/interview/interview': interviewFr,
+    'modules/interview/results': interviewResultsFr,
+    'modules/interview/apply': interviewApplyFr,
+    'modules/interview/skill-interview': skillInterviewFr,
+    'modules/interview/campaign-interview': campaignInterviewFr,
+    webinar: webinarFr,
+    dashboard: mergeDashboardPageBundles(
+      dashboardFr as any,
+      employeesFr,
+      departmentsFr,
+      campaignFr,
+      subscriptionFr,
+      candidateFr,
+    ),
+  },
+};
+
+const options: InitOptions = {
+  lng: getInitialLanguage(),
   fallbackLng: 'en',
   supportedLngs: [...SUPPORTED_LANGUAGES],
   defaultNS: 'common',
-  ns: [...NAMESPACES],
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  detection: {
-    order: ['cookie', 'localStorage', 'navigator'],
-    caches: ['cookie', 'localStorage'],
-    cookieName: LANGUAGE_COOKIE,
-    cookieOptions: { path: '/', sameSite: 'lax' },
-    lookupLocalStorage: LANGUAGE_COOKIE,
-    /** Map fr-FR / en-US → fr / en — resources are only registered under two-letter codes */
-    convertDetectedLanguage: (lng: string) => {
-      const base = lng.split("-")[0]?.toLowerCase();
-      if (base === "fr" || base === "en") return base;
-      return lng;
-    },
-  } as any,
+  resources,
 
   interpolation: {
     escapeValue: false,
@@ -150,16 +189,13 @@ const options: InitOptions = {
 
 if (!i18n.isInitialized) {
   i18n
-    .use(LanguageDetector)
     .use(initReactI18next)
     .init(options);
 } else {
-  // Re-sync all bundles so JSON changes survive HMR without a full restart
-  SUPPORTED_LANGUAGES.forEach((lng) => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const langBundles = (options.resources as any)?.[lng] ?? {};
-    Object.keys(langBundles).forEach((ns) => {
-      i18n.addResourceBundle(lng, ns, langBundles[ns], true, true);
+  // HMR: push updated static-import bundles into the existing i18next store
+  (Object.keys(resources) as (keyof typeof resources)[]).forEach((lng) => {
+    (Object.entries(resources[lng]) as [string, object][]).forEach(([ns, bundle]) => {
+      i18n.addResourceBundle(lng as string, ns, bundle, true, true);
     });
   });
 }

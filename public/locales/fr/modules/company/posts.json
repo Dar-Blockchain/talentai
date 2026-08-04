@@ -53,6 +53,8 @@
   "card": {
     "untitled": "Poste sans titre",
     "copied": "Copié !",
+    "applications_one": "{{count}} candidature",
+    "applications_other": "{{count}} candidatures",
     "days_left": "{{count}}j restants",
     "expired_badge": "Expirée",
     "status": {
@@ -122,6 +124,8 @@
       "btn_generate": "Générer l'offre avec l'IA",
       "btn_generating": "Génération en cours…",
       "error_prompt": "Veuillez décrire le poste",
+      "error_invalid_input": "Votre saisie contient du contenu inapproprié ou incompréhensible. Veuillez la réviser.",
+      "error_insufficient_detail": "Veuillez fournir plus de détails sur le poste afin que l'IA puisse comprendre votre besoin.",
       "error_salary_required": "La devise, le minimum et le maximum sont requis",
       "error_salary_max": "Le salaire maximum doit être supérieur au minimum",
       "error_required": "Requis"
@@ -139,6 +143,7 @@
       "labels": {
         "employment_type": "Type de contrat",
         "work_mode": "Mode de travail",
+        "department": "Département (optionnel)",
         "currency": "Devise",
         "experience_level": "Niveau d’expérience",
         "expires": "Expire le",
@@ -155,6 +160,7 @@
         "select": "Sélectionner",
         "select_employment_type": "Sélectionner le type de contrat",
         "select_work_mode": "Sélectionner le mode de travail",
+        "select_department": "Sélectionner le département (optionnel)",
         "select_currency": "Sélectionner la devise",
         "select_experience_level": "Sélectionner le niveau d’expérience",
         "select_skill_level": "Niveau d’expérience",
@@ -177,14 +183,12 @@
         "experience_expert": "Expert"
       },
       "hard_skill_levels": {
-        "1": "Niveau d’entrée",
         "2": "Junior",
         "3": "Intermédiaire",
         "4": "Senior",
         "5": "Expert"
       },
       "soft_skill_levels": {
-        "1": "Débutant",
         "2": "Junior",
         "3": "Intermédiaire",
         "4": "Senior",
@@ -261,12 +265,12 @@
       "download": "Télécharger le QR"
     },
     "tooltips": {
-      "cannot_edit_published": "Modification impossible — l'offre est déjà publiée",
+      "cannot_edit_published": "Modification impossible — des candidats ont déjà postulé",
       "cannot_edit_passed": "Modification impossible — des candidats ont déjà passé cet entretien"
     },
     "menu": {
       "edit_title": "Modifier l'offre",
-      "edit_desc_published": "Modifiable uniquement en brouillon",
+      "edit_desc_published": "Impossible de modifier si des candidatures existent",
       "edit_desc_draft": "Modifier les détails du poste",
       "delete_title": "Supprimer l'offre",
       "delete_desc": "Suppression permanente"

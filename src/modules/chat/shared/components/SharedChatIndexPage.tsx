@@ -1,8 +1,8 @@
 import React, { useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSelector, useDispatch } from "react-redux";
-import { Box, Typography, CircularProgress } from "@mui/material";
-import ChatOutlined from "@mui/icons-material/ChatOutlined";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import { MessageCircle as ChatOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { RootState, AppDispatch } from "@/store/store";
 import { fetchConversations, selectConversations, selectConversationsLoading } from "@/store/slices/chatSlice";
@@ -36,23 +36,23 @@ const SharedChatIndexPage: React.FC<Props> = ({ basePath, emptyText, layout: Lay
 
   return (
     <Layout>
-      <Box sx={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: 300, gap: 2 }}>
+      <div className="flex flex-1 flex-col items-center justify-center gap-4 min-h-[300px]">
         {loading ? (
-          <CircularProgress sx={{ color: T }} />
+          <Spinner style={{ color: T }} />
         ) : conversations.length === 0 ? (
           <>
-            <Box sx={{ width: 64, height: 64, borderRadius: "50%", bgcolor: TBG, border: `1px solid ${TBORDER}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <ChatOutlined sx={{ fontSize: 30, color: T }} />
-            </Box>
-            <Typography sx={{ fontSize: "15px", fontWeight: 700, color: "#111827" }}>{t("index.no_conversations")}</Typography>
-            <Typography sx={{ fontSize: "13px", color: "#6B7280", textAlign: "center", maxWidth: 300 }}>
+            <div className="flex h-16 w-16 items-center justify-center rounded-full" style={{ backgroundColor: TBG, border: `1px solid ${TBORDER}` }}>
+              <ChatOutlined size={30} color={T} />
+            </div>
+            <p className="text-[15px] font-bold text-[#111827]">{t("index.no_conversations")}</p>
+            <p className="max-w-[300px] text-center text-[13px] text-[#6B7280]">
               {emptyText}
-            </Typography>
+            </p>
           </>
         ) : (
-          <CircularProgress sx={{ color: T }} />
+          <Spinner style={{ color: T }} />
         )}
-      </Box>
+      </div>
     </Layout>
   );
 };

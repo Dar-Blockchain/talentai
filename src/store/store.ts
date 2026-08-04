@@ -10,59 +10,30 @@ import {
   REGISTER
 } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
-import authReducer from './slices/authSlice';
 import userReducer from './slices/userSlice';
-import postReducer from './slices/postSlice';
-import candidateReducer from './slices/candidateSlice';
-import postGenerationReducer from './slices/postGenerationSlice';
-import interviewReducer from './slices/interviewSlice';
-import jobDetailsReducer from './slices/jobDetailsSlice';
-import notificationReducer from './slices/notificationSlice';
-import memberReducer from './slices/memberSlice';
 import chatReducer from './slices/chatSlice';
 import teamChatReducer from '@/modules/chat/team-chat/store/teamChatSlice';
 import candidateChatReducer from '@/modules/chat/candidate-chat/store/candidateChatSlice';
-import adminReducer from './slices/adminSlice';
 import planLimitsReducer from './slices/planLimitsSlice';
-import campaignReducer from './slices/campaignSlice';
-import companyReducer from './slices/companySlice';
-import departmentReducer from './slices/departmentSlice';
-import jobApplicationReducer from './slices/jobApplicationSlice';
-import feedbackReducer from './slices/feedbackSlice';
 import paymentReducer from './slices/paymentSlice';
-import kpiReducer from './slices/kpiSlice';
-import postDetailsReducer from '../modules/posts/details/store/postSlice';
-import { socketMiddleware } from './middleware/socketMiddleware';
+import postDetailsReducer from '../modules/company/posts/details/store/postSlice';
+import postGenerationReducer from '../modules/company/posts/create/store/createPostSlice';
 
 const rootReducer = combineReducers({
   user: userReducer,
-  auth: authReducer,
-  post: postReducer,
-  candidate: candidateReducer,
-  postGeneration: postGenerationReducer,
-  interview: interviewReducer,
-  jobDetails: jobDetailsReducer,
-  notifications: notificationReducer,
-  member: memberReducer,
   chat: chatReducer,
   teamChat: teamChatReducer,
   candidateChat: candidateChatReducer,
-  admin: adminReducer,
   planLimits: planLimitsReducer,
-  campaign: campaignReducer,
-  company: companyReducer,
-  department: departmentReducer,
-  jobApplications: jobApplicationReducer,
-  kpi: kpiReducer,
-  feedback: feedbackReducer,
   payment: paymentReducer,
   postDetails: postDetailsReducer,
+  postGeneration: postGenerationReducer,
 });
 
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['auth', 'user', 'planLimits']
+  whitelist: ['user', 'planLimits']
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -74,7 +45,7 @@ export const store = configureStore({
       serializableCheck: {
         ignoredActions: [FLUSH, REHYDRATE, PAUSE, PERSIST, PURGE, REGISTER]
       }
-    }).concat(socketMiddleware)
+    })
 });
 
 export const persistor = persistStore(store);

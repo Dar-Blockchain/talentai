@@ -1,29 +1,27 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Controller, useWatch, type Control, type FieldErrors } from "react-hook-form";
-import { Box, Chip, Divider, DialogContent, DialogActions, Typography } from "@mui/material";
-import { DatePicker } from "@mui/x-date-pickers/DatePicker";
-import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
-import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
-import dayjs, { type Dayjs } from "dayjs";
-import AppInput  from "@/modules/shared/ui/AppInput";
-import AppSelect from "@/modules/shared/ui/AppSelect";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { FieldLabel } from "@/modules/settings/shared/components";
-import { TEAL, TEAL_BORDER, AVAILABLE_SCOPES } from "@/modules/settings/shared/constants";
+import { AVAILABLE_SCOPES } from "@/modules/settings/shared/constants";
 
 import { type KeyFormState } from "../../schemas/apiKeySchema";
-import { datePickerInputSx } from "./styles";
 
 // ─── Scope chips (read-only) ──────────────────────────────────────────────────
 
 export const ScopeChips = () => (
-  <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+  <div className="flex flex-wrap gap-1.5">
     {AVAILABLE_SCOPES.map((s) => (
-      <Chip key={s} label={s} size="small"
-        sx={{ height: 26, fontSize: "0.72rem", fontWeight: 600, bgcolor: "rgba(13,148,136,0.1)", color: TEAL, border: `1px solid ${TEAL_BORDER}`, cursor: "default", pointerEvents: "none" }}
-      />
+      <span
+        key={s}
+        className="inline-flex h-[26px] items-center px-2.5 rounded-full text-[0.72rem] font-semibold pointer-events-none bg-teal-600/10 text-teal-600 border border-teal-200"
+      >
+        {s}
+      </span>
     ))}
-  </Box>
+  </div>
 );
 
 // ─── Dialog layout wrapper ────────────────────────────────────────────────────
@@ -36,11 +34,11 @@ export const DialogForm = ({
   children: React.ReactNode;
 }) => (
   <>
-    <DialogContent sx={{ pt: 2.5 }}>
-      <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>{fields}</Box>
-    </DialogContent>
-    <Divider />
-    <DialogActions sx={{ px: 3, py: 2, gap: 1 }}>{children}</DialogActions>
+    <div className="px-6 pt-5">
+      <div className="flex flex-col gap-5">{fields}</div>
+    </div>
+    <hr className="border-gray-200 mt-5" />
+    <div className="flex justify-end gap-2 px-6 py-4">{children}</div>
   </>
 );
 
@@ -64,102 +62,93 @@ export const KeyFormFields = ({
   return (
     <>
       <Controller name="name" control={control} render={({ field }) => (
-        <AppInput
-          label={t("pages.settings.api_keys.fields.key_name")}
-          {...field}
-          placeholder={t("pages.settings.api_keys.fields.key_name_placeholder")}
-          error={errors.name?.message}
-          required
-        />
+        <div className="flex flex-col gap-1">
+          <FieldLabel text={t("pages.settings.api_keys.fields.key_name")} />
+          <Input
+            {...field}
+            placeholder={t("pages.settings.api_keys.fields.key_name_placeholder")}
+            aria-invalid={!!errors.name}
+          />
+          {errors.name?.message && (
+            <span className="text-[11px] text-red-500">{errors.name.message}</span>
+          )}
+        </div>
       )} />
 
       <Controller name="serviceName" control={control} render={({ field }) => (
-        <AppInput
-          label={t("pages.settings.api_keys.fields.service_name")}
-          {...field}
-          value={field.value ?? ""}
-          placeholder={t("pages.settings.api_keys.fields.service_placeholder")}
-        />
+        <div className="flex flex-col gap-1">
+          <FieldLabel text={t("pages.settings.api_keys.fields.service_name")} />
+          <Input
+            {...field}
+            value={field.value ?? ""}
+            placeholder={t("pages.settings.api_keys.fields.service_placeholder")}
+          />
+        </div>
       )} />
 
-      <Box>
+      <div>
         <FieldLabel text={t("pages.settings.api_keys.fields.scopes")} />
         <ScopeChips />
-      </Box>
+      </div>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2 }}>
+      <div className="grid grid-cols-2 gap-4">
         <Controller name="rateLimit" control={control} render={({ field }) => (
-          <AppInput
-            label={t("pages.settings.api_keys.fields.rate_limit")}
-            value={field.value > 0 ? String(field.value) : ""}
-            placeholder="e.g. 100"
-            onChange={(e) => {
-              const digits = e.target.value.replace(/\D/g, "");
-              field.onChange(digits ? Number(digits) : 0);
-            }}
-            error={errors.rateLimit?.message}
-            required
-          />
+          <div className="flex flex-col gap-1">
+            <FieldLabel text={t("pages.settings.api_keys.fields.rate_limit")} />
+            <Input
+              value={field.value > 0 ? String(field.value) : ""}
+              placeholder="e.g. 100"
+              onChange={(e) => {
+                const digits = e.target.value.replace(/\D/g, "");
+                field.onChange(digits ? Number(digits) : 0);
+              }}
+              aria-invalid={!!errors.rateLimit}
+            />
+            {errors.rateLimit?.message && (
+              <span className="text-[11px] text-red-500">{errors.rateLimit.message}</span>
+            )}
+          </div>
         )} />
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-          <Typography variant="subtitle2" sx={{ fontSize: 12, fontWeight: 600, color: "#374151", letterSpacing: 0.3, textTransform: "uppercase" }}>
+        <div className="flex flex-col gap-1">
+          <span className="text-xs font-semibold uppercase tracking-wide text-gray-700">
             {t("pages.settings.api_keys.fields.expires_at")}
-            <span style={{ color: "#EF4444", marginLeft: 2 }}>*</span>
-          </Typography>
+            <span className="text-red-500 ml-0.5">*</span>
+          </span>
           <Controller name="expiresAt" control={control} render={({ field }) => (
-            <LocalizationProvider dateAdapter={AdapterDayjs}>
-              <DatePicker
-                value={field.value ? dayjs(field.value) : null}
-                onChange={(v: Dayjs | null) => field.onChange(v ? v.format("YYYY-MM-DD") : "")}
-                disablePast
-                slotProps={{
-                  textField: {
-                    fullWidth: true,
-                    size: "small",
-                    InputProps: {
-                      sx: {
-                        ...datePickerInputSx,
-                        "& .MuiInputAdornment-root .MuiIconButton-root": {
-                          color: TEAL,
-                          padding: "4px",
-                          "&:hover": { bgcolor: "rgba(13,148,136,0.08)", borderRadius: "6px" },
-                        },
-                      },
-                    },
-                  },
-                  popper: {
-                    sx: {
-                      "& .MuiPaper-root": { borderRadius: "12px", boxShadow: "0 8px 24px rgba(0,0,0,0.12)" },
-                      "& .MuiPickersDay-root.Mui-selected": { bgcolor: TEAL },
-                      "& .MuiPickersDay-root:not(.Mui-selected):hover": { bgcolor: "rgba(13,148,136,0.08)" },
-                    },
-                  },
-                }}
-              />
-            </LocalizationProvider>
+            <Input
+              type="date"
+              value={field.value || ""}
+              min={new Date().toISOString().slice(0, 10)}
+              onChange={(e) => field.onChange(e.target.value)}
+            />
           )} />
           {errors.expiresAt && (
-            <Typography sx={{ fontSize: "11px", color: "#EF4444" }}>{errors.expiresAt.message}</Typography>
+            <span className="text-[11px] text-red-500">{errors.expiresAt.message}</span>
           )}
-        </Box>
-      </Box>
+        </div>
+      </div>
 
       <Controller name="ipMode" control={control} render={({ field }) => (
-        <AppSelect
-          label={t("pages.settings.api_keys.fields.ip_whitelist")}
-          value={field.value}
-          onChange={(v) => field.onChange(v)}
-          options={ipModeOptions}
-        />
+        <div className="flex flex-col gap-1">
+          <FieldLabel text={t("pages.settings.api_keys.fields.ip_whitelist")} />
+          <Select value={field.value} onValueChange={field.onChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {ipModeOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       )} />
 
       {ipMode === "custom" && (
         <Controller name="ipList" control={control} render={({ field }) => (
-          <AppInput
-            label=""
+          <Textarea
             {...field}
-            multiline
             rows={2}
             placeholder={t("pages.settings.api_keys.fields.ip_placeholder")}
           />

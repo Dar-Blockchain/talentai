@@ -1,15 +1,8 @@
 import React, { useRef, useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography, Avatar, Button, Chip, CircularProgress, IconButton, Tooltip } from "@mui/material";
-import EditOutlined from "@mui/icons-material/EditOutlined";
-import SaveOutlined from "@mui/icons-material/SaveOutlined";
-import CloseOutlined from "@mui/icons-material/CloseOutlined";
-import CloudUploadOutlined from "@mui/icons-material/CloudUploadOutlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import LanguageIcon from "@mui/icons-material/Language";
-import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
-import CheckOutlined from "@mui/icons-material/CheckOutlined";
-import { TEAL, TEAL_BG, TEAL_BORDER } from "@/modules/settings/shared/constants";
+import { Pencil, Save, X, UploadCloud, MapPin, Globe, Users, Check } from "lucide-react";
+import { Spinner } from "@/modules/settings/shared/components";
+import { TEAL } from "@/modules/settings/shared/constants";
 
 interface Props {
   profile: any;
@@ -24,10 +17,10 @@ interface Props {
 }
 
 const BannerInfoItem = ({ icon, text }: { icon: React.ReactNode; text: string }) => (
-  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
+  <div className="flex items-center gap-1">
     {icon}
-    <Typography sx={{ fontSize: "0.75rem", color: "#6B7280" }}>{text}</Typography>
-  </Box>
+    <span className="text-[0.75rem] text-gray-500">{text}</span>
+  </div>
 );
 
 const ProfileBanner: React.FC<Props> = ({ profile, loading, uploadingImage, isEditing, showEditActions = true, onStartEdit, onCancelEdit, onSaveEdit, onImageUpload }) => {
@@ -75,104 +68,133 @@ const ProfileBanner: React.FC<Props> = ({ profile, loading, uploadingImage, isEd
   const isPreviewing = !!previewUrl;
 
   return (
-    <Box sx={{ bgcolor: "#FAFAFA", borderBottom: "1px solid #E5E7EB", px: { xs: 3, md: 5 }, py: 3 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 2.5, flexWrap: "wrap" }}>
+    <div className="bg-[#FAFAFA] border-b border-gray-200 px-6 md:px-10 py-6">
+      <div className="flex items-center gap-5 flex-wrap">
 
-        <Box
+        <div
           onDragOver={(e) => { e.preventDefault(); if (!isPreviewing) setDragOver(true); }}
           onDragLeave={() => setDragOver(false)}
           onDrop={handleDrop}
           onClick={() => { if (!isPreviewing && !uploadingImage) fileInputRef.current?.click(); }}
-          sx={{
-            position: "relative", flexShrink: 0, width: 72, height: 72, borderRadius: "16px",
-            border: `3px solid ${isPreviewing ? TEAL : "#fff"}`,
+          className="group relative flex-shrink-0 w-[72px] h-[72px] rounded-2xl border-[3px] transition-shadow"
+          style={{
+            borderColor: isPreviewing ? TEAL : "#fff",
             boxShadow: dragOver ? `0 0 0 3px ${TEAL}` : "0 2px 8px rgba(0,0,0,0.1)",
-            transition: "box-shadow 0.2s, border-color 0.2s",
             cursor: isPreviewing || uploadingImage ? "default" : "pointer",
-            "&:hover .upload-overlay": { opacity: isPreviewing || uploadingImage ? 0 : 1 },
           }}
         >
           {uploadingImage ? (
-            <Box sx={{ width: "100%", height: "100%", borderRadius: "13px", bgcolor: TEAL_BG, display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CircularProgress size={22} sx={{ color: TEAL }} />
-            </Box>
-          ) : (
-            <Avatar
+            <div className="w-full h-full rounded-[13px] flex items-center justify-center bg-teal-50">
+              <Spinner size={22} />
+            </div>
+          ) : (previewUrl || profile.avatar) ? (
+            <img
               src={previewUrl || profile.avatar}
-              variant="rounded"
-              sx={{ width: "100%", height: "100%", borderRadius: "13px", bgcolor: TEAL, fontSize: "28px", fontWeight: 800, color: "#fff" }}
-            >
+              alt={displayName}
+              className="w-full h-full rounded-[13px] object-cover"
+            />
+          ) : (
+            <div className="w-full h-full rounded-[13px] flex items-center justify-center text-white font-extrabold text-[28px] bg-teal-600">
               {initials}
-            </Avatar>
+            </div>
           )}
 
           {/* hover-to-upload overlay (hidden when previewing or uploading) */}
           {!isPreviewing && !uploadingImage && (
-            <Box className="upload-overlay" sx={{ position: "absolute", inset: 0, borderRadius: "13px", bgcolor: "rgba(13,148,136,0.6)", opacity: 0, transition: "opacity 0.2s", display: "flex", alignItems: "center", justifyContent: "center" }}>
-              <CloudUploadOutlined sx={{ fontSize: 20, color: "#fff" }} />
-            </Box>
+            <div
+              className="absolute inset-0 rounded-[13px] opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center"
+              style={{ backgroundColor: "rgba(13,148,136,0.6)" }}
+            >
+              <UploadCloud size={20} className="text-white" />
+            </div>
           )}
 
           {/* confirm / cancel overlay when a file is staged */}
           {isPreviewing && (
-            <Box sx={{ position: "absolute", inset: 0, borderRadius: "13px", bgcolor: "rgba(0,0,0,0.45)", display: "flex", alignItems: "center", justifyContent: "center", gap: 0.75 }}>
-              <Tooltip title={t("pages.settings.banner.confirm_upload") || "Confirm"}>
-                <IconButton size="small" onClick={handleConfirmUpload} sx={{ bgcolor: TEAL, color: "#fff", p: 0.5, "&:hover": { bgcolor: "#0F766E" } }}>
-                  <CheckOutlined sx={{ fontSize: 13 }} />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title={t("pages.settings.banner.cancel") || "Cancel"}>
-                <IconButton size="small" onClick={handleCancelPreview} sx={{ bgcolor: "#fff", color: "#374151", p: 0.5, "&:hover": { bgcolor: "#F3F4F6" } }}>
-                  <CloseOutlined sx={{ fontSize: 13 }} />
-                </IconButton>
-              </Tooltip>
-            </Box>
+            <div className="absolute inset-0 rounded-[13px] bg-black/45 flex items-center justify-center gap-1.5">
+              <button
+                type="button"
+                title={t("pages.settings.banner.confirm_upload") || "Confirm"}
+                onClick={handleConfirmUpload}
+                className="rounded p-1 text-white hover:opacity-90 bg-teal-600"
+              >
+                <Check size={13} />
+              </button>
+              <button
+                type="button"
+                title={t("pages.settings.banner.cancel") || "Cancel"}
+                onClick={handleCancelPreview}
+                className="rounded p-1 bg-white text-gray-700 hover:bg-gray-100"
+              >
+                <X size={13} />
+              </button>
+            </div>
           )}
-        </Box>
-        <input ref={fileInputRef} type="file" accept="image/*" style={{ display: "none" }} onChange={handleFileInputChange} />
+        </div>
+        <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleFileInputChange} />
 
-        <Box sx={{ flex: 1, minWidth: 0 }}>
-          <Typography sx={{ fontSize: "1.15rem", fontWeight: 700, color: "#111827", lineHeight: 1.2 }}>{displayName}</Typography>
-          <Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mt: 0.5 }}>
+        <div className="flex-1 min-w-0">
+          <p className="text-[1.15rem] font-bold text-gray-900 leading-tight">{displayName}</p>
+          <div className="flex flex-wrap gap-3 mt-1">
             {profile.email && (
-              <BannerInfoItem icon={<LanguageIcon sx={{ fontSize: 13, color: "#9CA3AF" }} />} text={profile.email} />
+              <BannerInfoItem icon={<Globe size={13} className="text-gray-400" />} text={profile.email} />
             )}
             {profile.location && (
-              <BannerInfoItem icon={<LocationOnOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />} text={profile.location} />
+              <BannerInfoItem icon={<MapPin size={13} className="text-gray-400" />} text={profile.location} />
             )}
             {profile.industry && (
-              <Chip label={profile.industry} size="small" sx={{ height: 20, fontSize: "0.67rem", fontWeight: 600, bgcolor: "rgba(13,148,136,0.08)", color: TEAL }} />
+              <span className="inline-flex items-center h-5 px-2 rounded-full text-[0.67rem] font-semibold bg-teal-600/[0.08] text-teal-600">
+                {profile.industry}
+              </span>
             )}
             {(profile.size || profile.companySize) && (
-              <BannerInfoItem icon={<GroupsOutlined sx={{ fontSize: 13, color: "#9CA3AF" }} />} text={`${profile.size || profile.companySize} ${t("pages.settings.employees_suffix")}`} />
+              <BannerInfoItem icon={<Users size={13} className="text-gray-400" />} text={`${profile.size || profile.companySize} ${t("pages.settings.employees_suffix")}`} />
             )}
-          </Box>
-        </Box>
+          </div>
+        </div>
 
         {showEditActions && (
-          <Box sx={{ display: "flex", gap: 1, flexShrink: 0 }}>
+          <div className="flex gap-2 flex-shrink-0">
             {!isEditing ? (
-              <Button size="small" startIcon={<EditOutlined sx={{ fontSize: 14 }} />} onClick={onStartEdit}
-                sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: TEAL, border: `1px solid ${TEAL_BORDER}`, borderRadius: "9px", px: 2, bgcolor: TEAL_BG, "&:hover": { bgcolor: "#CCFBF1" } }}>
+              <button
+                type="button"
+                onClick={onStartEdit}
+                className="inline-flex items-center gap-1.5 text-[0.78rem] font-semibold rounded-[9px] px-4 py-1.5 transition-colors text-teal-600 border border-teal-200 bg-teal-50"
+              >
+                <Pencil size={14} />
                 {t("pages.settings.banner.edit_profile")}
-              </Button>
+              </button>
             ) : (
               <>
-                <Button size="small" startIcon={<CloseOutlined sx={{ fontSize: 14 }} />} onClick={onCancelEdit}
-                  sx={{ textTransform: "none", fontWeight: 600, fontSize: "0.78rem", color: "#6B7280", border: "1px solid #E5E7EB", borderRadius: "9px", px: 1.5 }}>
+                <button
+                  type="button"
+                  onClick={onCancelEdit}
+                  className="inline-flex items-center gap-1.5 text-[0.78rem] font-semibold rounded-[9px] px-3 py-1.5 text-gray-500 border border-gray-200"
+                >
+                  <X size={14} />
                   {t("pages.settings.banner.cancel")}
-                </Button>
-                <Button size="small" variant="contained" startIcon={loading ? undefined : <SaveOutlined sx={{ fontSize: 14 }} />}
-                  onClick={onSaveEdit} disabled={loading}
-                  sx={{ textTransform: "none", fontWeight: 700, fontSize: "0.78rem", bgcolor: TEAL, color: "#fff", borderRadius: "9px", px: 2, boxShadow: "none", "&:hover": { bgcolor: "#0F766E", boxShadow: "none" } }}>
-                  {loading ? <CircularProgress size={14} sx={{ color: "#fff" }} /> : t("pages.settings.banner.save")}
-                </Button>
+                </button>
+                <button
+                  type="button"
+                  onClick={onSaveEdit}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1.5 text-[0.78rem] font-bold rounded-[9px] px-4 py-1.5 text-white transition-colors bg-teal-600"
+                >
+                  {loading ? (
+                    <Spinner size={14} className="border-white/40 border-t-white" />
+                  ) : (
+                    <>
+                      <Save size={14} />
+                      {t("pages.settings.banner.save")}
+                    </>
+                  )}
+                </button>
               </>
             )}
-          </Box>
+          </div>
         )}
-      </Box>
-    </Box>
+      </div>
+    </div>
   );
 };
 

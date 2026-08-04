@@ -1,28 +1,22 @@
 import Head from "next/head";
-import { Box, Container, Typography, Divider, Link } from "@mui/material";
 import NextLink from "next/link";
 import { Trans, useTranslation } from "react-i18next";
-import Header from "@/components/layout/Header";
+import Header from "@/modules/shared/layouts/home/HomeHeader";
+import { SITE_URL, APP_URL, CONTACT_EMAIL } from "@/modules/shared/constants";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
-  <Box sx={{ mb: 4.5 }}>
-    <Typography sx={{ fontSize: "1.05rem", fontWeight: 700, color: "#111827", mb: 1.5, fontFamily: "Poppins" }}>
-      {title}
-    </Typography>
+  <div className="mb-8">
+    <h2 className="text-[1.05rem] font-bold text-gray-900 mb-3">{title}</h2>
     {children}
-  </Box>
+  </div>
 );
 
 const P: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Typography sx={{ fontSize: "0.93rem", color: "#374151", lineHeight: 1.85, mb: 1.5, fontFamily: "Poppins" }}>
-    {children}
-  </Typography>
+  <p className="text-[0.93rem] text-gray-600 leading-[1.85] mb-3">{children}</p>
 );
 
 const Li: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Typography component="li" sx={{ fontSize: "0.93rem", color: "#374151", lineHeight: 1.85, mb: 0.75, fontFamily: "Poppins", ml: 2.5 }}>
-    {children}
-  </Typography>
+  <li className="text-[0.93rem] text-gray-600 leading-[1.85] mb-1.5 ml-5 list-disc">{children}</li>
 );
 
 export default function PrivacyPolicy() {
@@ -35,121 +29,120 @@ export default function PrivacyPolicy() {
       <Head>
         <title>{t("privacy.meta.title")}</title>
         <meta name="description" content={t("privacy.meta.description")} />
-        <link rel="canonical" href="https://app.talentai.bid/privacy" />
+        <link rel="canonical" href={`${SITE_URL}/privacy`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={t("privacy.meta.title")} />
+        <meta property="og:description" content={t("privacy.meta.description")} />
       </Head>
 
       <Header />
 
-      {/* Content */}
-      <Box
-        sx={{
-          minHeight: "100vh",
-          py: { xs: 5, md: 8 },
-          background: "linear-gradient(180deg, #111827 0px, #111827 120px, #F9FAFB 120px, #F9FAFB 100%)",
-        }}
+      <div
+        className="min-h-screen py-10 md:py-16"
+        style={{ background: "linear-gradient(180deg,#111827 0px,#111827 120px,#F9FAFB 120px,#F9FAFB 100%)" }}
       >
-        <Container maxWidth="md">
-          <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", px: { xs: 3, md: 6 }, py: { xs: 4, md: 6 } }}>
+        <div className="max-w-3xl mx-auto px-4 md:px-6">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-6 md:px-10 py-8 md:py-10">
 
             {/* Title */}
-            <Typography sx={{ fontSize: { xs: "1.6rem", md: "2rem" }, fontWeight: 800, color: "#111827", mb: 1, fontFamily: "Poppins" }}>
+            <h1 className="text-[1.6rem] md:text-[2rem] font-extrabold text-gray-900 mb-1">
               {t("privacy.title")}
-            </Typography>
-            <Typography sx={{ fontSize: "0.85rem", color: "#9CA3AF", mb: 4, fontFamily: "Poppins" }}>
+            </h1>
+            <p className="text-[0.85rem] text-gray-400 mb-6">
               {t("common.lastUpdated", { date: lastUpdated })}
-            </Typography>
+            </p>
 
-            <Divider sx={{ mb: 4 }} />
+            <hr className="border-gray-200 mb-7" />
 
             <P>
               <Trans
                 i18nKey="privacy.intro"
                 ns="legal"
-                components={{ site: <Link href="https://app.talentai.bid" sx={{ color: "#0D9488" }} /> }}
+                components={{ site: <NextLink href={APP_URL} className="text-primary hover:underline" /> }}
               />
             </P>
 
             <Section title={t("privacy.sections.appliesTo.title")}>
               <P>{t("privacy.sections.appliesTo.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("privacy.sections.appliesTo.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
             </Section>
 
             <Section title={t("privacy.sections.dataCollected.title")}>
               <P><strong>{t("privacy.sections.dataCollected.fromCandidates")}</strong></P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 2 }}>
+              <ul className="mb-5">
                 {list("privacy.sections.dataCollected.candidateItems").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
               <P><strong>{t("privacy.sections.dataCollected.fromEmployers")}</strong></P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 2 }}>
+              <ul className="mb-4">
                 {list("privacy.sections.dataCollected.employerItems").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
             </Section>
 
             <Section title={t("privacy.sections.dataUse.title")}>
               <P>{t("privacy.sections.dataUse.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("privacy.sections.dataUse.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
               <P>{t("privacy.sections.dataUse.p2")}</P>
             </Section>
 
             <Section title={t("privacy.sections.aiProcessing.title")}>
               <P>{t("privacy.sections.aiProcessing.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("privacy.sections.aiProcessing.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
               <P>{t("privacy.sections.aiProcessing.p2")}</P>
             </Section>
 
             <Section title={t("privacy.sections.dataSharing.title")}>
               <P>{t("privacy.sections.dataSharing.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("privacy.sections.dataSharing.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
             </Section>
 
             <Section title={t("privacy.sections.retention.title")}>
               <P>{t("privacy.sections.retention.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("privacy.sections.retention.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
               <P>
                 <Trans
                   i18nKey="privacy.sections.retention.p2"
                   ns="legal"
-                  components={{ contact: <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488" }} /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>
 
             <Section title={t("privacy.sections.rights.title")}>
               <P>{t("privacy.sections.rights.p1")}</P>
-              <Box component="ul" sx={{ pl: 0, listStyle: "disc", mb: 1.5 }}>
+              <ul className="mb-4">
                 {list("privacy.sections.rights.items").map((item) => (
                   <Li key={item}>{item}</Li>
                 ))}
-              </Box>
+              </ul>
               <P>
                 <Trans
                   i18nKey="privacy.sections.rights.p2"
                   ns="legal"
-                  components={{ contact: <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488" }} /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>
@@ -159,7 +152,13 @@ export default function PrivacyPolicy() {
             </Section>
 
             <Section title={t("privacy.sections.security.title")}>
-              <P><Trans i18nKey="privacy.sections.security.p1" ns="legal" components={{ contact: <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488" }} /> }} /></P>
+              <P>
+                <Trans
+                  i18nKey="privacy.sections.security.p1"
+                  ns="legal"
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
+                />
+              </P>
             </Section>
 
             <Section title={t("privacy.sections.transfers.title")}>
@@ -175,24 +174,24 @@ export default function PrivacyPolicy() {
                 <Trans
                   i18nKey="privacy.sections.contact.p1"
                   ns="legal"
-                  components={{ contact: <Link href="mailto:contact@talentai.bid" sx={{ color: "#0D9488" }} /> }}
+                  components={{ contact: <NextLink href={`mailto:${CONTACT_EMAIL}`} className="text-primary hover:underline" /> }}
                 />
               </P>
             </Section>
 
-          </Box>
-        </Container>
-      </Box>
+          </div>
+        </div>
+      </div>
 
       {/* Footer */}
-      <Box sx={{ bgcolor: "#111827", py: 3, px: 3, textAlign: "center" }}>
-        <Typography sx={{ fontSize: "12px", color: "rgba(255,255,255,0.4)", fontFamily: "Poppins" }}>
+      <div className="border-t border-gray-200 bg-white py-5 px-4 text-center">
+        <p className="text-[12px] text-gray-400">
           {t("common.footerCopyright")} &nbsp;·&nbsp;{" "}
-          <NextLink href="/terms" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>{t("common.termsOfUse")}</NextLink>
+          <NextLink href="/terms" className="text-gray-500 hover:text-gray-700 transition-colors">{t("common.termsOfUse")}</NextLink>
           {" "}&nbsp;·&nbsp;{" "}
-          <NextLink href="/privacy" style={{ color: "rgba(255,255,255,0.6)", textDecoration: "none" }}>{t("common.privacyPolicy")}</NextLink>
-        </Typography>
-      </Box>
+          <NextLink href="/privacy" className="text-gray-500 hover:text-gray-700 transition-colors">{t("common.privacyPolicy")}</NextLink>
+        </p>
+      </div>
     </>
   );
 }

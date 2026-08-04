@@ -3,127 +3,84 @@ import React, { useEffect, useState } from "react";
 import { useRouter } from "next/router";
 import { useDispatch } from "react-redux";
 import Link from "next/link";
-import { Box, Typography, CircularProgress } from "@mui/material";
-import dynamic from "next/dynamic";
-import AppButton from "@/components/ui/AppButton";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { verifyPayment } from "@/store/slices/paymentSlice";
 import { AppDispatch } from "@/store/store";
-
-const CheckCircleOutlined = dynamic(() => import("@mui/icons-material/CheckCircleOutlined"));
-const CancelOutlined = dynamic(() => import("@mui/icons-material/CancelOutlined"));
-const ArrowBackOutlined = dynamic(() => import("@mui/icons-material/ArrowBackOutlined"));
-const DashboardOutlined = dynamic(() => import("@mui/icons-material/DashboardOutlined"));
+import { CheckCircle2 as CheckCircleOutlined, XCircle as CancelOutlined, ArrowLeft as ArrowBackOutlined, LayoutDashboard as DashboardOutlined } from "lucide-react";
 
 const PaymentResultPage: React.FC = () => {
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const { status, session_id } = router.query;
-  const [mounted, setMounted] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
 
-  useEffect(() => {
-    setMounted(true);
-  }, []);
 
   useEffect(() => {
     if (!router.isReady) return;
     if (status === "success" && session_id) {
+      setIsSuccess(true);
       dispatch(verifyPayment({ sessionId: session_id as string }))
         .finally(() => localStorage.removeItem("pending_payment_id"));
     }
   }, [router.isReady, status]);
 
-  if (!mounted) {
+  if (!router.isReady) {
     return (
-      <Box sx={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center" }}>
-        <CircularProgress />
-      </Box>
+      <div className="flex items-center justify-center min-h-screen">
+        <Spinner />
+      </div>
     );
   }
 
-  const isSuccess = status === "success";
+  
 
   return (
-    <Box
-      sx={{
-        minHeight: "100vh",
-        bgcolor: "#f9fafb",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        px: 2,
-      }}
-    >
-      <Box
-        sx={{
-          bgcolor: "#fff",
-          borderRadius: 4,
-          boxShadow: "0 8px 40px rgba(0,0,0,0.10)",
-          p: { xs: 4, sm: 6 },
-          maxWidth: 480,
-          width: "100%",
-          textAlign: "center",
-        }}
-      >
+    <div className="flex items-center justify-center min-h-screen bg-[#f9fafb] px-4">
+      <div className="w-full max-w-[480px] rounded-2xl bg-white p-8 sm:p-12 text-center shadow-[0_8px_40px_rgba(0,0,0,0.10)]">
         {/* Icon */}
-        <Box
-          sx={{
-            width: 80,
-            height: 80,
-            borderRadius: "50%",
-            bgcolor: isSuccess ? "#d1fae5" : "#fee2e2",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            mx: "auto",
-            mb: 3,
-          }}
+        <div
+          className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full"
+          style={{ backgroundColor: isSuccess ? "#d1fae5" : "#fee2e2" }}
         >
           {isSuccess ? (
-            <CheckCircleOutlined sx={{ fontSize: 44, color: "#059669" }} />
+            <CheckCircleOutlined size={44} color="#059669" />
           ) : (
-            <CancelOutlined sx={{ fontSize: 44, color: "#dc2626" }} />
+            <CancelOutlined size={44} color="#dc2626" />
           )}
-        </Box>
+        </div>
 
         {/* Title */}
-        <Typography
-          variant="h5"
-          sx={{ fontWeight: 800, color: "#111827", mb: 1.5 }}
-        >
+        <h5 className="mb-3 text-[1.5rem] font-extrabold text-[#111827]">
           {isSuccess ? "Payment Successful!" : "Payment Cancelled"}
-        </Typography>
+        </h5>
 
         {/* Message */}
-        <Typography
-          variant="body1"
-          sx={{ color: "#6b7280", mb: 1, lineHeight: 1.7 }}
-        >
+        <p className="mb-2 leading-[1.7] text-[#6b7280]">
           {isSuccess
             ? "Your subscription has been activated. You can now enjoy all the features of your new plan."
             : "Your payment was not completed. No charges were made to your account."}
-        </Typography>
+        </p>
 
         {/* Actions */}
-        <Box sx={{ display: "flex", gap: 2, justifyContent: "center", mt: 3, flexWrap: "wrap" }}>
+        <div className="mt-6 flex flex-wrap justify-center gap-4">
           {!isSuccess && (
             <Link href="/company/plans">
-              <AppButton
-                label="View Plans"
-                variant="outlined"
-                startIcon={<ArrowBackOutlined />}
-              />
+              <Button variant="outline">
+                <ArrowBackOutlined />
+                View Plans
+              </Button>
             </Link>
           )}
           <Link href="/company/dashboard">
-            <AppButton
-              label="Go to Dashboard"
-              variant="contained"
-              startIcon={<DashboardOutlined />}
-            />
+            <Button variant="default">
+              <DashboardOutlined />
+              Go to Dashboard
+            </Button>
           </Link>
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

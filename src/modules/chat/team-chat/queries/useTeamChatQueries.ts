@@ -158,9 +158,19 @@ export const useMarkTeamConversationReadMutation = () => {
     mutationFn: (conversationId: string) => teamChatApi.markConversationRead(conversationId),
     onSuccess: (conversationId) => {
       // markTeamConversationReadLocal zeros out the badge in Redux immediately.
-      // Conversations list invalidation is skipped — the local update is sufficient for the UI.
       dispatch(markTeamConversationReadLocal(conversationId));
       queryClient.invalidateQueries({ queryKey: teamChatKeys.unreadCount() });
+      // Also patch the cached conversations list (not just Redux) — HeaderChat
+      // mounts its own useTeamConversationsQuery persistently in the header, and
+      // without this it re-syncs the stale pre-read unread count back into
+      // Redux on its next render, making the badge reappear after navigating.
+      queryClient.setQueriesData(
+        { queryKey: [...teamChatKeys.all, "conversations"] },
+        (old: unknown) =>
+          Array.isArray(old)
+            ? old.map((c) => (c && typeof c === "object" && "_id" in c && c._id === conversationId ? { ...c, unreadCount: 0 } : c))
+            : old,
+      );
     },
   });
 };

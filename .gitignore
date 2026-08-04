@@ -7,10 +7,11 @@ yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
 temp
-
+managementServer.pem
 # AWS and Kubernetes configurations
 *.yaml
 *.yml
+!.github/workflows/*.yml
 frontend-service.yaml
 frontend-deployment.yaml
 frontend-service-account.yaml
@@ -187,4 +188,9 @@ dist
 ./Backend/package-lock.json
 ./Backend/yarn.lock
 nul
+
+# Local agent-tool state — not shared with the team
+.wolf/
+.claude/
+CLAUDE.md
 managementServer.pem

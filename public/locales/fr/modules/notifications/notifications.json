@@ -1,0 +1,19 @@
+{
+  "time_just_now": "À l'instant",
+  "time_minutes_ago_one": "il y a 1 minute",
+  "time_minutes_ago_other": "il y a {{count}} minutes",
+  "time_hours_ago_one": "il y a 1 heure",
+  "time_hours_ago_other": "il y a {{count}} heures",
+  "time_days_ago_one": "il y a 1 jour",
+  "time_days_ago_other": "il y a {{count}} jours",
+  "time_weeks_ago_one": "il y a 1 semaine",
+  "time_weeks_ago_other": "il y a {{count}} semaines",
+  "welcome": "Bienvenue sur TalentAI ! 🎉 Nous sommes ravis de vous accueillir. Commencez à explorer des opportunités exceptionnelles et connectez-vous avec les meilleurs talents.",
+  "skillTestPassed": "Excellent ! Vous avez obtenu {{score}}% au test {{skillName}} ! 🎯",
+  "skillLevelUp": "🎉 Félicitations ! Vous avez atteint le niveau {{newLevel}} en {{skillName}} ! Continuez comme ça ! 🌟",
+  "skillTestCompleted": "Vous avez terminé le test {{skillName}}. Continuez à pratiquer pour améliorer votre score ! 💪",
+  "candidateUnlocked": "Bonne nouvelle ! Une entreprise a déverrouillé votre profil et s'intéresse à vos qualifications. Consultez votre tableau de bord pour plus de détails ! 🎉",
+  "jobMatch": "🎯 Bonne nouvelle ! Votre profil correspond à {{jobTitle}}. Une entreprise recherche des candidats avec vos compétences. Consultez-le maintenant !",
+  "jobMatchDefault": "🎯 Bonne nouvelle ! Votre profil correspond à une nouvelle opportunité d'emploi. Une entreprise recherche des candidats avec vos compétences. Consultez-le maintenant !",
+  "interviewCompleted": "Vous avez terminé {{interviewLabel}}. Vos résultats sont maintenant disponibles dans votre tableau de bord."
+}

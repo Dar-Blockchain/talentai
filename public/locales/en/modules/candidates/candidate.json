@@ -10,9 +10,14 @@
     "all_assessments": "All assessments",
     "messages": "Messages",
     "company_chats": "Company conversations",
+    "notifications": "Notifications",
+    "your_notifications": "Your notifications",
     "settings": "Settings",
     "manage_profile": "Manage your profile",
-    "navigation": "Navigation"
+    "navigation": "Navigation",
+    "group_main": "Main",
+    "group_workspace": "Workspace",
+    "group_account": "Account"
   },
   "profile": {
     "applications": "Applications",
@@ -31,11 +36,21 @@
   },
   "actions": {
     "skill_interview": "Skill Interview",
+    "skill_interview_sub": "Start an AI assessment",
     "hr_interview": "HR Interview",
     "coming_soon": "Coming soon",
     "monthly_quota": "Monthly Quota",
     "hide": "Hide",
     "view_all": "View All"
+  },
+  "skill_dialog": {
+    "title": "Skill Interview",
+    "subtitle": "AI-powered technical assessment",
+    "input_label": "Which skill do you want to be assessed on?",
+    "placeholder": "e.g. React, Python, SQL…",
+    "popular_label": "Popular skills",
+    "cancel": "Cancel",
+    "start": "Start Interview"
   },
   "sections": {
     "skills_title": "Skills & Expertise",
@@ -213,7 +228,10 @@
     "retest": "Retest",
     "locked": "Locked",
     "limit_tooltip": "Monthly limit reached (5/5)",
+    "add_skill": "Add Skill",
     "show_more": "Show {{count}} more",
+    "search_placeholder": "Search skills…",
+    "loading": "Loading…",
     "levels": {
       "entry": "Entry",
       "junior": "Junior",
@@ -222,6 +240,14 @@
       "expert": "Expert",
       "new": "New"
     },
+    "filter": {
+      "all": "All",
+      "technical": "Technical",
+      "soft": "Soft",
+      "level": "Level:",
+      "all_levels": "All levels"
+    },
+    "no_filter_results": "No skills match the current filter",
     "empty": {
       "technical_title": "No Technical Skills Yet",
       "technical_desc": "Add your technical skills to get matched with relevant job opportunities.",

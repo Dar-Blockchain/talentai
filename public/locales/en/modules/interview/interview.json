@@ -1,8 +1,29 @@
 {
   "loading": "Loading interview…",
+  "invalid_link": {
+    "title": "Invalid interview link",
+    "desc": "This link is broken or has expired. Please check that the URL is correct and try again.",
+    "back": "Go back",
+    "retry": "Try again"
+  },
+  "checking": {
+    "title": "Verifying your access",
+    "subtitle": "Checking your eligibility before loading the interview."
+  },
+  "no_link": {
+    "title": "No interview link provided",
+    "desc": "This page requires a valid interview link. Please use the link provided by the company to access your interview.",
+    "action": "Go to dashboard"
+  },
   "company_only": {
-    "title": "This interview is for candidates only",
-    "redirecting": "Redirecting you to the dashboard…"
+    "title": "This page is not available for your account",
+    "desc": "The interview flow is designed for Candidate accounts. Your company account does not have access to this section.",
+    "action": "Go to my dashboard"
+  },
+  "employee_blocked": {
+    "title": "This page is not available for your account",
+    "desc": "The interview flow is designed for Candidate accounts. Your employee account does not have access to this section.",
+    "action": "Go to my dashboard"
   },
   "archived": {
     "title": "This position is no longer available",
@@ -15,7 +36,14 @@
   "completed": {
     "title": "You've already completed this interview",
     "desc_pre": "Your assessment for",
-    "desc_post": "has already been submitted. The hiring team will review your results and get back to you."
+    "desc_post": "has already been submitted. The hiring team will review your results and get back to you.",
+    "fallback_position": "this position"
+  },
+  "under_threshold": {
+    "title": "Interview Not Available",
+    "desc_pre": "Your CV match score (",
+    "desc_mid": ") is below the minimum required score of ",
+    "desc_post": " for this position. Only candidates who meet the threshold can proceed to the interview."
   },
   "limit": {
     "badge": "Interviews Paused",
@@ -24,6 +52,16 @@
     "contact": "If you believe this is an error, please contact the recruiter directly.",
     "go_back": "← Go Back",
     "go_home": "Go to Home"
+  },
+  "no_cv": {
+    "title": "CV Required to Access This Interview",
+    "desc": "This interview requires a CV so the AI can evaluate your profile. Please upload your CV in your settings and come back.",
+    "action": "Upload my CV"
+  },
+  "withdrawn": {
+    "title": "You withdrew from this position",
+    "desc": "You previously withdrew your application for this job. Reactivate it from your applications page to take the interview.",
+    "action": "Go to my applications"
   },
   "back_to_dashboard": "Back to Dashboard",
   "connection": {

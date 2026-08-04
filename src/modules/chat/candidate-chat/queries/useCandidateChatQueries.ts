@@ -187,9 +187,19 @@ export const useMarkCandidateConversationReadMutation = () => {
     mutationFn: (conversationId: string) => candidateChatApi.markConversationRead(conversationId),
     onSuccess: (conversationId) => {
       // markCandidateConversationReadLocal zeros out the badge in Redux immediately.
-      // Conversations list invalidation is skipped — the local update is sufficient for the UI.
       dispatch(markCandidateConversationReadLocal(conversationId));
       queryClient.invalidateQueries({ queryKey: candidateChatKeys.unreadCount() });
+      // Also patch the cached conversations list (not just Redux) — HeaderChat
+      // mounts its own useCandidateConversationsQuery persistently in the header,
+      // and without this it re-syncs the stale pre-read unread count back into
+      // Redux on its next render, making the badge reappear after navigating.
+      queryClient.setQueriesData(
+        { queryKey: [...candidateChatKeys.all, "conversations"] },
+        (old: unknown) =>
+          Array.isArray(old)
+            ? old.map((c) => (c && typeof c === "object" && "_id" in c && c._id === conversationId ? { ...c, unreadCount: 0 } : c))
+            : old,
+      );
     },
   });
 };

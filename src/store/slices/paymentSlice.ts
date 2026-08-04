@@ -165,17 +165,6 @@ export const enableAutoRenew = createAsyncThunk<void, { subscriptionId: string }
   }
 );
 
-export const scheduleDowngrade = createAsyncThunk<void, { subscriptionId: string; newPlanId: string }, { rejectValue: string }>(
-  "payment/scheduleDowngrade",
-  async ({ subscriptionId, newPlanId }, { rejectWithValue }) => {
-    try {
-      await paymentService.scheduleDowngrade(subscriptionId, newPlanId);
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to schedule downgrade");
-    }
-  }
-);
-
 export const fetchCompanyPaymentHistory = createAsyncThunk<Payment[], void, { rejectValue: string }>(
   "payment/fetchCompanyHistory",
   async (_, { rejectWithValue }) => {
@@ -272,21 +261,6 @@ export const createCheckoutSession = createAsyncThunk<
   }
 );
 
-export const updatePaymentStatus = createAsyncThunk<
-  Payment,
-  { paymentId: string; status: Payment["status"]; additionalData?: Record<string, any> },
-  { rejectValue: string }
->(
-  "payment/updateStatus",
-  async ({ paymentId, status, additionalData }, { rejectWithValue }) => {
-    try {
-      return await paymentService.updatePaymentStatus(paymentId, status, additionalData) as Payment;
-    } catch (error: any) {
-      return rejectWithValue(error.response?.data?.message || error.message || "Failed to update payment status");
-    }
-  }
-);
-
 const paymentSlice = createSlice({
   name: "payment",
   initialState,
@@ -316,11 +290,6 @@ const paymentSlice = createSlice({
         state.combinedDetails = null;
       })
       .addCase(enableAutoRenew.rejected, (state, action) => { state.cancelling = false; state.error = action.payload || "Failed to enable auto-renewal"; });
-
-    builder
-      .addCase(scheduleDowngrade.pending, (state) => { state.cancelling = true; state.error = null; })
-      .addCase(scheduleDowngrade.fulfilled, (state) => { state.cancelling = false; })
-      .addCase(scheduleDowngrade.rejected, (state, action) => { state.cancelling = false; state.error = action.payload || "Failed to schedule downgrade"; });
 
     builder
       .addCase(fetchCompanyPaymentHistory.pending, (state) => { state.historyLoading = true; })
@@ -357,10 +326,6 @@ const paymentSlice = createSlice({
       .addCase(createCheckoutSession.fulfilled, (state) => { state.loading = false; })
       .addCase(createCheckoutSession.rejected, (state, action) => { state.loading = false; state.error = action.payload || "Failed to create checkout session"; });
 
-    builder
-      .addCase(updatePaymentStatus.pending, (state) => { state.loading = true; state.error = null; })
-      .addCase(updatePaymentStatus.fulfilled, (state, action) => { state.loading = false; state.lastUpdated = action.payload; })
-      .addCase(updatePaymentStatus.rejected, (state, action) => { state.loading = false; state.error = action.payload || "Failed to update payment status"; });
   },
 });
 

@@ -2,13 +2,11 @@
 User-agent: *
 Allow: /
 
-# ── Auth & registration ───────────────────────────────────────────────────────
+# ── Private app areas ─────────────────────────────────────────────────────────
 Disallow: /signin
 Disallow: /signin/
 Disallow: /register
 Disallow: /register/
-
-# ── System / internal routes ──────────────────────────────────────────────────
 Disallow: /admin/
 Disallow: /api/
 Disallow: /_next/
@@ -22,6 +20,7 @@ Disallow: /candidate/
 Disallow: /settings/
 Disallow: /messages/
 Disallow: /payments/
+Disallow: /notifications/
 Disallow: /interviews/
 Disallow: /campaign/
 Disallow: /campaigns/
@@ -34,7 +33,6 @@ Disallow: /admin/
 Disallow: /company/
 Disallow: /employee/
 Disallow: /candidate/
-Disallow: /payments/
 Disallow: /campaigns/
 Disallow: /interviews/
 
@@ -49,3 +47,4 @@ Allow: /
 
 # ── Sitemap ───────────────────────────────────────────────────────────────────
 Sitemap: https://talentai.bid/sitemap.xml
+Sitemap: https://talentai.bid/sitemap-blog.xml

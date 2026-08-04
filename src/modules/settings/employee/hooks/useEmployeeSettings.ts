@@ -5,7 +5,7 @@ import { useEmployeeProfile, useUpdateEmployeeUsername, useUploadEmployeeAvatar 
 export const useEmployeeSettings = () => {
   const { showToast } = useToast();
 
-  const { data: settingsData } = useEmployeeProfile();
+  const { data: settingsData, isLoading } = useEmployeeProfile();
   const updateUsernameMutation = useUpdateEmployeeUsername();
   const uploadAvatarMutation   = useUploadEmployeeAvatar();
 
@@ -31,7 +31,7 @@ export const useEmployeeSettings = () => {
     : user?.username || '';
 
   const avatarUrl = (profile?.user_image || user?.user_image)
-    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}images/Users/${profile?.user_image || user?.user_image}`
+    ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${profile?.user_image || user?.user_image}`
     : null;
 
   const initials = displayName
@@ -70,6 +70,7 @@ export const useEmployeeSettings = () => {
     user,
     profile,
     companyMembership,
+    isInitialLoading: isLoading,
     fileRef,
     displayName,
     avatarUrl,

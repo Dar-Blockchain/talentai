@@ -25,10 +25,6 @@ export default async function handler(
         });
       }
 
-      console.log('🔑 V3 Token Request via SDK:');
-      console.log('  - API Key:', `${apiKey.substring(0, 8)}...${apiKey.substring(apiKey.length - 4)}`);
-      console.log('  - SDK Version: 4.19.0');
-
       const client = new AssemblyAI({
         apiKey: apiKey,
       });
@@ -38,10 +34,6 @@ export default async function handler(
         const token = await client.streaming.createTemporaryToken({
           expires_in_seconds: 600, // 10 minutes
         });
-
-        console.log('✅ V3 Token Generated Successfully via SDK:');
-        console.log('  - Token present?:', !!token);
-        console.log('  - Token length:', token?.length || 0);
 
         return res.status(200).json({ token });
       } catch (tokenError) {

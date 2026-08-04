@@ -12,6 +12,7 @@ export interface ConnectedUserEntity {
   trafficCounter?: number;
   firstName?: string;
   lastName?: string;
+  language?: string;
 }
 
 export interface ConnectedUserProfile {
@@ -61,16 +62,16 @@ export interface ConnectedUserProfile {
     address?: string;
     personalWebsite?: string;
     requiredExperienceLevel?: string;
-    requiredSkills?: string[];
     language?: string;
   };
-  requiredSkills?: string[];
+
   quota?: number;
   skills?: any[] | null;
   softSkills?: any[] | null;
   planUsage?: any;
   overallScore?: number;
   interviewDetails?: any[];
+  resume?: string;
   isPublicProfile?: boolean;
   createdAt?: string;
   _id?: string;
@@ -78,14 +79,6 @@ export interface ConnectedUserProfile {
 
 interface UserState {
   connectedUser: {
-    user: ConnectedUserEntity | null;
-    profile: ConnectedUserProfile | null;
-    planLimits: any | null;
-    companyMembership: any | null;
-    loading: boolean;
-    error: string | null;
-  };
-  targetUser: {
     user: ConnectedUserEntity | null;
     profile: ConnectedUserProfile | null;
     planLimits: any | null;
@@ -106,31 +99,9 @@ const initialState: UserState = {
     loading: false,
     error: null,
   },
-  targetUser: {
-    user: null,
-    profile: null,
-    planLimits: null,
-    companyMembership: null,
-    loading: false,
-    error: null,
-  },
   userType: null,
   currentSpace: null,
 };
-
-export const createOrUpdateProfile = createAsyncThunk<
-  any,
-  any,
-  { rejectValue: string }
->("user/createOrUpdateProfile", async (profileData, { rejectWithValue }) => {
-  try {
-    return await userService.createOrUpdateProfile(profileData);
-  } catch (error: any) {
-    return rejectWithValue(
-      error.response?.data?.message || "An error occurred while creating/updating profile"
-    );
-  }
-});
 
 export const updateProfile = createAsyncThunk<
   any,
@@ -180,39 +151,24 @@ export const uploadProfileImage = createAsyncThunk<
   }
 });
 
-export const getProfileById = createAsyncThunk<
-  any,
-  string,
-  { rejectValue: string; state: RootState }
->("user/getProfileById", async (userId, { rejectWithValue }) => {
-  try {
-    return await userService.getProfileById(userId);
-  } catch (error: any) {
-    return rejectWithValue(
-      error.response?.data?.message || "An error occurred while fetching profile"
-    );
-  }
-});
 
 const userSlice = createSlice({
   name: "user",
   initialState,
   reducers: {
     setConnectedUser(state, action: PayloadAction<any>) {
-      state.connectedUser.user = action.payload.user;
-      state.connectedUser.profile = action.payload.profile;
-      state.connectedUser.planLimits = action.payload.planLimits;
-      state.connectedUser.companyMembership = action.payload.companyMembership;
+      // Normalize: some APIs wrap the response in a `data` key, others don't
+      const p = action.payload?.data ?? action.payload;
+      state.connectedUser.user = p.user ?? state.connectedUser.user;
+      state.connectedUser.profile = p.profile ?? state.connectedUser.profile;
+      state.connectedUser.planLimits = p.planLimits ?? state.connectedUser.planLimits;
+      state.connectedUser.companyMembership = p.companyMembership ?? state.connectedUser.companyMembership;
     },
     clearConnectedUser(state) {
       state.connectedUser.user = null;
       state.connectedUser.profile = null;
       state.connectedUser.planLimits = null;
       state.connectedUser.companyMembership = null;
-    },
-    clearTargetUser(state) {
-      state.targetUser.user = null;
-      state.targetUser.profile = null;
     },
     setUserType(state, action: PayloadAction<"company" | "candidate" | "employee">) {
       state.userType = action.payload;
@@ -223,13 +179,18 @@ const userSlice = createSlice({
       }
     },
     updateProfileSkills(state, action: PayloadAction<string[]>) {
-      if (state?.connectedUser?.profile.skills !== null) {
+      if (state?.connectedUser?.profile) {
         state.connectedUser.profile.skills = action.payload;
       }
     },
     updateProfileSoftSkill(state, action: PayloadAction<string[]>) {
-      if (state?.connectedUser?.profile.softSkills !== null) {
+      if (state?.connectedUser?.profile) {
         state.connectedUser.profile.softSkills = action.payload;
+      }
+    },
+    updateProfileResume(state, action: PayloadAction<string>) {
+      if (state?.connectedUser?.profile) {
+        state.connectedUser.profile.resume = action.payload;
       }
     },
     updatePlanUsage(state, action: PayloadAction<any>) {
@@ -240,26 +201,6 @@ const userSlice = createSlice({
   },
     extraReducers: (builder) => {
       builder
-        //CREATE OR UPDATE PROFILE
-        .addCase(createOrUpdateProfile.pending, (state: UserState) => {
-          state.connectedUser.loading = true;
-          state.connectedUser.error = null;
-        })
-        .addCase(
-          createOrUpdateProfile.fulfilled,
-          (state: UserState, action: PayloadAction<any>) => {
-            state.connectedUser.loading = false;
-            state.connectedUser.profile = action.payload.profile;
-            state.connectedUser.companyMembership = action.payload.companyMembership;
-            state.connectedUser.user = action.payload.user;
-          }
-        )
-        .addCase(
-          createOrUpdateProfile.rejected,
-          (state: UserState) => {
-            state.connectedUser.loading = false;
-          }
-        )
         //UPDATE PROFILE
         .addCase(updateProfile.pending, (state: UserState) => {
           state.connectedUser.loading = true;
@@ -269,9 +210,9 @@ const userSlice = createSlice({
           updateProfile.fulfilled,
           (state: UserState, action: PayloadAction<any>) => {
             state.connectedUser.loading = false;
-            state.connectedUser.profile = action.payload.profile;
-            state.connectedUser.companyMembership = action.payload.companyMembership;
-            state.connectedUser.user = action.payload.user;
+            if (action.payload.profile !== undefined)           state.connectedUser.profile           = action.payload.profile;
+            if (action.payload.companyMembership !== undefined) state.connectedUser.companyMembership = action.payload.companyMembership;
+            if (action.payload.user !== undefined)              state.connectedUser.user              = action.payload.user;
           }
         )
         .addCase(
@@ -307,11 +248,12 @@ const userSlice = createSlice({
         .addCase(
           getMyProfile.fulfilled,
           (state: UserState, action: PayloadAction<any>) => {
+            const p = action.payload?.data ?? action.payload;
             state.connectedUser.loading = false;
-            state.connectedUser.profile = action.payload.profile;
-            state.connectedUser.planLimits = action.payload.planLimits;
-            state.connectedUser.companyMembership = action.payload.companyMembership;
-            state.connectedUser.user = action.payload.user;
+            state.connectedUser.profile = p.profile ?? state.connectedUser.profile;
+            state.connectedUser.planLimits = p.planLimits ?? state.connectedUser.planLimits;
+            state.connectedUser.companyMembership = p.companyMembership ?? state.connectedUser.companyMembership;
+            state.connectedUser.user = p.user ?? state.connectedUser.user;
           }
         )
         .addCase(
@@ -320,39 +262,17 @@ const userSlice = createSlice({
             state.connectedUser.loading = false;
           }
         )
-        //GET PROFILE BY ID
-        .addCase(getProfileById.pending, (state: UserState) => {
-          state.targetUser.loading = true;
-          state.targetUser.error = null;
-        })
-        .addCase(
-          getProfileById.fulfilled,
-          (state: UserState, action: PayloadAction<any>) => {
-            state.targetUser.loading = false;
-            state.targetUser.profile = action.payload.profile;
-            state.targetUser.planLimits = action.payload.planLimits || null;
-            state.targetUser.user = action.payload.user;
-            state.targetUser.companyMembership = action.payload.companyMembership || null;
-          }
-        )
-        .addCase(
-          getProfileById.rejected,
-          (state: UserState, action: PayloadAction<any>) => {
-            state.targetUser.loading = false;
-            state.targetUser.error = action.payload;
-          }
-        );
     },
   });
 
 export const {
   setConnectedUser,
   clearConnectedUser,
-  clearTargetUser,
   setUserType,
   updateProfileQuota,
   updateProfileSoftSkill,
   updateProfileSkills,
+  updateProfileResume,
   updatePlanUsage,
 } = userSlice.actions;
 

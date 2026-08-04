@@ -1,27 +1,27 @@
 import React, { useState, useCallback, useEffect } from "react";
-import { Box, Typography, Avatar } from "@mui/material";
+import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
 import { useTranslation } from "react-i18next";
-import CandidateWorkspaceLayout from "@/components/layout/candidate/CandidateWorkspaceLayout";
+import { Menu } from "lucide-react";
 import NotificationsTab from "./NotificationsTab";
 import PersonalInformationTab from "./PersonalInformationTab";
 import ProfileVisibilityTab from "./ProfileVisibilityTab";
-import SnackbarNotifications from "./SnackbarNotifications";
 import { useProfileManagement } from "../hooks";
 import { useUpdateCandidateVisibility } from "../queries";
 import { LanguageTab } from "@/modules/settings/shared";
-import PersonOutlined from "@mui/icons-material/PersonOutlined";
-import LanguageIcon from "@mui/icons-material/Language";
-import NotificationsOutlined from "@mui/icons-material/NotificationsOutlined";
-import VisibilityOutlined from "@mui/icons-material/VisibilityOutlined";
-import { TEAL as T, TEAL_BG as TBG, TEAL_BORDER as TBRD } from "@/modules/settings/shared";
-
-const NAVY = "#0D1B2A";
+import { User, Globe, Bell, Eye, FileText } from "lucide-react";
+import { cn } from "@/lib/utils";
+import CvSection from "./CvSection";
+import CandidateSettingsSkeleton from "./CandidateSettingsSkeleton";
+import {
+  Drawer, DrawerContent, DrawerHeader, DrawerTitle,
+} from "@/modules/shared/ui/shadcn/drawer";
 
 const TAB_IDS = [
-  { id: "personal",      key: "personal",      icon: PersonOutlined },
-  { id: "language",      key: "language",      icon: LanguageIcon },
-  { id: "notifications", key: "notifications", icon: NotificationsOutlined },
-  { id: "visibility",    key: "visibility",    icon: VisibilityOutlined },
+  { id: "personal",      key: "personal",      icon: User },
+  { id: "resumes",       key: "resumes",       icon: FileText },
+  { id: "language",      key: "language",      icon: Globe },
+  { id: "notifications", key: "notifications", icon: Bell },
+  { id: "visibility",    key: "visibility",    icon: Eye },
 ];
 
 const CandidateSettingsPage: React.FC = () => {
@@ -33,26 +33,29 @@ const CandidateSettingsPage: React.FC = () => {
   }));
 
   const {
-    activeTab, isEditing, profile, loading, error,
+    activeTab, isEditing, profile, loading, isInitialLoading,
     uploadingImage, saveSuccess, userId,
     companyMembership, isPublicProfile,
     control, formErrors,
     setActiveTab, setIsEditing,
-    handleInputChange, handleImageUpload,
-    handleSaveProfile, handleSaveLanguage, handleCancel, handleDismissError, handleDismissSuccess,
+    handleInputChange, handleImageUpload, handleCvUpdated, handleCvDeleted,
+    handleSaveProfile, handleSaveLanguage, handleCancel,
   } = useProfileManagement();
 
   const hasMembership = !!companyMembership?._id;
 
   const updateVisibilityMutation = useUpdateCandidateVisibility();
   const [localIsPublic, setLocalIsPublic] = useState(isPublicProfile);
+  const [drawerOpen,    setDrawerOpen]    = useState(false);
 
   useEffect(() => { setLocalIsPublic(isPublicProfile); }, [isPublicProfile]);
 
   const handleToggleVisibility = useCallback(async (newVisibility: boolean) => {
     setLocalIsPublic(newVisibility);
-    await updateVisibilityMutation.mutateAsync(newVisibility);
-  }, [updateVisibilityMutation]);
+    await updateVisibilityMutation.mutateAsync({ userId, isPublicProfile: newVisibility });
+  }, [updateVisibilityMutation, userId]);
+
+  if (isInitialLoading) return <CandidateSettingsSkeleton />;
 
   const displayName = profile.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
@@ -60,57 +63,117 @@ const CandidateSettingsPage: React.FC = () => {
   const initial   = displayName[0]?.toUpperCase() || "C";
   const avatarUrl = profile.avatar || undefined;
 
+  const activeLabel = TABS.find(t => t.id === activeTab)?.label ?? "";
+
+  // ── Shared sidebar content ─────────────────────────────────────────────────
+
+  const SidebarContent = ({ onSelect }: { onSelect?: () => void }) => (
+    <div className="flex flex-col gap-4">
+      {/* Profile card */}
+      <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+        <div className="h-14 relative bg-gradient-to-br from-primary-dark to-primary overflow-hidden">
+          <div className="absolute top-1/2 right-4 -translate-y-1/2 size-8 rounded-full bg-primary-foreground/10" />
+          <div className="absolute -top-2 -left-2 size-12 rounded-full bg-primary/20" />
+        </div>
+        <div className="px-4 pb-4">
+          <div className="-mt-6 mb-2">
+            <Avatar className="size-[52px] border-2 border-card shadow-md">
+              <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
+              <AvatarFallback className="rounded-full bg-primary text-primary-foreground text-lg font-bold">
+                {initial}
+              </AvatarFallback>
+            </Avatar>
+          </div>
+          <p className="font-extrabold text-sm leading-tight text-foreground">{displayName}</p>
+          {profile.email && (
+            <p className="text-xs text-muted-foreground mt-0.5 truncate">{profile.email}</p>
+          )}
+        </div>
+      </div>
+
+      {/* Nav */}
+      <div className="bg-card rounded-2xl border border-border p-2.5 shadow-sm">
+        <p className="text-[0.6rem] font-bold text-muted-foreground uppercase tracking-wide px-2 pb-2">
+          {t("candidate_settings.tabs.settings_label")}
+        </p>
+        <div className="flex flex-col gap-0.5">
+          {TABS.map(({ id, label, icon: Icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                type="button"
+                onClick={() => { setActiveTab(id); onSelect?.(); }}
+                className={cn(
+                  "flex items-center gap-2.5 px-3 py-2 rounded-xl cursor-pointer border text-left transition-colors",
+                  active
+                    ? "bg-primary-light border-primary-border"
+                    : "bg-transparent border-transparent hover:bg-muted hover:border-border",
+                )}
+              >
+                <Icon size={15} className={active ? "text-primary-dark" : "text-muted-foreground"} />
+                <span className={cn(
+                  "text-xs",
+                  active ? "font-bold text-primary-dark" : "font-medium text-foreground",
+                )}>
+                  {label}
+                </span>
+                {active && <span className="ml-auto size-1.5 rounded-full bg-primary shrink-0" />}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <CandidateWorkspaceLayout breadcrumb={t("candidate.nav.settings")}>
-      <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", md: "240px 1fr" }, gap: 2.5, alignItems: "start" }}>
+    <>
+      {/* ── Mobile top bar ──────────────────────────────────────────────── */}
+      <div className="md:hidden flex items-center gap-3 bg-card border border-border rounded-2xl px-4 py-3 shadow-sm">
+        <Avatar className="size-8 border border-border shrink-0">
+          <AvatarImage src={avatarUrl} alt={displayName} className="object-cover" />
+          <AvatarFallback className="bg-primary text-primary-foreground text-xs font-bold">
+            {initial}
+          </AvatarFallback>
+        </Avatar>
+        <div className="flex-1 min-w-0">
+          <p className="text-xs font-bold text-foreground truncate">{displayName}</p>
+          <p className="text-[0.65rem] text-primary-dark font-semibold">{activeLabel}</p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setDrawerOpen(true)}
+          className="flex items-center justify-center size-8 rounded-lg bg-muted hover:bg-muted/80 transition-colors cursor-pointer"
+        >
+          <Menu size={16} className="text-foreground" />
+        </button>
+      </div>
 
-        {/* LEFT: Profile + Nav */}
-        <Box sx={{ display: { xs: "none", md: "flex" }, flexDirection: "column", gap: 2, position: "sticky", top: 16, maxHeight: "calc(100vh - 96px)", overflowY: "auto" }} className="custom-scrollbar">
-          <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-            <Box sx={{ height: 56, background: `linear-gradient(135deg, ${NAVY} 0%, ${T} 100%)`, position: "relative" }}>
-              <Box sx={{ position: "absolute", top: "50%", right: 16, transform: "translateY(-50%)", width: 32, height: 32, borderRadius: "50%", bgcolor: `${T}30`, border: `1px solid ${T}40` }} />
-            </Box>
-            <Box sx={{ px: 2, pb: 2 }}>
-              <Box sx={{ mt: -3, mb: 1 }}>
-                <Avatar src={avatarUrl} sx={{ width: 52, height: 52, bgcolor: T, fontSize: "1.2rem", fontWeight: 700, border: "2.5px solid #fff", boxShadow: "0 2px 8px rgba(0,0,0,0.12)" }}>
-                  {initial}
-                </Avatar>
-              </Box>
-              <Typography sx={{ fontWeight: 800, fontSize: "0.95rem", color: NAVY, lineHeight: 1.2 }}>{displayName}</Typography>
-              {profile.email && <Typography sx={{ fontSize: "0.72rem", color: "#9CA3AF", mt: 0.25 }}>{profile.email}</Typography>}
-            </Box>
-          </Box>
+      {/* ── Mobile drawer ───────────────────────────────────────────────── */}
+      <Drawer open={drawerOpen} onOpenChange={setDrawerOpen}>
+        <DrawerContent className="w-[280px] p-0 flex flex-col">
+          <DrawerHeader className="px-4 pt-4 pb-2">
+            <DrawerTitle className="text-sm font-bold text-foreground">
+              {t("candidate_settings.tabs.settings_label")}
+            </DrawerTitle>
+          </DrawerHeader>
+          <div className="flex-1 overflow-y-auto px-4 pb-6">
+            <SidebarContent onSelect={() => setDrawerOpen(false)} />
+          </div>
+        </DrawerContent>
+      </Drawer>
 
-          <Box sx={{ bgcolor: "#fff", borderRadius: "16px", border: "1px solid #E5E7EB", p: 1.25, boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-            <Typography sx={{ fontSize: "0.65rem", fontWeight: 700, color: "#94A3B8", textTransform: "uppercase", letterSpacing: "0.06em", px: 1, pb: 1 }}>{t("candidate_settings.tabs.settings_label")}</Typography>
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 0.5 }}>
-              {TABS.map(({ id, label, icon: Icon }) => {
-                const active = activeTab === id;
-                return (
-                  <Box
-                    key={id}
-                    onClick={() => setActiveTab(id)}
-                    sx={{
-                      display: "flex", alignItems: "center", gap: 1.25,
-                      px: 1.5, py: 1, borderRadius: "10px", cursor: "pointer",
-                      bgcolor: active ? TBG : "transparent",
-                      border: `1px solid ${active ? TBRD : "transparent"}`,
-                      transition: "all 0.15s",
-                      "&:hover": { bgcolor: active ? TBG : "#F8FAFC", borderColor: active ? TBRD : "#E5E7EB" },
-                    }}
-                  >
-                    <Icon sx={{ fontSize: 16, color: active ? T : "#6B7280" }} />
-                    <Typography sx={{ fontSize: "0.82rem", fontWeight: active ? 700 : 500, color: active ? T : "#374151" }}>{label}</Typography>
-                    {active && <Box sx={{ ml: "auto", width: 6, height: 6, borderRadius: "50%", bgcolor: T }} />}
-                  </Box>
-                );
-              })}
-            </Box>
-          </Box>
-        </Box>
+      {/* ── Desktop layout ──────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 md:grid-cols-[240px_1fr] gap-5 items-start">
+
+        {/* LEFT: sticky sidebar — desktop only */}
+        <div className="hidden md:flex flex-col gap-4 sticky top-4 max-h-[calc(100vh-96px)] overflow-y-auto custom-scrollbar">
+          <SidebarContent />
+        </div>
 
         {/* RIGHT: Tab content */}
-        <Box>
+        <div>
           {activeTab === "personal" && (
             <PersonalInformationTab
               profile={profile}
@@ -119,13 +182,31 @@ const CandidateSettingsPage: React.FC = () => {
               isEditing={isEditing}
               loading={loading}
               saveSuccess={saveSuccess}
-              error={error || null}
               uploadingImage={uploadingImage}
               onImageUpload={handleImageUpload}
               onSave={handleSaveProfile}
               onCancel={handleCancel}
               onEditToggle={() => setIsEditing(!isEditing)}
+              onCvUpdated={handleCvUpdated}
+              onCvDeleted={handleCvDeleted}
             />
+          )}
+          {activeTab === "resumes" && (
+            <div className="bg-card border border-border rounded-2xl overflow-hidden">
+              <div className="px-4 md:px-6 py-4 border-b border-border">
+                <p className="font-bold text-sm text-foreground">{t("candidate_settings.tabs.resumes")}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Upload your latest CV. It will be used for all new job applications.
+                </p>
+              </div>
+              <div className="p-4 md:p-6">
+                <CvSection
+                  resumeFilename={profile.resume}
+                  onUpdated={handleCvUpdated}
+                  onDeleted={handleCvDeleted}
+                />
+              </div>
+            </div>
           )}
           {activeTab === "language" && (
             <LanguageTab
@@ -144,16 +225,9 @@ const CandidateSettingsPage: React.FC = () => {
               hasMembership={hasMembership}
             />
           )}
-        </Box>
-      </Box>
-
-      <SnackbarNotifications
-        error={error || null}
-        saveSuccess={saveSuccess}
-        onDismissError={handleDismissError}
-        onDismissSuccess={handleDismissSuccess}
-      />
-    </CandidateWorkspaceLayout>
+        </div>
+      </div>
+    </>
   );
 };
 

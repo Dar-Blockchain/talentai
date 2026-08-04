@@ -1,38 +1,38 @@
 import React from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
+import { Plus } from "lucide-react";
 import { useSelector } from "react-redux";
+import { usePermissionsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 
-import DashboardLayout from "@/components/layout/dashboard/DashboardLayout";
-import PageHeader from "@/components/layout/dashboard/PageHeader";
-import AppButton from "@/components/ui/AppButton";
+import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { RootState } from "@/store/store";
-import { selectEmployeePermissions } from "@/store/slices/memberSlice";
-
-const AddOutlined = dynamic(() => import("@mui/icons-material/AddOutlined"));
+import { getDashboardLayout } from "@/modules/shared/layouts";
+import type { NextPageWithLayout } from "@/pages/_app";
 
 const CampaignsStats = dynamic(
-  () => import("@/components/features/company/campaigns/list/Stats")
+  () => import("@/modules/company/campaigns/components/list/Stats"),
 );
 
 const CampaignsGrid = dynamic(
-  () => import("@/components/features/company/campaigns/list/CampaignsGrid"),
-  { ssr: false }
+  () => import("@/modules/company/campaigns/components/list/CampaignsGrid"),
+  { ssr: false },
 );
 
-const CampaignsPage: React.FC = () => {
+const CampaignsPage: NextPageWithLayout = () => {
   const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCampaigns");
 
-  const user     = useSelector((state: RootState) => state.user.connectedUser.user);
-  const empPerms = useSelector(selectEmployeePermissions);
-  const isEmp    = user?.role === "Employee";
+  const user    = useSelector((state: RootState) => state.user.connectedUser.user);
+  const isEmp   = user?.role === "Employee";
+  const { data: empPerms } = usePermissionsQuery(user?._id, isEmp);
   const canCreate = !isEmp || !!empPerms?.canCreateCampaign;
 
   return (
-    <DashboardLayout>
+    <>
       <PageHeader
         title={t("pages.campaigns.title")}
         subtitle={t("pages.campaigns.subtitle")}
@@ -42,20 +42,19 @@ const CampaignsPage: React.FC = () => {
         ]}
         actions={canCreate ? [
           <Link key="new" href="/company/campaigns/new">
-            <AppButton
-              label={t("pages.campaigns.new_campaign")}
-              variant="contained"
-              startIcon={<AddOutlined />}
-              size="medium"
-            />
+            <Button size="sm" className="gap-1.5">
+              <Plus className="size-4" />
+              {t("pages.campaigns.new_campaign")}
+            </Button>
           </Link>,
         ] : []}
       />
 
       <CampaignsStats />
       <CampaignsGrid />
-    </DashboardLayout>
+    </>
   );
 };
+CampaignsPage.getLayout = getDashboardLayout;
 
 export default CampaignsPage;
