@@ -4,7 +4,7 @@ import { SITE_URL } from "@/modules/shared/constants";
 function buildSitemap(posts: { slug: string; publishedAt: string }[]): string {
   const urls = posts.map((post) => `
   <url>
-    <loc>${SITE_URL}/blog/${post.slug}</loc>
+    <loc>${SITE_URL}/blog/${post.slug}/</loc>
     <lastmod>${new Date(post.publishedAt).toISOString()}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>

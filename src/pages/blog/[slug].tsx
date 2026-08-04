@@ -56,7 +56,7 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ initialPost, isPreview 
   const content = pickLocalized(currentLang, current.content_en, current.content_fr);
   const coverImage = pickLocalized(currentLang, current.coverImage_en, current.coverImage_fr);
 
-  const canonical = `${SITE_URL}/blog/${current.slug}`;
+  const canonical = `${SITE_URL}/blog/${current.slug}/`;
   const pageTitle = `${title} | TalentAI Blog`;
   const description = excerpt || excerptFromHtml(content);
   const image = coverImage ? resolveUploadUrl(coverImage) : OG_IMAGE;

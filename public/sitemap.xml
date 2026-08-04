@@ -22,7 +22,7 @@
 
   <!-- ── Blog ──────────────────────────────────────────────────────────────── -->
   <url>
-    <loc>https://talentai.bid/blog</loc>
+    <loc>https://talentai.bid/blog/</loc>
     <lastmod>2026-07-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -30,14 +30,14 @@
 
   <!-- ── Legal ─────────────────────────────────────────────────────────────── -->
   <url>
-    <loc>https://talentai.bid/privacy</loc>
+    <loc>https://talentai.bid/privacy/</loc>
     <lastmod>2026-07-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
 
   <url>
-    <loc>https://talentai.bid/terms</loc>
+    <loc>https://talentai.bid/terms/</loc>
     <lastmod>2026-07-01</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>

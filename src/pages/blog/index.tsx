@@ -14,7 +14,7 @@ import { useLanguage } from "@/hooks/useLanguage";
 import { SITE_URL, OG_IMAGE } from "@/modules/shared/constants";
 import { Newspaper, ChevronLeft, ChevronRight, ArrowUpRight } from "lucide-react";
 
-const CANONICAL = `${SITE_URL}/blog`;
+const CANONICAL = `${SITE_URL}/blog/`;
 
 const formatDate = (d: string, locale: string) => {
   try { return new Date(d).toLocaleDateString(locale === "fr" ? "fr-FR" : "en-US", { year: "numeric", month: "long", day: "numeric" }); }
@@ -47,7 +47,7 @@ const BlogIndexPage: React.FC<BlogIndexPageProps> = ({ initialData }) => {
       itemListElement: posts.map((post, i) => ({
         "@type": "ListItem",
         position: i + 1,
-        url: `${SITE_URL}/blog/${post.slug}`,
+        url: `${SITE_URL}/blog/${post.slug}/`,
         name: pickLocalized(currentLang, post.title_en, post.title_fr),
       })),
     },
