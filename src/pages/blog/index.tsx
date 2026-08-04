@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 import type { GetServerSideProps } from "next";
@@ -129,8 +130,13 @@ const BlogIndexPage: React.FC<BlogIndexPageProps> = ({ initialData }) => {
                   >
                     <div className="relative h-48 bg-gray-100 overflow-hidden">
                       {coverImage ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={resolveUploadUrl(coverImage)} alt={title} className="w-full h-full object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]" />
+                        <Image
+                          src={resolveUploadUrl(coverImage)}
+                          alt={title}
+                          fill
+                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover group-hover:scale-[1.06] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+                        />
                       ) : (
                         <div className="w-full h-full flex items-center justify-center text-gray-300 bg-gradient-to-br from-primary/5 to-emerald-50">
                           <Newspaper size={28} />

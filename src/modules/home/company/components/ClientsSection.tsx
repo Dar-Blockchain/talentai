@@ -1,12 +1,13 @@
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
 const partners = [
-  { src: "/images/supporters/darblockchain.png", alt: "Dar Blockchain", h: 26 },
-  { src: "/images/supporters/lightency.png", alt: "Lightency", h: 26 },
-  { src: "/images/supporters/nivdia.png",  alt: "NVIDIA Inception Program", h: 32 },
-  { src: "/images/supporters/f6s.png",     alt: "F6S #22 Top AI Company", h: 32 },
-  { src: "/images/supporters/hedera.png",  alt: "Built on Hedera Hashgraph", h: 32 },
+  { src: "/images/supporters/darblockchain.png", alt: "Dar Blockchain", h: 26, w: 148, ih: 38 },
+  { src: "/images/supporters/lightency.png", alt: "Lightency", h: 26, w: 141, ih: 38 },
+  { src: "/images/supporters/nivdia.png",  alt: "NVIDIA Inception Program", h: 32, w: 146, ih: 63 },
+  { src: "/images/supporters/f6s.png",     alt: "F6S #22 Top AI Company", h: 32, w: 252, ih: 48 },
+  { src: "/images/supporters/hedera.png",  alt: "Built on Hedera Hashgraph", h: 32, w: 2500, ih: 730 },
 ];
 
 /* Triple so the marquee has enough content to loop seamlessly */
@@ -62,9 +63,11 @@ const ClientsSection: React.FC = () => {
           >
             {LOOPED.map((logo, i) => (
               <div key={i} className="flex-shrink-0 flex items-center">
-                <img
+                <Image
                   src={logo.src}
                   alt={logo.alt}
+                  width={logo.w}
+                  height={logo.ih}
                   style={{ height: logo.h, width: "auto" }}
                   className="object-contain opacity-75 hover:opacity-100 transition-all duration-300"
                   draggable={false}

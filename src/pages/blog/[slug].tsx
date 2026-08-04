@@ -1,4 +1,5 @@
 import Head from "next/head";
+import Image from "next/image";
 import Link from "next/link";
 import type { GetServerSideProps } from "next";
 import { useTranslation } from "react-i18next";
@@ -145,8 +146,16 @@ const BlogDetailPage: React.FC<BlogDetailPageProps> = ({ initialPost, isPreview 
             <h1 className="mt-2 text-[1.8rem] md:text-[2.2rem] font-bold tracking-tight text-slate-900 leading-tight">{title}</h1>
 
             {coverImage && (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img src={resolveUploadUrl(coverImage)} alt={title} className="w-full h-auto rounded-2xl mt-8" />
+              <div className="relative w-full aspect-video rounded-2xl mt-8 overflow-hidden">
+                <Image
+                  src={resolveUploadUrl(coverImage)}
+                  alt={title}
+                  fill
+                  sizes="(max-width: 768px) 100vw, 760px"
+                  className="object-cover"
+                  priority
+                />
+              </div>
             )}
 
             <div className={contentClass} dangerouslySetInnerHTML={{ __html: resolveContentImages(content) }} />

@@ -25,6 +25,14 @@ const nextConfig: NextConfig = {
         hostname: 'app.talentai.bid',
         pathname: '/**',
       },
+      {
+        // Blog cover/content images are uploaded to the API and resolved via
+        // resolveUploadUrl() against NEXT_PUBLIC_API_BASE_URL — localhost in dev.
+        protocol: 'http',
+        hostname: 'localhost',
+        port: '5000',
+        pathname: '/**',
+      },
     ],
   },
   assetPrefix: '',

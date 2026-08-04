@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 import { PlayCircle } from "lucide-react";
 import { Button }      from "@/modules/shared/ui/shadcn/button";
 import DemoVideoModal  from "./DemoVideoModal";
@@ -165,10 +166,13 @@ const HeroSection = () => {
             className="relative w-[110%] ml-auto"
           >
             {/* Main dashboard image */}
-            <img
+            <Image
               src="/images/home/landing-hero.png"
               alt="TalentAI Dashboard"
+              width={534}
+              height={468}
               className="w-full h-auto rounded-xl block"
+              priority
             />
 
 

@@ -47,3 +47,4 @@ Allow: /
 
 # ── Sitemap ───────────────────────────────────────────────────────────────────
 Sitemap: https://talentai.bid/sitemap.xml
+Sitemap: https://talentai.bid/sitemap-blog.xml
