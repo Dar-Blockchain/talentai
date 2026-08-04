@@ -1,7 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { Dialog, DialogContent, DialogActions, Button, IconButton, TextField, FormControlLabel, Switch, Alert, CircularProgress } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
+import { Dialog, DialogContent } from '@/modules/shared/ui/shadcn/dialog';
+import { Button } from '@/modules/shared/ui/shadcn/button';
+import { Input } from '@/modules/shared/ui/shadcn/input';
+import { Textarea } from '@/modules/shared/ui/shadcn/textarea';
+import { Switch } from '@/modules/shared/ui/shadcn/switch';
+import { Label } from '@/modules/shared/ui/shadcn/label';
+import { Alert, AlertDescription } from '@/modules/shared/ui/shadcn/alert';
+import { Award as WorkspacePremiumIcon, AlertCircle } from 'lucide-react';
 import { ADMIN_ACCENT, ADMIN_RADIUS } from '@/modules/admin/shared';
 import { useCreatePlanMutation, useUpdatePlanMutation } from '../queries';
 import { PlanLimit, PlanFormValues } from '../types';
@@ -82,117 +87,114 @@ const PlanFormDialog: React.FC<PlanFormDialogProps> = ({ open, onClose, plan, on
   };
 
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: ADMIN_RADIUS, overflow: 'hidden', boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)' } }}
-    >
-      <div className="relative px-6 pt-6 pb-2">
-        <IconButton onClick={onClose} sx={{ position: 'absolute', top: 12, right: 12, color: '#94A3B8', '&:hover': { color: '#475569' } }}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#EEF2FF' }}>
-            <WorkspacePremiumIcon style={{ fontSize: 20, color: ADMIN_ACCENT }} />
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="max-w-sm p-0 gap-0 overflow-hidden sm:max-w-sm" style={{ borderRadius: ADMIN_RADIUS, boxShadow: '0 16px 40px -8px rgba(15,23,42,0.12)' }}>
+        <div className="relative px-6 pt-6 pb-2">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0" style={{ background: '#EEF2FF' }}>
+              <WorkspacePremiumIcon size={20} color={ADMIN_ACCENT} />
+            </div>
+            <h2 className="text-[1.05rem] font-semibold text-slate-900">{isEdit ? 'Edit Plan' : 'New Plan'}</h2>
           </div>
-          <h2 className="text-[1.05rem] font-semibold text-slate-900">{isEdit ? 'Edit Plan' : 'New Plan'}</h2>
         </div>
-      </div>
 
-      <DialogContent sx={{ px: 3, pt: 2, pb: 1 }}>
-        {error && (
-          <Alert severity="error" sx={{ mb: 2, borderRadius: '10px' }} onClose={() => setError(null)}>
-            {error}
-          </Alert>
-        )}
+        <div className="px-6 pt-2 pb-1 max-h-[70vh] overflow-y-auto">
+          {error && (
+            <Alert variant="destructive" className="mb-4 rounded-[10px]">
+              <AlertCircle />
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
+          )}
 
-        <div className="flex flex-col gap-3">
-          <TextField
-            label="Plan name"
-            value={form.name}
-            onChange={(e) => handleField('name', e.target.value)}
-            disabled={isEdit}
-            helperText={isEdit ? 'Plan names cannot be changed after creation.' : ' '}
-            fullWidth
-            size="small"
-          />
-          <div className="flex gap-3">
-            <TextField
-              label="Job posts limit"
-              type="number"
-              value={form.postsLimit}
-              onChange={(e) => handleField('postsLimit', Number(e.target.value))}
-              fullWidth
-              size="small"
-              slotProps={{ htmlInput: { min: 0 } }}
-            />
-            <TextField
-              label="Interviews / month"
-              type="number"
-              value={form.monthlyInterviewLimit}
-              onChange={(e) => handleField('monthlyInterviewLimit', Number(e.target.value))}
-              fullWidth
-              size="small"
-              slotProps={{ htmlInput: { min: 0 } }}
-            />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="plan-name" className="text-xs text-slate-500">Plan name</Label>
+              <Input
+                id="plan-name"
+                value={form.name}
+                onChange={(e) => handleField('name', e.target.value)}
+                disabled={isEdit}
+              />
+              <span className="text-[11px] text-slate-400">
+                {isEdit ? 'Plan names cannot be changed after creation.' : ' '}
+              </span>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="plan-posts" className="text-xs text-slate-500">Job posts limit</Label>
+                <Input
+                  id="plan-posts"
+                  type="number"
+                  min={0}
+                  value={form.postsLimit}
+                  onChange={(e) => handleField('postsLimit', Number(e.target.value))}
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="plan-interviews" className="text-xs text-slate-500">Interviews / month</Label>
+                <Input
+                  id="plan-interviews"
+                  type="number"
+                  min={0}
+                  value={form.monthlyInterviewLimit}
+                  onChange={(e) => handleField('monthlyInterviewLimit', Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <div className="flex gap-3">
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="plan-duration" className="text-xs text-slate-500">Duration (days)</Label>
+                <Input
+                  id="plan-duration"
+                  type="number"
+                  min={1}
+                  value={form.durationDays}
+                  onChange={(e) => handleField('durationDays', Number(e.target.value))}
+                />
+              </div>
+              <div className="flex flex-1 flex-col gap-1.5">
+                <Label htmlFor="plan-price" className="text-xs text-slate-500">Price (USD / mo)</Label>
+                <Input
+                  id="plan-price"
+                  type="number"
+                  min={0}
+                  value={form.priceUsd}
+                  onChange={(e) => handleField('priceUsd', Number(e.target.value))}
+                />
+              </div>
+            </div>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="plan-description" className="text-xs text-slate-500">Description</Label>
+              <Textarea
+                id="plan-description"
+                value={form.description}
+                onChange={(e) => handleField('description', e.target.value)}
+                rows={2}
+              />
+            </div>
+            <label className="flex items-center gap-2.5 cursor-pointer">
+              <Switch checked={form.isActive} onCheckedChange={(checked) => handleField('isActive', checked)} />
+              <span className="text-sm text-slate-700">Active (visible for new subscriptions)</span>
+            </label>
           </div>
-          <div className="flex gap-3">
-            <TextField
-              label="Duration (days)"
-              type="number"
-              value={form.durationDays}
-              onChange={(e) => handleField('durationDays', Number(e.target.value))}
-              fullWidth
-              size="small"
-              slotProps={{ htmlInput: { min: 1 } }}
-            />
-            <TextField
-              label="Price (USD / mo)"
-              type="number"
-              value={form.priceUsd}
-              onChange={(e) => handleField('priceUsd', Number(e.target.value))}
-              fullWidth
-              size="small"
-              slotProps={{ htmlInput: { min: 0 } }}
-            />
-          </div>
-          <TextField
-            label="Description"
-            value={form.description}
-            onChange={(e) => handleField('description', e.target.value)}
-            multiline
-            minRows={2}
-            fullWidth
-            size="small"
-          />
-          <FormControlLabel
-            control={<Switch checked={form.isActive} onChange={(e) => handleField('isActive', e.target.checked)} />}
-            label="Active (visible for new subscriptions)"
-          />
+        </div>
+
+        <div className="flex justify-end gap-3 px-6 py-5">
+          <Button onClick={onClose} disabled={saving} variant="outline" className="rounded-[10px] border-slate-200 text-slate-500 shadow-none">
+            Cancel
+          </Button>
+          <Button
+            onClick={handleSubmit}
+            variant="default"
+            disabled={!canSubmit || saving}
+            loading={saving}
+            className="rounded-[10px] font-semibold shadow-none"
+            style={{ backgroundColor: ADMIN_ACCENT }}
+          >
+            {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Plan'}
+          </Button>
         </div>
       </DialogContent>
-
-      <DialogActions sx={{ px: 3, py: 2.5, gap: 1.5 }}>
-        <Button
-          onClick={onClose}
-          disabled={saving}
-          variant="outlined"
-          sx={{ textTransform: 'none', borderColor: '#E2E8F0', color: '#64748B', borderRadius: '10px', boxShadow: 'none' }}
-        >
-          Cancel
-        </Button>
-        <Button
-          onClick={handleSubmit}
-          variant="contained"
-          disabled={!canSubmit || saving}
-          startIcon={saving ? <CircularProgress size={16} color="inherit" /> : undefined}
-          sx={{ textTransform: 'none', backgroundColor: ADMIN_ACCENT, borderRadius: '10px', fontWeight: 600, boxShadow: 'none', '&:hover': { backgroundColor: '#4338CA', boxShadow: 'none' } }}
-        >
-          {saving ? 'Saving…' : isEdit ? 'Save Changes' : 'Create Plan'}
-        </Button>
-      </DialogActions>
     </Dialog>
   );
 };

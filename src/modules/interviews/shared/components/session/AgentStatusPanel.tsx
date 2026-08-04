@@ -9,6 +9,10 @@ interface AgentStatusPanelProps {
   isVoiceActive?: boolean;
   currentTranscript?: string;
   canSubmit?: boolean;
+  /** False when the camera doesn't currently have a live feed. */
+  cameraLive?: boolean;
+  /** True when a ready answer is being held because the camera is off. */
+  cameraBlockedSubmit?: boolean;
   isInReadingTime?: boolean;
   readingTimeLeft?: number;
   onSubmitAnswer: () => void;
@@ -20,6 +24,8 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   agentState,
   isVoiceActive,
   canSubmit = false,
+  cameraLive = true,
+  cameraBlockedSubmit = false,
   isInReadingTime = false,
   readingTimeLeft = 0,
   onSubmitAnswer,
@@ -32,8 +38,9 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
   const progressPct  = Math.max(0, Math.min(100, (readingTimeLeft / 10000) * 100));
   const isProcessing = agentState === 'thinking' || agentState === 'processing' || agentState === 'finishing';
   // When AI is processing, ignore voice activity — button must stay frozen until question arrives
-  const isSpeaking   = !isProcessing && !!isVoiceActive;
-  const isDisabled   = isProcessing || isSpeaking || !canSubmit;
+  const isSpeaking      = !isProcessing && !!isVoiceActive;
+  const blockedByCamera = !isProcessing && (!cameraLive || cameraBlockedSubmit);
+  const isDisabled      = isProcessing || isSpeaking || !canSubmit || blockedByCamera;
   const [skipHovered,   setSkipHovered]   = useState(false);
   const [submitHovered, setSubmitHovered] = useState(false);
 
@@ -107,6 +114,8 @@ const AgentStatusPanel: React.FC<AgentStatusPanelProps> = ({
           {!isDisabled && !isSpeaking && <Send size={14} />}
           {isProcessing
             ? t('agent.processing')
+            : blockedByCamera
+            ? t('agent.camera_required', { defaultValue: 'Turn on your camera to submit' })
             : (isSpeaking || !canSubmit)
             ? t('agent.listening')
             : t('agent.submit')}

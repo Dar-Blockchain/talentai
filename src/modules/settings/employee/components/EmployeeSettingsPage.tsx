@@ -1,20 +1,22 @@
 import React from "react";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
-import { User, Mail, Building2, Briefcase, GitBranch, Camera, Check } from "lucide-react";
+import { User, Mail, Building2, Briefcase, GitBranch, Camera, Check, Settings as SettingsOutlined } from "lucide-react";
 import { ROLE_LABELS, ROLE_STYLES } from "@/modules/company/employees/components/list";
 import { Spinner } from "@/modules/settings/shared/components";
 import { Section, InfoRow, TEAL, useEmployeeSettings } from "@/modules/settings/employee";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import EmployeeSettingsSkeleton from "./EmployeeSettingsSkeleton";
 
 const EmployeeSettingsPage: React.FC = () => {
   const {
-    user, companyMembership, fileRef,
+    user, companyMembership, isInitialLoading, fileRef,
     displayName, avatarUrl, initials,
     username, savingName, nameSaved, nameError, uploadingImg,
     setUsername, setNameError,
     handleSaveName, handleAvatarChange,
   } = useEmployeeSettings();
+
+  if (isInitialLoading) return <EmployeeSettingsSkeleton />;
 
   return (
     <>

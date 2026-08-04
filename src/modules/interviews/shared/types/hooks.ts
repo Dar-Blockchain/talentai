@@ -93,6 +93,9 @@ export interface UseAudioTranscriptionReturn {
   silenceWarning: number | null;
   questionAnswerElapsed: number;
   questionAnswerRemaining: number;
+  /** True when the candidate has a ready answer but it's being held because the
+   *  camera is off — it will auto-submit as soon as the camera comes back. */
+  cameraBlockedSubmit: boolean;
 }
 
 export interface UseAudioTranscriptionOptions {
@@ -102,6 +105,10 @@ export interface UseAudioTranscriptionOptions {
   interviewStatus: string;
   showNotification: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
   jobData?: any;
+  /** True while the camera has a live video track. While false, the mic is muted
+   *  (silence sent instead of real audio), spoken turns are ignored, and any
+   *  answer ready to submit is held until the camera comes back — then auto-sent. */
+  cameraLive?: boolean;
 }
 
 // ─── useCamera ─────────────────────────────────────────────────────────────────
@@ -215,6 +222,10 @@ export interface UseInterviewSessionOptions {
   notify: (message: string, severity: 'success' | 'error' | 'warning' | 'info') => void;
   /** Socket.IO namespace to connect to. Defaults to '/interview'. */
   namespace?: string;
+  /** Overrides the computed candidateId (e.g. an anonymous/link token for unauthenticated campaign participants). */
+  candidateIdOverride?: string | null;
+  /** Where the candidate saw this job post link. `detail` holds the free-text value when `type` is 'other'. Sent with the application. */
+  source?: { type: string; detail?: string };
 }
 
 // ─── useSecurityMonitoring ─────────────────────────────────────────────────────

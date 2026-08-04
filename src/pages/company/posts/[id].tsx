@@ -1,6 +1,5 @@
 ﻿import React from "react";
-import { Box, Alert } from "@mui/material";
-import LoadingOverlay from "@/components/ui/LoadingOverlay";
+import { Alert, AlertDescription } from "@/modules/shared/ui/shadcn/alert";
 import { useTranslation } from "react-i18next";
 
 import { usePostDetailPage } from "@/modules/company/posts/details/hooks/usePostDetailPage";
@@ -13,8 +12,6 @@ import PublishConfirmModal from "@/modules/company/posts/list/components/Publish
 import InterviewLanguagesModal from "@/modules/company/posts/create/components/InterviewLanguagesModal";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
-
-const TEAL = "#0D9488";
 
 const PostDetailsPage: NextPageWithLayout = () => {
   const { t } = useTranslation("posts");
@@ -40,11 +37,10 @@ const PostDetailsPage: NextPageWithLayout = () => {
   } = usePostDetailPage();
 
   return (
-      <Box>
-        {loading && <LoadingOverlay height={400} message={t("detail.loading")} color={TEAL} />}
+      <div>
 
         {!loading && error && (
-          <Alert severity="error" sx={{ borderRadius: 2 }}>{error}</Alert>
+          <Alert variant="destructive" className="rounded-lg"><AlertDescription>{error}</AlertDescription></Alert>
         )}
 
         {!loading && !error && job && (
@@ -100,7 +96,7 @@ const PostDetailsPage: NextPageWithLayout = () => {
         <InterviewLanguagesModal
           open={langModalOpen}
           initialLanguages={job?.interviewLanguages ?? ["en"]}
-          confirmLabel={savingLanguages ? "…" : t("create.interview_lang_modal.btn_update")}
+          isLoading={savingLanguages}
           onConfirm={handleUpdateLanguages}
           onClose={() => setLangModalOpen(false)}
         />
@@ -113,7 +109,7 @@ const PostDetailsPage: NextPageWithLayout = () => {
           onClose={() => setQrOpen(false)}
           onDownload={handleDownloadQr}
         />
-      </Box>
+      </div>
   );
 };
 PostDetailsPage.getLayout = getDashboardLayout;

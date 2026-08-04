@@ -53,6 +53,8 @@
   "card": {
     "untitled": "Poste sans titre",
     "copied": "Copié !",
+    "applications_one": "{{count}} candidature",
+    "applications_other": "{{count}} candidatures",
     "days_left": "{{count}}j restants",
     "expired_badge": "Expirée",
     "status": {
@@ -141,6 +143,7 @@
       "labels": {
         "employment_type": "Type de contrat",
         "work_mode": "Mode de travail",
+        "department": "Département (optionnel)",
         "currency": "Devise",
         "experience_level": "Niveau d’expérience",
         "expires": "Expire le",
@@ -157,6 +160,7 @@
         "select": "Sélectionner",
         "select_employment_type": "Sélectionner le type de contrat",
         "select_work_mode": "Sélectionner le mode de travail",
+        "select_department": "Sélectionner le département (optionnel)",
         "select_currency": "Sélectionner la devise",
         "select_experience_level": "Sélectionner le niveau d’expérience",
         "select_skill_level": "Niveau d’expérience",

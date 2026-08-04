@@ -1,35 +1,69 @@
-import PeopleOutlined from '@mui/icons-material/PeopleOutlined';
-import CodeOutlined from '@mui/icons-material/CodeOutlined';
-import SupervisorAccountOutlined from '@mui/icons-material/SupervisorAccountOutlined';
-import ManageAccountsOutlined from '@mui/icons-material/ManageAccountsOutlined';
-import AdminPanelSettingsOutlined from '@mui/icons-material/AdminPanelSettingsOutlined';
-import EmojiEventsOutlined from '@mui/icons-material/EmojiEventsOutlined';
-import SettingsOutlined from '@mui/icons-material/SettingsOutlined';
-import AccountBalanceOutlined from '@mui/icons-material/AccountBalanceOutlined';
-import CampaignOutlined from '@mui/icons-material/CampaignOutlined';
-import InventoryOutlined from '@mui/icons-material/InventoryOutlined';
-import AccountTreeOutlined from '@mui/icons-material/AccountTreeOutlined';
-import LaptopOutlined from '@mui/icons-material/LaptopOutlined';
-import StorageOutlined from '@mui/icons-material/StorageOutlined';
-import IntegrationInstructionsOutlined from '@mui/icons-material/IntegrationInstructionsOutlined';
-import PhoneAndroidOutlined from '@mui/icons-material/PhoneAndroidOutlined';
-import BuildOutlined from '@mui/icons-material/BuildOutlined';
-import BarChartOutlined from '@mui/icons-material/BarChartOutlined';
-import BugReportOutlined from '@mui/icons-material/BugReportOutlined';
-import SecurityOutlined from '@mui/icons-material/SecurityOutlined';
-import DesignServicesOutlined from '@mui/icons-material/DesignServicesOutlined';
-import BrushOutlined from '@mui/icons-material/BrushOutlined';
-import GroupAddOutlined from '@mui/icons-material/GroupAddOutlined';
-import TrendingUpOutlined from '@mui/icons-material/TrendingUpOutlined';
-import LeaderboardOutlined from '@mui/icons-material/LeaderboardOutlined';
-import SupportAgentOutlined from '@mui/icons-material/SupportAgentOutlined';
-import GavelOutlined from '@mui/icons-material/GavelOutlined';
-import VerifiedOutlined from '@mui/icons-material/VerifiedOutlined';
-import AssessmentOutlined from '@mui/icons-material/AssessmentOutlined';
-import AccountCircleOutlined from '@mui/icons-material/AccountCircleOutlined';
-import ScienceOutlined from '@mui/icons-material/ScienceOutlined';
-import LocalShippingOutlined from '@mui/icons-material/LocalShippingOutlined';
-import SchoolOutlined from '@mui/icons-material/SchoolOutlined';
+import {
+  Users,
+  Code2,
+  UserCog,
+  ShieldCheck,
+  Trophy,
+  Settings,
+  Landmark,
+  Megaphone,
+  Package,
+  GitBranch,
+  Laptop,
+  Database,
+  Blocks,
+  Smartphone,
+  Wrench,
+  BarChart3,
+  Bug,
+  ShieldAlert,
+  PenTool,
+  Paintbrush,
+  UserPlus,
+  TrendingUp,
+  LineChart,
+  Headset,
+  Gavel,
+  BadgeCheck,
+  ClipboardList,
+  CircleUserRound,
+  FlaskConical,
+  Truck,
+  GraduationCap,
+} from 'lucide-react';
+
+const PeopleOutlined = Users;
+const CodeOutlined = Code2;
+const SupervisorAccountOutlined = UserCog;
+const ManageAccountsOutlined = UserCog;
+const AdminPanelSettingsOutlined = ShieldCheck;
+const EmojiEventsOutlined = Trophy;
+const SettingsOutlined = Settings;
+const AccountBalanceOutlined = Landmark;
+const CampaignOutlined = Megaphone;
+const InventoryOutlined = Package;
+const AccountTreeOutlined = GitBranch;
+const LaptopOutlined = Laptop;
+const StorageOutlined = Database;
+const IntegrationInstructionsOutlined = Blocks;
+const PhoneAndroidOutlined = Smartphone;
+const BuildOutlined = Wrench;
+const BarChartOutlined = BarChart3;
+const BugReportOutlined = Bug;
+const SecurityOutlined = ShieldAlert;
+const DesignServicesOutlined = PenTool;
+const BrushOutlined = Paintbrush;
+const GroupAddOutlined = UserPlus;
+const TrendingUpOutlined = TrendingUp;
+const LeaderboardOutlined = LineChart;
+const SupportAgentOutlined = Headset;
+const GavelOutlined = Gavel;
+const VerifiedOutlined = BadgeCheck;
+const AssessmentOutlined = ClipboardList;
+const AccountCircleOutlined = CircleUserRound;
+const ScienceOutlined = FlaskConical;
+const LocalShippingOutlined = Truck;
+const SchoolOutlined = GraduationCap;
 
 export const ROLES = [
   // ── Executive ──────────────────────────────────────────────────────────────

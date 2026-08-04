@@ -5,13 +5,13 @@ import { Menu } from "lucide-react";
 import NotificationsTab from "./NotificationsTab";
 import PersonalInformationTab from "./PersonalInformationTab";
 import ProfileVisibilityTab from "./ProfileVisibilityTab";
-import SnackbarNotifications from "./SnackbarNotifications";
 import { useProfileManagement } from "../hooks";
 import { useUpdateCandidateVisibility } from "../queries";
 import { LanguageTab } from "@/modules/settings/shared";
 import { User, Globe, Bell, Eye, FileText } from "lucide-react";
 import { cn } from "@/lib/utils";
 import CvSection from "./CvSection";
+import CandidateSettingsSkeleton from "./CandidateSettingsSkeleton";
 import {
   Drawer, DrawerContent, DrawerHeader, DrawerTitle,
 } from "@/modules/shared/ui/shadcn/drawer";
@@ -33,13 +33,13 @@ const CandidateSettingsPage: React.FC = () => {
   }));
 
   const {
-    activeTab, isEditing, profile, loading, error,
+    activeTab, isEditing, profile, loading, isInitialLoading,
     uploadingImage, saveSuccess, userId,
     companyMembership, isPublicProfile,
     control, formErrors,
     setActiveTab, setIsEditing,
     handleInputChange, handleImageUpload, handleCvUpdated, handleCvDeleted,
-    handleSaveProfile, handleSaveLanguage, handleCancel, handleDismissError, handleDismissSuccess,
+    handleSaveProfile, handleSaveLanguage, handleCancel,
   } = useProfileManagement();
 
   const hasMembership = !!companyMembership?._id;
@@ -54,6 +54,8 @@ const CandidateSettingsPage: React.FC = () => {
     setLocalIsPublic(newVisibility);
     await updateVisibilityMutation.mutateAsync({ userId, isPublicProfile: newVisibility });
   }, [updateVisibilityMutation, userId]);
+
+  if (isInitialLoading) return <CandidateSettingsSkeleton />;
 
   const displayName = profile.firstName
     ? `${profile.firstName}${profile.lastName ? ` ${profile.lastName}` : ""}`
@@ -180,7 +182,6 @@ const CandidateSettingsPage: React.FC = () => {
               isEditing={isEditing}
               loading={loading}
               saveSuccess={saveSuccess}
-              error={error || null}
               uploadingImage={uploadingImage}
               onImageUpload={handleImageUpload}
               onSave={handleSaveProfile}
@@ -226,13 +227,6 @@ const CandidateSettingsPage: React.FC = () => {
           )}
         </div>
       </div>
-
-      <SnackbarNotifications
-        error={error || null}
-        saveSuccess={saveSuccess}
-        onDismissError={handleDismissError}
-        onDismissSuccess={handleDismissSuccess}
-      />
     </>
   );
 };

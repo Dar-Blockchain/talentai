@@ -1,6 +1,6 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
-import { chatSegmentedControlSx } from "@/modules/chat/shared/styles/segmentedControl";
+import { cn } from "@/lib/utils";
+import { chatSegmentedControlCn } from "@/modules/chat/shared/styles/segmentedControl";
 import { TEAM_MINT_UI } from "@/modules/chat/shared/constants/teamMintUi";
 
 export interface ChatSegmentedOption<T extends string> {
@@ -25,68 +25,57 @@ function ChatSegmentedControl<T extends string>({
   fullWidth = false,
   mintLightTeamUi = false,
 }: ChatSegmentedControlProps<T>) {
-  const mintRoot = mintLightTeamUi
-    ? {
-        bgcolor: TEAM_MINT_UI.bgMain,
-        border: `1px solid ${TEAM_MINT_UI.border}`,
-        borderRadius: "14px",
-        gap: 0.5,
-        p: 0.45,
-        boxShadow: TEAM_MINT_UI.shadowSoft,
-      }
-    : {};
-  const mintItem = mintLightTeamUi
-    ? {
-        borderRadius: "12px",
-        py: 0.75,
-        color: TEAM_MINT_UI.textSecondary,
-        transition: TEAM_MINT_UI.transition,
-        "&:hover": {
-          bgcolor: TEAM_MINT_UI.bgCard,
-          color: TEAM_MINT_UI.textPrimary,
-          boxShadow: TEAM_MINT_UI.shadowSoft,
-        },
-      }
-    : {};
-  const mintItemActive = mintLightTeamUi
-    ? {
-        bgcolor: TEAM_MINT_UI.primarySoft,
-        borderColor: "rgba(52, 211, 153, 0.35)",
-        color: TEAM_MINT_UI.textPrimary,
-        boxShadow: "none",
-      }
+  const rootClass = cn(
+    chatSegmentedControlCn.root,
+    mintLightTeamUi && "rounded-[14px] gap-1 p-[3.6px]",
+    fullWidth && "w-full flex-nowrap",
+  );
+  const rootStyle: React.CSSProperties = mintLightTeamUi
+    ? { backgroundColor: TEAM_MINT_UI.bgMain, border: `1px solid ${TEAM_MINT_UI.border}`, boxShadow: TEAM_MINT_UI.shadowSoft }
     : {};
 
   return (
-    <Box
-      sx={{
-        ...chatSegmentedControlSx.root,
-        ...mintRoot,
-        ...(fullWidth ? { width: "100%", flexWrap: "nowrap" as const } : {}),
-      }}
-    >
+    <div className={rootClass} style={rootStyle}>
       {options.map((option) => {
         const isActive = value === option.value;
+        const itemClass = mintLightTeamUi
+          ? cn(
+              "inline-flex items-center justify-center gap-2 rounded-xl px-3 sm:px-3.5 py-3 no-underline border border-transparent transition-all cursor-pointer bg-transparent",
+              "hover:bg-[var(--mint-hover-bg)] hover:text-[var(--mint-hover-color)] hover:shadow-[var(--mint-hover-shadow)]",
+              fullWidth && "flex-1 min-w-0",
+              isActive && "border-[rgba(52,211,153,0.35)] shadow-none",
+            )
+          : cn(
+              chatSegmentedControlCn.item,
+              fullWidth && "flex-1 min-w-0",
+              isActive && chatSegmentedControlCn.itemActive,
+            );
+        const itemStyle: React.CSSProperties = mintLightTeamUi
+          ? {
+              color: isActive ? TEAM_MINT_UI.textPrimary : TEAM_MINT_UI.textSecondary,
+              transition: TEAM_MINT_UI.transition,
+              backgroundColor: isActive ? TEAM_MINT_UI.primarySoft : undefined,
+              ["--mint-hover-bg" as string]: TEAM_MINT_UI.bgCard,
+              ["--mint-hover-color" as string]: TEAM_MINT_UI.textPrimary,
+              ["--mint-hover-shadow" as string]: TEAM_MINT_UI.shadowSoft,
+            }
+          : {};
+
         return (
-          <Box
+          <button
             key={option.value}
-            component="button"
             type="button"
             onClick={() => onChange(option.value)}
-            sx={{
-              ...chatSegmentedControlSx.item,
-              ...mintItem,
-              ...(fullWidth ? { flex: 1, minWidth: 0 } : {}),
-              ...(isActive ? { ...chatSegmentedControlSx.itemActive, ...mintItemActive } : {}),
-            }}
+            className={itemClass}
+            style={itemStyle}
           >
-            <Typography component="span" sx={chatSegmentedControlSx.label}>
+            <span className={chatSegmentedControlCn.label}>
               {option.label}
-            </Typography>
-          </Box>
+            </span>
+          </button>
         );
       })}
-    </Box>
+    </div>
   );
 }
 

@@ -1,15 +1,13 @@
-import { Box, Typography, IconButton } from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import { DialogTitle } from "@mui/material";
+import { Sparkles as SparklesIcon } from "lucide-react";
+import { DialogHeader, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
 import { useTranslation } from "react-i18next";
 
 interface Props {
   skillType: "hard" | "soft";
   mode: "add" | "edit";
-  onClose: () => void;
 }
 
-const ModalHeader = ({ skillType, mode, onClose }: Props) => {
+const ModalHeader = ({ skillType, mode }: Props) => {
   const { t } = useTranslation("posts");
 
   const titleKey =
@@ -22,19 +20,14 @@ const ModalHeader = ({ skillType, mode, onClose }: Props) => {
         : "create.post_form.skill_modal.title_add_soft";
 
   return (
-    <DialogTitle sx={{ borderBottom: "1px solid rgba(227, 229, 233, 1)", color: "black" }}>
-      <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-        <Typography
-          variant="h6"
-          sx={{ color: "rgba(41, 210, 145, 1)", fontFamily: "Poppins", fontWeight: 600, fontSize: "20px" }}
-        >
-          {t(titleKey)}
-        </Typography>
-        <IconButton onClick={onClose} sx={{ color: "black" }}>
-          <CloseIcon />
-        </IconButton>
-      </Box>
-    </DialogTitle>
+    <DialogHeader className="flex-row items-center gap-3 border-b border-[rgba(227,229,233,1)] px-6 py-4">
+      <div className="flex size-9 shrink-0 items-center justify-center rounded-full bg-primary/10">
+        <SparklesIcon className="size-4.5 text-primary" />
+      </div>
+      <DialogTitle className="text-[18px] font-semibold text-foreground">
+        {t(titleKey)}
+      </DialogTitle>
+    </DialogHeader>
   );
 };
 

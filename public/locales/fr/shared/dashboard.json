@@ -126,6 +126,7 @@
   "overview": {
     "stat": {
       "avg_interview_score": "Score moyen",
+      "interviews_count": "Entretiens terminés",
       "active_job_posts": "Offres actives",
       "applicants": "Candidats",
       "campaigns": "Campagnes",
@@ -133,6 +134,15 @@
       "team_members": "Membres de l'équipe",
       "no_interviews_yet": "Aucun entretien",
       "no_posts_yet": "Aucune offre"
+    },
+    "subscription": {
+      "remaining_label": "Restant ce cycle",
+      "posts_short": "offres",
+      "interviews_short": "entretiens",
+      "unlimited_short": "∞",
+      "multi_plan": "{{count}} forfaits actifs",
+      "plan_name": "Forfait {{name}}",
+      "plan_suffix": "Forfait"
     },
     "interview_activity": {
       "title": "Activité des entretiens",
@@ -240,6 +250,70 @@
     "in_progress": "En cours",
     "not_started": "Non commencé"
   },
+  "team": {
+    "growth": {
+      "title": "Croissance de l'équipe",
+      "subtitle": "Nouveaux membres au cours des 30 derniers jours",
+      "total_members": "Membres au total",
+      "pending_invitations": "Invitations en attente",
+      "new_members": "Nouveaux membres",
+      "no_data": "Aucun nouveau membre sur cette période"
+    },
+    "by_department": {
+      "title": "Membres par département",
+      "subtitle": "Répartition des effectifs par département",
+      "members": "Membres",
+      "empty": "Aucun département pour l'instant"
+    },
+    "campaign_status": {
+      "title": "Répartition des campagnes",
+      "subtitle": "Campagnes internes par statut"
+    }
+  },
+  "campaigns_dashboard": {
+    "stat": {
+      "total_campaigns": "Total campagnes",
+      "total_participants": "Total participants",
+      "completion_rate": "Taux de complétion",
+      "avg_score": "Score IA moyen",
+      "not_enough_data": "N/A"
+    },
+    "trend": {
+      "title": "Tendance de complétion",
+      "subtitle": "Complétions de campagnes ces 30 derniers jours",
+      "completed": "Terminées",
+      "no_data": "Aucune complétion sur cette période"
+    },
+    "module_types": {
+      "title": "Campagnes par type de module",
+      "subtitle": "Répartition des types de module par campagne",
+      "empty": "Aucune campagne pour l'instant",
+      "campaigns": "Campagnes",
+      "types": {
+        "QUESTIONNAIRE": "Questionnaire",
+        "AI_INTERVIEW": "Entretien IA",
+        "SKILL_TEST": "Test de compétences",
+        "TRAINING_PATH": "Parcours de formation"
+      }
+    },
+    "recent_activity": {
+      "title": "Activité récente",
+      "subtitle": "Dernières complétions de campagnes",
+      "empty": "Aucune complétion pour l'instant",
+      "score": "Score",
+      "completed_campaign": "Terminé"
+    },
+    "table": {
+      "title": "Aperçu des campagnes",
+      "col_campaign": "Campagne",
+      "col_status": "Statut",
+      "col_participants": "Participants",
+      "col_completion": "Complétion",
+      "col_score": "Score moyen",
+      "col_deadline": "Échéance",
+      "empty": "Aucune campagne pour l'instant"
+    }
+  },
   "sidebar": {
     "groups": {
       "main": "Principal",
@@ -290,7 +364,9 @@
       "all_posts": "Tous",
       "recruiter": "Recruteur",
       "post": "Poste",
-      "zone1_title": "Actions du jour",
+      "zone1_title": "Activité récente",
+      "zone1_subtitle": "Les derniers événements sur vos candidats — qui a postulé, qui passe un entretien, et qui progresse.",
+      "take_action": "À traiter",
       "shortlists_pending": "Shortlists en attente de décision",
       "interviews_unreviewed": "Interviews non reviewés >48h",
       "noshows": "No-shows à relancer",
@@ -299,12 +375,36 @@
       "since_yesterday": "depuis hier",
       "invited_5d": "invités > 5 jours",
       "deadline_14d": "deadline < 14j",
+      "history_applied_to": "A postulé à",
+      "history_ai_match": "Match CV IA",
+      "history_threshold": "requis",
+      "history_interview_score": "Score d'entretien",
+      "history_applied": "Candidature reçue",
+      "history_applied_desc": "Vient de soumettre sa candidature — l'IA ne l'a pas encore invité à l'entretien.",
+      "history_invited": "Entretien envoyé",
+      "history_invited_desc": "Son CV correspond à cette offre et il a été invité à passer l'entretien IA.",
+      "history_completed": "Entretien terminé",
+      "history_completed_desc": "A terminé l'entretien IA. En attente de votre décision (shortlist ou rejet).",
+      "history_shortlisted": "Shortlisté",
+      "history_shortlisted_desc": "Vous avez shortlisté ce candidat pour cette offre.",
+      "history_rejected": "Rejeté",
+      "history_rejected_desc": "Vous avez rejeté ce candidat pour cette offre.",
+      "history_not_matched": "Non correspondant",
+      "history_not_matched_desc": "Son score de CV est inférieur au seuil minimum requis pour cette offre, il n'a donc pas été invité à l'entretien.",
+      "history_empty": "Aucune activité récente",
+      "history_view_all": "Voir toutes les candidatures",
+      "history_show_more": "Voir plus",
+      "zone1_title_full": "Activité récente",
       "zone2_title": "Statut par poste",
       "col_post": "Poste",
-      "col_shortlisted": "Shortlistés",
       "col_velocity": "Vélocité",
-      "col_coverage": "Couverture",
-      "col_status": "Statut",
+      "col_coverage": "Candidats matchés",
+      "col_job_status": "Statut de l'offre",
+      "job_status_draft": "Brouillon",
+      "job_status_published": "Publiée",
+      "filter_sort_hint": "Trier par cette colonne",
+      "col_completed": "Entretiens terminés",
+      "col_status": "Décision du recruteur",
       "col_deadline": "Deadline",
       "status_ok": "OK",
       "status_moyen": "Moyen",
@@ -315,6 +415,7 @@
       "funnel_completed": "Entretiens réalisés",
       "funnel_shortlisted": "Présélectionnés",
       "funnel_hired": "Embauchés",
+      "funnel_trend_empty": "Aucune donnée pour le moment",
       "passage": "passage",
       "key_metrics": "Résumé du pipeline",
       "noshow_rate": "Taux d'absence",
@@ -322,28 +423,25 @@
       "shortlist_rate": "Taux de présélection",
       "completed_rate": "Taux de complétion des entretiens",
       "hire_conversion": "Taux présélection → embauche",
-      "zone4_title": "Délais de recrutement",
-      "tts_title": "Délai de présélection",
-      "tts_subtitle": "Jours moyens entre candidature et décision de présélection",
-      "tth_title": "Délai d'embauche",
-      "tth_subtitle": "Jours moyens entre ouverture du poste et acceptation de l'offre",
-      "days": "jours",
-      "tts_chip": "↓ 0.4j vs période préc.",
-      "tth_chip": "↓ 1j vs période préc.",
-      "trending_down": "En amélioration",
-      "trending_up": "En ralentissement",
-      "trending_stable": "Stable",
+      "zone_department_title": "Postes par département",
+      "zone_department_subtitle": "Offres d'emploi ouvertes et passées regroupées par département — visible uniquement par les RH",
+      "zone_department_subtitle_chips": "Départements qui recrutent dans votre entreprise — visible uniquement par les RH",
+      "zone_department_empty": "Aucune offre d'emploi assignée à un département pour le moment",
+      "zone_department_all_zero": "Les départements sont configurés — aucune offre d'emploi ne leur est encore assignée",
+      "zone_department_jobs": "Postes",
+      "zone_department_add": "Ajouter un département",
       "zone5_title": "Qualité des candidats",
-      "avg_score_label": "Score moyen aux entretiens",
-      "score_vs_prev": "↑ +3 vs période préc.",
-      "by_channel": "Score par offre d'emploi",
       "top10_title": "Meilleurs candidats",
-      "top10_subtitle": "Classés par score d'entretien — présélectionnés ou complétés",
+      "top10_subtitle": "Top 5 — solides à la fois sur le CV et l'entretien",
+      "top10_empty": "Aucun entretien terminé pour le moment",
+      "top10_empty_sub": "Les meilleurs candidats apparaîtront ici une fois les entretiens terminés",
       "col_candidate": "Candidat",
       "col_score": "Score",
       "col_statut": "Statut",
       "shortlisted_chip": "Présélectionné",
       "completed_chip": "Entretien réalisé",
+      "cv_match": "Correspondance CV",
+      "interview_score_label": "Score d'entretien",
       "zone6_title": "Conformité & Audit",
       "rgpd_title": "Audit & Conformité RGPD",
       "audit_ready": "Audit-ready",
@@ -356,6 +454,7 @@
       "anomalies": "Anomalies détectées",
       "no_incident": "Aucun incident détecté ce mois-ci",
       "zone7_title": "Reporting & ROI",
+      "zone_manual_vs_ai_title": "Manuel vs TalentAI",
       "saved_hours_label": "Heures économisées",
       "saved_hours_formula": "interviews × 30 min / 60",
       "costs_label": "Coûts",
@@ -385,6 +484,9 @@
       "download_cvs_tooltip_one": "Télécharger {{count}} CV en ZIP",
       "download_cvs_tooltip_other": "Télécharger {{count}} CV en ZIP",
       "no_cv_alert": "Aucun CV disponible pour les filtres actuels.",
+      "action_filter_showing": "Affichage",
+      "action_filter_clear": "Effacer",
+      "application_filter_showing": "Affichage d'une seule candidature",
       "status": {
         "all": "Tous les statuts",
         "visited": "Visité",
@@ -501,8 +603,8 @@
       "metrics": {
         "total_applicants": "Total candidats",
         "job_posts": "Offres d'emploi",
-        "avg_cv_score": "Score CV moyen",
-        "top_cv_score": "Meilleur score CV"
+        "top_match_score": "Meilleur score de correspondance",
+        "top_interview_score": "Meilleur score d'entretien"
       }
     },
     "settings": {
@@ -514,6 +616,7 @@
         "company_info": "Infos entreprise",
         "contact": "Contact & Présence",
         "api_keys": "Clés API",
+        "cost": "Coûts de recrutement",
         "language": "Langue"
       },
       "banner": {
@@ -618,6 +721,23 @@
           "copied": "Clé copiée dans le presse-papier"
         }
       },
+      "cost": {
+        "title": "Taux de coût de recrutement",
+        "subtitle": "Alimente les cartes coûts & heures manuel vs TalentAI de votre tableau de bord",
+        "section_title": "Hypothèses de coût et de temps",
+        "section_subtitle": "Utilisé pour calculer ce que le tri manuel aurait coûté, comparé à vos frais TalentAI réels",
+        "manual_cost_label": "Coût manuel par candidat",
+        "manual_cost_desc": "Coût forfaitaire pour trier un candidat à la main, CV + entretien inclus",
+        "ai_cost_label": "Coût TalentAI par candidat",
+        "ai_cost_desc": "Ce que TalentAI vous facture réellement par entretien complété",
+        "hourly_rate_label": "Taux horaire du recruteur",
+        "hourly_rate_desc": "Coût horaire moyen d'un recruteur, utilisé pour valoriser le temps d'entretien",
+        "interview_len_label": "Durée de l'entretien",
+        "interview_len_desc": "Durée d'un entretien, en minutes",
+        "saved": "Paramètres de coût enregistrés",
+        "save_failed": "Impossible d'enregistrer les paramètres — réessayez",
+        "invalid": "Entrez un nombre valide et non négatif"
+      },
       "language": {
         "title": "Langue de l'interface",
         "subtitle": "Choisissez la langue utilisée dans votre tableau de bord",
@@ -641,6 +761,47 @@
         "team_size": "Taille de l'équipe"
       }
     }
+  },
+  "trendRangeFilter": {
+    "days": "Jours",
+    "months": "Mois",
+    "years": "Années"
+  },
+  "hoursComparison": {
+    "title": "Temps et coût économisés : manuel vs avec TalentAI",
+    "subtitle_fallback": "Derniers mois",
+    "description": "Combien d'heures et combien d'argent votre équipe dépenserait à examiner les mêmes CV et entretiens à la main chaque mois, comparé à TalentAI qui le fait automatiquement.",
+    "legend_manual": "Manuel (à la main)",
+    "legend_ai": "Avec TalentAI",
+    "legend_saved": "Temps économisé",
+    "legend_added": "Temps supplémentaire",
+    "interview_time_title": "Temps d'entretien",
+    "interview_time_manual_sub": "{{iv}} entretiens × {{min}}m",
+    "interview_time_ai_sub": "L'IA mène l'entretien",
+    "analysis_title": "Analyse : CV et évaluation",
+    "breakdown_manual": "{{cvs}} CV × 7m + {{iv}} entretiens × 10m",
+    "breakdown_ai": "{{cvs}} CV × 0,2m + {{iv}} entretiens × 1m",
+    "this_month": "ce mois-ci",
+    "saved_pct": "{{pct}}% de temps en moins",
+    "added_pct": "{{pct}}% de temps en plus",
+    "no_data": "Pas encore de données",
+    "chart_title": "Répartition dans le temps : temps d'entretien vs analyse",
+    "chart_legend_manual_interview": "Manuel — temps d'entretien",
+    "chart_legend_manual_analysis": "Manuel — analyse",
+    "chart_legend_ai_interview": "TalentAI — temps d'entretien",
+    "chart_legend_ai_analysis": "TalentAI — analyse"
+  },
+  "costComparison": {
+    "title": "Coût nécessaire : manuel vs avec TalentAI",
+    "subtitle_fallback": "Ce mois-ci",
+    "description": "Combien votre équipe dépenserait à examiner les mêmes CV et entretiens à la main chaque mois, comparé à TalentAI qui le fait automatiquement.",
+    "legend_manual": "Manuel (à la main)",
+    "legend_ai": "Avec TalentAI",
+    "no_data": "Pas encore de données",
+    "pie_saved_sub": "économisé avec TalentAI",
+    "pie_added_sub": "coût supplémentaire ce mois-ci",
+    "breakdown_manual": "{{iv}} candidats × {{rate}}",
+    "breakdown_ai": "{{iv}} candidats × {{rate}}"
   },
   "tour": {
     "nav": {

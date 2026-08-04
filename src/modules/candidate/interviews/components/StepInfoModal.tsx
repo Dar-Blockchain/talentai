@@ -1,21 +1,9 @@
 import React from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogActions,
-  Box,
-  Typography,
-  Button,
-  Chip,
-  IconButton,
-  LinearProgress,
-  Tooltip,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import PlayArrowIcon from "@mui/icons-material/PlayArrow";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import HourglassEmptyIcon from "@mui/icons-material/HourglassEmpty";
-import RadioButtonUncheckedIcon from "@mui/icons-material/RadioButtonUnchecked";
+import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/modules/shared/ui/shadcn/dialog";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { X as CloseIcon, Play as PlayArrowIcon, CheckCircle2 as CheckCircleOutlineIcon, Hourglass as HourglassEmptyIcon, Circle as RadioButtonUncheckedIcon } from "lucide-react";
 import { PostAssessment } from "./AssessmentCard";
 
 interface StepInfoModalProps {
@@ -30,11 +18,11 @@ const getStepIcon = (status: string) => {
   switch (status) {
     case "done":
     case "passed":
-      return <CheckCircleOutlineIcon sx={{ fontSize: 20, color: "#10b981" }} />;
+      return <CheckCircleOutlineIcon size={20} color="#10b981" />;
     case "inProgress":
-      return <HourglassEmptyIcon sx={{ fontSize: 20, color: "#f59e0b" }} />;
+      return <HourglassEmptyIcon size={20} color="#f59e0b" />;
     default:
-      return <RadioButtonUncheckedIcon sx={{ fontSize: 20, color: "#9ca3af" }} />;
+      return <RadioButtonUncheckedIcon size={20} color="#9ca3af" />;
   }
 };
 
@@ -84,7 +72,6 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
     currentStepData?.stepId?.data?.label ||
     currentStepData?.stepId?.data?.config?.title ||
     "Next Step";
-  const stepType = currentStepData?.stepId?.data?.type || "interview";
   const stepConfig = currentStepData?.stepId?.data?.config || {};
 
   // Calculate overall progress
@@ -98,11 +85,6 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
     (a: any, b: any) => (a.stepId?.order ?? 999) - (b.stepId?.order ?? 999)
   );
 
-  // Find current step index
-  const currentStepIndex = sortedSteps.findIndex(
-    (s: any) => s.stepId?._id === currentStep?._id || s.stepId?.id === currentStep?._id
-  );
-
   const jobTitle = assessment.post?.jobDetails?.title || "Job Application";
 
   // Skills data from post
@@ -111,379 +93,238 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
   const softSkills = skillAnalysis?.softSkills || [];
   const hasSkills = requiredSkills.length > 0 || softSkills.length > 0;
 
+  const quotaFull = quota >= 5;
+
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{
-        sx: {
-          borderRadius: "16px",
-          border: "1px solid rgba(211, 224, 245, 1)",
-          boxShadow: "0px 8px 32px rgba(0, 0, 0, 0.08)",
-          overflow: "hidden",
-        },
-      }}
-    >
-      {/* Header */}
-      <Box
-        sx={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          px: 3,
-          py: 2,
-          borderBottom: "1px solid rgba(211, 224, 245, 0.5)",
-        }}
-      >
-        <Box>
-          <Typography
-            sx={{
-              fontWeight: 600,
-              fontSize: "18px",
-              color: "rgba(62, 70, 82, 1)",
-            }}
-          >
-            {jobTitle}
-          </Typography>
-          <Typography
-            sx={{
-              fontWeight: 400,
-              fontSize: "13px",
-              color: "rgba(100, 113, 131, 1)",
-              mt: 0.25,
-            }}
-          >
-            Step {completedSteps} of {sortedSteps.length}
-          </Typography>
-        </Box>
-        <IconButton onClick={onClose} size="small" sx={{ color: "#6b7280" }}>
-          <CloseIcon />
-        </IconButton>
-      </Box>
+    <TooltipProvider>
+      <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+        <DialogContent
+          showCloseButton={false}
+          className="sm:max-w-[600px] p-0 gap-0 overflow-hidden rounded-2xl border border-[rgba(211,224,245,1)] shadow-[0px_8px_32px_rgba(0,0,0,0.08)]"
+        >
+          {/* Header */}
+          <div className="flex justify-between items-center px-6 py-4 border-b border-[rgba(211,224,245,0.5)]">
+            <div>
+              <DialogTitle asChild>
+                <p className="font-semibold text-[18px] text-[rgba(62,70,82,1)]">
+                  {jobTitle}
+                </p>
+              </DialogTitle>
+              <p className="font-normal text-[13px] text-[rgba(100,113,131,1)] mt-0.5">
+                Step {completedSteps} of {sortedSteps.length}
+              </p>
+            </div>
+            <button onClick={onClose} className="cursor-pointer p-1.5 rounded-md text-[#6b7280] hover:bg-slate-100">
+              <CloseIcon size={20} />
+            </button>
+          </div>
 
-      <DialogContent sx={{ px: 3, py: 2.5 }}>
-        {/* Progress */}
-        <Box sx={{ mb: 3 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "space-between",
-              alignItems: "center",
-              mb: 1,
-            }}
-          >
-            <Typography
-              sx={{ fontSize: "12px", fontWeight: 500, color: "#6b7280" }}
-            >
-              Overall Progress
-            </Typography>
-            <Typography
-              sx={{ fontSize: "12px", fontWeight: 600, color: "rgba(189, 133, 255, 1)" }}
-            >
-              {completedSteps}/{steps.length} completed
-            </Typography>
-          </Box>
-          <LinearProgress
-            variant="determinate"
-            value={progressPercent}
-            sx={{
-              height: 6,
-              borderRadius: 3,
-              backgroundColor: "rgba(243, 245, 247, 1)",
-              "& .MuiLinearProgress-bar": {
-                borderRadius: 3,
-                backgroundColor: "rgba(189, 133, 255, 1)",
-              },
-            }}
-          />
-        </Box>
+          <div className="px-6 py-5 max-h-[70vh] overflow-y-auto">
+            {/* Progress */}
+            <div className="mb-6">
+              <div className="flex justify-between items-center mb-2">
+                <span className="text-[12px] font-medium text-[#6b7280]">
+                  Overall Progress
+                </span>
+                <span className="text-[12px] font-semibold" style={{ color: "rgba(189, 133, 255, 1)" }}>
+                  {completedSteps}/{steps.length} completed
+                </span>
+              </div>
+              <div className="h-1.5 rounded-[3px] overflow-hidden" style={{ backgroundColor: "rgba(243, 245, 247, 1)" }}>
+                <div
+                  className="h-full rounded-[3px] transition-all"
+                  style={{ width: `${progressPercent}%`, backgroundColor: "rgba(189, 133, 255, 1)" }}
+                />
+              </div>
+            </div>
 
-        {/* Steps list */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-          {sortedSteps.map((step: any, index: number) => {
-            const isCurrentStep =
-              step.stepId?._id === currentStep?._id ||
-              step.stepId?.id === currentStep?._id;
-            const label =
-              step.stepId?.data?.label ||
-              step.stepId?.data?.config?.title ||
-              `Step ${index + 1}`;
-            const type = step.stepId?.data?.type || "interview";
-            const statusColors = getStatusColor(step.status);
+            {/* Steps list */}
+            <div className="flex flex-col gap-2">
+              {sortedSteps.map((step: any, index: number) => {
+                const isCurrentStep =
+                  step.stepId?._id === currentStep?._id ||
+                  step.stepId?.id === currentStep?._id;
+                const label =
+                  step.stepId?.data?.label ||
+                  step.stepId?.data?.config?.title ||
+                  `Step ${index + 1}`;
+                const type = step.stepId?.data?.type || "interview";
+                const statusColors = getStatusColor(step.status);
+                const isDone = step.status === "done" || step.status === "passed";
+                const isCurrentPending = isCurrentStep && !isDone;
 
-            return (
-              <Box
-                key={step._id || index}
-                sx={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 1.5,
-                  p: 1.5,
-                  borderRadius: "10px",
-                  border: isCurrentStep
-                    ? "1.5px solid rgba(189, 133, 255, 0.5)"
-                    : "1px solid rgba(211, 224, 245, 0.5)",
-                  backgroundColor: isCurrentStep
-                    ? "rgba(189, 133, 255, 0.04)"
-                    : "transparent",
-                }}
-              >
-                {/* Step number / icon */}
-                <Box
-                  sx={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: "8px",
-                    backgroundColor:
-                      step.status === "done" || step.status === "passed"
-                        ? "rgba(16, 185, 129, 0.1)"
-                        : isCurrentStep
-                        ? "rgba(189, 133, 255, 0.1)"
-                        : "rgba(243, 245, 247, 1)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  {step.status === "done" || step.status === "passed" ? (
-                    getStepIcon(step.status)
-                  ) : (
-                    <Typography
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: "13px",
-                        color: isCurrentStep
-                          ? "rgba(189, 133, 255, 1)"
-                          : "#9ca3af",
+                return (
+                  <div
+                    key={step._id || index}
+                    className="flex items-center gap-3 p-3 rounded-[10px]"
+                    style={{
+                      border: isCurrentStep
+                        ? "1.5px solid rgba(189, 133, 255, 0.5)"
+                        : "1px solid rgba(211, 224, 245, 0.5)",
+                      backgroundColor: isCurrentStep
+                        ? "rgba(189, 133, 255, 0.04)"
+                        : "transparent",
+                    }}
+                  >
+                    {/* Step number / icon */}
+                    <div
+                      className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                      style={{
+                        backgroundColor: isDone
+                          ? "rgba(16, 185, 129, 0.1)"
+                          : isCurrentStep
+                          ? "rgba(189, 133, 255, 0.1)"
+                          : "rgba(243, 245, 247, 1)",
                       }}
                     >
-                      {index + 1}
-                    </Typography>
-                  )}
-                </Box>
+                      {isDone ? (
+                        getStepIcon(step.status)
+                      ) : (
+                        <span
+                          className="font-bold text-[13px]"
+                          style={{ color: isCurrentStep ? "rgba(189, 133, 255, 1)" : "#9ca3af" }}
+                        >
+                          {index + 1}
+                        </span>
+                      )}
+                    </div>
 
-                {/* Step info */}
-                <Box sx={{ flex: 1, minWidth: 0 }}>
-                  <Typography
-                    sx={{
-                      fontWeight: isCurrentStep ? 600 : 500,
-                      fontSize: "14px",
-                      color: isCurrentStep
-                        ? "rgba(62, 70, 82, 1)"
-                        : "#6b7280",
-                    }}
-                  >
-                    {label}
-                  </Typography>
-                  <Typography
-                    sx={{
-                      fontSize: "11px",
-                      color: "#9ca3af",
-                      textTransform: "capitalize",
-                    }}
-                  >
-                    {type}
-                  </Typography>
-                </Box>
+                    {/* Step info */}
+                    <div className="flex-1 min-w-0">
+                      <p
+                        className="text-[14px]"
+                        style={{ fontWeight: isCurrentStep ? 600 : 500, color: isCurrentStep ? "rgba(62, 70, 82, 1)" : "#6b7280" }}
+                      >
+                        {label}
+                      </p>
+                      <p className="text-[11px] text-[#9ca3af] capitalize">
+                        {type}
+                      </p>
+                    </div>
 
-                {/* Status chip */}
-                <Chip
-                  label={
-                    isCurrentStep && step.status !== "done" && step.status !== "passed"
-                      ? "Current"
-                      : getStatusLabel(step.status)
-                  }
-                  size="small"
-                  sx={{
-                    backgroundColor: isCurrentStep && step.status !== "done" && step.status !== "passed"
-                      ? "rgba(189, 133, 255, 0.12)"
-                      : statusColors.bg,
-                    color: isCurrentStep && step.status !== "done" && step.status !== "passed"
-                      ? "rgba(189, 133, 255, 1)"
-                      : statusColors.color,
-                    fontWeight: 600,
-                    fontSize: "0.7rem",
-                    height: 22,
-                    borderRadius: "6px",
-                  }}
-                />
-              </Box>
-            );
-          })}
-        </Box>
-
-        {/* Skills */}
-        {hasSkills && (
-          <Box sx={{ mt: 2.5 }}>
-            <Typography
-              sx={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "rgba(62, 70, 82, 1)",
-                mb: 1,
-              }}
-            >
-              Skills to be assessed
-            </Typography>
-
-            {requiredSkills.length > 0 && (
-              <Box sx={{ mb: 1.5 }}>
-                <Typography
-                  sx={{ fontSize: "11px", fontWeight: 500, color: "#6b7280", mb: 0.5 }}
-                >
-                  Required Skills
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {requiredSkills.map((skill: any, i: number) => (
-                    <Chip
-                      key={skill._id || i}
-                      label={skill.name}
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgba(99, 102, 241, 0.08)",
-                        color: "#6366f1",
-                        fontWeight: 500,
-                        fontSize: "0.7rem",
-                        height: 22,
-                        border: "1px solid rgba(99, 102, 241, 0.2)",
+                    {/* Status chip */}
+                    <Badge
+                      variant="outline"
+                      className="font-semibold text-[0.7rem] h-[22px] rounded-md border-transparent"
+                      style={{
+                        backgroundColor: isCurrentPending ? "rgba(189, 133, 255, 0.12)" : statusColors.bg,
+                        color: isCurrentPending ? "rgba(189, 133, 255, 1)" : statusColors.color,
                       }}
-                    />
-                  ))}
-                </Box>
-              </Box>
+                    >
+                      {isCurrentPending ? "Current" : getStatusLabel(step.status)}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Skills */}
+            {hasSkills && (
+              <div className="mt-5">
+                <p className="text-[13px] font-semibold text-[rgba(62,70,82,1)] mb-2">
+                  Skills to be assessed
+                </p>
+
+                {requiredSkills.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-[11px] font-medium text-[#6b7280] mb-1">
+                      Required Skills
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {requiredSkills.map((skill: any, i: number) => (
+                        <Badge
+                          key={skill._id || i}
+                          variant="outline"
+                          className="font-medium text-[0.7rem] h-[22px] rounded-full"
+                          style={{ backgroundColor: "rgba(99, 102, 241, 0.08)", color: "#6366f1", borderColor: "rgba(99, 102, 241, 0.2)" }}
+                        >
+                          {skill.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {softSkills.length > 0 && (
+                  <div className="mb-3">
+                    <p className="text-[11px] font-medium text-[#6b7280] mb-1">
+                      Soft Skills
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {softSkills.map((skill: any, i: number) => (
+                        <Badge
+                          key={skill._id || i}
+                          variant="outline"
+                          className="font-medium text-[0.7rem] h-[22px] rounded-full"
+                          style={{ backgroundColor: "rgba(16, 185, 129, 0.08)", color: "#10b981", borderColor: "rgba(16, 185, 129, 0.2)" }}
+                        >
+                          {skill.name}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             )}
 
-            {softSkills.length > 0 && (
-              <Box sx={{ mb: 1.5 }}>
-                <Typography
-                  sx={{ fontSize: "11px", fontWeight: 500, color: "#6b7280", mb: 0.5 }}
-                >
-                  Soft Skills
-                </Typography>
-                <Box sx={{ display: "flex", flexWrap: "wrap", gap: 0.5 }}>
-                  {softSkills.map((skill: any, i: number) => (
-                    <Chip
-                      key={skill._id || i}
-                      label={skill.name}
-                      size="small"
-                      sx={{
-                        backgroundColor: "rgba(16, 185, 129, 0.08)",
-                        color: "#10b981",
-                        fontWeight: 500,
-                        fontSize: "0.7rem",
-                        height: 22,
-                        border: "1px solid rgba(16, 185, 129, 0.2)",
-                      }}
-                    />
-                  ))}
-                </Box>
-              </Box>
-            )}
-
-          </Box>
-        )}
-
-        {/* Current step description */}
-        {(stepConfig.description || stepConfig.interviewType) && (
-          <Box
-            sx={{
-              mt: 2.5,
-              p: 2,
-              backgroundColor: "rgba(189, 133, 255, 0.04)",
-              borderRadius: "10px",
-              border: "1px solid rgba(189, 133, 255, 0.15)",
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "13px",
-                fontWeight: 600,
-                color: "rgba(62, 70, 82, 1)",
-                mb: 0.5,
-              }}
-            >
-              About this step
-            </Typography>
-            {stepConfig.interviewType && (
-              <Typography
-                sx={{ fontSize: "12px", color: "#6b7280", mb: 0.5 }}
+            {/* Current step description */}
+            {(stepConfig.description || stepConfig.interviewType) && (
+              <div
+                className="mt-5 p-4 rounded-[10px]"
+                style={{ backgroundColor: "rgba(189, 133, 255, 0.04)", border: "1px solid rgba(189, 133, 255, 0.15)" }}
               >
-                Type: {stepConfig.interviewType.replace(/_/g, " ")}
-              </Typography>
+                <p className="text-[13px] font-semibold text-[rgba(62,70,82,1)] mb-1">
+                  About this step
+                </p>
+                {stepConfig.interviewType && (
+                  <p className="text-[12px] text-[#6b7280] mb-1">
+                    Type: {stepConfig.interviewType.replace(/_/g, " ")}
+                  </p>
+                )}
+                {stepConfig.description && (
+                  <p className="text-[12px] text-[#6b7280] leading-relaxed">
+                    {stepConfig.description}
+                  </p>
+                )}
+              </div>
             )}
-            {stepConfig.description && (
-              <Typography sx={{ fontSize: "12px", color: "#6b7280", lineHeight: 1.5 }}>
-                {stepConfig.description}
-              </Typography>
-            )}
-          </Box>
-        )}
-      </DialogContent>
+          </div>
 
-      <DialogActions
-        sx={{
-          px: 3,
-          py: 2,
-          borderTop: "1px solid rgba(211, 224, 245, 0.5)",
-          gap: 1.5,
-        }}
-      >
-        <Button
-          onClick={onClose}
-          sx={{
-            textTransform: "none",
-            color: "rgba(100, 113, 131, 1)",
-            fontWeight: 500,
-            fontSize: "0.875rem",
-            borderRadius: "38px",
-            px: 3,
-            "&:hover": {
-              backgroundColor: "rgba(243, 245, 247, 1)",
-            },
-          }}
-        >
-          Cancel
-        </Button>
-        <Tooltip
-          title={quota >= 5 ? "You have reached your monthly limit of 5 tests. Please try again next month." : ""}
-          arrow
-          disableHoverListener={quota < 5}
-        >
-          <span>
-            <Button
-              onClick={onStart}
-              variant="contained"
-              disabled={quota >= 5}
-              startIcon={<PlayArrowIcon />}
-              sx={{
-                textTransform: "none",
-                backgroundColor: "rgba(189, 133, 255, 1)",
-                color: "white",
-                fontWeight: 600,
-                fontSize: "0.875rem",
-                borderRadius: "38px",
-                px: 3,
-                height: "42px",
-                boxShadow: "none",
-                "&:hover": {
-                  backgroundColor: "rgba(160, 100, 230, 1)",
-                  boxShadow: "none",
-                },
-                "&.Mui-disabled": {
-                  backgroundColor: "rgba(189, 133, 255, 0.3)",
-                  color: "rgba(255, 255, 255, 0.6)",
-                },
-              }}
-            >
-              Start {stepLabel}
+          <DialogFooter className="px-6 py-4 border-t border-[rgba(211,224,245,0.5)] gap-3 sm:justify-end">
+            <Button onClick={onClose} variant="ghost" className="rounded-[38px] px-6 font-medium" style={{ color: "rgba(100, 113, 131, 1)" }}>
+              Cancel
             </Button>
-          </span>
-        </Tooltip>
-      </DialogActions>
-    </Dialog>
+            {quotaFull ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span>
+                    <Button
+                      onClick={onStart}
+                      variant="secondary"
+                      disabled
+                      className="h-[42px] rounded-[38px] px-6 font-semibold shadow-none"
+                    >
+                      <PlayArrowIcon />
+                      Start {stepLabel}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>You have reached your monthly limit of 5 tests. Please try again next month.</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button
+                onClick={onStart}
+                variant="secondary"
+                className="h-[42px] rounded-[38px] px-6 font-semibold shadow-none"
+              >
+                <PlayArrowIcon />
+                Start {stepLabel}
+              </Button>
+            )}
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </TooltipProvider>
   );
 };
 

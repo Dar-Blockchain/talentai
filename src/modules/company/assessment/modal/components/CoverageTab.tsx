@@ -1,5 +1,5 @@
 import React from "react";
-import TrendingUpOutlined from "@mui/icons-material/TrendingUpOutlined";
+import { TrendingUp as TrendingUpOutlined } from "lucide-react";
 import { PostAssessmentData } from "../types";
 import AreaCoverageCard from "./area-coverage/AreaCoverageCard";
 
@@ -23,7 +23,7 @@ const CoverageTab: React.FC<Props> = ({ coverage, overallCoverageLabel }) => {
           </span>
           {coverage.nextRecommendedArea && (
             <span className="flex items-center gap-1 h-6 px-3 rounded-full border bg-violet-50 text-violet-700 border-violet-200 text-[0.7rem] font-semibold capitalize">
-              <TrendingUpOutlined style={{ fontSize: 11 }} />
+              <TrendingUpOutlined size={11} />
               Next: {coverage.nextRecommendedArea.replace(/_/g, " ")}
             </span>
           )}

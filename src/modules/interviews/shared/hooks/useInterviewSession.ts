@@ -15,6 +15,7 @@ import { useInterviewTimer } from './useInterviewTimer';
 import { useCamera } from './useCamera';
 import { useSecurityMonitoring } from './useSecurityMonitoring';
 import { useIdentityGuard } from './useIdentityGuard';
+import { useCameraGuard } from './useCameraGuard';
 import { toast } from 'sonner';
 import { getMyProfile } from '@/store/slices/userSlice';
 import type { AppDispatch } from '@/store/store';
@@ -31,6 +32,8 @@ export function useInterviewSession({
   authUser,
   jobData,
   namespace,
+  candidateIdOverride,
+  source,
 }: Omit<UseInterviewSessionOptions, 'notify'>) {
   const dispatch = useDispatch<AppDispatch>();
   const [coverage, setCoverage] = useState<Coverage | null>(null);
@@ -190,6 +193,32 @@ export function useInterviewSession({
     namespace,
   });
 
+  const camera = useCamera({ showNotification: notify as any });
+
+  const cameraGuard = useCameraGuard({
+    streamRef: camera.streamRef,
+    active: socket.interviewStatus === 'active',
+    onTerminate: () => endInterviewRef.current(),
+    showNotification: notify,
+  });
+
+  const identityGuard = useIdentityGuard({
+    videoRef: camera.videoRef,
+    // Detection runs as soon as the camera preview is live (lobby included), so
+    // the Start button can require a face to actually be visible. Enforcement
+    // (warnings/termination) only kicks in once the interview is truly active.
+    active: camera.cameraStatus === 'granted',
+    enforce: socket.interviewStatus === 'active',
+    onTerminate: () => endInterviewRef.current(),
+    showNotification: notify,
+  });
+
+  // Candidate can only speak/submit while the camera is live AND their face is
+  // actually visible — camera-on-but-no-face pauses the mic exactly like a
+  // fully lost camera does (the full-screen alert is rendered in InterviewScreen).
+  const noFaceBlocking = socket.interviewStatus === 'active' && identityGuard.status === 'watching' && identityGuard.faceCount === 0;
+  const canSpeak = cameraGuard.cameraLive && !noFaceBlocking;
+
   const audio = useAudioTranscription({
     socketRef: socket.socketRef,
     sessionIdRef: socket.sessionIdRef,
@@ -197,6 +226,7 @@ export function useInterviewSession({
     interviewStatus: socket.interviewStatus,
     showNotification: notify,
     jobData,
+    cameraLive: canSpeak,
   });
 
   const timer = useInterviewTimer({
@@ -205,19 +235,10 @@ export function useInterviewSession({
     showNotification: notify as any,
   });
 
-  const camera = useCamera({ showNotification: notify as any });
-
   const security = useSecurityMonitoring({
     interviewStatus: socket.interviewStatus,
     onTerminate: () => endInterviewRef.current(),
     enabled: true,
-  });
-
-  const identityGuard = useIdentityGuard({
-    videoRef: camera.videoRef,
-    active: socket.interviewStatus === 'active',
-    onTerminate: () => endInterviewRef.current(),
-    showNotification: notify,
   });
 
   audioRef.current  = audio;
@@ -231,7 +252,7 @@ export function useInterviewSession({
     if (!socket.socketRef.current || !socket.isConnected) { notify('Not connected to interview system', 'error'); return; }
     try {
       socket.setInterviewStatus('connecting');
-      const candidateId = authUser?._id || authUser?.id || null;
+      const candidateId = candidateIdOverride ?? (authUser?._id || authUser?.id || null);
       const postId = jobData?._id || null;
       await audio.initializeAudio();
       socket.socketRef.current.emit('start_interview', {
@@ -246,13 +267,14 @@ export function useInterviewSession({
         },
         candidateId,
         postId,
+        source,
       });
     } catch (error) {
       console.error('Failed to start interview:', error);
       notify('Failed to start interview', 'error');
       socket.setInterviewStatus('idle');
     }
-  }, [socket.socketRef, socket.isConnected, socket.setInterviewStatus, interviewConfig, authUser, audio.initializeAudio, notify]);
+  }, [socket.socketRef, socket.isConnected, socket.setInterviewStatus, interviewConfig, authUser, candidateIdOverride, source, audio.initializeAudio, notify]);
 
   const endInterview = useCallback(() => {
     if (socket.socketRef.current && socket.sessionId) socket.socketRef.current.emit('end_interview', { sessionId: socket.sessionId });
@@ -289,6 +311,7 @@ export function useInterviewSession({
     camera,
     security,
     identityGuard,
+    cameraGuard,
     coverage,
     resultsReady,
     assessmentId: socket.assessmentId,

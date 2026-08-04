@@ -1,7 +1,7 @@
 import { useState, useCallback } from 'react';
 import { useRouter } from 'next/router';
 import { useLogout } from '@/modules/auth/shared/hooks';
-import { Menu as MenuIcon } from '@mui/icons-material';
+import { Menu as MenuIcon } from 'lucide-react';
 import { AdminSidebar } from '@/modules/admin/shared';
 import { UserDetailsDialog, type User } from '@/modules/admin/users';
 import dynamic from 'next/dynamic';
@@ -12,8 +12,10 @@ const PostsManagement           = dynamic(() => import('@/modules/admin/posts').
 const PostInterviewAssessments  = dynamic(() => import('@/modules/admin/post-interview').then((m) => m.PostInterviewAssessments));
 const SkillInterviewAssessments = dynamic(() => import('@/modules/admin/skill-interview').then((m) => m.SkillInterviewAssessments));
 const CompanyConfig             = dynamic(() => import('@/modules/admin/company-config').then((m) => m.CompanyConfig));
+const WebinarManagement         = dynamic(() => import('@/modules/admin/webinars').then((m) => m.WebinarManagement));
+const BlogManagement            = dynamic(() => import('@/modules/admin/blog').then((m) => m.BlogManagement));
 
-const VALID_TABS = ['dashboard', 'users', 'posts', 'post-interview', 'skill-interview', 'company-config'] as const;
+const VALID_TABS = ['dashboard', 'users', 'posts', 'post-interview', 'skill-interview', 'company-config', 'webinars', 'blog'] as const;
 type TabName = typeof VALID_TABS[number];
 
 const DashboardAdmin = () => {
@@ -33,7 +35,7 @@ const DashboardAdmin = () => {
   const openUserDialog = (user: User) => { setSelectedUser(user); setUserDialogOpen(true); };
 
   return (
-    <div className="flex min-h-screen bg-[#FAFBFC]">
+    <div className="flex h-dvh bg-[#FAFBFC]">
       <AdminSidebar
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -42,7 +44,7 @@ const DashboardAdmin = () => {
         onDrawerClose={() => setDrawerOpen(false)}
       />
 
-      <main className="flex flex-col flex-1 min-h-screen p-2 sm:p-4 md:p-8">
+      <main className="flex flex-col flex-1 min-w-0 overflow-y-auto p-2 sm:p-4 md:p-8">
         <div className="flex items-center mb-4 md:hidden">
           <button
             onClick={() => setDrawerOpen(true)}
@@ -65,6 +67,8 @@ const DashboardAdmin = () => {
           {activeTab === 'post-interview'  && <PostInterviewAssessments />}
           {activeTab === 'skill-interview' && <SkillInterviewAssessments />}
           {activeTab === 'company-config'  && <CompanyConfig />}
+          {activeTab === 'webinars'        && <WebinarManagement />}
+          {activeTab === 'blog'            && <BlogManagement />}
         </div>
       </main>
 

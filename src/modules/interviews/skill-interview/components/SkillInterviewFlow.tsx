@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { type RootState } from '@/store/store';
@@ -12,9 +12,11 @@ interface SkillInterviewFlowProps {
   skill?: string;
   category?: string;
   language?: string;
+  /** Called whenever the flow moves between the skill preview and the live interview (e.g. to hide the site nav during the interview). */
+  onPhaseChange?: (phase: 'preview' | 'interview') => void;
 }
 
-export default function SkillInterviewFlow({ skill: propSkill, category: propCategory, language: propLanguage }: SkillInterviewFlowProps = {}) {
+export default function SkillInterviewFlow({ skill: propSkill, category: propCategory, language: propLanguage, onPhaseChange }: SkillInterviewFlowProps = {}) {
   const { t } = useTranslation('modules/interview/skill-interview');
   const authUser = useSelector((state: RootState) => state.user.connectedUser.user);
 
@@ -29,6 +31,8 @@ export default function SkillInterviewFlow({ skill: propSkill, category: propCat
   } = useSkillInterviewConfig(overrides);
 
   const [step, setStep] = useState<'preview' | 'interview'>('preview');
+
+  useEffect(() => { onPhaseChange?.(step); }, [step, onPhaseChange]);
 
   const session = useInterviewSession({
     interviewConfig,

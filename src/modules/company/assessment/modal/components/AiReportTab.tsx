@@ -1,12 +1,14 @@
 import React from "react";
-import CheckCircleOutlined   from "@mui/icons-material/CheckCircleOutlined";
-import KeyOutlined           from "@mui/icons-material/KeyOutlined";
-import LightbulbOutlined     from "@mui/icons-material/LightbulbOutlined";
-import PersonOutlined        from "@mui/icons-material/PersonOutlined";
-import ReportProblemOutlined from "@mui/icons-material/ReportProblemOutlined";
-import SchoolOutlined        from "@mui/icons-material/SchoolOutlined";
-import TrendingUpOutlined    from "@mui/icons-material/TrendingUpOutlined";
-import AutoAwesomeOutlined   from "@mui/icons-material/AutoAwesomeOutlined";
+import {
+  CheckCircle2 as CheckCircleOutlined,
+  Key as KeyOutlined,
+  Lightbulb as LightbulbOutlined,
+  User as PersonOutlined,
+  AlertTriangle as ReportProblemOutlined,
+  GraduationCap as SchoolOutlined,
+  TrendingUp as TrendingUpOutlined,
+  Sparkles as AutoAwesomeOutlined,
+} from "lucide-react";
 import { PostAssessmentData } from "../types";
 
 interface Props {
@@ -25,7 +27,7 @@ interface SectionCfg {
   dotCls:     string;
   textCls:    string;
   countCls:   string;
-  Icon:       React.ComponentType<{ style?: React.CSSProperties }>;
+  Icon:       React.ComponentType<{ size?: number; color?: string }>;
   iconColor:  string;
 }
 
@@ -51,7 +53,7 @@ const AiReportTab: React.FC<Props> = ({ aiAssessment, candidateProfile, aiSummar
         <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
           <div className="flex items-center gap-2.5 px-5 py-3 border-b border-slate-100 bg-slate-50">
             <div className="w-6 h-6 rounded-lg bg-violet-100 flex items-center justify-center">
-              <AutoAwesomeOutlined style={{ fontSize: 13, color: "#7C3AED" }} />
+              <AutoAwesomeOutlined size={13} color="#7C3AED" />
             </div>
             <span className="text-[0.78rem] font-bold text-slate-700">{aiSummaryTitle}</span>
           </div>
@@ -70,7 +72,7 @@ const AiReportTab: React.FC<Props> = ({ aiAssessment, candidateProfile, aiSummar
               <div key={key} className={`rounded-2xl border bg-white overflow-hidden ${borderCls}`}>
                 <div className={`flex items-center gap-2.5 px-4 py-3 border-b ${headerCls}`}>
                   <div className={`w-6 h-6 rounded-lg flex items-center justify-center ${iconWrapCls}`}>
-                    <Icon style={{ fontSize: 13, color: iconColor }} />
+                    <Icon size={13} color={iconColor} />
                   </div>
                   <span className="text-[0.78rem] font-bold text-slate-800">{title}</span>
                   <span className={`ml-auto text-[0.65rem] font-bold px-1.5 py-0.5 rounded-full ${countCls}`}>
@@ -96,7 +98,7 @@ const AiReportTab: React.FC<Props> = ({ aiAssessment, candidateProfile, aiSummar
         <div className="rounded-2xl border border-slate-100 bg-white overflow-hidden">
           <div className="flex items-center gap-2.5 px-5 py-3 border-b border-slate-100 bg-slate-50">
             <div className="w-6 h-6 rounded-lg bg-blue-100 flex items-center justify-center">
-              <PersonOutlined style={{ fontSize: 13, color: "#3B82F6" }} />
+              <PersonOutlined size={13} color="#3B82F6" />
             </div>
             <span className="text-[0.78rem] font-bold text-slate-700">Candidate Profile</span>
           </div>
@@ -157,7 +159,7 @@ const AiReportTab: React.FC<Props> = ({ aiAssessment, candidateProfile, aiSummar
         <div className="rounded-2xl border border-amber-100 bg-white overflow-hidden">
           <div className="flex items-center gap-2.5 px-5 py-3 border-b border-amber-100 bg-amber-50">
             <div className="w-6 h-6 rounded-lg bg-amber-100 flex items-center justify-center">
-              <TrendingUpOutlined style={{ fontSize: 13, color: "#D97706" }} />
+              <TrendingUpOutlined size={13} color="#D97706" />
             </div>
             <span className="text-[0.78rem] font-bold text-slate-700">Recommended Focus</span>
           </div>

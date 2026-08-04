@@ -137,7 +137,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
               variant="outline"
               size="lg"
               onClick={onClose}
-              className="h-11 rounded-[10px] font-semibold text-[13px] shrink-0"
+              className="flex-1"
             >
               {t("lang_modal.btn_back")}
             </Button>
@@ -145,7 +145,7 @@ const InterviewLanguageModal: React.FC<Props> = ({ open, languages, onConfirm, o
               variant="default"
               size="lg"
               onClick={() => onConfirm(selected)}
-              className="flex-1 h-11 rounded-[10px] font-bold text-[13.5px]"
+              className="flex-1"
             >
               {isMulti ? t("lang_modal.btn_start_in", { language: selectedMeta?.label ?? selected }) : t("lang_modal.btn_start")}
               <ArrowRight size={15} />

@@ -3,6 +3,7 @@ import { Brain, Code2, ChevronLeft } from "lucide-react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { cn } from "@/lib/utils";
+import { buildInterviewUrl } from "@/lib/interviewSession";
 import { RootState } from "@/store/store";
 import { skillCategories, softSkills } from "@/modules/shared/constants/skills";
 import {
@@ -106,17 +107,17 @@ const AssessmentModal = ({ type, open, onClose }: any) => {
   };
 
   const handleSubmit = () => {
-    const query =
+    // Same session route as the dashboard's "Skill Interview" modal
+    // (SkillInterviewDialog) — /interviews/<encoded session>, not the old
+    // /candidate/interview query-string route.
+    const params =
       skillType === "technical"
-        ? { type: "technical", role: selectedSkill, proficiency: "Mid Level" }
-        : {
-            type:       "soft",
-            skill:      softSkillType,
-            category:   softSkillType === "Communication" ? softSkillLanguage : softSkillSubcategory,
-            proficiency: "3",
-          };
+        ? { type: "skill" as const, skill: selectedSkill, category: selectedCategory }
+        : softSkillType === "Communication"
+          ? { type: "skill" as const, skill: softSkillType, language: softSkillLanguage }
+          : { type: "skill" as const, skill: softSkillType, category: softSkillSubcategory };
     handleClose();
-    router.push(`/candidate/interview?${new URLSearchParams(query)}`);
+    router.push(buildInterviewUrl(params));
   };
 
   const availableSkills = selectedCategory

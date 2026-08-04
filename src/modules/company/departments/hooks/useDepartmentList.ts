@@ -23,9 +23,13 @@ export const useDepartmentList = (): UseDepartmentListReturn => {
     debounceRef.current = setTimeout(() => setDebouncedSearch(val), 400);
   }, []);
 
-  const { data, isLoading, error } = useDepartmentsQuery(
-    debouncedSearch ? { search: debouncedSearch } : undefined,
-  );
+  // No pagination UI is built on this hook — every consumer (dropdowns,
+  // badges, charts) expects the full department list, so request the
+  // backend's max page size instead of its 20-item default.
+  const { data, isLoading, error } = useDepartmentsQuery({
+    limit: 100,
+    ...(debouncedSearch ? { search: debouncedSearch } : {}),
+  });
 
   return {
     departments: data?.data ?? [],

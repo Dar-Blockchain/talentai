@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { useRouter } from "next/router";
 import { useSelector } from "react-redux";
 import { type RootState } from "@/store/store";
@@ -6,15 +6,18 @@ import { useInterviewConfig } from "../hooks/useInterviewConfig";
 import { useInterviewSession } from "../hooks/useInterviewSession";
 import InterviewScreen from "../../shared/components/session/InterviewScreen";
 import JobPreviewPanel from "./job-preview/JobInterviewPanel";
+import ApplicationSourceModal from "./job-preview/ApplicationSourceModal";
 import InterviewLoadingScreen from "../../shared/components/layout/InterviewLoadingScreen";
-import LoadingState from "@/components/ui/LoadingState";
+import LoadingState from "@/modules/shared/ui/LoadingState";
 import { useTranslation } from "react-i18next";
 
 interface InterviewFlowProps {
   jobId?: string;
+  /** Called whenever the flow moves between the job preview and the live interview (e.g. to hide the site nav during the interview). */
+  onPhaseChange?: (phase: "preview" | "interview") => void;
 }
 
-export default function InterviewFlow({ jobId: propJobId }: InterviewFlowProps = {}) {
+export default function InterviewFlow({ jobId: propJobId, onPhaseChange }: InterviewFlowProps = {}) {
   const { t } = useTranslation("modules/interview/interview");
 
   const router = useRouter();
@@ -28,6 +31,10 @@ export default function InterviewFlow({ jobId: propJobId }: InterviewFlowProps =
   const hasJobId = !!resolvedJobId;
 
   const [step, setStep] = useState<"preview" | "interview">("preview");
+  const [source, setSource] = useState<{ type: string; detail?: string } | undefined>(undefined);
+  const [sourceModalOpen, setSourceModalOpen] = useState(false);
+
+  useEffect(() => { onPhaseChange?.(step); }, [step, onPhaseChange]);
 
   const { interviewConfig, setInterviewConfig, jobData, isJobLoading, isConfigLoading } = useInterviewConfig({
     jobId: propJobId !== undefined ? propJobId : undefined,
@@ -38,9 +45,16 @@ export default function InterviewFlow({ jobId: propJobId }: InterviewFlowProps =
     setInterviewConfig,
     authUser,
     jobData,
+    source,
   });
 
-  const handleStartInterview = useCallback(() => {
+  const handleRequestStart = useCallback(() => {
+    setSourceModalOpen(true);
+  }, []);
+
+  const handleConfirmSource = useCallback((selectedSource: { type: string; detail?: string }) => {
+    setSource(selectedSource);
+    setSourceModalOpen(false);
     const langs = jobData?.interviewLanguages as string[] | undefined;
     const lang = langs?.[0] || "en";
     setInterviewConfig({
@@ -61,11 +75,18 @@ export default function InterviewFlow({ jobId: propJobId }: InterviewFlowProps =
       />
     );
     return (
-      <JobPreviewPanel
-        jobData={jobData}
-        isConfigLoading={isConfigLoading}
-        onStartInterview={authUser ? handleStartInterview : undefined}
-      />
+      <>
+        <JobPreviewPanel
+          jobData={jobData}
+          isConfigLoading={isConfigLoading}
+          onStartInterview={authUser ? handleRequestStart : undefined}
+        />
+        <ApplicationSourceModal
+          open={sourceModalOpen}
+          onClose={() => setSourceModalOpen(false)}
+          onContinue={handleConfirmSource}
+        />
+      </>
     );
   }
 

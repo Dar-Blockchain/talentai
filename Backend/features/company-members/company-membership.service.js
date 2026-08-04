@@ -1,5 +1,11 @@
 ﻿const CompanyMembershipModel = require("./company-membership.model");
 const User = require("../users/user.model");
+const CampaignParticipant = require("../campaigns/campaign-participant.model");
+const Post = require("../posts/post.model");
+const ProfileSkill = require("../skills/profile-skill.model");
+const SkillInterviewAssessment = require("../interviews/skill-interview/skill-interview.model");
+
+const PASSING_RECOMMENDATIONS = ["strong_hire", "hire"];
 
 // Get all memberships for a company owned by the current user (with optional search, role, department filter, sorting and pagination)
 module.exports.getMembershipsByCompany = async (
@@ -242,5 +248,25 @@ module.exports.getMembershipByUserId = async (userId) => {
     throw new Error("User has no company membership");
   }
 
-  return membership;
+  const profileId = membership.user?.profile?._id;
+
+  const [campaignsCount, jobPostsCount, skillDocs, interviewsPassed] = await Promise.all([
+    CampaignParticipant.countDocuments({ employee: userId }),
+    Post.countDocuments({ createdBy: userId }),
+    profileId ? ProfileSkill.find({ profile: profileId }).select("name").lean() : [],
+    profileId
+      ? SkillInterviewAssessment.countDocuments({
+          candidateId: profileId,
+          "interviewData.finalReport.recommendation": { $in: PASSING_RECOMMENDATIONS },
+        })
+      : 0,
+  ]);
+
+  return {
+    ...membership.toObject(),
+    campaignsCount,
+    jobPostsCount,
+    skills: skillDocs.map((s) => s.name),
+    interviewsPassed,
+  };
 };

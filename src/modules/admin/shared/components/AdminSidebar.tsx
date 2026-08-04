@@ -1,20 +1,22 @@
 import React from 'react';
 import Link from 'next/link';
 import {
-  Dashboard as DashboardIcon,
-  People as PeopleIcon,
-  Logout as LogoutIcon,
-  Close as CloseIcon,
-  QuestionAnswer as InterviewIcon,
-  Psychology as SkillIcon,
+  LayoutDashboard as DashboardIcon,
+  Users as PeopleIcon,
+  LogOut as LogoutIcon,
+  X as CloseIcon,
+  MessageSquare as InterviewIcon,
+  Brain as SkillIcon,
   Settings as SettingsIcon,
-  WorkOutline as PostsIcon,
-} from '@mui/icons-material';
+  Briefcase as PostsIcon,
+  Video as WebinarIcon,
+  Newspaper as BlogIcon,
+} from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const DRAWER_WIDTH = 240;
 
-type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config';
+type TabName = 'dashboard' | 'users' | 'posts' | 'post-interview' | 'skill-interview' | 'company-config' | 'webinars' | 'blog';
 
 const GROUPS = [
   {
@@ -30,6 +32,8 @@ const GROUPS = [
       { id: 'posts'           as TabName, label: 'Posts',           icon: PostsIcon     },
       { id: 'post-interview'  as TabName, label: 'Post Interview',  icon: InterviewIcon },
       { id: 'skill-interview' as TabName, label: 'Skill Interview', icon: SkillIcon     },
+      { id: 'webinars'        as TabName, label: 'Webinars',        icon: WebinarIcon   },
+      { id: 'blog'            as TabName, label: 'Blogs',            icon: BlogIcon      },
     ],
   },
   {
@@ -55,13 +59,13 @@ const SidebarContent: React.FC<AdminSidebarProps> = ({
     {/* Logo bar */}
     <div className="h-16 flex items-center justify-between px-4 bg-[#F7FBF9] border-b border-gray-200 shrink-0">
       <Link href="/">
-        <img src="/images/home/logo.svg" alt="TalentAI" className="h-9 cursor-pointer" />
+        <img src="/logo.svg" alt="TalentAI" className="h-9 cursor-pointer" />
       </Link>
       <button
         onClick={onDrawerClose}
         className="md:hidden w-7 h-7 flex items-center justify-center rounded-[7px] border border-gray-200 bg-gray-100 text-gray-500"
       >
-        <CloseIcon style={{ fontSize: 16 }} />
+        <CloseIcon size={16} />
       </button>
     </div>
 
@@ -90,7 +94,7 @@ const SidebarContent: React.FC<AdminSidebarProps> = ({
                   <span className="absolute left-0 top-[20%] bottom-[20%] w-[3px] rounded-r-[3px] bg-[#52e899]" />
                 )}
                 <span className={cn('w-7 h-7 rounded-lg flex items-center justify-center shrink-0', active ? 'text-teal-600' : 'text-gray-500')}>
-                  <Icon style={{ fontSize: 20 }} />
+                  <Icon size={20} />
                 </span>
                 <span className={cn('text-[14px] leading-none', active ? 'font-bold' : 'font-semibold')}>
                   {item.label}
@@ -109,7 +113,7 @@ const SidebarContent: React.FC<AdminSidebarProps> = ({
         className="group flex items-center gap-2.5 w-full px-2.5 py-[7px] rounded-[9px] text-gray-700 hover:bg-red-50 hover:text-red-500 transition-colors duration-100"
       >
         <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 text-gray-500 group-hover:text-red-500">
-          <LogoutIcon style={{ fontSize: 20 }} />
+          <LogoutIcon size={20} />
         </span>
         <span className="text-[14px] font-semibold leading-none">Logout</span>
       </button>

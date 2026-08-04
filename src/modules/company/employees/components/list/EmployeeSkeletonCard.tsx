@@ -1,44 +1,29 @@
 import React, { memo } from "react";
-import { Box, Skeleton } from "@mui/material";
-
-const CARD_SX = {
-  bgcolor: "#fff", border: "1px solid #E8EAED", borderRadius: "20px",
-  overflow: "hidden", display: "flex", flexDirection: "column",
-  boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-} as const;
-
-const HEADER_SX = {
-  px: 2.5, pt: 2.5, pb: 2,
-  display: "flex", flexDirection: "column", alignItems: "center", gap: 1.5,
-} as const;
-
-const BODY_SX = {
-  px: 2.5, pt: 1.75, pb: 2, display: "flex", flexDirection: "column", gap: 1.5,
-} as const;
+import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 
 const EmployeeSkeletonCard: React.FC = memo(() => (
-  <Box sx={CARD_SX}>
-    <Skeleton variant="rectangular" height={4} sx={{ transform: "none" }} />
+  <div className="flex flex-col overflow-hidden rounded-[20px] border border-[#E8EAED] bg-white shadow-[0_2px_8px_rgba(0,0,0,0.05)]">
+    <Skeleton className="h-1 rounded-none" />
 
-    <Box sx={HEADER_SX}>
-      <Skeleton variant="circular" width={76} height={76} />
-      <Box sx={{ textAlign: "center", width: "100%" }}>
-        <Skeleton variant="text" width="55%" height={18} sx={{ mx: "auto" }} />
-        <Skeleton variant="text" width="70%" height={13} sx={{ mx: "auto", mt: 0.5 }} />
-      </Box>
-      <Skeleton variant="rounded" width={90} height={24} sx={{ borderRadius: "999px" }} />
-    </Box>
+    <div className="flex flex-col items-center gap-1.5 px-2.5 pt-2.5 pb-2">
+      <Skeleton className="size-[76px] rounded-full" />
+      <div className="w-full text-center">
+        <Skeleton className="mx-auto h-[18px] w-[55%]" />
+        <Skeleton className="mx-auto mt-1 h-[13px] w-[70%]" />
+      </div>
+      <Skeleton className="h-6 w-[90px] rounded-full" />
+    </div>
 
-    <Box sx={{ mx: 2.5, height: "1px", bgcolor: "#F1F5F9" }} />
+    <div className="mx-2.5 h-px bg-[#F1F5F9]" />
 
-    <Box sx={BODY_SX}>
-      <Skeleton variant="rounded" height={34} sx={{ borderRadius: "10px" }} />
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <Skeleton variant="rounded" width={60} height={20} sx={{ borderRadius: "999px" }} />
-        <Skeleton variant="text" width={72} height={13} />
-      </Box>
-    </Box>
-  </Box>
+    <div className="flex flex-col gap-1.5 px-2.5 pt-[14px] pb-2">
+      <Skeleton className="h-[34px] w-full rounded-[10px]" />
+      <div className="flex items-center justify-between">
+        <Skeleton className="h-5 w-[60px] rounded-full" />
+        <Skeleton className="h-[13px] w-[72px]" />
+      </div>
+    </div>
+  </div>
 ));
 
 EmployeeSkeletonCard.displayName = "EmployeeSkeletonCard";

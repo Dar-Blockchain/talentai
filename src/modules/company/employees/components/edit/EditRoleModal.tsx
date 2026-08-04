@@ -1,26 +1,17 @@
 import React, { useState, useCallback, useEffect, useMemo, useRef } from "react";
-import {
-  Dialog, DialogTitle, DialogContent, DialogActions,
-  Button, TextField, Typography, Box, IconButton,
-  CircularProgress, Alert, Select, MenuItem, FormControl, InputAdornment,
-} from "@mui/material";
-import CloseIcon from "@mui/icons-material/Close";
-import EditOutlined from "@mui/icons-material/EditOutlined";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
+import { Alert, AlertDescription } from "@/modules/shared/ui/shadcn/alert";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { X as CloseIcon, Pencil as EditOutlined, Building2 as BusinessOutlined, CheckCircle as CheckCircleIcon, ChevronDown, Search, X, Check } from "lucide-react";
 import { useDepartmentsQuery } from "@/modules/company/employees/queries";
 import { useTranslation } from "react-i18next";
 import { ROLES } from "@/modules/shared/constants/employee";
-import { roleMatchesSearch } from '@/modules/company/employees/utils/employeeRoleI18n';
-import RoleMenuItem from "../shared/RoleMenuItem";
-import RoleSelectValue from "../shared/RoleSelectValue";
-import {
-  DIALOG_PAPER_SX, HEADER_ICON_SX, CLOSE_BTN_SX,
-  SELECT_SX, SEARCH_FIELD_SX,
-  STICKY_SEARCH_ITEM_SX, MENU_PAPER_SX,
-  CANCEL_BTN_SX, PRIMARY_BTN_SX, FIELD_LABEL_SX,
-} from "../shared/modalStyles";
+import { getRoleDescription, getRoleLabel, roleMatchesSearch } from '@/modules/company/employees/utils/employeeRoleI18n';
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
+import { cn } from "@/lib/utils";
+
+const PURPLE = "#8310FF";
 
 interface EditRoleModalProps {
   open: boolean;
@@ -44,10 +35,12 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
 
   const [role,         setRole]         = useState(currentRole);
   const [departmentId, setDepartmentId] = useState(currentDepartmentId ?? "");
+  const [roleOpen,     setRoleOpen]     = useState(false);
   const [roleSearch,   setRoleSearch]   = useState("");
   const [loading,      setLoading]      = useState(false);
   const [error,        setError]        = useState<string | null>(null);
   const [success,      setSuccess]      = useState(false);
+  const roleSearchRef = useRef<HTMLInputElement>(null);
 
   // Prevent setState on unmounted component from the close timeout
   const mountedRef = useRef(true);
@@ -66,6 +59,11 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, currentRole, currentDepartmentId]);
+
+  useEffect(() => {
+    if (roleOpen) setTimeout(() => roleSearchRef.current?.focus(), 50);
+    else setRoleSearch("");
+  }, [roleOpen]);
 
   const isChanged = useMemo(
     () => role !== currentRole || departmentId !== (currentDepartmentId ?? ""),
@@ -91,11 +89,13 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
     }
   }, [role, departmentId, onSave, onClose, m]);
 
-  const handleClose            = useCallback(() => { if (!loading) onClose(); }, [loading, onClose]);
-  const handleRoleChange       = useCallback((e: { target: { value: string } }) => setRole(e.target.value), []);
-  const handleDeptChange       = useCallback((e: { target: { value: string } }) => setDepartmentId(e.target.value), []);
-  const handleRoleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setRoleSearch(e.target.value), []);
-  const handleRoleSearchClose  = useCallback(() => setRoleSearch(""), []);
+  const handleClose      = useCallback(() => { if (!loading) onClose(); }, [loading, onClose]);
+  const handleDeptChange = useCallback((v: string) => setDepartmentId(v === "none" ? "" : v), []);
+
+  const handleRoleSelect = useCallback((v: string) => {
+    setRole(v);
+    setRoleOpen(false);
+  }, []);
 
   const filteredRoles = useMemo(() => {
     const q = roleSearch.trim().toLowerCase();
@@ -103,129 +103,208 @@ const EditRoleModal: React.FC<EditRoleModalProps> = React.memo(({
   }, [roleSearch, t]);
 
   const selectedRole = useMemo(() => ROLES.find((r) => r.value === role), [role]);
-
-  const renderRoleValue = useCallback(() => {
-    if (!selectedRole) return null;
-    return <RoleSelectValue value={selectedRole.value} color={selectedRole.color} icon={selectedRole.icon} />;
-  }, [selectedRole]);
+  const SelectedRoleIcon = selectedRole?.icon;
 
   return (
-    <Dialog open={open} onClose={handleClose} maxWidth="sm" fullWidth
-      slotProps={{ paper: { sx: DIALOG_PAPER_SX } }}>
+    <Dialog open={open} onOpenChange={(next) => { if (!next) handleClose(); }}>
+    <DialogContent
+      showCloseButton={false}
+      className="sm:max-w-sm p-0 gap-0 max-h-[90vh] overflow-hidden flex flex-col"
+      style={{ borderRadius: 12, boxShadow: "0 20px 48px rgba(0,0,0,0.12)" }}
+    >
 
-      <DialogTitle sx={{ p: 0 }}>
-        <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between", px: 3, py: 2.5, borderBottom: "1px solid #f3f4f6" }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-            <Box sx={HEADER_ICON_SX}>
-              <EditOutlined sx={{ fontSize: 20 }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontWeight: 700, fontSize: "1rem", color: "#111827", lineHeight: 1.2 }}>
-                {m("title")}
-              </Typography>
-              <Typography sx={{ fontSize: "0.775rem", color: "#9CA3AF", mt: 0.25 }}>
-                {m("subtitle_intro")}{" "}
-                <strong style={{ color: "#374151" }}>{memberName}</strong>
-              </Typography>
-            </Box>
-          </Box>
-          <IconButton onClick={handleClose} disabled={loading} size="small" sx={CLOSE_BTN_SX}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Box>
-      </DialogTitle>
+      <div className="flex items-center justify-between px-6 py-5 border-b border-[#f3f4f6]">
+        <div className="flex items-center gap-3">
+          <div className="flex h-[38px] w-[38px] items-center justify-center rounded-lg" style={{ backgroundColor: `${PURPLE}18`, color: PURPLE }}>
+            <EditOutlined size={20} />
+          </div>
+          <div>
+            <p className="text-[1rem] font-bold leading-tight text-[#111827]">
+              {m("title")}
+            </p>
+            <p className="mt-0.5 text-[0.775rem] text-[#9CA3AF]">
+              {m("subtitle_intro")}{" "}
+              <strong className="text-[#374151]">{memberName}</strong>
+            </p>
+          </div>
+        </div>
+        <button
+          onClick={handleClose}
+          disabled={loading}
+          className="cursor-pointer rounded-md p-1.5 text-[#9CA3AF] hover:bg-[#F3F4F6] hover:text-[#374151] disabled:pointer-events-none disabled:cursor-default disabled:opacity-50"
+        >
+          <CloseIcon size={18} />
+        </button>
+      </div>
 
-      <DialogContent sx={{ px: 3, pt: 3, pb: 1 }}>
-        {error   && <Alert severity="error"   sx={{ mb: 2, borderRadius: 2 }}>{error}</Alert>}
-        {success && <Alert severity="success" icon={<CheckCircleIcon />} sx={{ mb: 2, borderRadius: 2 }}>{m("success")}</Alert>}
+      <div className="overflow-y-auto px-6 pt-6 pb-1">
+        {error && (
+          <Alert variant="destructive" className="mb-4 rounded-lg">
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+        {success && (
+          <Alert className="mb-4 rounded-lg border-transparent bg-emerald-50 text-emerald-700 [&>svg]:text-emerald-600">
+            <CheckCircleIcon />
+            <AlertDescription className="text-emerald-700">{m("success")}</AlertDescription>
+          </Alert>
+        )}
 
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+        <div className="flex flex-col gap-5">
 
           {/* Role */}
-          <Box>
-            <Typography sx={FIELD_LABEL_SX}>{m("role_label")}</Typography>
-            <FormControl fullWidth size="small">
-              <Select
-                value={role}
-                onChange={handleRoleChange}
-                disabled={loading}
-                onClose={handleRoleSearchClose}
-                MenuProps={{ PaperProps: { sx: MENU_PAPER_SX }, autoFocus: false }}
-                renderValue={renderRoleValue}
-                sx={SELECT_SX}
+          <div>
+            <p className="mb-2 text-[0.8rem] font-semibold text-[#374151]">{m("role_label")}</p>
+            <Popover open={roleOpen} onOpenChange={setRoleOpen}>
+              <PopoverTrigger asChild>
+                <button
+                  type="button"
+                  disabled={loading}
+                  className={cn(
+                    "flex h-10 w-full items-center justify-between gap-2 rounded-xl border border-input bg-background px-3.5 text-sm",
+                    "shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all",
+                    "hover:border-primary/40",
+                    "focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20",
+                    "disabled:cursor-not-allowed disabled:opacity-50",
+                    roleOpen && "border-primary ring-2 ring-primary/20",
+                  )}
+                >
+                  {selectedRole && SelectedRoleIcon ? (
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span
+                        className="flex size-6 shrink-0 items-center justify-center rounded-lg"
+                        style={{ backgroundColor: `${selectedRole.color}18`, color: selectedRole.color }}
+                      >
+                        <SelectedRoleIcon size={14} />
+                      </span>
+                      <span className="truncate font-semibold text-foreground">
+                        {getRoleLabel(selectedRole.value, t)}
+                      </span>
+                      <span className="truncate text-xs text-muted-foreground">
+                        — {getRoleDescription(selectedRole.value, t)}
+                      </span>
+                    </span>
+                  ) : (
+                    <span className="text-muted-foreground">{m("select_role_error")}</span>
+                  )}
+                  <ChevronDown className={cn(
+                    "size-4 shrink-0 text-muted-foreground/60 transition-transform duration-200",
+                    roleOpen && "rotate-180 text-primary",
+                  )} />
+                </button>
+              </PopoverTrigger>
+
+              <PopoverContent
+                align="start"
+                sideOffset={4}
+                className="w-(--radix-popover-trigger-width) p-0"
               >
-                <MenuItem disableRipple onKeyDown={(e) => e.stopPropagation()} sx={STICKY_SEARCH_ITEM_SX}>
-                  <TextField
-                    size="small" fullWidth autoFocus
-                    placeholder={m("search_roles")}
+                {/* Search */}
+                <div className="flex items-center gap-2 border-b px-3 py-2.5">
+                  <Search className="size-4 shrink-0 text-muted-foreground/60" />
+                  <input
+                    ref={roleSearchRef}
                     value={roleSearch}
-                    onChange={handleRoleSearchChange}
-                    onKeyDown={(e) => e.stopPropagation()}
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchOutlined sx={{ fontSize: 18, color: "#9CA3AF" }} />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={SEARCH_FIELD_SX}
+                    onChange={(e) => setRoleSearch(e.target.value)}
+                    placeholder={m("search_roles")}
+                    className="flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/60"
                   />
-                </MenuItem>
+                  {roleSearch && (
+                    <button onClick={() => setRoleSearch("")} className="text-muted-foreground/60 hover:text-foreground">
+                      <X className="size-3.5" />
+                    </button>
+                  )}
+                </div>
 
-                {filteredRoles.map((r) => (
-                  <RoleMenuItem key={r.value} value={r.value} color={r.color} icon={r.icon} />
-                ))}
-
-                {filteredRoles.length === 0 && (
-                  <MenuItem disabled sx={{ py: 2, justifyContent: "center" }}>
-                    <Typography sx={{ fontSize: "0.8rem", color: "#9CA3AF" }}>
+                {/* List */}
+                <div
+                  className="max-h-60 overflow-y-auto overscroll-contain p-1.5"
+                  onWheel={(e) => e.stopPropagation()}
+                >
+                  {filteredRoles.length === 0 ? (
+                    <p className="py-8 text-center text-sm text-muted-foreground">
                       {m("no_roles_match", { term: roleSearch })}
-                    </Typography>
-                  </MenuItem>
-                )}
-              </Select>
-            </FormControl>
-          </Box>
+                    </p>
+                  ) : filteredRoles.map((r) => {
+                    const Icon = r.icon;
+                    const selected = r.value === role;
+                    return (
+                      <button
+                        key={r.value}
+                        type="button"
+                        onClick={() => handleRoleSelect(r.value)}
+                        className={cn(
+                          "flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left transition-colors",
+                          "hover:bg-primary/[0.07]",
+                          selected && "bg-primary/[0.07]",
+                        )}
+                      >
+                        <span
+                          className="flex size-8 shrink-0 items-center justify-center rounded-lg"
+                          style={{ backgroundColor: `${r.color}18`, color: r.color }}
+                        >
+                          <Icon size={16} />
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="block truncate text-sm font-semibold text-foreground">
+                            {getRoleLabel(r.value, t)}
+                          </span>
+                          <span className="block truncate text-xs text-muted-foreground">
+                            {getRoleDescription(r.value, t)}
+                          </span>
+                        </span>
+                        {selected && <Check className="size-4 shrink-0 text-primary" />}
+                      </button>
+                    );
+                  })}
+                </div>
+              </PopoverContent>
+            </Popover>
+          </div>
 
           {/* Department */}
-          <Box>
-            <Typography sx={FIELD_LABEL_SX}>
+          <div>
+            <p className="mb-2 text-[0.8rem] font-semibold text-[#374151]">
               {m("department_label")}{" "}
-              <Typography component="span" sx={{ fontWeight: 400, color: "#9CA3AF", fontSize: "0.75rem" }}>
+              <span className="text-[0.75rem] font-normal text-[#9CA3AF]">
                 {m("optional")}
-              </Typography>
-            </Typography>
-            <FormControl fullWidth size="small">
-              <Select
-                value={departmentId}
-                onChange={handleDeptChange}
-                disabled={loading || departmentsLoading}
-                displayEmpty
-                startAdornment={<BusinessOutlined sx={{ fontSize: 18, color: "#9CA3AF", mr: 1 }} />}
-                sx={SELECT_SX}
-              >
-                <MenuItem value="">
-                  <Typography sx={{ color: "#9CA3AF", fontSize: "0.875rem" }}>{m("no_department")}</Typography>
-                </MenuItem>
+              </span>
+            </p>
+            <Select
+              value={departmentId || "none"}
+              onValueChange={handleDeptChange}
+              disabled={loading || departmentsLoading}
+            >
+              <SelectTrigger className="w-full bg-[#F8FAFC] text-sm text-[#111827]">
+                <BusinessOutlined size={18} color="#9CA3AF" />
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="none">{m("no_department")}</SelectItem>
                 {departments.map((d) => (
-                  <MenuItem key={d._id} value={d._id}>{d.name}</MenuItem>
+                  <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
                 ))}
-              </Select>
-            </FormControl>
-          </Box>
-        </Box>
-      </DialogContent>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
 
-      <DialogActions sx={{ px: 3, pb: 3, pt: 2.5, gap: 1.5 }}>
-        <Button onClick={handleClose} disabled={loading} sx={CANCEL_BTN_SX}>
+      <div className="flex items-center justify-end gap-3 px-6 pb-6 pt-5">
+        <Button onClick={handleClose} disabled={loading} variant="ghost" className="rounded-lg px-6 font-semibold text-gray-500">
           {m("cancel")}
         </Button>
-        <Button onClick={handleSave} disabled={loading || !isChanged} variant="contained" sx={PRIMARY_BTN_SX}>
-          {loading
-            ? <><CircularProgress size={15} sx={{ mr: 1, color: "#fff" }} />{m("updating_btn")}</>
-            : m("save")}
+        <Button
+          onClick={handleSave}
+          disabled={loading || !isChanged}
+          loading={loading}
+          variant="secondary"
+          className="rounded-lg px-6 font-bold shadow-[0_2px_8px_rgba(131,16,255,0.3)]"
+        >
+          {loading ? m("updating_btn") : m("save")}
         </Button>
-      </DialogActions>
+      </div>
+    </DialogContent>
     </Dialog>
   );
 });

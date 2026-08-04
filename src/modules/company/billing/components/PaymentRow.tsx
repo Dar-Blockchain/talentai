@@ -1,5 +1,6 @@
 import React from "react";
 import { Download } from "lucide-react";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Payment } from "@/store/slices/paymentSlice";
 import { STATUS_CONFIG, PLAN_COLORS, SUB_STATUS_STYLE } from "../constants";
 import { downloadInvoice } from "../utils/invoice";
@@ -72,15 +73,15 @@ const PaymentRow: React.FC<Props> = ({ payment, index, subStatus }) => {
         <div className="flex items-center gap-2">
           <span className="font-mono text-[0.75rem] text-gray-400">{invoiceNo}</span>
           {payment.status === "completed" && (
-            <button
-              type="button"
+            <Button
+              variant="ghost"
               title="Download Invoice"
               onClick={() => void downloadInvoice(payment)}
-              className="flex h-7 w-7 items-center justify-center rounded-md text-emerald-600 transition-colors hover:bg-emerald-100"
+              className="h-7 w-7 p-0 rounded-md text-emerald-600 hover:bg-emerald-100"
               style={{ backgroundColor: "#f0fdf4" }}
             >
               <Download size={16} />
-            </button>
+            </Button>
           )}
         </div>
       </td>

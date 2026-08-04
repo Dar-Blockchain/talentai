@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Play, Mic, RefreshCw, Video, ArrowLeft, CheckCircle, Circle } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { type InterviewStatus, type ConnectionStatus, type CameraStatus, type AgentState } from '../../types/interview';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 
 interface InterviewContainerProps {
   interviewStatus: InterviewStatus;
@@ -12,8 +13,12 @@ interface InterviewContainerProps {
   currentTranscript?: string;
   resultsReady: boolean;
   noBorder?: boolean;
+  /** True once a face is actually visible in the camera — required to start. */
+  faceDetected?: boolean;
   onStartInterview: () => void;
   onBack?: () => void;
+  /** Overrides the default "Back to post details" label (e.g. "Back to campaign" for campaign interviews). */
+  backLabel?: string;
   jobTitle?: string;
   companyName?: string;
   dashboardPath?: string;
@@ -29,8 +34,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   currentTranscript,
   resultsReady,
   noBorder = false,
+  faceDetected = false,
   onStartInterview,
   onBack,
+  backLabel,
   jobTitle,
   companyName,
   dashboardPath: _dashboardPath,
@@ -39,13 +46,14 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
   const { t } = useTranslation('interview');
   const [waitDots] = useState('');
 
-  const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted';
+  const allReady = isHydrated && connectionStatus === 'connected' && cameraStatus === 'granted' && faceDetected;
 
   const checks = useMemo(() => [
     { label: t('container.check_camera'),  ok: cameraStatus === 'granted' },
+    { label: t('container.check_face'),    ok: cameraStatus === 'granted' && faceDetected },
     { label: t('container.check_system'),  ok: connectionStatus === 'connected' },
     { label: t('container.check_loaded'),  ok: isHydrated },
-  ], [cameraStatus, connectionStatus, isHydrated, t]);
+  ], [cameraStatus, faceDetected, connectionStatus, isHydrated, t]);
 
   return (
     <div
@@ -69,8 +77,10 @@ const InterviewContainer: React.FC<InterviewContainerProps> = ({
             checks={checks}
             allReady={allReady}
             cameraStatus={cameraStatus}
+            faceDetected={faceDetected}
             onStartInterview={onStartInterview}
             onBack={onBack}
+            backLabel={backLabel}
             jobTitle={jobTitle}
             companyName={companyName}
           />
@@ -152,11 +162,13 @@ const ReadinessChecklist: React.FC<{
   checks: { label: string; ok: boolean }[];
   allReady: boolean;
   cameraStatus: CameraStatus;
+  faceDetected: boolean;
   onStartInterview: () => void;
   onBack?: () => void;
+  backLabel?: string;
   jobTitle?: string;
   companyName?: string;
-}> = ({ checks, allReady, cameraStatus, onStartInterview, onBack, jobTitle, companyName }) => {
+}> = ({ checks, allReady, cameraStatus, faceDetected, onStartInterview, onBack, backLabel, jobTitle, companyName }) => {
   const { t } = useTranslation('interview');
 
   return (
@@ -168,7 +180,7 @@ const ReadinessChecklist: React.FC<{
         </div>
       )}
 
-      <div className="grid grid-cols-3 gap-2 mb-5">
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-5">
         {checks.map(({ label, ok }) => (
           <div
             key={label}
@@ -195,10 +207,18 @@ const ReadinessChecklist: React.FC<{
           </div>
         )}
 
-        <button
+        {cameraStatus === 'granted' && !faceDetected && (
+          <div className="flex items-center gap-1.5 px-3 py-2 rounded-[10px] bg-[rgba(245,158,11,0.05)] border border-[rgba(245,158,11,0.18)]">
+            <Video size={14} color="#f59e0b" className="shrink-0" />
+            <p className="font-sans text-[0.72rem] text-[#d97706]">{t('container.face_warning')}</p>
+          </div>
+        )}
+
+        <Button
+          variant="ghost"
           onClick={onStartInterview}
           disabled={!allReady}
-          className="w-full flex items-center justify-center gap-2 font-sans font-bold text-[0.88rem] py-3 rounded-[14px] transition-all cursor-pointer disabled:cursor-not-allowed"
+          className="w-full h-auto font-sans font-bold text-[0.88rem] py-3 rounded-[14px]"
           style={{
             background: allReady ? 'linear-gradient(135deg, #6AD39C 0%, #10b981 100%)' : '#f3f4f6',
             color:      allReady ? '#fff' : '#9ca3af',
@@ -207,16 +227,17 @@ const ReadinessChecklist: React.FC<{
         >
           <Play size={16} />
           {t('start.btn_start')}
-        </button>
+        </Button>
 
         {onBack && (
-          <button
+          <Button
+            variant="ghost"
             onClick={onBack}
-            className="w-full flex items-center justify-center gap-1.5 font-sans font-semibold text-[0.78rem] text-[#9ca3af] py-2 rounded-[12px] hover:text-[#6b7280] hover:bg-[#f9fafb] transition-colors cursor-pointer"
+            className="w-full h-auto font-sans font-semibold text-[0.78rem] text-[#9ca3af] py-2 rounded-[12px] hover:text-[#6b7280] hover:bg-[#f9fafb]"
           >
             <ArrowLeft size={15} />
-            {t('container.back_to_post')}
-          </button>
+            {backLabel ?? t('container.back_to_post')}
+          </Button>
         )}
       </div>
     </div>

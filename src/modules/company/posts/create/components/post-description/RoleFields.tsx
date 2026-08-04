@@ -1,60 +1,87 @@
-import { Box, MenuItem, TextField, Typography } from "@mui/material";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
+import { Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Calendar as CalendarTodayOutlined, Building2 as DepartmentOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { cn } from "@/lib/utils";
 import { contractTypes, workModes } from "@/modules/company/posts/shared/constants";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
+import { DatePicker } from "@/modules/shared/ui/DatePicker";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import { EMPLOYMENT_OPTION_KEY, optionLabel, WORK_MODE_OPTION_KEY } from "../../utils";
 import FieldLabel from "./FieldLabel";
 import SectionLabel from "./SectionLabel";
-import { fieldSx } from "./styles";
 
 interface Props {
   employmentType: string;
   workMode: string;
+  department: string;
   expirationDate: string | null;
   errors: { employmentType: string; workMode: string };
   onEmploymentChange: (val: string) => void;
   onWorkModeChange: (val: string) => void;
+  onDepartmentChange: (val: string) => void;
   onExpirationChange: (val: string) => void;
 }
 
-const RoleFields = ({ employmentType, workMode, expirationDate, errors, onEmploymentChange, onWorkModeChange, onExpirationChange }: Props) => {
+const RoleFields = ({ employmentType, workMode, department, expirationDate, errors, onEmploymentChange, onWorkModeChange, onDepartmentChange, onExpirationChange }: Props) => {
   const { t } = useTranslation("posts");
+  const { departments } = useDepartmentList();
   return (
-    <Box>
+    <div>
       <SectionLabel>{t("create.form.section_role")}</SectionLabel>
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 1.5 }}>
-        <Box>
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+        <div>
           <FieldLabel icon={WorkOutlined} label={t("create.post_form.labels.employment_type")} />
-          <TextField select fullWidth value={employmentType} onChange={(e) => onEmploymentChange(e.target.value)} error={!!errors.employmentType} sx={fieldSx}>
-            <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.post_form.placeholders.select_employment_type")}</MenuItem>
-            {contractTypes.map((c) => <MenuItem key={c} value={c} sx={{ fontSize: "12px" }}>{optionLabel(t, c, EMPLOYMENT_OPTION_KEY)}</MenuItem>)}
-          </TextField>
-          {errors.employmentType && <Typography sx={{ fontSize: "10.5px", color: "#EF4444", mt: 0.25 }}>{errors.employmentType}</Typography>}
-        </Box>
+          <Select value={employmentType || undefined} onValueChange={onEmploymentChange}>
+            <SelectTrigger className={cn("w-full", errors.employmentType && "border-red-500")}>
+              <SelectValue placeholder={t("create.post_form.placeholders.select_employment_type")} />
+            </SelectTrigger>
+            <SelectContent>
+              {contractTypes.map((c) => (
+                <SelectItem key={c} value={c}>{optionLabel(t, c, EMPLOYMENT_OPTION_KEY)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.employmentType && <p className="mt-0.5 text-[10.5px] text-[#EF4444]">{errors.employmentType}</p>}
+        </div>
 
-        <Box>
+        <div>
           <FieldLabel icon={LocationOnOutlined} label={t("create.post_form.labels.work_mode")} />
-          <TextField select fullWidth value={workMode} onChange={(e) => onWorkModeChange(e.target.value)} error={!!errors.workMode} sx={fieldSx}>
-            <MenuItem disabled value="" sx={{ fontSize: "12px" }}>{t("create.post_form.placeholders.select_work_mode")}</MenuItem>
-            {workModes.map((m) => <MenuItem key={m} value={m} sx={{ fontSize: "12px" }}>{optionLabel(t, m, WORK_MODE_OPTION_KEY)}</MenuItem>)}
-          </TextField>
-          {errors.workMode && <Typography sx={{ fontSize: "10.5px", color: "#EF4444", mt: 0.25 }}>{errors.workMode}</Typography>}
-        </Box>
+          <Select value={workMode || undefined} onValueChange={onWorkModeChange}>
+            <SelectTrigger className={cn("w-full", errors.workMode && "border-red-500")}>
+              <SelectValue placeholder={t("create.post_form.placeholders.select_work_mode")} />
+            </SelectTrigger>
+            <SelectContent>
+              {workModes.map((m) => (
+                <SelectItem key={m} value={m}>{optionLabel(t, m, WORK_MODE_OPTION_KEY)}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          {errors.workMode && <p className="mt-0.5 text-[10.5px] text-[#EF4444]">{errors.workMode}</p>}
+        </div>
 
-        <Box>
+        <div>
+          <FieldLabel icon={DepartmentOutlined} label={t("create.post_form.labels.department")} />
+          <Select value={department || undefined} onValueChange={onDepartmentChange}>
+            <SelectTrigger className="w-full">
+              <SelectValue placeholder={t("create.post_form.placeholders.select_department")} />
+            </SelectTrigger>
+            <SelectContent>
+              {departments.map((d) => (
+                <SelectItem key={d._id} value={d._id}>{d.name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div>
           <FieldLabel icon={CalendarTodayOutlined} label={t("create.post_form.labels.expires")} />
-          <TextField
-            type="date" fullWidth
-            value={expirationDate ? new Date(expirationDate).toISOString().split("T")[0] : ""}
-            onChange={(e) => { if (e.target.value) onExpirationChange(new Date(e.target.value).toISOString()); }}
-            slotProps={{ htmlInput: { min: new Date().toISOString().split("T")[0] } }}
-            sx={fieldSx}
+          <DatePicker
+            value={expirationDate ?? ""}
+            onChange={onExpirationChange}
+            minDate={new Date()}
           />
-        </Box>
-      </Box>
-    </Box>
+        </div>
+      </div>
+    </div>
   );
 };
 

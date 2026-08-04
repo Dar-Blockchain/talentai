@@ -96,13 +96,10 @@ module.exports.createJobApplication = async (req, res) => {
       applicationData
     );
 
-    if (application.recruiterDecision === "rejected") {
-    }
-
     res.status(201).json({
       success: true,
-      message: application.recruiterDecision === "rejected" 
-        ? "Job application created but automatically rejected due to low match score" 
+      message: application.recruiterDecision === "not_matched"
+        ? "Job application created but automatically marked as not matched due to low match score"
         : "Job application created successfully (match score calculated by AI)",
       data: application,
     });
@@ -226,9 +223,10 @@ module.exports.getApplicationsByCompany = async (req, res) => {
       });
     }
 
-    const { scoreMin, scoreMax, dateFrom, dateTo } = req.query;
+    const { scoreMin, scoreMax, dateFrom, dateTo, actionFilter } = req.query;
 
     const filters = {};
+    if (status) filters.status = status;
     if (post || postId) filters.post = post || postId;
     if (search) filters.search = search;
     if (candidateName) filters.candidateName = candidateName;
@@ -238,6 +236,7 @@ module.exports.getApplicationsByCompany = async (req, res) => {
     if (scoreMax !== undefined) filters.scoreMax = parseFloat(scoreMax);
     if (dateFrom) filters.dateFrom = dateFrom;
     if (dateTo) filters.dateTo = dateTo;
+    if (actionFilter) filters.actionFilter = actionFilter;
 
     const result = await jobApplicationService.getApplicationsByCompany(
       companyId,
@@ -296,6 +295,7 @@ module.exports.getApplicationStats = async (req, res) => {
 module.exports.getApplicationMetrics = async (req, res) => {
   try {
     const companyId = req.user._id;
+    const { postId, dateFrom } = req.query;
 
     if (!companyId) {
       return res.status(400).json({
@@ -304,7 +304,7 @@ module.exports.getApplicationMetrics = async (req, res) => {
       });
     }
 
-    const metrics = await jobApplicationService.getApplicationMetrics(companyId);
+    const metrics = await jobApplicationService.getApplicationMetrics(companyId, postId || null, dateFrom || null);
 
     res.status(200).json({
       success: true,
@@ -544,20 +544,22 @@ module.exports.getApplicationsSummaryByCompany = async (req, res) => {
   try {
     const companyId = req.user._id;
     const {
-      status, search, postId,
+      status, search, postId, applicationId,
       matchScoreMin, matchScoreMax,
       interviewScoreMin, interviewScoreMax,
-      dateFrom, dateTo, sort,
+      dateFrom, dateTo, sort, actionFilter,
       page = 1, limit = 20,
     } = req.query;
 
     const filters = {};
-    if (status)   filters.status   = status;
-    if (search)   filters.search   = search;
-    if (postId)   filters.postId   = postId;
+    if (status)        filters.status        = status;
+    if (search)        filters.search        = search;
+    if (postId)        filters.postId        = postId;
+    if (applicationId) filters.applicationId = applicationId;
     if (sort)     filters.sort     = sort;
     if (dateFrom) filters.dateFrom = dateFrom;
     if (dateTo)   filters.dateTo   = dateTo;
+    if (actionFilter) filters.actionFilter = actionFilter;
     if (matchScoreMin !== undefined)     filters.matchScoreMin     = parseFloat(matchScoreMin);
     if (matchScoreMax !== undefined)     filters.matchScoreMax     = parseFloat(matchScoreMax);
     if (interviewScoreMin !== undefined) filters.interviewScoreMin = parseFloat(interviewScoreMin);
@@ -610,6 +612,21 @@ module.exports.getActionsKPI = async (req, res) => {
         postsInAlert:      postsInAlert.count ?? 0,
       },
     });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - APPLICATION HISTORY (Zone 1 replacement) ==========
+module.exports.getApplicationHistoryKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, dateFrom, limit, page } = req.query;
+    const result = await jobApplicationService.getApplicationHistoryKPIPaged(
+      companyId, postId || null, dateFrom || null,
+      page ? parseInt(page, 10) : 1, limit ? parseInt(limit, 10) : 4,
+    );
+    res.status(200).json({ success: true, data: result.data, pagination: result.pagination });
   } catch (error) {
     handleError(res, error);
   }
@@ -700,7 +717,36 @@ module.exports.getNoshowsKPI = async (req, res) => {
 module.exports.getRoiKPI = async (req, res) => {
   try {
     const companyId = req.user._id;
-    const data = await jobApplicationService.getRoiKPI(companyId);
+    const { postId, dateFrom } = req.query;
+    const data = await jobApplicationService.getRoiKPI(companyId, postId || null, dateFrom || null);
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - MANUAL VS TALENTAI HOURS ==========
+module.exports.getHoursComparisonKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, unit, value } = req.query;
+    const data = await jobApplicationService.getHoursComparisonKPI(
+      companyId, postId || null, unit || 'month', value ? parseInt(value, 10) : 3
+    );
+    res.status(200).json({ success: true, data });
+  } catch (error) {
+    handleError(res, error);
+  }
+};
+
+// ========== KPI - MANUAL VS TALENTAI COST ==========
+module.exports.getCostComparisonKPI = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const { postId, unit, value } = req.query;
+    const data = await jobApplicationService.getCostComparisonKPI(
+      companyId, postId || null, unit || 'month', value ? parseInt(value, 10) : 3
+    );
     res.status(200).json({ success: true, data });
   } catch (error) {
     handleError(res, error);

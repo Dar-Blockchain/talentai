@@ -1,23 +1,17 @@
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { useTranslation } from "react-i18next";
 
-const clients = [
-  { name: "Dar Blockchain", logo: "/images/GLOBAL_COMPANIES/DarBlockchain.png" },
-  { name: "Lightency",      logo: "/images/GLOBAL_COMPANIES/Lightency.png" },
-];
 const partners = [
-  { logo: "/images/partners/nivdia.png",  alt: "NVIDIA Inception Program" },
-  { logo: "/images/partners/F6s.png",     alt: "F6S #22 Top AI Company" },
-  { logo: "/images/partners/hedera.png",  alt: "Built on Hedera Hashgraph" },
-];
-
-const allLogos = [
-  ...clients.map((c) => ({ src: c.logo, alt: c.name, h: 26 })),
-  ...partners.map((p) => ({ src: p.logo, alt: p.alt,  h: 32 })),
+  { src: "/images/supporters/darblockchain.png", alt: "Dar Blockchain", h: 26, w: 148, ih: 38 },
+  { src: "/images/supporters/lightency.png", alt: "Lightency", h: 26, w: 141, ih: 38 },
+  { src: "/images/supporters/nivdia.png",  alt: "NVIDIA Inception Program", h: 32, w: 146, ih: 63 },
+  { src: "/images/supporters/f6s.png",     alt: "F6S #22 Top AI Company", h: 32, w: 252, ih: 48 },
+  { src: "/images/supporters/hedera.png",  alt: "Built on Hedera Hashgraph", h: 32, w: 2500, ih: 730 },
 ];
 
 /* Triple so the marquee has enough content to loop seamlessly */
-const LOOPED = [...allLogos, ...allLogos, ...allLogos];
+const LOOPED = [...partners, ...partners, ...partners];
 
 const VP   = { once: true, margin: "-40px" };
 const ease = [0.22, 1, 0.36, 1] as const;
@@ -69,9 +63,11 @@ const ClientsSection: React.FC = () => {
           >
             {LOOPED.map((logo, i) => (
               <div key={i} className="flex-shrink-0 flex items-center">
-                <img
+                <Image
                   src={logo.src}
                   alt={logo.alt}
+                  width={logo.w}
+                  height={logo.ih}
                   style={{ height: logo.h, width: "auto" }}
                   className="object-contain opacity-75 hover:opacity-100 transition-all duration-300"
                   draggable={false}

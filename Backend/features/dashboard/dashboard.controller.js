@@ -34,7 +34,8 @@ module.exports.getStatsCards = async (req, res) => {
     if (!userId) {
       return res.status(400).json({ success: false, message: 'User ID missing in request' });
     }
-    const stats = await dashboardService.getStatsCards(userId);
+    const { postId, dateFrom } = req.query;
+    const stats = await dashboardService.getStatsCards(userId, postId || null, dateFrom || null);
     res.status(200).json({ success: true, data: stats });
   } catch (error) {
     res.status(500).json({ success: false, message: error.message });

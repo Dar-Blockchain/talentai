@@ -15,9 +15,11 @@ export interface ApplicationListParams {
   search?: string;
   status?: string;
   postId?: string;
+  applicationId?: string;
   sort?: string;
   page?: number;
   limit?: number;
+  actionFilter?: string;
 }
 
 export interface PostPickerParams {

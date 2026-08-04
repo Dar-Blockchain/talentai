@@ -4,7 +4,9 @@
     "how_it_works": "Comment ça marche",
     "find_jobs": "Trouver un emploi",
     "are_you_hiring": "Vous recrutez ?",
-    "contact": "Contact"
+    "contact": "Contact",
+    "webinar": "Webinaire",
+    "blog": "Blogs"
   },
   "hero": {
     "headline_1": "Arrêtez de perdre vos meilleurs talents",
@@ -12,7 +14,7 @@
     "headline_accent": "recrutement trop lent",
     "body": "Les agents IA conversationnels de TalentAI interviewent les candidats en vidéo naturelle, évaluent les compétences techniques et comportementales en temps réel, et classent vos candidats objectivement.",
     "body_accent": "réduisant votre cycle de recrutement moyen de 42 jours jusqu'à 75 %",
-    "cta_primary": "Recrutez plus intelligemment",
+    "cta_primary": "Commencer gratuitement",
     "cta_demo": "Voir la démo (2 min)",
     "trust": "Sans carte bancaire. Votre premier pipeline est en ligne en moins de 30 minutes.",
     "stats": {
@@ -60,10 +62,10 @@
     "right_headline_accent": "sur le mérite. Rien d'autre.",
     "right_body": "Les mêmes critères, à chaque fois — compétences, communication, culture. Zéro jugement à l'instinct.",
     "bullet_video": "Entretiens vidéo IA — Sans planification",
-    "bullet_pipeline": "Pipeline drag-and-drop, en ligne en 30 minutes",
+    "bullet_pipeline": "Générez vos offres d'emploi avec l'IA en quelques secondes",
     "bullet_shortlists": "Shortlists auto-classées — vous n'avez qu'à valider",
     "bullet_credits": "Crédits à l'embauche, sans contrats gonflés",
-    "cta": "Recrutez plus intelligemment — Essai gratuit →"
+    "cta": "Voyez-le en action — Essai gratuit →"
   },
   "stakes": {
     "overline": "Le coût de l'inaction",
@@ -82,7 +84,7 @@
     "cta_headline_1": "Les entreprises qui automatisent maintenant",
     "cta_headline_accent": "domineront le marché des talents.",
     "cta_body": "Les autres continueront à perdre leurs meilleurs candidats au profit de concurrents plus rapides.",
-    "cta_button": "Recrutez plus intelligemment dès aujourd'hui",
+    "cta_button": "Automatisez votre recrutement dès aujourd'hui",
     "trust_live": "En ligne en 30 min",
     "trust_cancel": "Résiliation à tout moment"
   },
@@ -130,7 +132,7 @@
     "headline_1": "Votre prochain grand recrutement vous attend.",
     "headline_accent": "Vos concurrents, eux, n'attendent pas.",
     "body": "Pendant que vous lisez ceci, des entreprises dopées à l'IA interviewent déjà vos candidats. TalentAI se déploie en 30 minutes. Votre premier entretien IA peut avoir lieu aujourd'hui.",
-    "btn_primary": "Recrutez plus intelligemment — Essai gratuit →",
+    "btn_primary": "Démarrez votre essai gratuit →",
     "btn_secondary": "Réserver un appel stratégique de 15 min →",
     "trust_setup": "Configuration en 30 min",
     "trust_cancel": "Résiliation à tout moment"
@@ -150,6 +152,36 @@
     "a4": "TalentAI propose 8 modules d'évaluation préconstruits : Évaluation des compétences techniques, Évaluation des soft skills, Analyse de l'adéquation culturelle, Test de maîtrise linguistique, Missions pratiques, Défis de résolution de problèmes, Entretiens comportementaux et Vérification des références. Chaque module peut être configuré avec des seuils de réussite personnalisés, un scoring pondéré, des limites de temps et des règles de progression automatique. Les entreprises combinent les modules pour créer des pipelines uniques adaptés à différents rôles, départements ou niveaux de séniorité.",
     "q5": "Combien coûte TalentAI ?",
     "a5": "TalentAI propose des tarifs flexibles à partir de seulement 8 $ par entretien IA, sans engagement — payez uniquement ce que vous utilisez. Pour les équipes avec des besoins récurrents, les abonnements commencent à 99 $/mois (Starter, 15 entretiens) et montent jusqu'à 1 499 $/mois (Illimité, 700 entretiens avec support 24/7 dédié et benchmarks BI). Chaque plan inclut l'IA d'entretien avec scoring et rapports, la création de fiches de poste par IA, et un pipeline builder personnalisable. Les entretiens supplémentaires sont facturés de 8 $ à 4 $ selon le niveau. Une solution entreprise en marque blanche est également disponible avec infrastructure dédiée et SLA."
+  },
+  "webinar": {
+    "overline": "Webinaire gratuit",
+    "headline_1": "L'IA en recrutement :",
+    "headline_accent": "ce qui change vraiment",
+    "body": "Une session live de 60 minutes pour comprendre comment les équipes RH et dirigeants utilisent l'IA pour recruter plus vite, sans sacrifier la qualité.",
+    "benefit_1": "Comprendre l'impact réel de l'IA sur vos recrutements",
+    "benefit_2": "Voir des cas concrets de réduction du time-to-hire",
+    "benefit_3": "Repartir avec un plan d'action actionnable",
+    "cta": "Réserver ma place",
+    "card_type": "Session live",
+    "card_sub": "En ligne · Gratuit",
+    "card_title": "IA & Recrutement : de la hype à la réalité",
+    "card_desc": "3 actes · 60 min · Questions en direct",
+    "acte_1": "Risques & réalités de l'IA en recrutement",
+    "acte_2": "L'entretien IA en pratique : cas concrets",
+    "acte_3": "Comment piloter l'adoption dans votre équipe",
+    "attendees": "+120 inscrits",
+    "spots": "Places limitées",
+    "modal_title": "S'inscrire au webinaire",
+    "modal_sub": "3 minutes pour personnaliser votre session après l'inscription.",
+    "field_name": "Nom complet",
+    "field_name_placeholder": "Jane Dupont",
+    "field_email": "Email professionnel",
+    "field_email_placeholder": "jane@entreprise.com",
+    "modal_cta": "Confirmer mon inscription →",
+    "modal_cta_loading": "Enregistrement…",
+    "modal_privacy": "Vos données restent chez Talent AI · Aucun spam",
+    "success_title": "Inscription confirmée !",
+    "success_sub": "Redirection en cours…"
   },
   "contact": {
     "overline": "Parlons-en",
@@ -189,5 +221,18 @@
     "error_message": "Le message est requis",
     "error_network": "Erreur réseau. Vérifiez votre connexion et réessayez.",
     "error_generic": "Une erreur est survenue. Veuillez réessayer."
+  },
+  "blog": {
+    "meta_title": "Blog | TalentAI",
+    "meta_description": "Analyses sur le recrutement propulsé par l'IA, l'automatisation du recrutement et la création de meilleurs pipelines d'entretien.",
+    "overline": "Blog TalentAI",
+    "headline": "Analyses sur le",
+    "headline_accent": "recrutement propulsé par l'IA",
+    "subtitle": "Guides pratiques, mises à jour produit et analyses approfondies sur l'automatisation du recrutement par l'équipe TalentAI.",
+    "empty": "Aucun article pour le moment — revenez bientôt.",
+    "read_article": "Lire l'article",
+    "back_to_blog": "Retour au blog",
+    "not_found": "Cet article est introuvable.",
+    "page_of": "Page {{page}} sur {{totalPages}}"
   }
 }

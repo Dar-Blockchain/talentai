@@ -1,11 +1,4 @@
 import React, { memo } from "react";
-import { Box, Typography } from "@mui/material";
-
-const CARD_SX = {
-  p: 2.25, borderRadius: "16px",
-  bgcolor: "#fff", border: "1px solid #E8EAED",
-  boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-} as const;
 
 interface MetricCardProps {
   icon: React.ReactNode;
@@ -16,25 +9,23 @@ interface MetricCardProps {
 }
 
 const MetricCard: React.FC<MetricCardProps> = memo(({ icon, iconColor, label, value, sub }) => (
-  <Box sx={CARD_SX}>
-    <Box sx={{
-      width: 40, height: 40, borderRadius: "11px", mb: 1.75,
-      bgcolor: `${iconColor}10`, border: `1px solid ${iconColor}18`,
-      display: "flex", alignItems: "center", justifyContent: "center",
-      color: iconColor,
-    }}>
+  <div className="rounded-2xl border border-[#E8EAED] bg-white p-[18px] shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+    <div
+      className="mb-3.5 flex size-10 items-center justify-center rounded-[11px] border"
+      style={{ backgroundColor: `${iconColor}10`, borderColor: `${iconColor}18`, color: iconColor }}
+    >
       {icon}
-    </Box>
-    <Typography sx={{ fontSize: "1.625rem", fontWeight: 800, color: "#0F172A", lineHeight: 1 }}>
+    </div>
+    <p className="text-[1.625rem] font-extrabold leading-none text-[#0F172A]">
       {value}
-    </Typography>
-    <Typography sx={{ fontSize: "0.75rem", fontWeight: 600, color: "#374151", mt: 0.5 }}>
+    </p>
+    <p className="mt-1 text-xs font-semibold text-[#374151]">
       {label}
-    </Typography>
+    </p>
     {sub && (
-      <Typography sx={{ fontSize: "0.7rem", color: "#94A3B8", mt: 0.25 }}>{sub}</Typography>
+      <p className="mt-0.5 text-[0.7rem] text-[#94A3B8]">{sub}</p>
     )}
-  </Box>
+  </div>
 ));
 
 MetricCard.displayName = "MetricCard";

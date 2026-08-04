@@ -8,16 +8,13 @@ import dynamic from "next/dynamic";
 import { Provider, useSelector, useDispatch } from "react-redux";
 import { store, persistor, RootState } from "../store/store";
 import { PersistGate } from "redux-persist/integration/react";
-import { ThemeProvider as MuiThemeProvider, createTheme, CssBaseline } from "@mui/material";
-import { useEffect, useMemo, useRef } from "react";
-import { useTheme } from "next-themes";
+import { useEffect, useRef } from "react";
 import { ThemeProvider } from "@/providers/ThemeProvider";
 import { useRouter } from "next/router";
 import Head from "next/head";
-import ScrollToTop from "@/components/ui/ScrollToTop";
-import LoadingScreen from "@/components/ui/LoadingScreen";
+import ScrollToTop from "@/modules/shared/ui/ScrollToTop";
+import LoadingScreen from "@/modules/shared/ui/LoadingScreen";
 import { Poppins } from "next/font/google";
-import MuiToast from "@/components/ui/Toast";
 import { Toaster } from "@/modules/shared/ui/shadcn/sonner";
 import { useToast, ToastProvider } from "@/hooks/useToast";
 import { NotificationProvider } from "@/modules/notifications/shared/context";
@@ -54,30 +51,6 @@ const poppins = Poppins({
   variable: "--font-poppins",
 });
 
-// ─── MUI theme bridge ─────────────────────────────────────────────────────────
-// next-themes injects a blocking inline script that applies the correct class to
-// <html> before React hydrates, so resolvedTheme is accurate on the first browser
-// render. No "mounted" guard needed — that pattern added an extra paint cycle.
-function MuiThemeSync({ children }: { children: React.ReactNode }) {
-  const { resolvedTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
-
-  const muiTheme = useMemo(() => createTheme({
-    palette: {
-      mode: isDark ? "dark" : "light",
-      primary:    { main: "#6AD39C" },
-      secondary:  { main: "#BD85FF" },
-      background: {
-        default: isDark ? "#0B1120" : "#FDFEFE",
-        paper:   isDark ? "#0F1829" : "#FFFFFF",
-      },
-    },
-    typography: { fontFamily: "Poppins, sans-serif" },
-  }), [isDark]);
-
-  return <MuiThemeProvider theme={muiTheme}><CssBaseline />{children}</MuiThemeProvider>;
-}
-
 // ─── Language sync ────────────────────────────────────────────────────────────
 // Uses useAuthState() — re-renders when isAuthenticated changes (correct), but
 // NOT when logout actions or other auth state flips occur. Selector is granular:
@@ -97,18 +70,21 @@ function DbLanguageSync() {
       return;
     }
 
-    const dbLang = normalizeLangCode(language);
-    if (dbLang) {
-      if (typeof window !== "undefined") localStorage.removeItem(MANUAL_LANG_KEY);
-      i18n.changeLanguage(dbLang);
-      return;
-    }
-
+    // An explicit manual choice always wins over the DB-stored language —
+    // otherwise a stale/default profile.language (defaults to "fr" on the
+    // backend) silently reverts the user's pick on every re-render of this
+    // effect (e.g. after a profile refetch).
     const manualLang =
       typeof window !== "undefined"
         ? normalizeLangCode(localStorage.getItem(MANUAL_LANG_KEY))
         : null;
-    i18n.changeLanguage(manualLang ?? "en");
+    if (manualLang) {
+      i18n.changeLanguage(manualLang);
+      return;
+    }
+
+    const dbLang = normalizeLangCode(language);
+    i18n.changeLanguage(dbLang ?? "en");
   }, [isAuthenticated, userId, language]); // eslint-disable-line react-hooks/exhaustive-deps
 
   return null;
@@ -262,7 +238,6 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
         <ThemeProvider>
         <ReactQueryProvider>
         <AuthProvider>
-        <MuiThemeSync>
           <Head>
             <title>TalentAI | AI Recruitment Platform — Hire 75% Faster with Conversational AI Agents</title>
             <meta name="viewport" content="initial-scale=1, width=device-width" />
@@ -270,19 +245,18 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
             <meta property="og:title" content="TalentAI — AI Agents That Interview Candidates For You" />
             <meta property="og:description" content="Automate screening, interviews, and evaluation with conversational AI. Reduce hiring time by 75%. Trusted by NVIDIA Inception." />
             <meta property="og:type" content="website" />
-            <link rel="icon" href="/images/home/favico.png" type="image/png" />
+            <link rel="icon" href="/favicon.ico" />
           </Head>
           <main className={poppins.variable}>
             <Toaster richColors />
             <ToastProvider>
-              <MuiToastWrapper />
+              <ToastAndSessionBridge />
               <AuthWrapper>
                 {getLayout(<Component {...pageProps} />)}
                 <ScrollToTop />
               </AuthWrapper>
             </ToastProvider>
           </main>
-        </MuiThemeSync>
         </AuthProvider>
         </ReactQueryProvider>
         </ThemeProvider>
@@ -291,10 +265,11 @@ export default function App({ Component, pageProps }: AppPropsWithLayout) {
   );
 }
 
-// MuiToastWrapper only calls logout — it never needs to know about
+// ToastAndSessionBridge only calls logout — it never needs to know about
 // isAuthenticated. Using useAuthActions() means it won't re-render on login.
-function MuiToastWrapper() {
-  const { open, toastOptions, closeToast, showToast } = useToast();
+// Renders nothing: toast UI is handled globally by the <Toaster /> above.
+function ToastAndSessionBridge() {
+  const { showToast } = useToast();
   const { logout } = useAuthActions();
 
   useEffect(() => {
@@ -311,12 +286,5 @@ function MuiToastWrapper() {
     });
   }, [logout]);
 
-  return (
-    <MuiToast
-      open={open}
-      message={toastOptions.message}
-      severity={toastOptions.severity}
-      onClose={closeToast}
-    />
-  );
+  return null;
 }

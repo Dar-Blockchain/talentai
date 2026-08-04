@@ -15,6 +15,8 @@ const { handleSilenceDetected }   = require('./handlers/silence-detected.handler
 // Post-interview persistence
 const PostInterviewAssessment = require('../post-interview/post-interview.model');
 const Post                    = require('../../posts/post.model');
+const Profile                 = require('../../users/profile.model');
+const JobApplication          = require('../../job-applications/job-application.model');
 const { persistInterviewResults }    = require('../post-interview/post-interview.persistence');
 
 // Skill-interview persistence
@@ -50,6 +52,20 @@ async function onSessionStarted(socket, config) {
   } catch (err) {
     if (err.code !== 11000) {
       logger.warn('Pending assessment creation failed', { err: err.message });
+    }
+  }
+
+  if (socket.source) {
+    try {
+      const profile = await Profile.findOne({ userId: socket.candidateId }).select('_id').lean();
+      if (profile) {
+        await JobApplication.findOneAndUpdate(
+          { profile: profile._id, post: socket.postId },
+          { $set: { source: socket.source } },
+        );
+      }
+    } catch (err) {
+      logger.warn('Failed to persist application source', { err: err.message });
     }
   }
 }

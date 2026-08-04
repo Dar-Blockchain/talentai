@@ -207,15 +207,15 @@ module.exports.createJobApplication = async (applicationData) => {
     cleanData.matchBreakdown = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
     cleanData.status = "visited";
 
-    // ========== AUTO-REJECT IF MATCH SCORE BELOW THRESHOLD ==========
+    // ========== AUTO-MARK NOT MATCHED IF MATCH SCORE BELOW THRESHOLD ==========
     // Fetch the post to get the threshold score
     const post = await Post.findById(cleanData.post);
     const thresholdScore = post?.thresholdScore || 60; // Default threshold is 60
 
     if (cleanData.matchScore < thresholdScore) {
-      cleanData.recruiterDecision = "rejected";
+      cleanData.recruiterDecision = "not_matched";
       cleanData.recruiterDecisionAt = new Date();
-      cleanData.rejectionReason = `Candidate's match score (${cleanData.matchScore}/100) is below the required threshold (${thresholdScore}/100). Automatic rejection based on qualification mismatch.`;
+      cleanData.rejectionReason = `Candidate's match score (${cleanData.matchScore}/100) is below the required threshold (${thresholdScore}/100). Automatically marked not matched based on qualification mismatch.`;
     }
 
     const application = await JobApplication.create(cleanData);
@@ -284,7 +284,7 @@ module.exports.recalculateScoresForVisitedApps = async (profileId, newCvAnalysis
 
       const thresholdScore = post.thresholdScore || 60;
       if (app.matchScore < thresholdScore) {
-        app.recruiterDecision   = "rejected";
+        app.recruiterDecision   = "not_matched";
         app.recruiterDecisionAt = new Date();
         app.rejectionReason     = `Candidate's match score (${app.matchScore}/100) is below the required threshold (${thresholdScore}/100).`;
       } else {
@@ -355,7 +355,7 @@ module.exports.reactivateApplication = async (applicationId, profileId) => {
 
     const thresholdScore = post.thresholdScore || 60;
     if (app.matchScore < thresholdScore) {
-      app.recruiterDecision    = "rejected";
+      app.recruiterDecision    = "not_matched";
       app.recruiterDecisionAt  = new Date();
       app.rejectionReason      = `Candidate's match score (${app.matchScore}/100) is below the required threshold (${thresholdScore}/100).`;
     } else {
@@ -528,6 +528,37 @@ module.exports.getApplicationsByCompany = async (companyId, filters = {}, page =
     if (filters.post) query.post = filters.post;
     if (filters.isArchived !== undefined) query.isArchived = filters.isArchived;
 
+    // "Take Action" deep-links from the dashboard — same definitions as the
+    // Zone 1 KPI counts (getPendingShortlistsKPI / getNoshowsKPI / getUnreviewedInterviewsOver48Hours).
+    if (filters.actionFilter === 'pending_shortlist') {
+      query.matchScore = { $gte: 60 };
+      query.recruiterDecision = null;
+    } else if (filters.actionFilter === 'no_show') {
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      query.firstInvitationSentAt = { $lt: fiveDaysAgo, $ne: null };
+      query.status = 'visited';
+      query.recruiterDecision = null;
+    } else if (filters.actionFilter === 'unreviewed') {
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      const assessmentMatch = { company: companyId, completed: true, recruiterFeedback: null, createdAt: { $lte: cutoff } };
+      if (filters.post) assessmentMatch.post = filters.post;
+
+      const assessments = await PostInterviewAssessment.find(assessmentMatch).select('post candidate').lean();
+      const profiles = await Profile.find({ userId: { $in: assessments.map((a) => a.candidate) } }).select('_id userId').lean();
+      const userIdToProfileId = {};
+      profiles.forEach((p) => { userIdToProfileId[String(p.userId)] = String(p._id); });
+
+      const pairs = assessments
+        .map((a) => ({ post: a.post, profile: userIdToProfileId[String(a.candidate)] }))
+        .filter((p) => p.profile);
+
+      if (pairs.length === 0) {
+        query._id = null; // no candidates match — force an empty result set
+      } else {
+        query.$or = pairs.map((p) => ({ post: p.post, profile: p.profile }));
+      }
+    }
+
     // Score range filter
     if (filters.scoreMin !== undefined || filters.scoreMax !== undefined) {
       query.matchScore = {};
@@ -648,7 +679,7 @@ module.exports.getApplicationStats = async (companyId, postId = null) => {
   }
 };
 
-module.exports.getApplicationMetrics = async (companyId) => {
+module.exports.getApplicationMetrics = async (companyId, postId = null, dateFrom = null) => {
   try {
     if (!companyId) {
       const error = new Error("Company ID is required");
@@ -657,20 +688,25 @@ module.exports.getApplicationMetrics = async (companyId) => {
     }
 
     const ObjectId = require("mongoose").Types.ObjectId;
+    const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
+
+    const appFilter = { company: new ObjectId(companyId), isArchived: false, isWithdrawn: false };
+    if (postId) appFilter.post = new ObjectId(postId);
+    if (dateFrom) appFilter.appliedAt = { $gte: new Date(dateFrom) };
 
     // Get total number of applicants (all applications for this company)
-    const totalApplicants = await JobApplication.countDocuments({ company: new ObjectId(companyId) });
+    const totalApplicants = await JobApplication.countDocuments(appFilter);
 
-    // Get count of unique job posts that have received applications
+    // Get unique job posts that have received applications
     const postsWithApplications = await JobApplication.aggregate([
-      { $match: { company: new ObjectId(companyId) } },
+      { $match: appFilter },
       { $group: { _id: "$post" } },
-      { $count: "totalPosts" },
     ]);
+    const postIds = postsWithApplications.map((p) => p._id);
 
-    // Get avg/top CV scores across all applications
+    // Get avg/top match scores across all applications
     const applicationsMetrics = await JobApplication.aggregate([
-      { $match: { company: new ObjectId(companyId) } },
+      { $match: appFilter },
       {
         $group: {
           _id: null,
@@ -680,14 +716,23 @@ module.exports.getApplicationMetrics = async (companyId) => {
       },
     ]);
 
-    const totalPostsWithApplications = postsWithApplications.length > 0 ? postsWithApplications[0].totalPosts : 0;
+    // Get top interview score across this company's post interviews
+    const interviewMatch = { post: { $in: postIds } };
+    if (dateFrom) interviewMatch.createdAt = { $gte: new Date(dateFrom) };
+    const interviewMetrics = await PostInterviewAssessment.aggregate([
+      { $match: interviewMatch },
+      { $group: { _id: null, topInterviewScore: { $max: "$interviewData.finalReport.scores.overall" } } },
+    ]);
+
     const appMetrics = applicationsMetrics[0] || {};
+    const intMetrics = interviewMetrics[0] || {};
 
     return {
       totalApplicants,
-      totalJobPosts: totalPostsWithApplications,
+      totalJobPosts: postIds.length,
       avgCVScore: appMetrics.avgCVScore ? Math.round(appMetrics.avgCVScore) : 0,
       topCVScore: appMetrics.topCVScore ? Math.round(appMetrics.topCVScore) : 0,
+      topInterviewScore: intMetrics.topInterviewScore ? Math.round(intMetrics.topInterviewScore) : 0,
     };
   } catch (error) {
     error.status = error.status || 500;
@@ -705,6 +750,9 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
     }
 
     const PostInterviewAssessment = require("../interviews/post-interview/post-interview.model");
+
+    const post = await Post.findById(postId).select("thresholdScore").lean();
+    const thresholdScore = post?.thresholdScore ?? 60;
 
     // â”€â”€ Build base query â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
     const query = { post: postId, isWithdrawn: false };
@@ -738,7 +786,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
 
     // â”€â”€ Fetch applications (all, for in-memory interviewScore sort/filter) â”€â”€â”€
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile recruiterDecision invitedAt")
+      .select("_id status matchScore appliedAt profile recruiterDecision invitedAt source")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -748,7 +796,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
       .lean();
 
     // â”€â”€ Fetch all assessments for this post in one query â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-    const assessments = await PostInterviewAssessment.find({ post: postId })
+    const assessments = await PostInterviewAssessment.find({ post: postId, completed: true })
       .select("candidate interviewData.finalReport.scores.overall createdAt")
       .lean();
 
@@ -778,6 +826,8 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
         resumeFile: p.resume || null,
         recruiterDecision: app.recruiterDecision ?? null,
         invitedAt: app.invitedAt ?? null,
+        source: app.source ?? null,
+        belowThreshold: app.matchScore !== null && app.matchScore !== undefined && app.matchScore < thresholdScore,
       };
     });
 
@@ -835,8 +885,21 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
 
     const query = { company: new ObjectId(companyId) };
 
-    if (filters.status) query.status = filters.status;
-    if (filters.postId) query.post = new ObjectId(filters.postId);
+    if (filters.status)        query.status = filters.status;
+    if (filters.postId)        query.post   = new ObjectId(filters.postId);
+    if (filters.applicationId) query._id    = new ObjectId(filters.applicationId);
+
+    // "Take Action" deep-links from the dashboard — same definitions as the
+    // Zone 1 KPI counts (getPendingShortlistsKPI / getNoshowsKPI / getUnreviewedInterviewsOver48Hours).
+    if (filters.actionFilter === 'pending_shortlist') {
+      query.matchScore = { $gte: 60 };
+      query.recruiterDecision = null;
+    } else if (filters.actionFilter === 'no_show') {
+      const fiveDaysAgo = new Date(Date.now() - 5 * 24 * 60 * 60 * 1000);
+      query.firstInvitationSentAt = { $lt: fiveDaysAgo, $ne: null };
+      query.status = 'visited';
+      query.recruiterDecision = null;
+    }
 
     if (filters.matchScoreMin !== undefined || filters.matchScoreMax !== undefined) {
       query.matchScore = {};
@@ -863,7 +926,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
     }
 
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile post recruiterDecision invitedAt")
+      .select("_id status matchScore appliedAt profile post recruiterDecision invitedAt source")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -874,8 +937,8 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
       .lean();
 
     const postIds = [...new Set(applications.map((a) => a.post?._id).filter(Boolean).map(String))];
-    const assessments = await PostInterviewAssessment.find({ post: { $in: postIds } })
-      .select("candidate post interviewData.finalReport.scores.overall createdAt")
+    const assessments = await PostInterviewAssessment.find({ post: { $in: postIds }, completed: true })
+      .select("candidate post interviewData.finalReport.scores.overall createdAt recruiterFeedback")
       .lean();
 
     const assessmentMap = new Map();
@@ -906,6 +969,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
         resumeFile: p.resume || null,
         recruiterDecision: app.recruiterDecision ?? null,
         invitedAt: app.invitedAt ?? null,
+        source: app.source ?? null,
       };
     });
 
@@ -913,6 +977,14 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
       rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore >= filters.interviewScoreMin);
     if (filters.interviewScoreMax !== undefined)
       rows = rows.filter((r) => r.interviewScore !== null && r.interviewScore <= filters.interviewScoreMax);
+
+    if (filters.actionFilter === 'unreviewed') {
+      const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+      rows = rows.filter((r) => {
+        const assessment = assessmentMap.get(`${r.postId}:${r.candidateUserId}`);
+        return assessment && assessment.recruiterFeedback == null && new Date(assessment.createdAt) <= cutoff;
+      });
+    }
 
     const sortMap = {
       appliedAt_desc:      (a, b) => new Date(b.appliedAt) - new Date(a.appliedAt),
@@ -1041,6 +1113,8 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
     // PostInterviewAssessment: candidate â†’ User (userId matches Profile.userId)
     const appFilter = {
       company: companyId,
+      isArchived: false,
+      isWithdrawn: false,
       $or: [
         { status: 'interview_completed' },
         { recruiterDecision: 'shortlisted' },
@@ -1050,7 +1124,7 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
     if (dateFrom) appFilter.appliedAt = { $gte: new Date(dateFrom) };
 
     const completedApps = await JobApplication.find(appFilter)
-      .select('post profile recruiterDecision')
+      .select('post profile recruiterDecision matchScore')
       .populate('post', 'jobDetails')
       .populate('profile', 'userId firstName lastName')
       .lean();
@@ -1066,48 +1140,67 @@ module.exports.getSourcingKPI = async (companyId, postId = null, dateFrom = null
     const userIds = Object.values(profileIdToUserId);
     const postIds = completedApps.map(a => a.post?._id).filter(Boolean);
 
-    // Fetch all assessments for these candidates+posts
+    // Fetch all assessments for these candidates+posts. Deliberately not
+    // filtering by `company` here — postIds are already scoped to this
+    // company via appFilter above, and the assessment's own `company` field
+    // can be stale/null if it was set from a failed post lookup at interview
+    // start time, which would otherwise hide a genuinely completed score.
     const assessments = await PostInterviewAssessment.find({
-      company:   companyId,
       candidate: { $in: userIds },
       post:      { $in: postIds },
     }).select('candidate post interviewData.finalReport.scores').lean();
 
-    // scoreMap key: postId_userId â€” only store entries with a real score > 0
+    // scoreMap key: postId_userId â€” a genuine 0 (e.g. candidate never
+    // responded) is a real score and must still win over the CV-match
+    // fallback below; only a missing assessment should fall back.
     const scoreMap = {};
     assessments.forEach(a => {
       const raw = a.interviewData?.finalReport?.scores?.overall;
-      if (raw != null && raw > 0) {
+      if (raw != null) {
         const key = `${String(a.post)}_${String(a.candidate)}`;
         scoreMap[key] = Math.round(raw);
       }
     });
 
-    // Build ranked list â€” score is null if no assessment exists (not 0)
-    const ranked = completedApps.map(a => {
-      const userId    = profileIdToUserId[String(a.profile?._id)] || '';
-      const postIdStr = String(a.post?._id || '');
-      const key       = `${postIdStr}_${userId}`;
-      const score     = key in scoreMap ? scoreMap[key] : null;
-      return {
-        firstName: a.profile?.firstName || 'â€”',
-        lastName:  a.profile?.lastName  || '',
-        postTitle: a.post?.jobDetails?.title || 'â€”',
-        score,
-        status: a.recruiterDecision === 'shortlisted' ? 'shortlisted' : 'completed',
-      };
-    });
+    // Build ranked list â€” score is null if no assessment exists (not 0).
+    // matchScore is the CV/AI match score computed at application time,
+    // shown alongside the interview score for context. Candidates who never
+    // completed an interview (score === null) are dropped below.
+    // Ranking key is min(interview score, CV match) â€” a candidate only
+    // ranks high if they're strong on BOTH, not just one of the two.
+    const ranked = completedApps
+      .map(a => {
+        const userId    = profileIdToUserId[String(a.profile?._id)] || '';
+        const postIdStr = String(a.post?._id || '');
+        const key       = `${postIdStr}_${userId}`;
+        const score     = key in scoreMap ? scoreMap[key] : null;
+        return {
+          applicationId: String(a._id),
+          firstName:  a.profile?.firstName || 'â€”',
+          lastName:   a.profile?.lastName  || '',
+          postTitle:  a.post?.jobDetails?.title || 'â€”',
+          score,
+          matchScore: a.matchScore ?? null,
+          status: a.recruiterDecision === 'shortlisted' ? 'shortlisted' : 'completed',
+        };
+      })
+      .filter(r => r.score !== null);
 
-    // Scored entries first (desc), then unscored entries after
+    // Primary: min(interview, match) â€” must be strong on both. Ties (e.g. two
+    // candidates both scoring 0 on the interview) fall back to whichever has
+    // the stronger CV match, then the stronger interview score.
     ranked.sort((a, b) => {
-      if (a.score !== null && b.score !== null) return b.score - a.score;
-      if (a.score !== null) return -1;
-      if (b.score !== null) return 1;
-      return 0;
+      const minB = Math.min(b.score, b.matchScore ?? 0);
+      const minA = Math.min(a.score, a.matchScore ?? 0);
+      if (minB !== minA) return minB - minA;
+      const matchB = b.matchScore ?? 0;
+      const matchA = a.matchScore ?? 0;
+      if (matchB !== matchA) return matchB - matchA;
+      return b.score - a.score;
     });
-    const top10 = ranked.slice(0, 10).map((r, i) => ({ rank: i + 1, ...r }));
+    const top10 = ranked.slice(0, 5).map((r, i) => ({ rank: i + 1, ...r }));
 
-    // â”€â”€ Avg score: all completed/shortlisted candidates, score=0 for those without interview â”€â”€
+    // â”€â”€ Avg score: across candidates who completed an interview only â”€â”€
     const avgCurrent = ranked.length
       ? Math.round(ranked.reduce((s, r) => s + (r.score ?? 0), 0) / ranked.length)
       : null;
@@ -1276,12 +1369,14 @@ module.exports.getVelocityKPI = async (companyId, postId = null, dateFrom = null
 
 // ========== KPI - REPORTING & ROI (Zone 7) ==========
 // savedHours, subscriptionCost, costPerHire, costPerShortlisted, tth trend 12 months
-module.exports.getRoiKPI = async (companyId) => {
+module.exports.getRoiKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
     const Payment      = require('../billing/payments/payment.model');
     const Profile      = require('../users/profile.model');
 
-    const base = { company: companyId, isArchived: false };
+    const base = { company: companyId, isArchived: false, isWithdrawn: false };
+    if (postId) base.post = new mongoose.Types.ObjectId(postId);
+    if (dateFrom) base.appliedAt = { $gte: new Date(dateFrom) };
 
     // ── Counts (single aggregation pass) ────────────────────────────────────────
     const [counts] = await JobApplication.aggregate([
@@ -1374,11 +1469,168 @@ module.exports.getRoiKPI = async (companyId) => {
   }
 };
 
+// ========== KPI - MANUAL VS TALENTAI HOURS/COST (Zone 7) ==========
+// Shared cvsAnalyzed/interviewsCompleted usage, bucketed in JS (not a Mongo
+// $year/$month aggregation) so the grouping key always matches the bucket
+// labels exactly — no UTC-vs-server-local timezone drift between how the
+// range/labels are built and how documents get bucketed. Both the hours and
+// cost comparison KPIs derive their numbers from this same usage data.
+//
+// unit="day": bucket per calendar day, value = how many days back (7/14/30).
+// unit="month": bucket per calendar month, value = how many months back
+// (3/6/9/12 for the Months filter, 12/24/36 for the Years filter — a "years"
+// range is just a larger month count, since a 1-3 point line chart wouldn't
+// show a usable trend).
+const ALLOWED_DAY_VALUES   = [7, 14, 30];
+const ALLOWED_MONTH_VALUES = [3, 6, 9, 12, 24, 36];
+
+function normalizeRange(unit, value) {
+  if (unit === 'day' && ALLOWED_DAY_VALUES.includes(value)) return { unit: 'day', value };
+  if (unit === 'month' && ALLOWED_MONTH_VALUES.includes(value)) return { unit: 'month', value };
+  return { unit: 'month', value: 3 };
+}
+
+async function getCvInterviewUsage(companyId, postId, unit, value) {
+  ({ unit, value } = normalizeRange(unit, value));
+
+  const base = { company: companyId, isArchived: false, isWithdrawn: false };
+  if (postId) base.post = new mongoose.Types.ObjectId(postId);
+
+  const now = new Date();
+  const buckets = [];
+
+  if (unit === 'day') {
+    for (let i = value - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      buckets.push({
+        key:   `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`,
+        label: d.toLocaleString('en', { month: 'short', day: 'numeric' }),
+        cvsAnalyzed: 0, interviewsCompleted: 0,
+      });
+    }
+  } else {
+    for (let i = value - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      // Spans more than a year (the Years filter) — disambiguate repeating
+      // month names with a 2-digit year, e.g. "Jan '24".
+      const label = value > 12
+        ? `${d.toLocaleString('en', { month: 'short' })} '${String(d.getFullYear()).slice(-2)}`
+        : d.toLocaleString('en', { month: 'short' });
+      buckets.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label,
+        cvsAnalyzed: 0, interviewsCompleted: 0,
+      });
+    }
+  }
+
+  const rangeStart = unit === 'day'
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - (value - 1))
+    : new Date(now.getFullYear(), now.getMonth() - (value - 1), 1);
+
+  const keyOf = unit === 'day'
+    ? (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    : (d) => `${d.getFullYear()}-${d.getMonth()}`;
+
+  const byKey = {};
+  buckets.forEach(b => { byKey[b.key] = b; });
+
+  const apps = await JobApplication.find({ ...base, appliedAt: { $gte: rangeStart } })
+    .select('appliedAt cvAnalysis status')
+    .lean();
+
+  apps.forEach(app => {
+    const bucket = byKey[keyOf(new Date(app.appliedAt))];
+    if (!bucket) return;
+    if (app.cvAnalysis) bucket.cvsAnalyzed += 1;
+    if (app.status === 'interview_completed') bucket.interviewsCompleted += 1;
+  });
+
+  // A completed interview can't happen without that candidate's CV having been
+  // screened first — if `cvAnalysis` wasn't linked on the application (e.g. it
+  // was applied before the profile had an analyzed CV on file), still count it
+  // as screened here so manual/AI cost & hours aren't understated for that bucket.
+  buckets.forEach(b => { b.cvsAnalyzed = Math.max(b.cvsAnalyzed, b.interviewsCompleted); });
+
+  return buckets.map(({ label, cvsAnalyzed, interviewsCompleted }) => ({ month: label, cvsAnalyzed, interviewsCompleted }));
+}
+
+const round2 = (n) => Math.round(n * 100) / 100;
+
+// manualHours = (cvsAnalyzed*7 + interviewsCompleted*10) / 60
+// aiHours     = (cvsAnalyzed*0.2 + interviewsCompleted*1) / 60
+module.exports.getHoursComparisonKPI = async (companyId, postId = null, unit = 'month', value = 3) => {
+  try {
+    const { CompanySettingsService } = require('../company-settings');
+    const settings = await CompanySettingsService.getOrCreateSettings(companyId);
+
+    const usage = await getCvInterviewUsage(companyId, postId, unit, value);
+
+    // 2 decimals: aiHours is routinely well under 0.05h for low-volume months
+    // (e.g. 2 CVs analyzed = 0.007h) and would silently round to 0.0 at 1 decimal.
+    const trend = usage.map(({ month, cvsAnalyzed, interviewsCompleted }) => ({
+      month,
+      cvsAnalyzed,
+      interviewsCompleted,
+      manualHours: round2((cvsAnalyzed * 7 + interviewsCompleted * 10) / 60),
+      aiHours:     round2((cvsAnalyzed * 0.2 + interviewsCompleted * 1) / 60),
+    }));
+
+    return { trend, interviewDurationMinutes: settings.interviewDurationMinutes };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// manualCost = interviewsCompleted * manualCostPerCandidate
+// aiCost     = interviewsCompleted * aiCostPerInterview
+//              (flat, real per-candidate charges for taking one candidate through
+//              CV review + interview end-to-end — not a time estimate)
+// costSaved  = manualCost - aiCost
+// gapPercent = costSaved / manualCost * 100
+module.exports.getCostComparisonKPI = async (companyId, postId = null, unit = 'month', value = 3) => {
+  try {
+    const { CompanySettingsService } = require('../company-settings');
+    const settings = await CompanySettingsService.getOrCreateSettings(companyId);
+
+    const usage = await getCvInterviewUsage(companyId, postId, unit, value);
+
+    const trend = usage.map(({ month, cvsAnalyzed, interviewsCompleted }) => {
+      const manualCost = interviewsCompleted * settings.manualCostPerCandidate;
+      const aiCost      = interviewsCompleted * settings.aiCostPerInterview;
+      const costSaved   = manualCost - aiCost;
+      const gapPercent  = manualCost > 0 ? Math.round((costSaved / manualCost) * 100) : null;
+
+      return {
+        month,
+        cvsAnalyzed,
+        interviewsCompleted,
+        manualCost: round2(manualCost),
+        aiCost:     round2(aiCost),
+        costSaved:  round2(costSaved),
+        gapPercent,
+      };
+    });
+
+    return {
+      trend,
+      currency:                 settings.currency,
+      manualCostPerCandidate:   settings.manualCostPerCandidate,
+      aiCostPerInterview:       settings.aiCostPerInterview,
+      interviewDurationMinutes: settings.interviewDurationMinutes,
+    };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
 // ========== KPI - GLOBAL FUNNEL (Zone 3) ==========
 // Applied â†’ Invited â†’ Completed â†’ Shortlisted
 module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) => {
   try {
-    const match = { company: companyId, isArchived: false };
+    const match = { company: companyId, isArchived: false, isWithdrawn: false };
     if (postId)   match.post      = postId;
     if (dateFrom) match.appliedAt = { $gte: new Date(dateFrom) };
 
@@ -1395,9 +1647,155 @@ module.exports.getFunnelKPI = async (companyId, postId = null, dateFrom = null) 
       },
     ]);
 
+    // ── Monthly trend: last 6 calendar months, each bucketed by the date the
+    // event actually happened (applied â†’ appliedAt, completed/shortlisted â†’ their
+    // own timestamps) so a candidate who applied in month 1 but was shortlisted
+    // in month 2 counts correctly in each month, not just the application month.
+    const now    = new Date();
+    const months = [];
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({ year: d.getFullYear(), month: d.getMonth() + 1, label: d.toLocaleString('en', { month: 'short' }) });
+    }
+
+    const trendMatch = { company: companyId, isArchived: false, isWithdrawn: false };
+    if (postId) trendMatch.post = postId;
+
+    const apps = await JobApplication.find(trendMatch)
+      .select('appliedAt status updatedAt recruiterDecision recruiterDecisionAt')
+      .lean();
+
+    const byMonth = {};
+    months.forEach(m => { byMonth[`${m.year}-${m.month}`] = { applied: 0, completed: 0, shortlisted: 0 }; });
+
+    const bucketOf = (date) => `${date.getFullYear()}-${date.getMonth() + 1}`;
+
+    apps.forEach(app => {
+      const appliedKey = app.appliedAt ? bucketOf(new Date(app.appliedAt)) : null;
+      if (appliedKey && byMonth[appliedKey]) byMonth[appliedKey].applied += 1;
+
+      if (app.status === 'interview_completed') {
+        const completedKey = bucketOf(new Date(app.updatedAt));
+        if (byMonth[completedKey]) byMonth[completedKey].completed += 1;
+      }
+
+      if (app.recruiterDecision === 'shortlisted') {
+        const decidedAt = app.recruiterDecisionAt || app.updatedAt;
+        const shortlistedKey = bucketOf(new Date(decidedAt));
+        if (byMonth[shortlistedKey]) byMonth[shortlistedKey].shortlisted += 1;
+      }
+    });
+
+    const trend = months.map(m => ({
+      month:       m.label,
+      applied:     byMonth[`${m.year}-${m.month}`].applied,
+      completed:   byMonth[`${m.year}-${m.month}`].completed,
+      shortlisted: byMonth[`${m.year}-${m.month}`].shortlisted,
+    }));
+
     return result
-      ? { applied: result.applied, invited: result.invited, completed: result.completed, shortlisted: result.shortlisted }
-      : { applied: 0, invited: 0, completed: 0, shortlisted: 0 };
+      ? { applied: result.applied, invited: result.invited, completed: result.completed, shortlisted: result.shortlisted, trend }
+      : { applied: 0, invited: 0, completed: 0, shortlisted: 0, trend };
+  } catch (error) {
+    error.status = error.status || 500;
+    throw error;
+  }
+};
+
+// ========== KPI - RECENT ACTIVITY (Zone 1 replacement) ==========
+// Last N application events on the site: applied, invited, interview completed,
+// shortlisted, or rejected — whichever is each application's latest change.
+module.exports.getApplicationHistoryKPI = async (companyId, postId = null, dateFrom = null, limit = 4) => {
+  const result = await module.exports.getApplicationHistoryKPIPaged(companyId, postId, dateFrom, 1, limit);
+  return result.data;
+};
+
+module.exports.getApplicationHistoryKPIPaged = async (companyId, postId = null, dateFrom = null, page = 1, limit = 4) => {
+  try {
+    const match = { company: companyId, isArchived: false, isWithdrawn: false };
+    if (postId)   match.post      = new mongoose.Types.ObjectId(postId);
+    if (dateFrom) match.appliedAt = { $gte: new Date(dateFrom) };
+
+    const skip       = (page - 1) * limit;
+    const totalCount = await JobApplication.countDocuments(match);
+    const totalPages = Math.ceil(totalCount / limit) || 1;
+
+    const apps = await JobApplication.find(match)
+      .sort({ updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .select('profile post status recruiterDecision matchScore updatedAt firstInvitationSentAt')
+      .populate('profile', 'firstName lastName userId')
+      .populate('post', 'jobDetails thresholdScore')
+      .lean();
+
+    // JobApplication.interviewAssessment is never actually written by the
+    // interview-completion flow, so the interview score has to be joined the
+    // same way getSourcingKPI does it: PostInterviewAssessment.candidate is a
+    // User id (Profile.userId), keyed together with post.
+    const completedPostIds = [...new Set(
+      apps.filter(a => a.status === 'interview_completed' && a.post?._id).map(a => String(a.post._id)),
+    )];
+    const completedUserIds = [...new Set(
+      apps.filter(a => a.status === 'interview_completed' && a.profile?.userId).map(a => String(a.profile.userId)),
+    )];
+
+    const scoreMap = {};
+    if (completedPostIds.length && completedUserIds.length) {
+      // Not filtering by `company` — completedPostIds is already scoped to
+      // this company via `match` above, and the assessment's own `company`
+      // field can be stale/null (see getSourcingKPI for why).
+      const assessments = await PostInterviewAssessment.find({
+        post:      { $in: completedPostIds },
+        candidate: { $in: completedUserIds },
+      }).select('post candidate interviewData.finalReport.scores.overall').lean();
+
+      assessments.forEach((asm) => {
+        const key = `${String(asm.post)}_${String(asm.candidate)}`;
+        const score = asm.interviewData?.finalReport?.scores?.overall;
+        if (score != null) scoreMap[key] = Math.round(score);
+      });
+    }
+
+    const data = apps.map((a) => {
+      const threshold  = a.post?.thresholdScore || 60;
+      // A known low match score always means "not matched" — even on legacy rows
+      // that were auto-marked "rejected" before the "not_matched" outcome existed.
+      const hasLowScore = a.matchScore != null && a.matchScore < threshold;
+      const status = a.recruiterDecision === 'shortlisted' && !hasLowScore
+        ? 'shortlisted'
+        : a.recruiterDecision === 'rejected' && !hasLowScore
+          ? 'rejected'
+          : (a.recruiterDecision === 'not_matched' || hasLowScore)
+            ? 'not_matched'
+            : a.status === 'interview_completed'
+              ? 'completed'
+              : a.firstInvitationSentAt
+                ? 'invited'
+                : 'applied';
+
+      const scoreKey = `${String(a.post?._id)}_${String(a.profile?.userId)}`;
+      const interviewScore = status === 'completed' ? (scoreMap[scoreKey] ?? null) : null;
+
+      return {
+        id:              String(a._id),
+        firstName:       a.profile?.firstName || 'â€”',
+        lastName:        a.profile?.lastName  || '',
+        postTitle:       a.post?.jobDetails?.title || 'â€”',
+        status,
+        matchScore:      a.matchScore ?? null,
+        matchThreshold:  threshold,
+        interviewScore,
+        date:            a.updatedAt,
+        hasInterview:    a.status === 'interview_completed',
+        candidateUserId: a.profile?.userId ? String(a.profile.userId) : null,
+      };
+    });
+
+    return {
+      data,
+      pagination: { currentPage: page, totalPages, totalCount, limit, hasNextPage: page < totalPages, hasPrevPage: page > 1 },
+    };
   } catch (error) {
     error.status = error.status || 500;
     throw error;

@@ -1,11 +1,10 @@
 "use client";
 
-import { Box, Divider } from "@mui/material";
 import { useDispatch, useSelector, shallowEqual } from "react-redux";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useQueryClient } from "@tanstack/react-query";
-import { setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, updateSalaryField, setGeneratedPost } from "../store/createPostSlice";
+import { setEmploymentType, setExpirationDate, setPromptDescription, setWorkMode, setDepartment, updateSalaryField, setGeneratedPost } from "../store/createPostSlice";
 import { AppDispatch, RootState } from "@/store/store";
 import GenerateLanguageModal, { GENERATE_LANG_KEY } from "./GenerateLanguageModal";
 import CardHeader from "./post-description/CardHeader";
@@ -23,7 +22,7 @@ interface PostDescriptionProps {
 const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const dispatch = useDispatch<AppDispatch>();
   const queryClient = useQueryClient();
-  const { promptDescription, salary, workMode, employmentType, expirationDate, interviewLanguages } = useSelector(
+  const { promptDescription, salary, workMode, employmentType, department, expirationDate, interviewLanguages } = useSelector(
     (state: RootState) => state.postGeneration,
     shallowEqual
   );
@@ -98,25 +97,27 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   };
 
   return (
-    <Box sx={{ bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "16px", overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 1px 6px rgba(0,0,0,0.04)" }}>
+    <div className="flex flex-col overflow-hidden rounded-2xl border border-[#E5E7EB] bg-white shadow-[0_1px_6px_rgba(0,0,0,0.04)]">
       <CardHeader />
 
-      <Box sx={{ px: 2.5, pt: 2, pb: 0, display: "flex", flexDirection: "column", gap: 1.75 }}>
+      <div className="flex flex-col gap-3.5 px-5 pt-4 pb-0">
         <PromptField
           value={promptDescription}
           error={errors.promptDescription}
           onChange={(val) => { dispatch(setPromptDescription(val)); clear("promptDescription"); }}
         />
 
-        <Divider sx={{ borderColor: "#F3F4F6" }} />
+        <hr className="border-t border-[#F3F4F6]" />
 
         <RoleFields
           employmentType={employmentType}
           workMode={workMode}
+          department={department}
           expirationDate={expirationDate}
           errors={{ employmentType: errors.employmentType, workMode: errors.workMode }}
           onEmploymentChange={(val) => { dispatch(setEmploymentType(val)); clear("employmentType"); }}
           onWorkModeChange={(val) => { dispatch(setWorkMode(val)); clear("workMode"); }}
+          onDepartmentChange={(val) => dispatch(setDepartment(val))}
           onExpirationChange={(val) => dispatch(setExpirationDate(val))}
         />
 
@@ -126,7 +127,7 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
           onChange={handleSalaryChange}
           employmentType={employmentType}
         />
-      </Box>
+      </div>
 
       <GenerateButton loading={loading} onClick={handleGenerate} />
 
@@ -136,7 +137,7 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
         onConfirm={handleConfirmLanguage}
         onClose={() => setLangModalOpen(false)}
       />
-    </Box>
+    </div>
   );
 };
 

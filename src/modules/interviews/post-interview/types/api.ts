@@ -18,7 +18,7 @@ export interface JobPostSkill {
 export interface JobDetails {
   title?: string;
   description?: string;
-  requirements?: string;
+  requirements?: string | string[];
   responsibilities?: string;
   workMode?: string;
   employmentType?: string;

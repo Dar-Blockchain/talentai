@@ -10,7 +10,7 @@ const { sendCompanyInvitation } = require("../../utils/email.service");
 // Constants
 const INVITATION_EXPIRATION_TIME = 2 * 24 * 60 * 60 * 1000; // 2 days in milliseconds
 const INVITATION_EXPIRATION_SECONDS = 2 * 24 * 60 * 60; // 2 days in seconds for JWT
-const FRONTEND_BASE_URL = process.env.FRONTEND_URL || "https://app.talentai.bid";
+const FRONTEND_BASE_URL = process.env.BASE_URL || "https://app.talentai.bid";
 const JWT_SECRET = process.env.INVITATION_JWT_SECRET || "your-secret-key-change-in-production";
 
 /**
@@ -113,7 +113,9 @@ module.exports.sentInvitation = async (
   // Check if user already has an account
   const existingUser = await User.findOne({ email: userEmail });
   if (existingUser) {
-    throw new Error("An account with this email already exists");
+    const err = new Error("An account with this email already exists");
+    err.code = "EMAIL_ALREADY_EXISTS";
+    throw err;
   }
 
   const existing = await CompanyInvitationModel.findOne({
@@ -122,7 +124,9 @@ module.exports.sentInvitation = async (
     status: "pending",
   });
   if (existing) {
-    throw new Error("User already has a pending invitation for this account");
+    const err = new Error("User already has a pending invitation for this account");
+    err.code = "INVITATION_PENDING";
+    throw err;
   }
 
   const { token, expiresAt } = _generateTokenAndExpiration(userEmail, role);

@@ -11,6 +11,7 @@
  *   â€¢ Lightweight coverage tracking
  */
 
+const mongoose = require("mongoose");
 const bedrock = require("../../../utils/bedrock-client");
 const sessionMgr = require("../shared/redis-session-manager");
 const Campaign = require("../../campaigns/campaign.model");
@@ -29,6 +30,7 @@ function buildMixedQuestionPrompt({
   usedQuestionTypes = [],
   moduleType,
   interviewTopic,
+  isSkipped = false,
 }) {
   const totalProgress   = Math.round((questionsAsked / Math.max(maxQuestions, 1)) * 100);
   const phase =
@@ -91,7 +93,7 @@ Every question you ask MUST be directly relevant to this topic. Do not ask gener
 ${conversationSummary || "(interview just started â€” this is the first question after the greeting)"}
 
 â•â•â•â• CANDIDATE'S LATEST ANSWER â•â•â•â•
-"${transcript}"
+${isSkipped ? "(The candidate chose to SKIP this question — no answer was given. Do not evaluate or reference an answer that does not exist.)" : `\"${transcript}\"`}
 
 â•â•â•â• LAST QUESTION YOU ASKED â•â•â•â•
 ${lastQuestion ? `"${lastQuestion}"` : "(none yet â€” you just gave the opening greeting)"}
@@ -113,6 +115,8 @@ Step 2 â€” Decide your next move:
   â€¢ "follow_up"      â†’ if the answer was vague, incomplete, or skipped a key detail that needs probing
   â€¢ "next_question"  â†’ if the answer was sufficient and you should move to a new topic or angle
   â€¢ "end_interview"  â†’ ONLY if SHOULD_END is true OR overall coverage across all areas â‰¥ 75%
+${isSkipped ? `NOTE: the candidate SKIPPED this question without answering. decision MUST be "next_question" (never "follow_up" — there is nothing to probe), every coverageUpdates increase MUST be 0, and analysis.quality should be "avoided". Move on to a fresh topic or angle and do not reference or evaluate a nonexistent answer.` : ""}
+
 Step 3 â€” Generate the next question or closing statement following ALL of these rules:
   âœ“ Use a DIFFERENT question type than the last 2 (avoid: ${recentTypes.join(", ") || "none"})
   âœ“ One question only â€” never compound questions or sub-questions
@@ -273,6 +277,22 @@ class CampaignInterviewService {
     const campaign = await Campaign.findById(campaignId).lean();
     if (!campaign) throw new Error(`Campaign ${campaignId} not found`);
 
+    // A connected (logged-in) participant who already completed this
+    // campaign's module cannot start a new session -- this is the actual
+    // gate; the "already_completed" UI state on the frontend only hides the
+    // Start button, it doesn't stop a direct start_interview call. Anonymous
+    // or link-based participants aren't tracked by a stable candidateId here,
+    // so they're intentionally left out of this check.
+    if (mongoose.Types.ObjectId.isValid(candidateId)) {
+      const existingParticipant = await CampaignParticipant.findOne(
+        { campaign: campaignId, employee: candidateId },
+        { status: 1 },
+      ).lean();
+      if (existingParticipant?.status === "COMPLETED") {
+        throw new Error("You have already completed this interview and cannot retake it.");
+      }
+    }
+
     const moduleConfig = campaign.module?.config || {};
     const agentPrompt = moduleConfig.agentPrompt || null;
     const skill = moduleConfig.skill || null;
@@ -282,13 +302,13 @@ class CampaignInterviewService {
     const context =
       moduleType === "SKILL_TEST"
         ? this._buildSkillContext(skill)
-        : this._buildAgentContext(agentPrompt, campaign);
+        : await this._buildAgentContext(agentPrompt, campaign);
 
     // 3. Determine coverage areas
     const coverageAreas =
       moduleType === "SKILL_TEST"
         ? SKILL_TEST_AREAS(skill || "the requested skill")
-        : AI_INTERVIEW_DEFAULT_AREAS();
+        : this._buildCoverageAreasFromFocus(context.focusAreas) || AI_INTERVIEW_DEFAULT_AREAS();
 
     // 4. Create Redis session
     const sessionData = {
@@ -338,7 +358,7 @@ class CampaignInterviewService {
 
   // â”€â”€ Process candidate response â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
 
-  async processCandidateResponse(sessionId, transcript) {
+  async processCandidateResponse(sessionId, transcript, isSkipped = false) {
     const session = await this.sessionManager.getSession(sessionId);
     if (!session) throw new Error(`Session ${sessionId} not found`);
 
@@ -347,6 +367,7 @@ class CampaignInterviewService {
       type: "candidate",
       content: transcript,
       timestamp: new Date().toISOString(),
+      ...(isSkipped ? { metadata: { skipped: true } } : {}),
     });
 
     const {
@@ -385,6 +406,7 @@ class CampaignInterviewService {
       newCount,
       maxQuestions,
       usedQuestionTypes,
+      isSkipped,
     );
 
     // Track question type for anti-repetition
@@ -452,14 +474,29 @@ class CampaignInterviewService {
       return;
     }
 
-    // Look up the CampaignParticipant by (campaign, employee user _id)
-    let participant = await CampaignParticipant.findOne({
-      campaign: campaignId,
-      employee: candidateId,
-    });
+    // Resolve the CampaignParticipant. candidateId may be a real User _id (authenticated
+    // employee) OR an anonymous/link token (ANONYMOUS-mode or unauthenticated LINK access)
+    // — mirrors the resolution order already proven in campaign.controller.js's
+    // exports.getParticipantResults.
+    const candidateIsObjectId = mongoose.Types.ObjectId.isValid(candidateId);
+
+    let participant = null;
+    if (candidateIsObjectId) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, employee: candidateId });
+    }
+    if (!participant) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, anonymousToken: candidateId });
+    }
+    if (!participant) {
+      participant = await CampaignParticipant.findOne({ campaign: campaignId, linkAccessToken: candidateId });
+    }
 
     if (!participant) {
-      console.warn(`âš ï¸ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId} â€” upserting`);
+      if (!candidateIsObjectId) {
+        console.warn(`⚠️ [CampaignInterview] No participant found for anonymous/link candidateId=${candidateId}, campaign=${campaignId} — skipping persist`);
+        return;
+      }
+      console.warn(`⚠️ [CampaignInterview] No participant found for campaign=${campaignId} employee=${candidateId} — upserting`);
       participant = await CampaignParticipant.findOneAndUpdate(
         { campaign: campaignId, employee: candidateId },
         { $setOnInsert: { campaign: campaignId, employee: candidateId, status: 'IN_PROGRESS' } },
@@ -486,6 +523,11 @@ class CampaignInterviewService {
       aiScore,
       aiSummary,
       interviewTranscript,
+      aiReport: {
+        strengths:            Array.isArray(finalReport.strengths) ? finalReport.strengths : [],
+        areasForImprovement:  Array.isArray(finalReport.areasForImprovement) ? finalReport.areasForImprovement : [],
+        recommendation:       finalReport.recommendation ?? null,
+      },
     };
 
     if (moduleType === "SKILL_TEST") {
@@ -567,121 +609,193 @@ This is NOT a job interview. Do NOT ask about years of experience, past employer
 CRITICAL — WHAT THIS IS
 This is a direct knowledge test of the candidate's understanding of ${s}. Every question must test what they KNOW about ${s} itself — definitions, mechanics, concepts, trade-offs, best practices, edge cases — not what they have DONE with it.
 
+QUESTION BANK MINDSET
+Draw from the same pool of real, well-known ${s} interview questions that show up in actual technical interviews and interview-prep guides for this skill -- never vague, generic, or invented-on-the-spot questions. Before asking anything, silently organize ${s} into the categories a real interview guide for it would use (for example, for React that's roughly: Fundamentals, Hooks, State management & data flow, Performance, Testing, Ecosystem/tooling -- work out the real equivalent categories for ${s} specifically, whatever they are). Every question should be one an expert in ${s} would instantly recognize as a genuine, commonly-asked interview question, in the spirit of:
+  - "What's the difference between X and Y?"
+  - "What does Z do, and when would you reach for it over W?"
+  - "How would you implement / debug / optimize <a specific, concrete situation>?"
+  - "Explain how A affects B" or "Walk me through what happens when..."
+
+AVOID:
+  - "Tell me about your experience with ${s}" -- fine ONCE as a warm-up, never again
+  - Abstract questions with no concrete right answer, or ones a non-expert could bluff through
+  - Anything not tied to how ${s} is actually used and discussed in real ${s} work
+
 ROLE
-Act as a knowledgeable, professional, and empathetic interviewer â€” like a senior engineer interviewing a peer. Your tone should be encouraging yet evaluative. Make the candidate feel at ease while genuinely testing their depth.
+Act as a knowledgeable, professional, and empathetic interviewer -- like a senior engineer interviewing a peer. Encouraging yet evaluative: put the candidate at ease while genuinely testing depth.
 
 INTERVIEW PROGRESSION
-Phase 1 – Warm-up (first 2 questions):
-  Direct but approachable knowledge questions.
-  Goal: gauge baseline understanding and comfort with the vocabulary of ${s}.
-  Example style: "In your own words, what is ${s} and what problem does it solve?" / "Can you describe the core building blocks of ${s}?"
+Phase 1 (first 2 questions) -- Fundamentals: canonical, foundational ${s} questions (core definitions and mechanics) plus a quick read on their experience level.
+Phase 2 (next 2-3 questions) -- Practical mechanics: real, specific questions about the tools/APIs/patterns a working ${s} developer uses day to day -- move across DIFFERENT categories from your map, don't linger on one for more than 2 questions in a row.
+Phase 3 (next 2-3 questions) -- Depth: pick the category (or categories) where the candidate showed the most -- or least -- strength, and go to the advanced end of it: internals, trade-offs, performance, edge cases, "what happens when...".
+Phase 4 (last 1-2 questions) -- Reflection: a mistake they learned from, or advice they'd give someone newer to ${s}.
 
-Phase 2 – Exploration (next 2–3 questions):
-  Core concepts, mechanics, and standard patterns of ${s}.
-  Ask HOW and WHY things work — not whether they have used them.
-  Example styles: "How does X work under the hood?" / "What is the difference between X and Y in ${s}?" / "When would you use X instead of Y?"
+QUESTION STYLES -- rotate, never repeat the same one twice in a row:
+  - Definition/comparison -- "What's the difference between X and Y?"
+  - Mechanism -- "What does Z do internally, or how does it actually work?"
+  - Practical/applied -- "How would you build / debug / optimize <a concrete, specific situation>?"
+  - Trade-off -- "When would you reach for X instead of Y, and why?"
+  - Best-practice/pitfall -- "What's a common mistake people make with X?"
 
-Phase 3 – Deep-dive (next 2–3 questions):
-  Advanced concepts, edge cases, performance characteristics, common pitfalls, architectural trade-offs.
-  Push for precision — probe if answers are vague.
-  Example styles: "What happens if...?" / "What are the trade-offs of X vs Y?" / "Why does X behave this way when...?"
+ANSWER-DRIVEN ADAPTATION
+  - Strong, specific answer -> stay on that same area and go one notch harder (edge case, scale, "what if")
+  - Thin or generic answer -> don't repeat the question verbatim; ask a narrower, more concrete version once, then move to a different area if it's still thin
+  - Skipped or avoided -> pivot to an easier area entirely, don't circle back to the same spot right away
 
-Phase 4 – Closing (last 1–2 questions):
-  Best practices, common mistakes people make with ${s}, or one final knowledge probe on an uncovered area.
-  Example styles: "What are common anti-patterns with ${s}?" / "What's a subtle mistake that trips people up with ${s}?"
-
-QUESTION TYPE ROTATION — always vary across:
-  • Conceptual    → definitions, purpose, when-to-use ("What is X?", "Why does X exist?")
-  • Mechanics     → how it works internally ("How does X work step by step?")
-  • Comparison    → distinguishing similar things ("What's the difference between X and Y?")
-  • Edge-case     → boundary and failure behaviour ("What happens if... / when...?")
-  • Best-practice → recommended patterns and anti-patterns
-  • Problem-solving → present a small, abstract problem and ask how ${s} solves it (still knowledge-focused, not "have you done this")
-
-FORBIDDEN QUESTION STYLES
-  – "How long have you been working with ${s}?"
-  – "Tell me about a project where you used ${s}."
-  – "Tell me about a time you..." / "Describe a challenge you faced..."
-  – "What kind of teams / companies have you worked in?"
-  – Any question about their resume, employers, seniority, or personal history.
-
-ANTI-REPETITION RULES
-  – Never ask two questions of the same type in a row
-  – Never reuse the same example, feature, or concept
-  – If a candidate gave an excellent answer, build on it — go deeper into mechanics or edge cases
-  – If a candidate gave a poor answer, simplify slightly and try a different angle, don't abandon the area
-
-RESPONSE QUALITY ADAPTATION
-  – Excellent answer → increase difficulty, go deeper into mechanics or edge cases
-  – Good answer → probe one specific detail further before moving on
-  – Fair answer → stay at the same level, try a different angle
-  – Poor/avoided → give a simpler follow-up or pivot to a related area
-
-STYLE
-  – Concise, clear questions (one thing at a time — no compound questions)
-  – Brief acknowledgment of the previous answer before each new question (1 phrase max)
-  – Professional but never cold or robotic
-  – Speak about the SKILL, not the CANDIDATE'S HISTORY`,
+HARD RULES
+  - Never ask two questions about the same narrow sub-topic back to back
+  - Never reuse the same example, snippet, or scenario twice
+  - One question at a time -- no compound questions
+  - Acknowledge the previous answer in one short phrase before asking the next question
+  - Professional but conversational -- never cold or robotic`,
     };
   }
 
-  _buildAgentContext(agentPrompt, campaign) {
+  // Reads the company's free-form agentPrompt (a phrase, a list, or full instructions)
+  // and interprets its INTENT into a short topic label, weighted focus areas, and tone â€”
+  // instead of ever splicing the raw text verbatim into the system prompt.
+  async _interpretAgentPrompt(rawInput, campaignTitle) {
+    if (!rawInput) return null;
+
+    const systemPrompt = `You are an expert interview designer. You read a free-form brief written by a company describing what an AI-led interview should cover, and convert it into a structured, actionable interview plan. You never copy the brief verbatim into your output â€” you interpret its intent and re-express it in your own words.`;
+
+    const userMsg = `Read the brief below and produce a structured interview plan.
+
+BRIEF (written by the company â€” may be a single phrase, a list of topics, or full persona/instructions):
+"""
+${rawInput}
+"""
+${campaignTitle ? `Campaign title (context): "${campaignTitle}"` : ""}
+
+Produce:
+- "topic": a short 2-6 word label for what this interview is about
+- "focusAreas": 3-5 subtopics/competencies to probe, each an object with:
+    "key"    â€” snake_case identifier, no spaces (e.g. "react_expertise")
+    "label"  â€” short human-readable label (e.g. "React Expertise")
+    "weight" â€” integer importance weight; all weights together should sum to ~100
+- "tone": a short phrase describing the interview's tone/style, inferred from the brief (default to "professional and encouraging" if the brief doesn't imply otherwise)
+- "openingContext": one natural sentence (no surrounding quotes, no "the interview will focus on" boilerplate) summarizing what this conversation will explore, written so it can be dropped directly into a greeting
+
+Return ONLY valid JSON, no markdown, no extra text:
+{
+  "topic": "<label>",
+  "focusAreas": [{ "key": "<key>", "label": "<label>", "weight": <int> }],
+  "tone": "<tone>",
+  "openingContext": "<sentence>"
+}`;
+
+    try {
+      const res = await bedrock.callLLM({
+        systemPrompt,
+        messages: [{ role: "user", content: userMsg }],
+        temperature: 0.4,
+        maxTokens: 500,
+        timeout: 20000,
+        useFastModel: true,
+      });
+      const parsed = parseJSON(res.content, null);
+      if (!parsed || !Array.isArray(parsed.focusAreas) || parsed.focusAreas.length === 0) return null;
+      return parsed;
+    } catch (e) {
+      console.warn("âš ï¸ [CampaignInterview] Prompt interpretation failed:", e.message);
+      return null;
+    }
+  }
+
+  _buildCoverageAreasFromFocus(focusAreas) {
+    if (!Array.isArray(focusAreas) || focusAreas.length === 0) return null;
+    const areas = {};
+    for (const a of focusAreas) {
+      if (!a?.key || !a?.label) continue;
+      areas[a.key] = {
+        label: a.label,
+        percentage: 0,
+        questionsAsked: 0,
+        weight: typeof a.weight === "number" && a.weight > 0 ? a.weight : 25,
+      };
+    }
+    return Object.keys(areas).length > 0 ? areas : null;
+  }
+
+  async _buildAgentContext(agentPrompt, campaign) {
     const rawInput    = agentPrompt?.trim() || "";
-    const topic       = rawInput || campaign.title || "general assessment";
-    const isRealPrompt = rawInput.length > 120;
+    const interpreted  = await this._interpretAgentPrompt(rawInput, campaign.title);
+
+    const topic          = interpreted?.topic || rawInput || campaign.title || "general assessment";
+    const tone            = interpreted?.tone || "professional and encouraging";
+    const openingContext  = interpreted?.openingContext || null;
+    const focusAreas      = Array.isArray(interpreted?.focusAreas) && interpreted.focusAreas.length > 0
+      ? interpreted.focusAreas
+      : null;
+    const focusList = focusAreas
+      ? focusAreas.map((a) => `  â€¢ ${a.label}`).join("\n")
+      : null;
+
+    const focusRotationNote = focusAreas
+      ? `Rotate across ALL of the focus areas above -- do not spend more than 2 consecutive questions on the same area. Areas with a higher weight deserve more questions, but every area must get at least one.`
+      : `No predefined focus areas were given for "${topic}" -- before your first question, silently break "${topic}" down into 3-4 natural sub-competencies (the way an expert in this field would), and rotate your questions across those sub-competencies instead of asking generic variations of the same thing.`;
 
     const conductRules = `
 INTERVIEW CONDUCT RULES
-- Ask one question at a time â€” no compound questions.
-- Vary question types every turn: behavioral, situational, technical (if relevant), motivational, problem-solving.
+- Ask one question at a time -- no compound questions.
+- Vary question types every turn: definitional/conceptual, applied/practical, behavioral, situational, trade-off, best-practice.
 - Acknowledge the candidate's previous answer with one brief phrase before each new question.
-- Adapt difficulty based on answer quality (deeper if excellent, simpler if poor).
-- Never repeat the same angle, example, or scenario twice.
-- Every question must be directly relevant to the interview topic: "${topic}".`;
+- Adapt difficulty based on answer quality: excellent answer -> go deeper or raise difficulty; vague/shallow answer -> ask a follow-up on that SAME point before moving to a new sub-topic.
+- Never repeat the same angle, example, or scenario twice, and never ask two questions about the same narrow sub-topic in a row.
+- Every question must be directly relevant to the interview topic: "${topic}" -- never generic filler that could apply to any interview.
+${focusRotationNote}`;
 
-    let systemPrompt;
-
-    if (isRealPrompt) {
-      systemPrompt = `${rawInput}\n\n---\n${conductRules}`;
-    } else {
-      systemPrompt = `You are an experienced interviewer conducting a structured assessment on the topic: "${topic}".
+    const systemPrompt = `You are an experienced interviewer conducting a structured assessment on the topic: "${topic}".
 Campaign: "${campaign.title}"
+Interview tone: ${tone}.
+
+QUESTION BANK MINDSET
+Where "${topic}" has a real body of professional knowledge behind it, draw from the same kind of real, well-known interview questions that show up in actual interviews and interview-prep guides for that subject -- never vague, generic, or invented-on-the-spot questions. Silently organize "${topic}" into the categories a real subject-matter expert would use to structure an assessment of it (for a technical subject that's roughly: fundamentals, everyday practical usage, tools/patterns, advanced/edge-case understanding; for a role, competency, or soft-skill topic that's roughly: core responsibilities or behaviors, decision-making, collaboration, growth areas -- work out what's actually relevant for "${topic}" specifically). Each question should be one a domain expert in "${topic}" would instantly recognize as a genuine, specific interview question, in the spirit of:
+  - "What's the difference between X and Y (within ${topic})?"
+  - "What does Z do, or how does it actually work?"
+  - "How would you handle/build/resolve <a specific, concrete situation involving ${topic}>?"
+  - "Tell me about a time you faced <a specific challenge related to ${topic}> -- what did you do?"
+
+AVOID: "tell me about your experience with ${topic}" beyond a single warm-up use, abstract questions with no concrete right answer, and any generic HR filler unrelated to this topic.
 
 INTERVIEW FOCUS
-Every single question you ask must be directly and specifically about "${topic}".
-Do not ask generic HR questions unrelated to this topic unless used as a brief warm-up opener.
+Every single question you ask must be directly and specifically about "${topic}"${focusList ? `, covering these areas (with their relative importance):\n${focusList}` : ""}.
 
 ROLE
-Act as a knowledgeable, professional, and empathetic interviewer. Your tone is encouraging yet evaluative.
+Act as a knowledgeable, professional, and empathetic interviewer. Your tone is ${tone}.
 You combine behavioral, situational, technical, and problem-solving questions to build a complete picture of the candidate's capabilities in "${topic}".
 
 INTERVIEW PROGRESSION
-Phase 1 â€“ Warm-up: Ask about the candidate's overall experience with "${topic}" â€” how long, in what context.
-Phase 2 â€“ Exploration: Probe specific knowledge, past projects, and practical application of "${topic}".
-Phase 3 â€“ Deep-dive: Test advanced understanding, trade-offs, edge cases, and design decisions related to "${topic}".
-Phase 4 â€“ Closing: Ask about best practices, lessons learned, or an achievement they're proud of involving "${topic}".
+Phase 1 - Warm-up: One canonical, foundational question about "${topic}" plus a quick read on the candidate's overall experience with it -- how long, in what context.
+Phase 2 - Exploration: Real, specific questions about the tools/knowledge/practices a working professional in "${topic}" uses day to day, moving through its different sub-competencies -- don't linger on one for more than 2 questions in a row.
+Phase 3 - Deep-dive: Push to the advanced end of whichever sub-competency the candidate showed the most (or least) strength in -- trade-offs, edge cases, design decisions related to "${topic}".
+Phase 4 - Closing: Ask about best practices, lessons learned, or an achievement they're proud of involving "${topic}".
 
-QUESTION TYPE ROTATION (always vary):
-  â€¢ Conceptual     â†’ "How does X work in the context of ${topic}?"
-  â€¢ Applied        â†’ "Tell me about a project where you used ${topic}. What did you build?"
-  â€¢ Behavioral     â†’ "Tell me about a challenge you faced with ${topic} and how you solved it."
-  â€¢ Situational    â†’ "If you had to use ${topic} to solve [problem], how would you approach it?"
-  â€¢ Best-practice  â†’ "What are the most common mistakes people make with ${topic}?"
+QUESTION TYPE ROTATION (always vary, never repeat the same one twice in a row):
+  - Definition/comparison -> "What's the difference between X and Y?"
+  - Mechanism/conceptual  -> "How does X actually work, or what does it do?"
+  - Applied/practical     -> "Tell me about a project where you used ${topic}. What did you build?"
+  - Behavioral            -> "Tell me about a challenge you faced with ${topic} and how you solved it."
+  - Situational           -> "If you had to use ${topic} to solve [a specific problem], how would you approach it?"
+  - Best-practice         -> "What are the most common mistakes people make with ${topic}?"
 
 ${conductRules}`;
-    }
-
     return {
       type:          "AI_INTERVIEW",
       topic,
+      tone,
+      openingContext,
+      focusAreas,
       systemPrompt,
       campaignTitle: campaign.title,
     };
   }
 
   async _generateGreeting(context, moduleType, skill, onChunk) {
-    const systemPrompt = context.systemPrompt;
-    const topic        = context.topic || skill || "this subject";
+    const systemPrompt   = context.systemPrompt;
+    const topic          = context.topic || skill || "this subject";
+    const tone           = context.tone || "warm, welcoming, professional";
+    const openingContext = context.openingContext;
     const userMsg =
       moduleType === "SKILL_TEST"
         ? `Generate a warm, professional opening message to start a ${topic} KNOWLEDGE assessment.
@@ -693,15 +807,15 @@ The message must:
 IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
 Never ask about experience, seniority, employers, or past projects — this is a knowledge test, not a job interview.
 Tone: encouraging, professional, human. Not robotic.
-Length: 3–4 sentences maximum. No bullet points, no headers.`
-        : `Generate a warm, professional opening message to start an interview on the topic: "${topic}".
+Length: 3â€“4 sentences maximum. No bullet points, no headers.`
+        : `Generate a warm, professional opening message to start an interview${openingContext ? ` covering: ${openingContext}` : ` on the topic: "${topic}"`}.
 The message must:
 1. Greet the candidate using "I" â€” do NOT include any name, placeholder, or bracket like [Your Name]. Just say "I" or "I'm your interviewer today".
-2. Briefly mention the interview will focus on "${topic}" and that it's a conversation, not a test.
+2. Briefly and naturally mention what this conversation will explore${openingContext ? "" : ` â€” "${topic}"`} and that it's a conversation, not a test.
 3. End with an open warm-up question related to "${topic}" â€” for example, asking about their overall experience with it or how they've worked with it in the past.
 
-IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets.
-Tone: warm, welcoming, professional. Not robotic or formal.
+IMPORTANT: Never output placeholders like [Your Name], [Name], or any text in square brackets. Speak naturally in your own words â€” never quote or copy any source brief verbatim.
+Tone: ${tone}. Not robotic.
 Length: 3â€“4 sentences maximum. No bullet points, no headers.`;
 
     try {
@@ -869,6 +983,7 @@ Respond ONLY with valid JSON â€” no markdown, no extra text:
     questionsAsked = 1,
     maxQuestions = 10,
     usedQuestionTypes = [],
+    isSkipped = false,
   ) {
     const conversationSummary = conversation
       .slice(-4)
@@ -888,6 +1003,7 @@ Respond ONLY with valid JSON â€” no markdown, no extra text:
       usedQuestionTypes,
       moduleType,
       interviewTopic,
+      isSkipped,
     });
 
     const fallback = {
@@ -897,7 +1013,9 @@ Respond ONLY with valid JSON â€” no markdown, no extra text:
       questionType: "situational",
       nextQuestion: shouldEnd
         ? "Thank you so much for your time today â€” I really enjoyed our conversation. That brings us to the end of this session."
-        : "That's interesting. Could you walk me through a specific situation where you had to apply that in practice?",
+        : isSkipped
+          ? "No problem, let's move on. Could you tell me about a different experience relevant to this role?"
+          : "That's interesting. Could you walk me through a specific situation where you had to apply that in practice?",
       report: { strengths: [], areasForImprovement: [], overallProgress: 30 },
     };
 

@@ -18,7 +18,7 @@ module.exports.sentInvitation = async (req, res) => {
     );
     res.json({ success: true, member });
   } catch (error) {
-    res.status(400).json({ success: false, message: error.message });
+    res.status(400).json({ success: false, message: error.message, code: error.code || null });
   }
 };
 

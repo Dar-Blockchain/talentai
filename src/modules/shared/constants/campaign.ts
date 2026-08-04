@@ -1,42 +1,42 @@
 import { CampaignStatus, CampaignType, ModuleType } from "@/modules/company/campaigns/types/campaign";
 import {
-  InsightsOutlined,
-  AccountTreeOutlined,
-  SchoolOutlined,
-  TuneOutlined,
-  DescriptionOutlined,
-  PsychologyOutlined,
-  AssignmentTurnedInOutlined,
-  PeopleOutlined,
-} from "@mui/icons-material";
+  LineChart,
+  Network,
+  GraduationCap,
+  SlidersHorizontal,
+  FileText,
+  Brain,
+  ClipboardCheck,
+  Users,
+} from "lucide-react";
 
 export const CAMPAIGN_TYPES = [
   {
     value: "PRODUCTIVITY_DIAGNOSTIC",
     label: "Productivity Diagnostic",
     description: "Measure team productivity & output",
-    icon: InsightsOutlined,
+    icon: LineChart,
     color: "#3B82F6",
   },
   {
     value: "SKILLS_MAPPING",
     label: "Skills Mapping",
     description: "Map existing skill sets across teams",
-    icon: AccountTreeOutlined,
+    icon: Network,
     color: "#10B981",
   },
   {
     value: "ENABLEMENT",
     label: "Enablement",
     description: "Enable & upskill your teams",
-    icon: SchoolOutlined,
+    icon: GraduationCap,
     color: "#F59E0B",
   },
   {
     value: "CUSTOM",
     label: "Custom",
     description: "Build your own assessment flow",
-    icon: TuneOutlined,
+    icon: SlidersHorizontal,
     color: "#8B5CF6",
   },
 ] as const;
@@ -53,25 +53,25 @@ export const MODULE_CONFIG: Record<
   QUESTIONNAIRE: {
     label: "Questionnaire",
     description: "Structured questionnaire with custom questions",
-    icon: DescriptionOutlined,
+    icon: FileText,
     color: "#3B82F6",
   },
   AI_INTERVIEW: {
     label: "AI Interview",
     description: "Conversational AI-powered interview session",
-    icon: PsychologyOutlined,
+    icon: Brain,
     color: "#8B5CF6",
   },
   SKILL_TEST: {
     label: "Skill Test",
     description: "Technical skill assessment with scoring",
-    icon: AssignmentTurnedInOutlined,
+    icon: ClipboardCheck,
     color: "#10B981",
   },
   TRAINING_PATH: {
     label: "Training Path",
     description: "Guided learning & development path",
-    icon: PeopleOutlined,
+    icon: Users,
     color: "#F59E0B",
   },
 };

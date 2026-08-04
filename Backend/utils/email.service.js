@@ -34,6 +34,10 @@ const transporter = nodemailer.createTransport(getMailTransportOptions());
 const FROM_ADDRESS =
   `"TalentAI" <${process.env.NO_REPLY_EMAIL || process.env.EMAIL_USER || "contact@talentai.bid"}>`;
 
+// Same 1:1 booking link used on the marketing site's home page — the webinar
+// results email offers it as a soft CTA instead of a per-webinar admin field.
+const CALENDLY_URL = "https://calendly.com/talent__ai/first-contact";
+
 // Verify SMTP at startup so misconfigurations are visible immediately
 transporter
   .verify()
@@ -64,6 +68,9 @@ const campaignInviteTemplate           = compileTemplate("campaign/campaign-invi
 const campaignDeadlineReminderTemplate = compileTemplate("campaign/campaign-deadline-reminder.hbs");
 const planUpgradeReminderTemplate      = compileTemplate("company/plan-upgrade-reminder.hbs");
 const jobMatchTemplate                 = compileTemplate("job/job-match.hbs");
+const webinarResultsTemplate           = compileTemplate("webinar/webinar-results.hbs");
+const webinarReminderTemplate          = compileTemplate("webinar/webinar-reminder.hbs");
+const webinarInvitationTemplate        = compileTemplate("webinar/webinar-invitation.hbs");
 
 // Format role: "project_manager" → "Project Manager"
 const formatRole = (role) =>
@@ -245,7 +252,7 @@ const sendCandidateEmail = async (to, candidateName, fromCompanyName, subject, m
 const sendPlanUpgradeReminder = async (companyEmail, companyName, language = "en") => {
   const locale = locales[language] || locales.en;
   const t = { ...locale.common, ...locale.plan_upgrade };
-  const upgradeUrl = `${process.env.FRONTEND_URL}company/plans`;
+  const upgradeUrl = `${process.env.BASE_URL}company/plans`;
   const mailOptions = {
     from: FROM_ADDRESS,
     to: companyEmail,
@@ -345,6 +352,208 @@ const sendJobMatchEmail = async (candidateEmail, { candidateName, jobTitle, comp
   }
 };
 
+// ─── Send Webinar Results (to participant after completing the questionnaire) ──
+// Participant-facing copy: "a few numbers, not an audit" — no key_insight/
+// main_pain/recommended_action here, those stay organizer-only (Dashboard 2).
+const MATURITY_LABELS = {
+  beginner:     { fr: "Débutant",              en: "Beginner" },
+  explorer:     { fr: "Explorateur",           en: "Explorer" },
+  practitioner: { fr: "Praticien",             en: "Practitioner" },
+  pioneer:      { fr: "Pionnier",              en: "Pioneer" },
+};
+
+const CATEGORY_LABELS = {
+  adoption:   { fr: "Adoption & outils",             en: "Adoption & tools" },
+  governance: { fr: "Gouvernance & conformité",       en: "Governance & compliance" },
+  quality:    { fr: "Qualité & mesure",               en: "Quality & measurement" },
+  antifraud:  { fr: "Vigilance fraude / AI-washing",  en: "Anti-fraud / AI-washing vigilance" },
+};
+
+const sendWebinarResultsEmail = async (submission, webinar) => {
+  const email = submission.contact?.email;
+  if (!email) return false;
+
+  const nom         = submission.contact?.nom || "Participant";
+  const scoring     = submission.scoring || {};
+  const subScores   = scoring.subScores || {};
+  // Follows the webinar's own language, not the registrant's pick — "both"
+  // defaults to English so every email for that webinar reads consistently.
+  const lang        = webinar.lang !== "fr" ? "en" : "fr";
+  const isEn        = lang === "en";
+
+  const webinarDate = webinar.date
+    ? new Date(webinar.date).toLocaleDateString(isEn ? "en-GB" : "fr-FR", {
+        day: "numeric", month: "long", year: "numeric",
+      })
+    : null;
+
+  const subScoreRows = ["adoption", "governance", "quality", "antifraud"].map((cat) => ({
+    label: CATEGORY_LABELS[cat][lang],
+    value: subScores[cat] ?? 0,
+  }));
+
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: email,
+    subject: isEn
+      ? `Your AI maturity results are ready — ${webinar.title}`
+      : `Vos résultats de maturité IA sont prêts — ${webinar.title}`,
+    html: webinarResultsTemplate({
+      nom,
+      isEn,
+      webinarTitle:  webinar.title,
+      webinarDate,
+      total100:      scoring.total100 ?? 0,
+      maturityLevel: MATURITY_LABELS[scoring.maturityLevel]?.[lang] || "—",
+      subScores:     subScoreRows,
+      strength:      scoring.strength  ? { ...scoring.strength }  : null,
+      vigilance:     scoring.vigilance ? { ...scoring.vigilance } : null,
+      webinarLink:   webinar.webinar_link || null,
+      bookingLink:   CALENDLY_URL,
+      year,
+    }),
+    attachments: [logoAttachment],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("❌ Webinar results email failed:", error.message);
+    return false;
+  }
+};
+
+const sendWebinarReminderEmail = async (submission, webinar) => {
+  const email = submission.contact?.email;
+  if (!email) return false;
+
+  const nom  = submission.contact?.nom || "Participant";
+  // Follows the webinar's own language, not the registrant's pick — "both"
+  // defaults to English so every email for that webinar reads consistently.
+  const isEn = webinar.lang !== "fr";
+
+  const locale = isEn ? "en-GB" : "fr-FR";
+  const webinarDate = webinar.date
+    ? new Date(webinar.date).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })
+    : null;
+  const webinarTime = webinar.date
+    ? new Date(webinar.date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : null;
+  const webinarEndTime = webinar.end_date
+    ? new Date(webinar.end_date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : null;
+
+  // Duration only when both ends are known and the gap makes sense (avoids
+  // showing "0 min" or negative spans for mis-entered end dates).
+  let webinarDuration = null;
+  if (webinar.date && webinar.end_date) {
+    const minutes = Math.round((new Date(webinar.end_date) - new Date(webinar.date)) / 60000);
+    if (minutes > 0) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      webinarDuration = [h && `${h}h`, m && `${m}min`].filter(Boolean).join(" ");
+    }
+  }
+
+  const webinarUrl = webinar.webinar_link || null;
+
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: email,
+    subject: isEn
+      ? `Your webinar link — ${webinar.title}`
+      : `Votre lien webinar — ${webinar.title}`,
+    html: webinarReminderTemplate({
+      nom,
+      webinarTitle: webinar.title,
+      webinarDate,
+      webinarTime,
+      webinarEndTime,
+      webinarDuration,
+      webinarUrl,
+      isEn,
+      year: new Date().getFullYear(),
+    }),
+    attachments: [logoAttachment],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("❌ Webinar reminder email failed:", error.message);
+    return false;
+  }
+};
+
+// Cold invite — sent to people who haven't registered yet, so the CTA links
+// to the public registration page rather than the (registrants-only) join link.
+const sendWebinarInvitationEmail = async (email, webinar) => {
+  if (!email) return false;
+
+  // Bilingual webinars ("both") default to English since there's no
+  // registrant language to key off yet — only an explicit "fr" gets French.
+  const isEn = webinar.lang !== "fr";
+  const locale = isEn ? "en-GB" : "fr-FR";
+  const title = (isEn ? webinar.title_en : webinar.title_fr) || webinar.title;
+
+  const webinarDate = webinar.date
+    ? new Date(webinar.date).toLocaleDateString(locale, { day: "numeric", month: "long", year: "numeric" })
+    : null;
+  const webinarTime = webinar.date
+    ? new Date(webinar.date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : null;
+  const webinarEndTime = webinar.end_date
+    ? new Date(webinar.end_date).toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
+    : null;
+
+  // Duration only when both ends are known and the gap makes sense (avoids
+  // showing "0 min" or negative spans for mis-entered end dates).
+  let webinarDuration = null;
+  if (webinar.date && webinar.end_date) {
+    const minutes = Math.round((new Date(webinar.end_date) - new Date(webinar.date)) / 60000);
+    if (minutes > 0) {
+      const h = Math.floor(minutes / 60);
+      const m = minutes % 60;
+      webinarDuration = isEn
+        ? [h && `${h}h`, m && `${m}min`].filter(Boolean).join(" ")
+        : [h && `${h}h`, m && `${m}min`].filter(Boolean).join(" ");
+    }
+  }
+
+  const registerUrl = `${process.env.BASE_URL}/webinar?id=${webinar._id || webinar.id}`;
+  const meetingUrl  = webinar.webinar_link || null;
+
+  const mailOptions = {
+    from: FROM_ADDRESS,
+    to: email,
+    subject: isEn
+      ? `You're invited — ${title}`
+      : `Vous êtes invité(e) — ${title}`,
+    html: webinarInvitationTemplate({
+      webinarTitle: title,
+      webinarDate,
+      webinarTime,
+      webinarEndTime,
+      webinarDuration,
+      registerUrl,
+      meetingUrl,
+      isEn,
+      year: new Date().getFullYear(),
+    }),
+    attachments: [logoAttachment],
+  };
+
+  try {
+    await transporter.sendMail(mailOptions);
+    return true;
+  } catch (error) {
+    console.error("❌ Webinar invitation email failed:", error.message);
+    return false;
+  }
+};
+
 module.exports = {
   sendOTP,
   sendCompanyInvitation,
@@ -358,5 +567,8 @@ module.exports = {
   sendCampaignInvitation,
   sendCampaignDeadlineReminder,
   sendJobMatchEmail,
+  sendWebinarResultsEmail,
+  sendWebinarReminderEmail,
+  sendWebinarInvitationEmail,
   transporter,
 };

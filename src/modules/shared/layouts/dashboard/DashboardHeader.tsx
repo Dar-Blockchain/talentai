@@ -9,7 +9,7 @@ import { Separator } from "@/modules/shared/ui/shadcn/separator";
 import HeaderNotification from "@/modules/notifications/shared/components/HeaderNotification";
 import HeaderChat from "./HeaderChat";
 import GlobalSearch from "./GlobalSearch";
-import LanguageSwitcher from "@/components/ui/LanguageSwitcher";
+import LanguageSwitcher from "@/modules/shared/layouts/shared/LanguageSwitcher";
 import UserAvatar from "../shared/UserAvatar";
 import Image from "next/image";
 import Link from "next/link";
@@ -18,9 +18,11 @@ interface HeaderProps {
   onOpenMobile: () => void;
   mobileOpen?: boolean;
   breadcrumb?: string;
+  /** Hide the mobile sidebar-toggle button (e.g. when this header is used standalone, without a sidebar). */
+  hideMenuButton?: boolean;
 }
 
-const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen }) => {
+const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen, hideMenuButton = false }) => {
   const user = useSelector((state: RootState) => state.user.connectedUser.user);
   const isCandidate = user?.role === "Candidate";
 
@@ -28,23 +30,26 @@ const Header: React.FC<HeaderProps> = ({ onOpenMobile, mobileOpen }) => {
     <header className="relative h-16 bg-white border-b border-gray-100 shadow-[0_1px_4px_0_rgb(0_0_0/0.06)] flex items-center justify-between px-5 md:px-7 z-10">
       {/* ── Left: mobile menu + logo ── */}
       <div className="flex items-center gap-3 shrink-0">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={onOpenMobile}
-          className="xl:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
-        >
-          {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </Button>
+        {!hideMenuButton && (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onOpenMobile}
+            className="xl:hidden h-9 w-9 rounded-xl text-gray-500 hover:bg-gray-100 hover:text-gray-800 transition-colors"
+          >
+            {mobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        )}
 
         {isCandidate && (
           <Link href="/" className="hidden sm:inline-flex items-center">
             <Image
-              src="/images/home/logo.svg"
+              src="/logo.svg"
               alt="TalentAI"
               width={130}
               height={36}
-              className="object-contain"
+              className="h-9 w-auto object-contain"
+              priority
             />
           </Link>
         )}

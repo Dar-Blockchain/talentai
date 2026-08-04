@@ -123,6 +123,7 @@ const DepartmentDetailPage: NextPageWithLayout = () => {
         {id && (
           <DepartmentMembersSection
             departmentId={id}
+            departmentName={department?.name}
             canManage={canInvite} canAssignRoles={canAssignRoles} canRemove={canRemove}
             onEdit={m => { setSelectedMember(m); setMemberEditOpen(true); }}
             onDelete={m => { setSelectedMember(m); setMemberDeleteOpen(true); }}

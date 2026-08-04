@@ -1,9 +1,7 @@
 import React from "react";
 import NextLink from "next/link";
-import { Box, Paper, Typography } from "@mui/material";
-import GroupsOutlined from "@mui/icons-material/GroupsOutlined";
-import GroupsRounded from "@mui/icons-material/GroupsRounded";
-import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
+import { cn } from "@/lib/utils";
+import { Users as GroupsOutlined, Users as GroupsRounded, UserCircle as PeopleAltOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useChatUnreadBadges } from "@/modules/chat/shared/hooks/useChatUnreadBadges";
 import {
@@ -11,8 +9,8 @@ import {
   COMPANY_TEAM_CHAT_PATH,
   type CompanyChatChannel,
 } from "@/modules/chat/shared/constants/companyChannels";
-import { companyChatSx } from "@/modules/chat/shared/styles/companyChat";
-import { chatSegmentedControlSx } from "@/modules/chat/shared/styles/segmentedControl";
+import { companyChatCn } from "@/modules/chat/shared/styles/companyChat";
+import { chatSegmentedControlCn } from "@/modules/chat/shared/styles/segmentedControl";
 
 interface CompanyChatTopNavProps {
   activeChannel: CompanyChatChannel;
@@ -48,73 +46,50 @@ const CompanyChatTopNav: React.FC<CompanyChatTopNavProps> = ({ activeChannel }) 
   const teamDense = activeChannel === "team";
 
   return (
-    <Paper
-      elevation={0}
-      sx={{
-        ...companyChatSx.hubHeader,
-        ...(teamDense ? companyChatSx.hubHeaderTeamDense : {}),
-      }}
-    >
-      <Box sx={companyChatSx.hubIntro}>
-        <Box
-          sx={{
-            display: "flex",
-            alignItems: "center",
-            gap: 1.25,
-            minWidth: 0,
-            mt: 0.25,
-          }}
-        >
-          <Box aria-hidden sx={companyChatSx.teamTitleIconWrap}>
+    <div className={cn(companyChatCn.hubHeader, teamDense && companyChatCn.hubHeaderTeamDense)}>
+      <div className={companyChatCn.hubIntro}>
+        <div className="flex min-w-0 items-center gap-3 mt-0.5">
+          <div aria-hidden className={companyChatCn.teamTitleIconWrap}>
             {activeChannel === "team"
-              ? <GroupsRounded sx={{ fontSize: 20 }} />
-              : <PeopleAltOutlined sx={{ fontSize: 20 }} />}
-          </Box>
-          <Box sx={{ minWidth: 0 }}>
-            <Typography
-              sx={{
-                ...companyChatSx.hubTitle,
-                ...(teamDense ? companyChatSx.hubTitleTeamDense : {}),
-              }}
-            >
+              ? <GroupsRounded size={20} />
+              : <PeopleAltOutlined size={20} />}
+          </div>
+          <div className="min-w-0">
+            <p className={cn(companyChatCn.hubTitle, teamDense && companyChatCn.hubTitleTeamDense)}>
               {t(`channels.${activeChannel}.title`)}
-            </Typography>
-          </Box>
-        </Box>
-      </Box>
+            </p>
+          </div>
+        </div>
+      </div>
 
-      <Box sx={companyChatSx.hubNavWrap}>
-        <Box sx={chatSegmentedControlSx.root}>
+      <div className={companyChatCn.hubNavWrap}>
+        <div className={chatSegmentedControlCn.root}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = activeChannel === item.channel;
             const unread = unreadByChannel[item.channel];
 
             return (
-              <Box
+              <NextLink
                 key={item.channel}
-                component={NextLink}
                 href={item.href}
-                sx={{
-                  ...chatSegmentedControlSx.item,
-                  ...(isActive ? chatSegmentedControlSx.itemActive : {}),
-                }}
+                className={cn(chatSegmentedControlCn.item, isActive && chatSegmentedControlCn.itemActive)}
               >
-                <Icon sx={chatSegmentedControlSx.icon} />
-                <Typography component="span" sx={chatSegmentedControlSx.label}>
+                <Icon size={18} color="currentColor" />
+                <span className={chatSegmentedControlCn.label}>
                   {t(`top_nav.${item.labelKey}`)}
-                </Typography>
+                </span>
                 {unread > 0 && (
-                  <Box component="span" sx={chatSegmentedControlSx.badge}>
+                  <span className={chatSegmentedControlCn.badge}>
                     {unread > 9 ? "9+" : unread}
-                  </Box>
+                  </span>
                 )}
-              </Box>
+              </NextLink>
             );
           })}
-        </Box>
-      </Box>
-    </Paper>
+        </div>
+      </div>
+    </div>
   );
 };
 

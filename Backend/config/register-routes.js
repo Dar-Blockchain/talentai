@@ -18,17 +18,20 @@ const { router: notificationSystemRouter } = require("../features/notifications"
 const { stripeRouter } = require("../features/billing/payments");
 const SkillInterviewAssessmentRoutes = require("../features/interviews/skill-interview/skill-interview.routes");
 const { router: chatRouter } = require("../features/chat");
-const { router: teamChatRouter } = require("../features/team-chat");
 const { router: planLimitsRouter } = require("../features/billing/plans");
 const { subscriptionRouter } = require("../features/billing/subscriptions");
 const { router: internalCampaignRoutes } = require('../features/campaigns');
 const { router: departmentRoutes } = require('../features/departments');
 const { contactRouter } = require('../features/contact');
 const { jobApplicationRouter } = require("../features/job-applications");
+const { companySettingsRouter } = require("../features/company-settings");
 const { router: apiKeyRouter } = require('../features/api-keys');
 const { paymentRouter } = require('../features/billing/payments');
 const usersRouter = require('../features/users').userRouter;
 const skillRouter = require('../features/skills/skill.routes');
+const { webinarAgentRouter, webinarRouter } = require('../features/webinar-agent');
+const { blogRouter } = require('../features/blog');
+const systemRouter = require('../features/system/system.routes');
 
 /**
  * Register all routes on the Express app
@@ -69,13 +72,13 @@ function registerRoutes(app) {
     next();
   };
   app.use("/chat", noChatCache, chatRouter);
-  app.use("/team-chat", noChatCache, teamChatRouter);
 
   // Notifications
   app.use("/notification", notificationSystemRouter);
 
   // Candidate Management
   app.use("/job-applications", jobApplicationRouter);
+  app.use("/company-settings", companySettingsRouter);
 
   // Utility
   app.use("/feedbacks", feedbackRouter);
@@ -94,6 +97,17 @@ function registerRoutes(app) {
 
   // API Key Management
   app.use('/api/api-keys', apiKeyRouter);
+
+  // Webinar onboarding agent (public submission flow)
+  app.use('/webinar-agent', webinarAgentRouter);
+  // Webinar management (admin CRUD)
+  app.use('/webinars', webinarRouter);
+
+  // Blog (public read + admin CRUD)
+  app.use('/blog', blogRouter);
+
+  // System (public, no auth)
+  app.use('/api/system', systemRouter);
 }
 
 module.exports = {

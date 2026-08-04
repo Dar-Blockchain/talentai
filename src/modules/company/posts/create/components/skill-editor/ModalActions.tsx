@@ -1,4 +1,5 @@
-import { DialogActions, Button } from "@mui/material";
+import { DialogFooter } from "@/modules/shared/ui/shadcn/dialog";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 
 interface Props {
@@ -14,40 +15,24 @@ const ModalActions = ({ mode, disabled, onClose, onSave }: Props) => {
     mode === "edit" ? "create.post_form.skill_modal.btn_edit" : "create.post_form.skill_modal.btn_add";
 
   return (
-    <DialogActions sx={{ p: 3, borderTop: "1px solid rgba(255,255,255,0.1)" }}>
+    <DialogFooter className="border-t border-[rgba(227,229,233,1)] px-6 py-4">
       <Button
-        variant="outlined"
+        variant="ghost"
         onClick={onClose}
-        sx={{
-          border: "none",
-          background: "none",
-          color: "rgba(133, 169, 227, 1)",
-          "&:hover": { background: "none", color: "rgba(133, 169, 227, 0.8)" },
-        }}
+        className="h-[42px] w-[110px] rounded-full text-muted-foreground hover:text-foreground"
       >
         {t("create.post_form.skill_modal.cancel")}
       </Button>
 
       <Button
-        variant="outlined"
+        variant="default"
         onClick={onSave}
         disabled={disabled}
-        sx={{
-          width: 130,
-          borderColor: "rgba(77, 217, 163, 1)",
-          color: "rgba(77, 217, 163, 1)",
-          fontWeight: 600,
-          borderRadius: "38px",
-          py: 1.5,
-          height: "42px",
-          textTransform: "none",
-          fontSize: "0.875rem",
-          "&:hover": { backgroundColor: "rgba(77, 217, 163, 0.08)" },
-        }}
+        className="h-[42px] w-[130px] rounded-full text-sm font-semibold"
       >
         {t(confirmKey)}
       </Button>
-    </DialogActions>
+    </DialogFooter>
   );
 };
 

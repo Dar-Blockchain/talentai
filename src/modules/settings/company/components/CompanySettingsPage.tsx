@@ -8,16 +8,17 @@ import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { useCompanyProfileManagement } from "../hooks";
 import ProfileBanner from "./ProfileBanner";
+import CompanySettingsSkeleton from "./CompanySettingsSkeleton";
 import CompanyInfoTab from "./CompanyInfoTab";
 import ApiKeysTab from "./ApiKeysTab";
+import CostSettingsTab from "./CostSettingsTab";
 import { LanguageTab } from "@/modules/settings/shared";
-import AppButton from "@/components/ui/AppButton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import AppUserInfo from "@/modules/shared/ui/AppUserInfo";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
 import {
-  Building2, MapPin, Key, CreditCard, Globe, Users, Tag,
+  Building2, MapPin, Key, CreditCard, Globe, Users, Tag, Settings as SettingsOutlined, Calculator,
 } from "lucide-react";
-import SettingsOutlined from "@mui/icons-material/SettingsOutlined";
 
 const TEAL = "#0D9488";
 
@@ -25,15 +26,17 @@ const CompanySettingsPage: React.FC = () => {
   const { t } = useTranslation("dashboard");
   useCompanyAccess("canViewCompanyProfile");
   const user     = useSelector((s: RootState) => s.user.connectedUser.user);
-  const { data: empPerms } = usePermissionsQuery(user?._id);
   const {
-    profile, loading, uploadingImage, isEmployee, isEditing, control,
+    profile, loading, isInitialLoading, uploadingImage, isEmployee, isEditing, control,
     handleInputChange, handleImageUpload, handleSaveProfile, handleSaveLanguage, handleCancel,
     setIsEditing,
   } = useCompanyProfileManagement();
+  const { data: empPerms } = usePermissionsQuery(user?._id, isEmployee);
 
   const canEdit = !isEmployee || !!empPerms?.canEditCompanyProfile;
   const [tab, setTab] = useState("0");
+
+  if (isInitialLoading) return <CompanySettingsSkeleton />;
 
   const handleTabChange = (v: string) => {
     if (isEditing) { setIsEditing(false); handleCancel(); }
@@ -43,6 +46,7 @@ const CompanySettingsPage: React.FC = () => {
   const TABS = [
     { label: t("pages.settings.tabs.company_info"), icon: Building2 },
     { label: t("pages.settings.tabs.api_keys"),     icon: Key, dataTour: "settings-tab-apikeys" },
+    { label: t("pages.settings.tabs.cost", "Hiring Costs"), icon: Calculator },
     { label: t("pages.settings.tabs.language"),     icon: Globe },
   ];
 
@@ -58,12 +62,10 @@ const CompanySettingsPage: React.FC = () => {
         icon={SettingsOutlined}
         actions={[
           <Link key="plans" href="/company/plans">
-            <AppButton
-              label={t("pages.settings.view_plans")}
-              variant="outlined"
-              startIcon={<CreditCard size={18} />}
-              size="medium"
-            />
+            <Button variant="outline">
+              <CreditCard size={18} />
+              {t("pages.settings.view_plans")}
+            </Button>
           </Link>,
         ]}
       />
@@ -118,6 +120,9 @@ const CompanySettingsPage: React.FC = () => {
             <ApiKeysTab />
           </TabsContent>
           <TabsContent value="2">
+            <CostSettingsTab />
+          </TabsContent>
+          <TabsContent value="3">
             <LanguageTab onInputChange={handleInputChange} onSaveLanguage={handleSaveLanguage} />
           </TabsContent>
         </Tabs>

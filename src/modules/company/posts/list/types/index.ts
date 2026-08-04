@@ -1,6 +1,5 @@
 export type StatusFilter = "all" | "active" | "draft" | "expired";
 export type SortOption   = "newest" | "oldest" | "title-asc" | "title-desc";
-export type TypeFilter   = "all" | "ai" | "manual";
 export type PostStatus   = "open" | "active" | "draft" | "closed" | "expired";
 
 export interface PaginationInfo {
@@ -22,4 +21,5 @@ export interface JobPost {
     workMode?: string;
   };
   user?: { _id: string };
+  applicationsCount?: number;
 }

@@ -1,5 +1,5 @@
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip as RechartsTooltip } from 'recharts';
-import DonutLargeIcon from '@mui/icons-material/DonutLarge';
+import { PieChart as DonutLargeIcon } from 'lucide-react';
 import { AdminChartCard, ADMIN_CHART_COLORS } from '@/modules/admin/shared';
 
 const AdminSkillsDistribution = ({ skillDistribution }: { skillDistribution: any[] }) => (

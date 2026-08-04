@@ -1,8 +1,8 @@
-import { Box, TextField, Typography } from "@mui/material";
+import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
+import { cn } from "@/lib/utils";
 import { useTranslation } from "react-i18next";
 import FieldLabel from "./FieldLabel";
 import HintChips from "./HintChips";
-import { TEAL } from "./styles";
 
 interface Props {
   value: string;
@@ -13,38 +13,28 @@ interface Props {
 const PromptField = ({ value, error, onChange }: Props) => {
   const { t } = useTranslation("posts");
   return (
-    <Box>
+    <div>
       <FieldLabel label={t("create.form.prompt_label")} />
       <HintChips />
-      <TextField
+      <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={t("create.form.prompt_placeholder")}
-        multiline minRows={5} maxRows={8} fullWidth
-        error={!!error}
-        helperText={error}
-        sx={{
-          "& .MuiInputBase-root": { fontSize: "13px", borderRadius: "10px", bgcolor: "#FAFAFA", lineHeight: 1.75 },
-          "& .MuiOutlinedInput-notchedOutline": { borderColor: "#E5E7EB" },
-          "&:hover .MuiOutlinedInput-notchedOutline": { borderColor: TEAL },
-          "&.Mui-focused .MuiOutlinedInput-notchedOutline": { borderColor: TEAL },
-          "& textarea": {
-            "&::-webkit-scrollbar": { width: "5px" },
-            "&::-webkit-scrollbar-track": { background: "transparent", borderRadius: "10px" },
-            "&::-webkit-scrollbar-thumb": { background: "#D1D5DB", borderRadius: "10px", "&:hover": { background: "#9CA3AF" } },
-            scrollbarWidth: "thin",
-            scrollbarColor: "#D1D5DB transparent",
-          },
-        }}
-        FormHelperTextProps={{ sx: { ml: 0, fontSize: "11px" } }}
+        rows={5}
+        aria-invalid={!!error}
+        className={cn(
+          "max-h-44 min-h-[120px] resize-y rounded-[10px] border-[#E5E7EB] bg-[#FAFAFA] text-[13px] leading-[1.75] placeholder:text-[11.5px] hover:border-[#0D9488] focus-visible:border-[#0D9488] focus-visible:ring-[#0D9488]/20",
+          error && "border-red-500",
+        )}
       />
-      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 0.5 }}>
-        <Typography sx={{ fontSize: "11px", color: "#9CA3AF" }}>{t("create.form.prompt_hint")}</Typography>
-        <Typography sx={{ fontSize: "11px", color: value.length < 50 ? "#F59E0B" : "#10B981", fontWeight: 500 }}>
+      {error && <p className="mt-1 text-[11px] text-[#EF4444]">{error}</p>}
+      <div className="mt-1 flex items-center justify-between">
+        <span className="text-[11px] text-[#9CA3AF]">{t("create.form.prompt_hint")}</span>
+        <span className={cn("text-[11px] font-medium", value.length < 50 ? "text-[#F59E0B]" : "text-[#10B981]")}>
           {value.length} {t("create.form.prompt_chars")}
-        </Typography>
-      </Box>
-    </Box>
+        </span>
+      </div>
+    </div>
   );
 };
 

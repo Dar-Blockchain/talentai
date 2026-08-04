@@ -27,8 +27,17 @@ const validatePostData = (postData) => {
   return true;
 };
 
+// An empty string department (unselected in the UI) must not be cast to
+// ObjectId - fall back to the schema default instead of failing the save.
+const sanitizeDepartment = (jobDetails) => {
+  if (jobDetails && !jobDetails.department) {
+    delete jobDetails.department;
+  }
+};
+
 module.exports.createPost = async (postData, token) => {
   try {
+    sanitizeDepartment(postData.jobDetails);
     validatePostData(postData);
 
     const post = new Post(postData);
@@ -318,12 +327,25 @@ module.exports.getPostsByUserIdWithPagination = async (userId, page = 1, limit =
       Post.countDocuments(query)
     ]);
 
+    const postIds = posts.map((p) => p._id);
+    const applicationCounts = postIds.length
+      ? await JobApplication.aggregate([
+          { $match: { post: { $in: postIds } } },
+          { $group: { _id: "$post", count: { $sum: 1 } } },
+        ])
+      : [];
+    const countsByPostId = new Map(applicationCounts.map((c) => [c._id.toString(), c.count]));
+    const postsWithCounts = posts.map((p) => ({
+      ...p,
+      applicationsCount: countsByPostId.get(p._id.toString()) || 0,
+    }));
+
     const totalPages = Math.ceil(total / limitNum);
     const hasNextPage = pageNum < totalPages;
     const hasPrevPage = pageNum > 1;
 
     return {
-      posts,
+      posts: postsWithCounts,
       pagination: {
         total,
         page: pageNum,
@@ -344,6 +366,7 @@ module.exports.updatePost = async (postId, userId, updateData) => {
       updateData.jobDetails ||
       updateData.skillAnalysis
     ) {
+      sanitizeDepartment(updateData.jobDetails);
       validatePostData(updateData);
     }
 
@@ -575,6 +598,32 @@ module.exports.getPostMetrics = async (userId) => {
   }
 };
 
+module.exports.getPostsByDepartmentKPI = async (userId) => {
+  try {
+    const Department = require("../departments/department.model");
+
+    // Start from every department the company has, then left-join job
+    // counts — so departments with zero posts still show up (as 0),
+    // not just the ones referenced by an existing post.
+    const departments = await Department.find({ companyId: userId })
+      .select("name")
+      .sort({ name: 1 })
+      .lean();
+
+    const rows = await Post.aggregate([
+      { $match: { user: userId, archived: { $ne: true }, "jobDetails.department": { $ne: null } } },
+      { $group: { _id: "$jobDetails.department", count: { $sum: 1 } } },
+    ]);
+    const countById = new Map(rows.map((r) => [String(r._id), r.count]));
+
+    return departments
+      .map((d) => ({ departmentId: String(d._id), name: d.name, count: countById.get(String(d._id)) ?? 0 }))
+      .sort((a, b) => b.count - a.count);
+  } catch (error) {
+    throw new Error(`Error getting posts by department KPI: ${error.message}`);
+  }
+};
+
 module.exports.getPostsInAlertKPI = async (userId) => {
   try {
     const now = new Date();
@@ -593,52 +642,53 @@ module.exports.getPostsInAlertKPI = async (userId) => {
   }
 };
 
-module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = null) => {
+module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 4, postId = null, dateFrom = null, sortBy = null, sortDir = null) => {
   try {
     const now      = new Date();
     const pageNum  = Math.max(1, parseInt(page)  || 1);
-    const limitNum = Math.max(1, parseInt(limit) || 3);
+    const limitNum = Math.max(1, parseInt(limit) || 4);
     const skip     = (pageNum - 1) * limitNum;
 
-    const postMatch = { user: userId, status: 'open', archived: { $ne: true } };
-    if (postId) postMatch._id = postId;
+    // When a specific post is picked from the filter dropdown, show it regardless
+    // of status (it may be closed) — the status restriction only applies to the
+    // unfiltered "all posts" list.
+    const postMatch = { user: userId, archived: { $ne: true } };
+    if (postId) {
+      postMatch._id = postId;
+    } else {
+      postMatch.status = { $in: ['draft', 'open'] };
+    }
 
-    const [totalCount, posts] = await Promise.all([
-      Post.countDocuments(postMatch),
-      Post.find(postMatch).select('_id jobDetails expirationDate').skip(skip).limit(limitNum).lean(),
-    ]);
-
-    if (!posts.length) {
+    // Sorting is by a value computed AFTER joining applications (matched,
+    // completed interviews, recruiter decisions), so it can't be done as a
+    // simple Post.find().sort() before that join. Instead: pull every matching
+    // post (unpaginated), compute all the derived KPI fields for the FULL set,
+    // sort that in JS, then paginate — this keeps the sort scoped to the whole
+    // dataset (all pages), not just whatever page happened to load first.
+    const totalCount = await Post.countDocuments(postMatch);
+    if (totalCount === 0) {
       return { data: [], pagination: { currentPage: pageNum, totalPages: 0, totalCount: 0 } };
     }
 
+    const posts = await Post.find(postMatch)
+      .select('_id jobDetails expirationDate thresholdScore status createdAt')
+      .sort({ createdAt: -1 })
+      .lean();
+
     const postIds = posts.map(p => p._id);
 
+    const appMatch = { company: userId, post: { $in: postIds }, isArchived: false, isWithdrawn: false };
+    if (dateFrom) appMatch.appliedAt = { $gte: new Date(dateFrom) };
+
     const agg = await JobApplication.aggregate([
-      { $match: { company: userId, post: { $in: postIds }, isArchived: false } },
+      { $match: appMatch },
       {
         $group: {
-          _id:            '$post',
-          totalCount:     { $sum: 1 },
-          shortlistedCount: { $sum: { $cond: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, 1, 0] } },
-          velocitySum: {
-            $sum: {
-              $cond: [
-                { $and: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, { $ne: ['$recruiterDecisionAt', null] }] },
-                { $divide: [{ $subtract: ['$recruiterDecisionAt', '$appliedAt'] }, 86400000] },
-                0,
-              ],
-            },
-          },
-          velocityCount: {
-            $sum: {
-              $cond: [
-                { $and: [{ $eq: ['$recruiterDecision', 'shortlisted'] }, { $ne: ['$recruiterDecisionAt', null] }] },
-                1,
-                0,
-              ],
-            },
-          },
+          _id:              '$post',
+          totalCount:       { $sum: 1 },
+          // Pushed together so the per-post threshold can be applied in JS below.
+          applications:     { $push: { matchScore: '$matchScore', recruiterDecision: '$recruiterDecision' } },
+          completedCount:   { $sum: { $cond: [{ $eq: ['$status', 'interview_completed'] }, 1, 0] } },
         },
       },
     ]);
@@ -646,23 +696,67 @@ module.exports.getPostsStatusKPI = async (userId, page = 1, limit = 3, postId = 
     const aggMap = {};
     agg.forEach(a => { aggMap[String(a._id)] = a; });
 
-    const data = posts.map(post => {
-      const a          = aggMap[String(post._id)] || { totalCount: 0, shortlistedCount: 0, velocitySum: 0, velocityCount: 0 };
-      const shortlisted = a.shortlistedCount;
-      const total       = a.totalCount;
+    // "Matched" (CV Match Coverage column) = candidate qualifies for interview on
+    // CV match alone (matchScore >= the post's own acceptance threshold).
+    // "Shortlisted"/"Rejected" (Status column) both require a manual recruiter
+    // decision AND matchScore >= threshold — so a candidate who was never a real
+    // match (matchScore < threshold, incl. legacy rows auto-marked "rejected"
+    // before the "not_matched" outcome existed) never counts as either. Neither
+    // count can exceed Matched/Coverage. Withdrawn/archived apps are excluded
+    // from everything below.
+    let data = posts.map(post => {
+      const a       = aggMap[String(post._id)] || { totalCount: 0, applications: [], completedCount: 0 };
+      const threshold = post.thresholdScore || 60;
+      const apps      = a.applications || [];
+      const isMatch      = x => x.matchScore != null && x.matchScore >= threshold;
+      const matched     = apps.filter(isMatch).length;
+      const shortlisted = apps.filter(x => x.recruiterDecision === 'shortlisted' && isMatch(x)).length;
+      const rejected     = apps.filter(x => x.recruiterDecision === 'rejected' && isMatch(x)).length;
+      const total     = a.totalCount;
       return {
-        id:         String(post._id),
-        title:      post.jobDetails?.title || 'Untitled',
+        id:                String(post._id),
+        title:             post.jobDetails?.title || 'Untitled',
+        jobStatus:         post.status === 'draft' ? 'draft' : 'published',
+        matched,
         shortlisted,
-        velocity:   a.velocityCount > 0 ? Math.round(a.velocitySum / a.velocityCount) : null,
-        coverage:   total > 0 ? Math.round((shortlisted / total) * 100) / 100 : 0,
-        deadline:   post.expirationDate
+        rejected,
+        completedInterviews: a.completedCount || 0,
+        totalApplicants:   total,
+        coverage:        total > 0 ? Math.round((matched / total) * 100) / 100 : 0,
+        deadline:        post.expirationDate
           ? Math.max(0, Math.round((new Date(post.expirationDate) - now) / 86400000))
           : null,
       };
     });
 
-    return { data, pagination: { currentPage: pageNum, totalPages: Math.ceil(totalCount / limitNum), totalCount } };
+    if (sortBy && (sortDir === 'asc' || sortDir === 'desc')) {
+      const dir = sortDir === 'asc' ? 1 : -1;
+      const keyOf = {
+        jobStatus: (r) => r.jobStatus,
+        matched:   (r) => r.matched,
+        completed: (r) => r.completedInterviews,
+        decision:  (r) => r.shortlisted - r.rejected,
+        // No deadline (null) always sorts to the end, regardless of direction.
+        deadline:  (r) => r.deadline,
+      }[sortBy];
+
+      if (keyOf) {
+        data = data.slice().sort((a, b) => {
+          const av = keyOf(a);
+          const bv = keyOf(b);
+          if (av == null && bv == null) return 0;
+          if (av == null) return 1;
+          if (bv == null) return -1;
+          if (av < bv) return -1 * dir;
+          if (av > bv) return 1 * dir;
+          return 0;
+        });
+      }
+    }
+
+    const paged = data.slice(skip, skip + limitNum).map(({ _createdAt, ...row }) => row);
+
+    return { data: paged, pagination: { currentPage: pageNum, totalPages: Math.ceil(totalCount / limitNum), totalCount } };
   } catch (error) {
     throw new Error(`Error getting posts status KPI: ${error.message}`);
   }

@@ -1,64 +1,47 @@
 import React, { useEffect } from 'react';
-import { Box } from '@mui/material';
 
 import { Campaign } from '@/modules/company/campaigns/types/campaign';
-import axiosInstance from '@/utils/axiosInstance';
+import { Card } from '@/modules/shared/ui/shadcn/card';
 
-import InterviewPageHeader from './InterviewPageHeader';
-import QuestionnaireForm   from './QuestionnaireForm';
+import { useStartQuestionnaireMutation } from '../queries';
+import QuestionnaireForm from './QuestionnaireForm';
 
 interface QuestionnaireAssessmentProps {
   campaign:      Campaign;
   participantId: string;
+  isLoggedIn?:   boolean;
   onBack:        () => void;
   onComplete:    () => void;
 }
 
 const QuestionnaireAssessment: React.FC<QuestionnaireAssessmentProps> = ({
-  campaign, participantId, onBack, onComplete,
+  campaign, participantId, isLoggedIn, onBack, onComplete,
 }) => {
   const questions = (campaign.module as any)?.config?.questions ?? [];
+  const showResults = (campaign.module as any)?.config?.showResultsToParticipants !== false;
+
+  const { mutate: startQuestionnaire } = useStartQuestionnaireMutation();
 
   useEffect(() => {
     if (!participantId) return;
-    axiosInstance.patch(`internal-campaigns/${campaign._id}/start/${participantId}`).catch(() => {});
+    startQuestionnaire({ campaignId: campaign._id, participantId });
   }, []);
 
   return (
-    <Box sx={{ height: '100vh', display: 'flex', flexDirection: 'column', bgcolor: '#F8FAFC', overflow: 'hidden' }}>
-      <InterviewPageHeader
-        campaign={campaign}
-        moduleType="QUESTIONNAIRE"
-        interviewStatus="idle"
-        isVoiceActive={false}
-        agentState="waiting"
-        coverage={null}
-        elapsedTime={0}
-        timeWarning={false}
-        onBack={onBack}
-        onEnd={() => {}}
-      />
-      <Box sx={{
-        flex: 1, overflow: 'hidden',
-        display: 'flex', flexDirection: 'column',
-        maxWidth: 760, width: '100%', mx: 'auto',
-        px: { xs: 2, md: 0 }, py: 2,
-      }}>
-        <Box sx={{
-          flex: 1, overflow: 'hidden',
-          bgcolor: '#FFFFFF', border: '1px solid #E2E8F0',
-          borderRadius: 3, boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
-        }}>
-          <QuestionnaireForm
-            campaignId={campaign._id}
-            participantId={participantId}
-            questions={questions}
-            onComplete={onComplete}
-            onBack={onBack}
-          />
-        </Box>
-      </Box>
-    </Box>
+    <div className="flex-1 flex items-start justify-center p-4 lg:pt-8">
+      <Card className="w-full max-w-3xl">
+        <QuestionnaireForm
+          campaignId={campaign._id}
+          campaignTitle={campaign.title}
+          participantId={participantId}
+          questions={questions}
+          showResults={showResults}
+          isLoggedIn={isLoggedIn}
+          onComplete={onComplete}
+          onBack={onBack}
+        />
+      </Card>
+    </div>
   );
 };
 

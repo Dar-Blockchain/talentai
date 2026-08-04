@@ -33,10 +33,8 @@ Analyze the job description below and return a single valid JSON object. No mark
 If the input is not a valid job description (random words, gibberish, offensive content, or completely unrelated text) → return exactly this and nothing else:
 { "error": "invalid_input" }
 
-If the description is truly too vague to work with (e.g., a single unrelated word like "job" or "asdf", NO role/domain hint at all) → return exactly this and nothing else:
+If the description is valid but too vague to generate a meaningful job post (e.g., only a job title with no context, fewer than 10 meaningful words, no indication of role scope or required skills) → return exactly this and nothing else:
 { "error": "insufficient_detail" }
-
-A short description that names a role type (e.g. "fullstack developer 3 years", "backend engineer Python", "mobile dev") IS enough — proceed to generate the post and INFER the standard companion skills for that role (rules below).
 
 ${internshipInstruction}
 ━━━ OUTPUT STRUCTURE ━━━
@@ -111,43 +109,20 @@ requirements
 - If location is not in the description → use: "${companyLocation || "Not specified"}"
 
 skills
-- required skills — always return between 1 and 3 skills. Sourcing priority (in order):
-  1. EVERY skill explicitly named in the description — always include these first, in the order they appear (up to 3).
-     Among explicit skills, when more than 3 are mentioned prioritize:
-       a. Skills marked "mandatory", "required", or "must have".
-       b. Skills with explicit years signals.
-       c. Skills with the strongest qualifier (mastery > solid > comfortable > basic).
-  2. If the description names FEWER than 3 skills, INFER the missing slots from the STANDARD companion stack for the stated role type. Fill up to a total of 3 skills — do not exceed 3.
-  3. Explicit skills ALWAYS outrank inferred ones on importance and appear first in the list.
+- required skills — include EVERY skill explicitly named in the description (up to 3). When more than 3 skills are mentioned, use this priority order:
+  1. Skills marked as "mandatory", "required", or "must have" — always include these first.
+  2. Skills with explicit years signals — never drop these in favor of skills with no years.
+  3. Skills with the strongest qualifier (mastery > solid > comfortable > basic).
+  Do NOT pad beyond what's named — if the description names 2, return 2. If it names 1, return 1. Prefer specific named tools over generic terms.
 
-  Inference guide — apply only when the description does not name enough skills to fill 3 slots. Pick the most widely used, industry-standard companions for the role:
-  - "Fullstack" / "Full-stack" developer          → React.js (frontend default), Node.js (backend default), PostgreSQL (DB default). If a specific stack element is already named, honour it (e.g. "fullstack with Vue" → Vue.js instead of React.js).
-  - "Frontend" developer (no framework named)     → React.js, TypeScript, HTML/CSS.
-  - "Backend" developer (no framework named)      → Node.js (default) OR Python if the description hints Python/Django/Flask/data/ML. Then PostgreSQL and REST APIs.
-  - "Mobile" developer (no framework named)       → React Native (default). Only pick Swift/Kotlin/Flutter if explicitly named.
-  - "Data" engineer                                → Python, SQL, Apache Airflow (or Apache Spark if description hints big data).
-  - "Data" analyst / scientist                    → Python, SQL, Pandas (analyst) or PyTorch (scientist).
-  - "DevOps" / "SRE" / "Platform" engineer        → Docker, Kubernetes, AWS.
-  - "AI/ML" / "Machine Learning" engineer         → Python, PyTorch, LangChain (or MLflow for MLOps signal).
-  - "Blockchain" / "Web3" developer               → Solidity, Hardhat, Ethers.js.
-  - "Game" developer                              → Unity (default) with C# (Unity), OR Unreal Engine with C++ if explicitly named.
-  - "Embedded" engineer                            → C, C++, FreeRTOS.
-  - "Security" / "AppSec" engineer                 → Burp Suite, OWASP ZAP, one cloud IAM (AWS IAM default).
-  - "QA" / "Test" engineer                        → Cypress, Playwright, Jest.
-
-  Rules for inferred skills:
-  - level must be null (code will default them to Junior/level 2).
-  - importance must be strictly LOWER than any explicit skill's importance. If ALL 3 are inferred, use importance 5, 4, 3 in listed order.
-  - The role type MUST be clearly recognisable from the description; do not invent skills for a generic "engineer" or "developer" with no domain — return the insufficient_detail marker instead.
-  - Never invent unusual, niche, or obscure technologies. Stick to widely used industry standards.
-
-  Prefer specific named tools over generic terms in every slot.
+- requiredSkills MUST NOT be empty. If the description names zero specific skills (only a job title and/or generic context, e.g. "sales employee, 5 years experience"), infer the 3 most important skills a candidate in that role would realistically need, based on the job title and domain alone — same as softSkills inference below. Mark every inferred skill (no explicit signal in the description) with "level": null and "importance" spread 8/6/4 in order of relevance. Prefer concrete, named tools/competencies over generic labels (e.g. for "sales employee" → "CRM Software", "Cold Calling", "Negotiation" — not "Sales Skills" or "Communication Tools").
 
 - years parsing rule:
   - If a years signal PRECEDES a skill name (e.g. "2 years Node.js"), apply it to the skill that FOLLOWS it.
   - If a years signal FOLLOWS a skill (e.g. "React, 2 years" or "Python and NestJS for 7 years"), apply it to the skill IMMEDIATELY BEFORE it.
   - Never assign a years signal to a skill separated from it by another skill name.
   - Unless the description explicitly says "each" or "both" (e.g. "Python and NestJS, 7 years each"), do not apply the same years to multiple skills.
+  - GENERAL/FIELD-LEVEL YEARS: If a years signal is NOT attached to any single named skill but instead describes the overall role or field (e.g. "Next.js, CSS, React js, need a developer with 5 years in this field/skills"), apply that SAME years value to EVERY explicitly named skill in the list. This only applies to skills the description actually names — never to skills you infer with no signal at all.
 - softSkills MUST contain 1 to 2 items — never return an empty array.
   Always infer soft skills from the job context even if not explicitly stated. Use the role type, seniority, and skills to determine what matters most:
   - Senior/Expert roles → prefer "Technical Leadership", "Problem Solving", "Mentoring"
@@ -298,11 +273,19 @@ function normalizeSkillAnalysis(result) {
   }
 
   // ── Collect skills ────────────────────────────────────────────────────────
-  const rawRequired = Array.isArray(result.skillAnalysis.requiredSkills)
-    ? [...result.skillAnalysis.requiredSkills]
-        .sort((a, b) => (b.importance || 0) - (a.importance || 0))
-        .slice(0, 3)
+  const validRequired = Array.isArray(result.skillAnalysis.requiredSkills)
+    ? result.skillAnalysis.requiredSkills.filter(s => s && typeof s.name === "string" && s.name.trim())
     : [];
+
+  // Backstop for model non-compliance: the prompt instructs the model to infer
+  // skills from the role when none are explicitly named, but if it still
+  // returns an empty array, fall back to a single generic placeholder rather
+  // than showing no hard skills at all.
+  const rawRequired = (validRequired.length > 0 ? validRequired : [
+    { name: result.jobDetails?.title ? `${result.jobDetails.title} Experience` : "Relevant Experience", level: null, importance: 5 },
+  ])
+    .sort((a, b) => (b.importance || 0) - (a.importance || 0))
+    .slice(0, 3);
 
   const validSoft = Array.isArray(result.skillAnalysis.softSkills)
     ? result.skillAnalysis.softSkills.filter(s => s && typeof s.name === "string" && s.name.trim())
@@ -333,7 +316,11 @@ function normalizeSkillAnalysis(result) {
   if (!isInternship && result.jobDetails) {
     const llmExpNumeric  = EXP_TO_LEVEL[result.jobDetails.experienceLevel] ?? 2;
     const maxSkillLevel  = requiredSkills.reduce((max, s) => Math.max(max, s.level), 2);
-    const effectiveLevel = Math.max(llmExpNumeric, maxSkillLevel);
+    // Skill levels are the more reliable signal — allow the LLM's overall role
+    // assessment to exceed them by at most one tier (e.g. leadership scope not
+    // tied to a specific skill), but never let it run away unbounded (e.g.
+    // "Expert" role with only Junior-level skills).
+    const effectiveLevel = Math.min(Math.max(llmExpNumeric, maxSkillLevel), maxSkillLevel + 1);
     result.jobDetails.experienceLevel = LEVEL_TO_EXP[effectiveLevel] ?? result.jobDetails.experienceLevel;
   }
 

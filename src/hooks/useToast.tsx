@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, ReactNode } from "react";
+import { createContext, useCallback, useContext, ReactNode } from "react";
+import { toast } from "sonner";
 import { playNotificationSound, NotificationType } from "@/utils/notificationSounds";
 
 type ToastOptions = {
@@ -9,36 +10,29 @@ type ToastOptions = {
 
 type ToastContextType = {
   showToast: (options: ToastOptions) => void;
-  closeToast: () => void;
-  open: boolean;
-  toastOptions: ToastOptions;
 };
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
 
 export const ToastProvider = ({ children }: { children: ReactNode }) => {
-  const [open, setOpen] = useState(false);
-  const [toastOptions, setToastOptions] = useState<ToastOptions>({
-    message: "",
-    severity: "info",
-  });
+  const showToast = useCallback((options: ToastOptions) => {
+    const { message, severity = "info", playSound } = options;
 
-  const showToast = (options: ToastOptions) => {
-    setToastOptions(options);
-    setOpen(true);
-
-    // Play sound if enabled (default true)
-    if (options.playSound !== false && options.severity) {
-      playNotificationSound(options.severity as NotificationType);
+    if (playSound !== false) {
+      playNotificationSound(severity as NotificationType);
     }
-  };
 
-  const closeToast = () => {
-    setOpen(false);
-  };
+    const trimmed = message.length > 100 ? message.slice(0, 100).trimEnd() + "…" : message;
+    switch (severity) {
+      case "success": toast.success(trimmed); break;
+      case "error":   toast.error(trimmed);   break;
+      case "warning": toast.warning(trimmed); break;
+      default:        toast.info(trimmed);
+    }
+  }, []);
 
   return (
-    <ToastContext.Provider value={{ showToast, closeToast, open, toastOptions }}>
+    <ToastContext.Provider value={{ showToast }}>
       {children}
     </ToastContext.Provider>
   );

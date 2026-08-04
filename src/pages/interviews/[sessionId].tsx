@@ -1,12 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useState } from "react";
 import { useRouter } from "next/router";
-import InterviewHeader from "@/modules/interviews/shared/components/layout/InterviewHeader";
+import { useSelector } from "react-redux";
+import { type RootState } from "@/store/store";
+import Header from "@/modules/shared/layouts/home/HomeHeader";
+import DashboardHeader from "@/modules/shared/layouts/dashboard/DashboardHeader";
 import InvalidInterviewLink from "@/modules/interviews/shared/components/InvalidInterviewLink";
 import { PostInterviewFlow } from "@/modules/interviews/post-interview";
 import { SkillInterviewFlow } from "@/modules/interviews/skill-interview";
-import { CampaignInterviewFlow } from "@/modules/interviews/campaign-interview";
 import {
   decodeInterviewSession,
   type InterviewSessionParams,
@@ -14,6 +17,8 @@ import {
 
 function InterviewPage() {
   const router = useRouter();
+  const [phase, setPhase] = useState<"preview" | "interview">("preview");
+  const isLoggedIn = !!useSelector((state: RootState) => state.user.connectedUser.user?._id);
 
   if (!router.isReady) return <div className="min-h-screen bg-background" />;
 
@@ -24,22 +29,21 @@ function InterviewPage() {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      <InterviewHeader />
+      {phase !== "interview" && (
+        isLoggedIn
+          ? <DashboardHeader onOpenMobile={() => {}} hideMenuButton />
+          : <Header forceSignup />
+      )}
       <div className="flex-1 flex flex-col">
         {params?.type === "post" && params.jobId && (
-          <PostInterviewFlow jobId={params.jobId} />
+          <PostInterviewFlow jobId={params.jobId} onPhaseChange={setPhase} />
         )}
         {params?.type === "skill" && params.skill && (
           <SkillInterviewFlow
             skill={params.skill}
             category={params.category}
             language={params.language}
-          />
-        )}
-        {params?.type === "campaign" && params.campaignId && params.moduleType && (
-          <CampaignInterviewFlow
-            campaignId={params.campaignId}
-            moduleType={params.moduleType}
+            onPhaseChange={setPhase}
           />
         )}
         {!params && <InvalidInterviewLink />}

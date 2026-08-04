@@ -15,8 +15,11 @@ export interface ApplicationSummaryItem {
   postId?: string | null;
   postTitle?: string | null;
   resumeFile?: string | null;
-  recruiterDecision?: 'shortlisted' | 'rejected' | null;
+  recruiterDecision?: 'shortlisted' | 'rejected' | 'not_matched' | null;
   invitedAt?: string | null;
+  belowThreshold?: boolean;
+  /** Where the candidate said they saw the job post link. `detail` holds the free-text value when `type` is 'other'. */
+  source?: { type: string; detail?: string | null } | null;
 }
 
 // ─── CV / Profile shapes ──────────────────────────────────────────────────────
@@ -140,7 +143,7 @@ export interface ApplicationDetail {
   appliedAt?: string;
   createdAt?: string;
   invitedAt?: string;
-  recruiterDecision?: "shortlisted" | "rejected" | null;
+  recruiterDecision?: "shortlisted" | "rejected" | "not_matched" | null;
   matchScore?: number;
   matchReasoning?: string;
   matchRecommendation?: string;
@@ -150,6 +153,8 @@ export interface ApplicationDetail {
   interviewAssessment?: InterviewAssessment;
   post?: JobPost;
   company?: { _id?: string };
+  /** Where the candidate said they saw the job post link. `detail` holds the free-text value when `type` is 'other'. */
+  source?: { type: string; detail?: string | null } | null;
 }
 
 // ─── Derived candidate data (pre-computed in hook) ────────────────────────────

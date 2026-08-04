@@ -1,5 +1,4 @@
 import React from "react";
-import { Box, Typography } from "@mui/material";
 import Image from "next/image";
 import { getLevelFromNumber } from '@/modules/company/posts/utils/postHelpers';
 import EditSkillChip from "./EditSkillChip";
@@ -19,43 +18,37 @@ interface Props {
   onDelete: (index: number, type: "hard" | "soft") => void;
 }
 
-const sectionTitle = {
-  color: "rgba(84,98,116,1)", fontSize: "20px", fontWeight: 600,
-} as const;
+const sectionTitleClass = "text-[20px] font-semibold text-[rgba(84,98,116,1)]";
 
 const EditSkillsSection: React.FC<Props> = ({
   requiredSkills, softSkills, onAdd, onEdit, onDelete,
 }) => (
   <>
     {/* Info banner */}
-    <Box sx={{ display: "flex", alignItems: "center", mb: 1, justifyContent: "space-between" }}>
-      <Typography variant="subtitle2" sx={sectionTitle}>Required Skills</Typography>
-      <Typography variant="subtitle2" sx={{ color: "rgba(77,217,163,1)", fontSize: "12px" }}>
+    <div className="mb-2 flex items-center justify-between">
+      <p className={sectionTitleClass}>Required Skills</p>
+      <p className="text-[12px] text-[rgba(77,217,163,1)]">
         Total: 100%
-      </Typography>
-    </Box>
+      </p>
+    </div>
 
-    <Box sx={{
-      display: "flex", alignItems: "flex-start", gap: 1, p: 1,
-      borderRadius: "12px", background: "rgba(240,249,255,1)",
-      border: "1px solid rgba(122,200,240,1)",
-    }}>
+    <div className="flex items-start gap-2 rounded-xl border p-2" style={{ background: "rgba(240,249,255,1)", borderColor: "rgba(122,200,240,1)" }}>
       <Image src="/icons/lightinfooutline.svg" alt="info" width={18} height={18} />
-      <Box sx={{ flexGrow: 1 }}>
-        <Typography variant="subtitle2" sx={{ color: "rgba(84,98,116,1)", fontSize: "13px", fontWeight: 600 }}>
+      <div className="grow">
+        <p className="text-[13px] font-semibold text-[rgba(84,98,116,1)]">
           About Skill Percentages
-        </Typography>
-        <Typography variant="subtitle2" sx={{ color: "rgba(84,98,116,1)", fontSize: "12px", fontWeight: 400 }}>
+        </p>
+        <p className="text-[12px] font-normal text-[rgba(84,98,116,1)]">
           The percentages represent the <b>relative importance</b> of each skill for this role. These
           percentages will be used to <b>match candidates</b> to your job requirements.
-        </Typography>
-      </Box>
-    </Box>
+        </p>
+      </div>
+    </div>
 
     {/* Hard skills */}
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="subtitle2" sx={sectionTitle}>Hard Skills</Typography>
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
+    <div className="mt-4">
+      <p className={sectionTitleClass}>Hard Skills</p>
+      <div className="mt-1 flex flex-wrap gap-2">
         {requiredSkills.map((skill, i) => (
           <EditSkillChip
             key={i}
@@ -65,13 +58,13 @@ const EditSkillsSection: React.FC<Props> = ({
           />
         ))}
         <EditAddSkillButton onClick={() => onAdd("hard")} />
-      </Box>
-    </Box>
+      </div>
+    </div>
 
     {/* Soft skills */}
-    <Box sx={{ mt: 2 }}>
-      <Typography variant="subtitle2" sx={sectionTitle}>Soft Skills</Typography>
-      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mt: 0.5 }}>
+    <div className="mt-4">
+      <p className={sectionTitleClass}>Soft Skills</p>
+      <div className="mt-1 flex flex-wrap gap-2">
         {softSkills.map((skill, i) => (
           <EditSkillChip
             key={i}
@@ -81,8 +74,8 @@ const EditSkillsSection: React.FC<Props> = ({
           />
         ))}
         <EditAddSkillButton onClick={() => onAdd("soft")} />
-      </Box>
-    </Box>
+      </div>
+    </div>
   </>
 );
 

@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
-import { Dialog, DialogContent, Box } from "@mui/material";
 import { useDispatch } from "react-redux";
+import { Dialog, DialogContent } from "@/modules/shared/ui/shadcn/dialog";
 import { editHardSkill, editSoftSkill, addHardSkill, addSoftSkill } from "../store/createPostSlice";
 import ModalHeader from "./skill-editor/ModalHeader";
 import SkillNameField from "./skill-editor/SkillNameField";
@@ -69,30 +69,32 @@ const SkillEditorModal: React.FC<SkillEditorModalProps> = ({
   };
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="sm">
-      <ModalHeader skillType={skillType} mode={mode} onClose={onClose} />
+    <Dialog open={open} onOpenChange={(next) => { if (!next) onClose(); }}>
+      <DialogContent className="rounded-2xl p-0 sm:max-w-md">
+        <ModalHeader skillType={skillType} mode={mode} />
 
-      <DialogContent sx={{ mt: 1 }}>
-        <SkillNameField
-          skillType={skillType}
-          value={localSkill.name}
-          onChange={(v) => handleChange("name", v)}
-        />
-
-        <Box sx={{ display: "flex", gap: 2 }}>
-          <LevelField
+        <div className="flex flex-col gap-4 px-6 py-5">
+          <SkillNameField
             skillType={skillType}
-            value={localSkill.level}
-            onChange={(v) => handleChange("level", v)}
+            value={localSkill.name}
+            onChange={(v) => handleChange("name", v)}
           />
-          <PercentageField
-            value={localSkill.percentage}
-            onChange={(v) => handleChange("percentage", v)}
-          />
-        </Box>
-      </DialogContent>
 
-      <ModalActions mode={mode} disabled={isSaveDisabled} onClose={onClose} onSave={handleSave} />
+          <div className="flex gap-4">
+            <LevelField
+              skillType={skillType}
+              value={localSkill.level}
+              onChange={(v) => handleChange("level", v)}
+            />
+            <PercentageField
+              value={localSkill.percentage}
+              onChange={(v) => handleChange("percentage", v)}
+            />
+          </div>
+        </div>
+
+        <ModalActions mode={mode} disabled={isSaveDisabled} onClose={onClose} onSave={handleSave} />
+      </DialogContent>
     </Dialog>
   );
 };

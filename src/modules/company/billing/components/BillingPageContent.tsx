@@ -1,8 +1,8 @@
 import React from "react";
-import ReceiptLongOutlined from "@mui/icons-material/ReceiptLongOutlined";
+import { Receipt as ReceiptLongOutlined } from "lucide-react";
 import { CheckCircle, Receipt, DollarSign } from "lucide-react";
 import PageHeader      from "@/modules/shared/layouts/dashboard/PageHeader";
-import StatCard        from "@/components/ui/StatCard";
+import StatCard        from "@/modules/shared/ui/StatCard";
 import { useBillingPage } from "../hooks/useBillingPage";
 import ActiveSubscriptionCard from "./ActiveSubscriptionCard";
 import PaymentTable           from "./PaymentTable";

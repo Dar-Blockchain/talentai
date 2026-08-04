@@ -3,7 +3,7 @@ import NextLink from "next/link";
 import { AlertTriangle, Info } from "lucide-react";
 import { Trans, useTranslation } from "react-i18next";
 import Header from "@/modules/shared/layouts/home/HomeHeader";
-import { APP_URL, CONTACT_EMAIL } from "@/modules/shared/constants";
+import { SITE_URL, APP_URL, CONTACT_EMAIL } from "@/modules/shared/constants";
 
 const Section: React.FC<{ title: string; children: React.ReactNode }> = ({ title, children }) => (
   <div className="mb-8">
@@ -56,7 +56,10 @@ export default function TermsOfUse() {
       <Head>
         <title>{t("terms.meta.title")}</title>
         <meta name="description" content={t("terms.meta.description")} />
-        <link rel="canonical" href={`${APP_URL}/terms`} />
+        <link rel="canonical" href={`${SITE_URL}/terms`} />
+        <meta property="og:type" content="website" />
+        <meta property="og:title" content={t("terms.meta.title")} />
+        <meta property="og:description" content={t("terms.meta.description")} />
       </Head>
 
       <Header />

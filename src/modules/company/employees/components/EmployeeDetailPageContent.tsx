@@ -1,13 +1,10 @@
 import React, { memo, useCallback } from "react";
-import { Box, CircularProgress, Typography } from "@mui/material";
+import { Spinner } from "@/modules/shared/ui/shadcn/spinner";
 import EditRoleModal from "./edit/EditRoleModal";
 import DeleteMemberDialog from "./delete/DeleteMemberDialog";
 import EmployeeDetail from "./details/EmployeeDetail";
 import { useEmployeeDetail } from "../hooks/useEmployeeDetail";
 import type { ExtendedMember } from "../types";
-
-const LOADER_SX  = { display: "flex", justifyContent: "center", alignItems: "center", minHeight: 300 } as const;
-const NOT_FOUND_SX = { display: "flex", flexDirection: "column", alignItems: "center", py: 10, gap: 2 } as const;
 
 interface Props {
   id: string | undefined;
@@ -31,18 +28,18 @@ const EmployeeDetailPageContent: React.FC<Props> = memo(({ id }) => {
   return (
     <>
       {loading && !member ? (
-        <Box sx={LOADER_SX}>
-          <CircularProgress sx={{ color: "#8310FF" }} />
-        </Box>
+        <div className="flex min-h-[300px] items-center justify-center">
+          <Spinner className="size-8" style={{ color: "#8310FF" }} />
+        </div>
       ) : !member ? (
-        <Box sx={NOT_FOUND_SX}>
-          <Typography sx={{ fontWeight: 700, fontSize: "1.1rem", color: "#374151" }}>
+        <div className="flex flex-col items-center gap-4 py-20">
+          <p className="text-[1.1rem] font-bold text-[#374151]">
             Member not found
-          </Typography>
-          <Typography sx={{ fontSize: "0.875rem", color: "#9CA3AF" }}>
+          </p>
+          <p className="text-sm text-[#9CA3AF]">
             This member may have been removed or the link is invalid.
-          </Typography>
-        </Box>
+          </p>
+        </div>
       ) : (
         <EmployeeDetail
           member={member}

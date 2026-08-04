@@ -1,12 +1,14 @@
 import { memo, useState } from "react";
-import { Box } from "@mui/material";
 import { motion } from "framer-motion";
+import { useTranslation } from "react-i18next";
 import CardHeader from "./cards/CardHeader";
 import CardMeta from "./cards/CardMeta";
 import CardFooter from "./cards/CardFooter";
 import CardDraftBanner from "./cards/CardDraftBanner";
 import CardQrDialog from "./cards/CardQrDialog";
-import { getDaysLeft, getPostShareLink } from "../utils";
+import { getDaysLeft, getPostShareLink, copyToClipboard } from "../utils";
+import { useToast } from "@/hooks/useToast";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 
 interface JobPostCardProps {
   job: any;
@@ -21,22 +23,30 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
   const [menuAnchor, setMenuAnchor] = useState<null | HTMLElement>(null);
   const [copied, setCopied]         = useState(false);
   const [qrOpen, setQrOpen]         = useState(false);
+  const { showToast } = useToast();
+  const { t } = useTranslation("posts");
 
+  const { departments } = useDepartmentList();
   const jd        = job.jobDetails || {};
   const isDraft   = job.status === "draft";
+  const departmentName = jd.department ? departments.find((d) => d._id === jd.department)?.name : undefined;
   const daysLeft  = getDaysLeft(job.expirationDate);
   const isExpired = daysLeft !== null && daysLeft <= 0;
   const statusKey = isDraft ? "draft" : isExpired ? "expired" : job.status === "closed" ? "closed" : "active";
 
   const shareLink = getPostShareLink(job._id, job.user?._id);
 
-  const handleCopyLink = (e: React.MouseEvent) => {
+  const handleCopyLink = async (e: React.MouseEvent) => {
     e.stopPropagation();
     setMenuAnchor(null);
-    navigator.clipboard.writeText(shareLink).then(() => {
+    const ok = await copyToClipboard(shareLink);
+    if (ok) {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
-    });
+      showToast({ message: t("detail.toast.link_copied"), severity: "success" });
+    } else {
+      showToast({ message: t("detail.toast.link_copy_error"), severity: "error" });
+    }
   };
 
   return (
@@ -46,22 +56,16 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
       transition={{ duration: 0.18, delay: index * 0.04 }}
       style={{ height: "100%", minWidth: 0 }}
     >
-      <Box
+      <div
         onClick={() => onViewDetails(job._id)}
-        sx={{
-          bgcolor: "#fff", border: "1px solid #E5E7EB", borderRadius: "12px",
-          display: "flex", flexDirection: "column", height: "100%",
-          overflow: "hidden", cursor: "pointer", transition: "all 0.15s",
-          "&:hover": { borderColor: "#D1D5DB", boxShadow: "0 4px 16px rgba(0,0,0,0.07)", transform: "translateY(-1px)" },
-        }}
+        className="flex h-full cursor-pointer flex-col overflow-hidden rounded-xl border border-[#E5E7EB] bg-white transition-all hover:-translate-y-px hover:border-[#D1D5DB] hover:shadow-[0_4px_16px_rgba(0,0,0,0.07)]"
       >
-        <Box sx={{ height: 3, bgcolor: isDraft ? "#F59E0B" : "#E5E7EB", flexShrink: 0 }} />
+        <div className="h-[3px] shrink-0" style={{ backgroundColor: isDraft ? "#F59E0B" : "#E5E7EB" }} />
 
-        <Box sx={{ p: 2.5, display: "flex", flexDirection: "column", gap: 1.75, flex: 1 }}>
+        <div className="flex flex-1 flex-col gap-3.5 p-5">
           <CardHeader
             jobId={job._id}
             title={jd.title}
-            creationType={job.creationType}
             statusKey={statusKey}
             isDraft={isDraft}
             copied={copied}
@@ -77,7 +81,7 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             location={jd.location}
             employmentType={jd.employmentType}
             workMode={jd.workMode}
-            description={jd.description}
+            department={departmentName}
           />
 
           <CardFooter
@@ -87,15 +91,16 @@ const JobPostCard = memo<JobPostCardProps>(({ job, index = 0, onDelete, onViewDe
             daysLeft={daysLeft}
             isExpired={isExpired}
             copied={copied}
+            applicationsCount={job.applicationsCount}
             onOpenQr={(e) => { e.stopPropagation(); setQrOpen(true); }}
             onCopyLink={handleCopyLink}
           />
-        </Box>
+        </div>
 
         {isDraft && onPublish && (
           <CardDraftBanner onPublish={(e) => { e.stopPropagation(); onPublish(job._id); }} />
         )}
-      </Box>
+      </div>
 
       {!isDraft && (
         <CardQrDialog

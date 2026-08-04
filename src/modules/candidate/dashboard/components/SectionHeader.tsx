@@ -2,6 +2,7 @@ import React from "react";
 import { useRouter } from "next/router";
 import { ArrowRight } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 
 interface Props {
   icon:      React.ElementType;
@@ -19,12 +20,13 @@ const SectionHeader: React.FC<Props> = ({ icon: Icon, iconClass, title, href }) 
         <span className="text-[0.88rem] font-extrabold text-gray-900">{title}</span>
       </div>
       {href && (
-        <button
+        <Button
+          variant="ghost"
           onClick={() => router.push(href)}
-          className="flex items-center gap-1 text-[0.72rem] font-bold text-secondary-dark hover:text-secondary-dark/80 transition-colors"
+          className="p-0 h-auto text-[0.72rem] font-bold text-secondary-dark hover:bg-transparent hover:text-secondary-dark/80"
         >
           View all <ArrowRight className="size-3" />
-        </button>
+        </Button>
       )}
     </div>
   );

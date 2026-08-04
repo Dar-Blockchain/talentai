@@ -1,69 +1,121 @@
-import { Box, MenuItem, TextField, Typography } from "@mui/material";
-import InputAdornment from "@mui/material/InputAdornment";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import WorkOutlined from "@mui/icons-material/WorkOutlined";
-import LocationOnOutlined from "@mui/icons-material/LocationOnOutlined";
+import { TrendingUp as TrendingUpIcon, Briefcase as WorkOutlined, MapPin as LocationOnOutlined, Building2 as DepartmentOutlined } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useDispatch } from "react-redux";
 import { AppDispatch } from "@/store/store";
 import { updateJobField, updateJobSalaryField } from "../../store/createPostSlice";
 import { contractTypes, workModes, experienceLevels } from "@/modules/company/posts/shared/constants";
+import { useDepartmentList } from "@/modules/company/departments/hooks";
 import { EMPLOYMENT_OPTION_KEY, EXPERIENCE_OPTION_KEY, WORK_MODE_OPTION_KEY, optionLabel } from "../../utils";
-import SectionCard from "@/components/ui/SectionCard";
+import { Card } from "@/modules/shared/ui/shadcn/card";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/modules/shared/ui/shadcn/select";
 import SalaryRange from "../SalaryRange";
-import { labelSx, inputSx } from "./styles";
 
 interface Props {
   title: string;
   employmentType: string;
   workMode: string;
+  department: string;
   experienceLevel: string;
   salary: { min: number | string; max: number | string; currency: string };
   labelT: (key: string) => string;
 }
 
-const DetailsSection = ({ title, employmentType, workMode, experienceLevel, salary, labelT }: Props) => {
+const DetailsSection = ({ title, employmentType, workMode, department, experienceLevel, salary, labelT }: Props) => {
   const dispatch = useDispatch<AppDispatch>();
   const { t } = useTranslation("posts");
+  const { departments } = useDepartmentList();
 
   return (
-    <SectionCard>
-      <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#111827", mb: 2 }}>{t("create.preview.section_details")}</Typography>
+    <Card className="p-6 gap-0">
+      <p className="mb-4 text-[13px] font-bold text-[#111827]">{t("create.preview.section_details")}</p>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography sx={labelSx}>{t("create.preview.label_title")}</Typography>
-        <TextField fullWidth value={title} onChange={(e) => dispatch(updateJobField({ field: "title", value: e.target.value }))} sx={inputSx} />
-      </Box>
+      <div className="mb-4">
+        <p className="mb-1 flex items-center gap-1 text-xs font-semibold text-[#374151]">{t("create.preview.label_title")}</p>
+        <Input
+          value={title}
+          onChange={(e) => dispatch(updateJobField({ field: "title", value: e.target.value }))}
+          className="h-10 text-[13px]"
+        />
+      </div>
 
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 2, mb: 2 }}>
-        <Box>
-          <Typography sx={labelSx}><WorkOutlined sx={{ fontSize: 14 }} />{t("create.post_form.labels.employment_type")}</Typography>
-          <TextField select fullWidth value={employmentType} onChange={(e) => dispatch(updateJobField({ field: "employmentType", value: e.target.value }))} sx={inputSx}>
-            <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_employment_type")}</Typography></MenuItem>
-            {contractTypes.map((c) => <MenuItem key={c} value={c} sx={{ fontSize: "13px" }}>{optionLabel(labelT as any, c, EMPLOYMENT_OPTION_KEY)}</MenuItem>)}
-          </TextField>
-        </Box>
-        <Box>
-          <Typography sx={labelSx}><LocationOnOutlined sx={{ fontSize: 14 }} />{t("create.post_form.labels.work_mode")}</Typography>
-          <TextField select fullWidth value={workMode} onChange={(e) => dispatch(updateJobField({ field: "workMode", value: e.target.value }))} sx={inputSx}>
-            <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_work_mode")}</Typography></MenuItem>
-            {workModes.map((m) => <MenuItem key={m} value={m} sx={{ fontSize: "13px" }}>{optionLabel(labelT as any, m, WORK_MODE_OPTION_KEY)}</MenuItem>)}
-          </TextField>
-        </Box>
-      </Box>
+      <div className="mb-4 grid grid-cols-2 gap-4">
+        <div>
+          <p className="mb-1 flex items-center gap-1 text-xs font-semibold text-[#374151]">
+            <WorkOutlined size={14} />
+            {t("create.post_form.labels.employment_type")}
+          </p>
+          <Select value={employmentType} onValueChange={(v) => dispatch(updateJobField({ field: "employmentType", value: v }))}>
+            <SelectTrigger className="h-10 text-[13px]">
+              <SelectValue placeholder={t("create.post_form.placeholders.select_employment_type")} />
+            </SelectTrigger>
+            <SelectContent>
+              {contractTypes.map((c) => (
+                <SelectItem key={c} value={c} className="text-[13px]">
+                  {optionLabel(labelT as any, c, EMPLOYMENT_OPTION_KEY)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+        <div>
+          <p className="mb-1 flex items-center gap-1 text-xs font-semibold text-[#374151]">
+            <LocationOnOutlined size={14} />
+            {t("create.post_form.labels.work_mode")}
+          </p>
+          <Select value={workMode} onValueChange={(v) => dispatch(updateJobField({ field: "workMode", value: v }))}>
+            <SelectTrigger className="h-10 text-[13px]">
+              <SelectValue placeholder={t("create.post_form.placeholders.select_work_mode")} />
+            </SelectTrigger>
+            <SelectContent>
+              {workModes.map((m) => (
+                <SelectItem key={m} value={m} className="text-[13px]">
+                  {optionLabel(labelT as any, m, WORK_MODE_OPTION_KEY)}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+      </div>
 
-      <Box sx={{ mb: 2 }}>
-        <Typography sx={labelSx}><TrendingUpIcon sx={{ fontSize: 14 }} />{t("create.post_form.labels.experience_level")}</Typography>
-        <TextField select fullWidth value={experienceLevel} onChange={(e) => dispatch(updateJobField({ field: "experienceLevel", value: e.target.value }))} sx={inputSx}
-          InputProps={{ startAdornment: <InputAdornment position="start"><TrendingUpIcon sx={{ fontSize: 16, color: "#9CA3AF" }} /></InputAdornment> }}
-        >
-          <MenuItem disabled value=""><Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>{t("create.post_form.placeholders.select_experience_level")}</Typography></MenuItem>
-          {experienceLevels.map((l) => <MenuItem key={l} value={l} sx={{ fontSize: "13px" }}>{optionLabel(labelT as any, l, EXPERIENCE_OPTION_KEY)}</MenuItem>)}
-        </TextField>
-      </Box>
+      <div className="mb-4">
+        <p className="mb-1 flex items-center gap-1 text-xs font-semibold text-[#374151]">
+          <DepartmentOutlined size={14} />
+          {t("create.post_form.labels.department")}
+        </p>
+        <Select value={department || undefined} onValueChange={(v) => dispatch(updateJobField({ field: "department", value: v }))}>
+          <SelectTrigger className="h-10 text-[13px]">
+            <SelectValue placeholder={t("create.post_form.placeholders.select_department")} />
+          </SelectTrigger>
+          <SelectContent>
+            {departments.map((d) => (
+              <SelectItem key={d._id} value={d._id} className="text-[13px]">{d.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="mb-4">
+        <p className="mb-1 flex items-center gap-1 text-xs font-semibold text-[#374151]">
+          <TrendingUpIcon size={14} />
+          {t("create.post_form.labels.experience_level")}
+        </p>
+        <Select value={experienceLevel} onValueChange={(v) => dispatch(updateJobField({ field: "experienceLevel", value: v }))}>
+          <SelectTrigger className="h-10 text-[13px]">
+            <SelectValue placeholder={t("create.post_form.placeholders.select_experience_level")} />
+          </SelectTrigger>
+          <SelectContent>
+            {experienceLevels.map((l) => (
+              <SelectItem key={l} value={l} className="text-[13px]">
+                {optionLabel(labelT as any, l, EXPERIENCE_OPTION_KEY)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
 
       <SalaryRange salaryRange={salary as any} onSalaryChange={(field, value) => dispatch(updateJobSalaryField({ field, value }))} employmentType={employmentType} />
-    </SectionCard>
+    </Card>
   );
 };
 

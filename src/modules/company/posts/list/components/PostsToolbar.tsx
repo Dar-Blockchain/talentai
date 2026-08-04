@@ -1,45 +1,45 @@
 import React from "react";
-import { Box, Typography, FormControl, Select, MenuItem, InputBase, ListSubheader, Divider, Tooltip } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import AddOutlined from "@mui/icons-material/AddOutlined";
-import AppButton from "@/components/ui/AppButton";
-import WorkOutlineOutlined from "@mui/icons-material/WorkOutlineOutlined";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import SortOutlined from "@mui/icons-material/SortOutlined";
-import CalendarTodayOutlined from "@mui/icons-material/CalendarTodayOutlined";
-import SortByAlphaOutlined from "@mui/icons-material/SortByAlphaOutlined";
-import CheckCircleOutlineOutlined from "@mui/icons-material/CheckCircleOutline";
-import AutoAwesomeOutlined from "@mui/icons-material/AutoAwesomeOutlined";
-import EditNoteOutlined from "@mui/icons-material/EditNoteOutlined";
-import FilterListOutlined from "@mui/icons-material/FilterListOutlined";
-import type { StatusFilter, SortOption, TypeFilter } from "../types";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@/modules/shared/ui/shadcn/select";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
+import {
+  Plus as AddOutlined,
+  Briefcase as WorkOutlineOutlined,
+  Search as SearchOutlined,
+  ArrowDownUp as SortOutlined,
+  Calendar as CalendarTodayOutlined,
+  ArrowDownAZ as SortByAlphaOutlined,
+  CheckCircle2 as CheckCircleOutlineOutlined,
+  Lock as LockOutlined,
+} from "lucide-react";
+import type { StatusFilter, SortOption } from "../types";
 
 import { TEAL } from "@/modules/company/posts/shared/constants";
 
-const selectSx = {
-  height: 34, fontSize: "13px", bgcolor: "#F9FAFB",
-  border: "1px solid #E5E7EB", borderRadius: "8px",
-  "& .MuiOutlinedInput-notchedOutline": { border: "none" },
-};
-
-const MENU_PAPER_SX = {
-  borderRadius: "12px", boxShadow: "0 12px 32px rgba(0,0,0,0.12)",
-  border: "1px solid #E5E7EB", mt: 0.5,
-};
+const selectTriggerClass =
+  "h-[34px] w-fit gap-1 rounded-lg border-[#E5E7EB] bg-[#F9FAFB] px-2.5 text-[13px] shadow-none hover:border-[#E5E7EB] hover:shadow-none data-[state=open]:border-[#E5E7EB] data-[state=open]:shadow-none data-[state=open]:ring-0";
 
 interface PostsToolbarProps {
   totalCount: number;
   loading: boolean;
   search: string;
   statusFilter: StatusFilter;
-  typeFilter: TypeFilter;
   sortBy: SortOption;
   postsUsed: number;
   postsLimit: number | typeof Infinity;
   postsAtLimit: boolean;
   onSearchChange: (v: string) => void;
   onStatusChange: (v: StatusFilter) => void;
-  onTypeChange: (v: TypeFilter) => void;
   onSortChange: (v: SortOption) => void;
   onCreateClick: () => void;
 }
@@ -49,12 +49,6 @@ const STATUS_OPTIONS: { value: StatusFilter; label_key: string; color: string }[
   { value: "active",  label_key: "status.active", color: "#059669" },
   { value: "draft",   label_key: "status.draft",  color: "#D97706" },
   { value: "expired", label_key: "status.closed", color: "#DC2626" },
-];
-
-const TYPE_OPTIONS: { value: TypeFilter; label_key: string; color: string; bg: string; Icon: React.ElementType }[] = [
-  { value: "all",    label_key: "type.all",    color: "#6B7280", bg: "#F3F4F6", Icon: FilterListOutlined },
-  { value: "ai",     label_key: "type.ai",     color: "#7C3AED", bg: "#F5F3FF", Icon: AutoAwesomeOutlined },
-  { value: "manual", label_key: "type.manual", color: "#D97706", bg: "#FFFBEB", Icon: EditNoteOutlined },
 ];
 
 const SORT_GROUPS_DEF = [
@@ -75,144 +69,135 @@ const SORT_GROUPS_DEF = [
 ];
 
 const PostsToolbar: React.FC<PostsToolbarProps> = ({
-  totalCount, loading, search, statusFilter, typeFilter, sortBy,
+  totalCount, loading, search, statusFilter, sortBy,
   postsUsed, postsLimit, postsAtLimit,
-  onSearchChange, onStatusChange, onTypeChange, onSortChange, onCreateClick,
+  onSearchChange, onStatusChange, onSortChange, onCreateClick,
 }) => {
   const { t }  = useTranslation("posts");
   const { t: td } = useTranslation("dashboard");
 
   const statusOpts = STATUS_OPTIONS.map((o) => ({ ...o, label: t(o.label_key) }));
-  const typeOpts   = TYPE_OPTIONS.map((o)   => ({ ...o, label: t(o.label_key) }));
   const sortGroups = SORT_GROUPS_DEF.map((g) => ({
     ...g, label: t(g.label_key),
     options: g.options.map((o) => ({ ...o, label: t(o.label_key) })),
   }));
   const sortFlat = sortGroups.flatMap((g) => g.options);
 
+  const currentStatus = statusOpts.find((o) => o.value === statusFilter);
+  const currentSort   = sortFlat.find((o) => o.value === sortBy);
+
   return (
-    <Box sx={{ mb: 3, bgcolor: "#fff", border: "1px solid #E5E7EB", borderTop: "3px solid #E5E7EB", borderRadius: "16px", overflow: "hidden", boxShadow: "0 1px 4px rgba(0,0,0,0.04)" }}>
-      <Box sx={{ px: 3, pt: 2.5, pb: 2.5, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 2 }}>
+    <TooltipProvider>
+      <div className="mb-6 overflow-hidden rounded-2xl border border-[#E5E7EB] border-t-[3px] border-t-[#E5E7EB] bg-white shadow-[0_1px_4px_rgba(0,0,0,0.04)]">
+        <div className="flex flex-wrap items-center justify-between gap-4 px-6 pb-5 pt-5">
 
-        {/* Title + count */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
-          <Box sx={{ width: 40, height: 40, borderRadius: "10px", bgcolor: `${TEAL}12`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <WorkOutlineOutlined sx={{ fontSize: 20, color: TEAL }} />
-          </Box>
-          <Box>
-            <Typography sx={{ fontWeight: 800, fontSize: "1.1rem", color: "#111827", lineHeight: 1.2 }}>{t("title")}</Typography>
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>
-              {loading ? td("pages.common.loading") : t("count", { count: totalCount })}
-            </Typography>
-          </Box>
-        </Box>
+          {/* Title + count */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-[10px]" style={{ backgroundColor: `${TEAL}12` }}>
+              <WorkOutlineOutlined size={20} color={TEAL} />
+            </div>
+            <div>
+              <p className="text-[1.1rem] font-extrabold leading-tight text-[#111827]">{t("title")}</p>
+              <p className="text-xs text-[#9CA3AF]">
+                {loading ? td("pages.common.loading") : t("count", { count: totalCount })}
+              </p>
+            </div>
+          </div>
 
-        {/* Controls */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: 1, flexWrap: "wrap" }}>
+          {/* Controls */}
+          <div className="flex flex-wrap items-center gap-2">
 
-          {/* Search */}
-          <Box sx={{ display: "flex", alignItems: "center", bgcolor: "#F9FAFB", border: "1px solid #E5E7EB", borderRadius: "8px", px: 1.25, height: 34, width: { xs: "100%", sm: 220, md: 300, lg: 380 }, "&:focus-within": { borderColor: TEAL }, transition: "border-color 0.15s" }}>
-            <SearchOutlined sx={{ fontSize: 15, color: "#9CA3AF", mr: 0.75 }} />
-            <InputBase placeholder={t("search_placeholder")} value={search} onChange={(e) => onSearchChange(e.target.value)} sx={{ fontSize: "13px", flex: 1 }} />
-          </Box>
-
-          {/* Status filter */}
-          <FormControl size="small">
-            <Select value={statusFilter} onChange={(e) => onStatusChange(e.target.value as StatusFilter)} displayEmpty
-              startAdornment={<CheckCircleOutlineOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
-              renderValue={(val) => {
-                const opt = statusOpts.find((o) => o.value === val);
-                return <Typography sx={{ fontSize: "13px", color: val === "all" ? "#9CA3AF" : (opt?.color ?? "#374151") }}>{opt?.label ?? t("status.all")}</Typography>;
-              }}
-              sx={selectSx}
-              MenuProps={{ PaperProps: { sx: { ...MENU_PAPER_SX, minWidth: 160 } } }}
-            >
-              {statusOpts.map(({ value, label, color }) => (
-                <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5, "&:hover": { bgcolor: `${color}0D` }, "&.Mui-selected": { bgcolor: `${color}12`, "&:hover": { bgcolor: `${color}1A` } } }}>
-                  <Typography sx={{ fontSize: "13px", fontWeight: statusFilter === value ? 700 : 400, color: statusFilter === value ? color : "#374151" }}>{label}</Typography>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Type filter */}
-          <FormControl size="small">
-            <Select value={typeFilter} onChange={(e) => onTypeChange(e.target.value as TypeFilter)} displayEmpty
-              renderValue={(val) => {
-                const opt  = typeOpts.find((o) => o.value === val);
-                const Icon = opt?.Icon ?? FilterListOutlined;
-                return (
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
-                    <Icon sx={{ fontSize: 14, color: val === "all" ? "#9CA3AF" : opt?.color }} />
-                    <Typography sx={{ fontSize: "13px", color: val === "all" ? "#9CA3AF" : opt?.color }}>{opt?.label ?? t("type.all")}</Typography>
-                  </Box>
-                );
-              }}
-              sx={selectSx}
-              MenuProps={{ PaperProps: { sx: { ...MENU_PAPER_SX, minWidth: 160 } } }}
-            >
-              {typeOpts.map(({ value, label, color, bg, Icon }) => (
-                <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.25, gap: 1, "&:hover": { bgcolor: `${color}0D` }, "&.Mui-selected": { bgcolor: `${color}12`, "&:hover": { bgcolor: `${color}1A` } } }}>
-                  {value !== "all" && (
-                    <Box sx={{ width: 20, height: 20, borderRadius: "5px", bgcolor: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
-                      <Icon sx={{ fontSize: 11, color }} />
-                    </Box>
-                  )}
-                  <Typography sx={{ fontSize: "13px", fontWeight: typeFilter === value ? 700 : 400, color: typeFilter === value ? color : "#374151" }}>{label}</Typography>
-                </MenuItem>
-              ))}
-            </Select>
-          </FormControl>
-
-          {/* Sort */}
-          <FormControl size="small">
-            <Select value={sortBy} onChange={(e) => onSortChange(e.target.value as SortOption)}
-              startAdornment={<SortOutlined sx={{ fontSize: 14, color: "#9CA3AF", mr: 0.5 }} />}
-              renderValue={(val) => {
-                const opt = sortFlat.find((o) => o.value === val);
-                return <Typography sx={{ fontSize: "13px", color: "#374151" }}>{opt?.label ?? td("pages.common.sort")}</Typography>;
-              }}
-              sx={selectSx}
-              MenuProps={{ PaperProps: { sx: { ...MENU_PAPER_SX, minWidth: 190 } } }}
-            >
-              {sortGroups.flatMap((group, gi) => [
-                <ListSubheader key={`h-${gi}`} sx={{ display: "flex", alignItems: "center", gap: 0.75, fontSize: "10px", fontWeight: 700, color: group.color, textTransform: "uppercase", letterSpacing: "0.06em", lineHeight: "32px", bgcolor: "#fff", px: 1.5 }}>
-                  <group.Icon sx={{ fontSize: 12 }} />{group.label}
-                </ListSubheader>,
-                ...group.options.map(({ value, label }) => (
-                  <MenuItem key={value} value={value} sx={{ mx: 0.5, borderRadius: "8px", py: 0.75, px: 1.5, "&:hover": { bgcolor: `${group.color}0D` }, "&.Mui-selected": { bgcolor: `${group.color}12`, "&:hover": { bgcolor: `${group.color}1A` } } }}>
-                    <Typography sx={{ fontSize: "13px", fontWeight: sortBy === value ? 700 : 400, color: sortBy === value ? group.color : "#374151" }}>{label}</Typography>
-                  </MenuItem>
-                )),
-                gi < sortGroups.length - 1 ? <Divider key={`d-${gi}`} sx={{ my: 0.5, borderColor: "#F3F4F6" }} /> : null,
-              ])}
-            </Select>
-          </FormControl>
-
-          <Box sx={{ width: "1px", height: 22, bgcolor: "#E5E7EB", mx: 0.25 }} />
-
-          {/* New post button */}
-          <Tooltip title={postsAtLimit ? t("limit_tooltip", { used: postsUsed, limit: postsLimit }) : ""} arrow disableHoverListener={!postsAtLimit}>
-            <span>
-              <AppButton
-                label={postsAtLimit ? t("limit_reached", { used: postsUsed, limit: postsLimit }) : t("new_post")}
-                variant="contained"
-                disabled={postsAtLimit}
-                startIcon={<AddOutlined sx={{ fontSize: 16 }} />}
-                onClick={onCreateClick}
-                size="small"
-                sx={{
-                  borderRadius: "10px", height: 36,
-                  background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)`,
-                  boxShadow: `0 2px 8px ${TEAL}40`,
-                  "&:hover": { opacity: 0.9, boxShadow: `0 4px 14px ${TEAL}50`, background: `linear-gradient(135deg, ${TEAL} 0%, #0F766E 100%)` },
-                }}
+            {/* Search */}
+            <div className="flex h-[34px] w-full items-center rounded-lg border border-[#E5E7EB] bg-[#F9FAFB] px-2.5 transition-colors focus-within:border-teal-500 sm:w-[220px] md:w-[300px] lg:w-[380px]">
+              <SearchOutlined size={15} color="#9CA3AF" className="mr-1.5 shrink-0" />
+              <input
+                type="text"
+                placeholder={t("search_placeholder")}
+                value={search}
+                onChange={(e) => onSearchChange(e.target.value)}
+                className="w-full flex-1 border-none bg-transparent text-[13px] outline-none placeholder:text-[#9CA3AF]"
               />
-            </span>
-          </Tooltip>
-        </Box>
-      </Box>
-    </Box>
+            </div>
+
+            {/* Status filter */}
+            <Select value={statusFilter} onValueChange={(v) => onStatusChange(v as StatusFilter)}>
+              <SelectTrigger className={selectTriggerClass}>
+                <CheckCircleOutlineOutlined size={14} color="#9CA3AF" />
+                <SelectValue>
+                  <span className="text-[13px]" style={{ color: statusFilter === "all" ? "#9CA3AF" : (currentStatus?.color ?? "#374151") }}>
+                    {currentStatus?.label ?? t("status.all")}
+                  </span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="min-w-[160px]">
+                {statusOpts.map(({ value, label, color }) => (
+                  <SelectItem key={value} value={value}>
+                    <span className="text-[13px]" style={{ fontWeight: statusFilter === value ? 700 : 400, color: statusFilter === value ? color : "#374151" }}>
+                      {label}
+                    </span>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            {/* Sort */}
+            <Select value={sortBy} onValueChange={(v) => onSortChange(v as SortOption)}>
+              <SelectTrigger className={selectTriggerClass}>
+                <SortOutlined size={14} color="#9CA3AF" />
+                <SelectValue>
+                  <span className="text-[13px] text-[#374151]">{currentSort?.label ?? td("pages.common.sort")}</span>
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent className="min-w-[190px]">
+                {sortGroups.map((group, gi) => (
+                  <React.Fragment key={`g-${gi}`}>
+                    <SelectGroup>
+                      <SelectLabel className="flex items-center gap-1.5" style={{ color: group.color }}>
+                        <group.Icon size={12} />{group.label}
+                      </SelectLabel>
+                      {group.options.map(({ value, label }) => (
+                        <SelectItem key={value} value={value}>
+                          <span className="text-[13px]" style={{ fontWeight: sortBy === value ? 700 : 400, color: sortBy === value ? group.color : "#374151" }}>
+                            {label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                    {gi < sortGroups.length - 1 && <SelectSeparator />}
+                  </React.Fragment>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <div className="mx-0.5 h-[22px] w-px bg-[#E5E7EB]" />
+
+            {/* New post button */}
+            {postsAtLimit ? (
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <span className="inline-block">
+                    <Button
+                      size="sm"
+                      className="cursor-pointer border border-amber-500 bg-amber-500 text-white opacity-100 shadow-sm hover:bg-amber-600 hover:text-white"
+                      onClick={onCreateClick}
+                    >
+                      <LockOutlined size={14} />
+                      {t("limit_reached", { used: postsUsed, limit: postsLimit })}
+                    </Button>
+                  </span>
+                </TooltipTrigger>
+                <TooltipContent>{t("limit_tooltip", { used: postsUsed, limit: postsLimit })}</TooltipContent>
+              </Tooltip>
+            ) : (
+              <Button size="sm" onClick={onCreateClick}>
+                <AddOutlined size={16} />
+                {t("new_post")}
+              </Button>
+            )}
+          </div>
+        </div>
+      </div>
+    </TooltipProvider>
   );
 };
 

@@ -1,487 +1,518 @@
 import React, { memo, useState, useMemo, useCallback } from "react";
-import { Box, Typography } from "@mui/material";
 import { useTranslation } from "react-i18next";
-import { Campaign, CampaignModule, CampaignStatus, ModuleType, ParticipantStatus } from "@/modules/company/campaigns/types/campaign";
+import {
+  LayoutDashboard, Users, ClipboardList, Play, ArrowRight,
+  CircleCheck, Circle, SlidersHorizontal, Rocket, EyeOff,
+} from "lucide-react";
+import {
+  Campaign,
+  CampaignModule,
+  CampaignStatus,
+  ModuleType,
+  ParticipantStatus,
+} from "@/modules/company/campaigns/types/campaign";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/modules/shared/ui/shadcn/tabs";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { cn } from "@/lib/utils";
 import CampaignHeader from "./CampaignHeader";
-import CampaignDetailsCard from "./CampaignDetailsCard";
-import CampaignModuleCard from "./CampaignModuleCard";
-import CampaignSidebar from "./CampaignSidebar";
+import CampaignOverviewCharts from "./CampaignOverviewCharts";
 import CampaignParticipantsTab from "./CampaignParticipantsTab";
 import CampaignSessionsTab from "./CampaignSessionsTab";
+import CampaignModuleConfigTab from "./CampaignModuleConfigTab";
 import DeleteCampaignDialog from "./DeleteCampaignDialog";
 import ConfirmStatusChangeDialog from "./ConfirmStatusChangeDialog";
 import ConfigureModuleModal from "./configure/ConfigureModuleModal";
 import EditCampaignModal from "./EditCampaignModal";
 import { useDeleteCampaignMutation } from "../../queries";
-import PeopleAltOutlined            from "@mui/icons-material/PeopleAltOutlined";
-import AssignmentOutlined           from "@mui/icons-material/AssignmentOutlined";
-import AccessTimeOutlined           from "@mui/icons-material/AccessTimeOutlined";
-import DashboardOutlined            from "@mui/icons-material/DashboardOutlined";
-import EmojiEventsOutlined          from "@mui/icons-material/EmojiEventsOutlined";
-import PlayArrowOutlined            from "@mui/icons-material/PlayArrow";
-import ArrowForwardOutlined         from "@mui/icons-material/ArrowForwardOutlined";
-import CheckCircleOutlined          from "@mui/icons-material/CheckCircleOutlined";
-import RadioButtonUncheckedOutlined from "@mui/icons-material/RadioButtonUnchecked";
-import TuneOutlined                 from "@mui/icons-material/TuneOutlined";
-import RocketLaunchOutlined         from "@mui/icons-material/RocketLaunchOutlined";
-import VisibilityOffOutlined        from "@mui/icons-material/VisibilityOffOutlined";
 import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
-import { daysLeft, isDeadlinePassed } from "@/utils/functions";
-import { buildInterviewUrl } from "@/lib/interviewSession";
+import { isDeadlinePassed } from "@/utils/functions";
+import { buildCampaignSessionUrl } from "@/lib/campaignSession";
 
 // ─── Static constants ─────────────────────────────────────────────────────────
 
-const PURPLE = "#8310FF";
-
-const CARD_SX = {
-  bgcolor: "#fff", border: "1px solid #EDEEF0",
-  borderRadius: "18px", boxShadow: "0 1px 4px rgba(0,0,0,0.04)",
-} as const;
-
-const PARTICIPANT_STATUS_STYLE: Record<ParticipantStatus, { color: string; bg: string }> = {
-  INVITED:     { color: "#0891B2", bg: "#ECFDF5" },
+const PARTICIPANT_STATUS_STYLE: Record<
+  ParticipantStatus,
+  { color: string; bg: string }
+> = {
+  INVITED: { color: "#0891B2", bg: "#ECFDF5" },
   IN_PROGRESS: { color: "#D97706", bg: "#FFFBEB" },
-  COMPLETED:   { color: "#16A34A", bg: "#F0FDF4" },
-  DROPPED:     { color: "#EF4444", bg: "#FEF2F2" },
+  COMPLETED: { color: "#16A34A", bg: "#F0FDF4" },
+  DROPPED: { color: "#EF4444", bg: "#FEF2F2" },
 };
 
-const PAGE_SX        = { display: "flex", flexDirection: "column", gap: 1.5 } as const;
-const STATS_GRID_SX  = { display: "grid", gridTemplateColumns: { xs: "1fr 1fr", md: "repeat(4, 1fr)" }, gap: 1.5 } as const;
-const STAT_CARD_SX   = { ...CARD_SX, p: 2, display: "flex", alignItems: "center", gap: 1.5 } as const;
-const STAT_LABEL_SX  = { fontSize: "10px", fontWeight: 700, color: "#9CA3AF", letterSpacing: "0.02em" } as const;
-const STAT_VALUE_SX  = { fontSize: "15px", fontWeight: 800, color: "#111827", lineHeight: 1.2, mt: 0.25 } as const;
-const TAB_SHELL_SX   = { ...CARD_SX, p: 0, overflow: "hidden" } as const;
-const TAB_BAR_SX     = { display: "flex", alignItems: "center", px: 2, py: 1.25, borderBottom: "1px solid #F3F4F6" } as const;
-const TAB_STRIP_SX   = { display: "inline-flex", alignItems: "center", bgcolor: "#F3F4F6", borderRadius: "12px", p: 0.5, gap: 0.5 } as const;
-const TAB_CONTENT_SX = { p: 2.5 } as const;
-const OV_GRID_SX     = { display: "grid", gridTemplateColumns: { xs: "1fr", lg: "1fr 280px" }, gap: 1.5, alignItems: "start" } as const;
-const OV_LEFT_SX     = { display: "flex", flexDirection: "column", gap: 1.5 } as const;
-const SETUP_BG_SX    = { position: "absolute", inset: 0, opacity: 0.035, background: "linear-gradient(135deg, #F59E0B 0%, #8310FF 100%)", pointerEvents: "none" } as const;
-const SETUP_TITLE_ROW_SX = { display: "flex", alignItems: "center", gap: 1.25, mb: 2 } as const;
-const SETUP_STEPS_SX = { display: "flex", flexDirection: { xs: "column", sm: "row" }, gap: 1.5 } as const;
-const SETUP_ARROW_SX = { display: { xs: "none", sm: "flex" }, alignItems: "center", color: "#D1D5DB", fontSize: 22, fontWeight: 300 } as const;
-const SETUP_BANNER_SX = { bgcolor: "#fff", border: "1px solid #E2E8F0", borderRadius: "18px", p: 2.5, boxShadow: "0 1px 4px rgba(0,0,0,0.04)", overflow: "hidden", position: "relative" } as const;
-const SETUP_ICON_BOX_SX = { width: 32, height: 32, borderRadius: "9px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } as const;
-const SETUP_CONFIGURE_BTN_SX = { mt: 0.25, alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.625, borderRadius: "8px", cursor: "pointer", bgcolor: "#FEF3C7", border: "1px solid #FDE68A", transition: "all 0.15s", "&:hover": { bgcolor: "#FDE68A" } } as const;
-const SETUP_ACTIVATE_BTN_SX = { mt: 0.25, alignSelf: "flex-start", display: "flex", alignItems: "center", gap: 0.5, px: 1.25, py: 0.625, borderRadius: "8px", cursor: "pointer", bgcolor: "#2563EB", border: "1px solid #1D4ED8", transition: "all 0.15s", "&:hover": { bgcolor: "#1D4ED8" } } as const;
-const BADGE_EXPIRED_SX = { display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#FEF2F2", border: "1px solid #FECACA" } as const;
-const BADGE_PAUSED_SX  = { display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#FFFBEB", border: "1px solid #FDE68A" } as const;
-const BADGE_CLOSED_SX  = { display: "inline-flex", alignItems: "center", gap: 0.5, px: 1.125, py: "4px", borderRadius: "999px", bgcolor: "#EFF6FF", border: "1px solid #BFDBFE" } as const;
-const EXP_DOT_SX   = { width: 6, height: 6, borderRadius: "50%", bgcolor: "#EF4444" } as const;
-const EXP_TEXT_SX  = { fontSize: "11px", fontWeight: 700, color: "#EF4444" } as const;
-const PAU_DOT_SX   = { width: 6, height: 6, borderRadius: "50%", bgcolor: "#D97706" } as const;
-const PAU_TEXT_SX  = { fontSize: "11px", fontWeight: 700, color: "#D97706" } as const;
-const CLO_DOT_SX   = { width: 6, height: 6, borderRadius: "50%", bgcolor: "#2563EB" } as const;
-const CLO_TEXT_SX  = { fontSize: "11px", fontWeight: 700, color: "#2563EB" } as const;
-const STAT_ICON_SX_BASE = { width: 38, height: 38, borderRadius: "10px", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 } as const;
-
-// ─── TabPill ──────────────────────────────────────────────────────────────────
-
-type TabKey = "overview" | "participants" | "sessions";
-
-interface TabPillProps {
-  tabKey: TabKey;
-  label: string;
-  icon: React.ReactNode;
-  count?: number | string;
-  color: string;
-  active: boolean;
-  onClick: (key: TabKey) => void;
-}
-
-const TAB_PILL_BASE = { display: "flex", alignItems: "center", gap: 1, px: 2, py: 0.875, borderRadius: "9px", cursor: "pointer", transition: "all 0.18s ease" } as const;
-
-const TabPill: React.FC<TabPillProps> = memo(({ tabKey, label, icon, count, color, active, onClick }) => {
-  const containerSx = useMemo(() => ({
-    ...TAB_PILL_BASE,
-    bgcolor: active ? "#fff" : "transparent",
-    boxShadow: active ? "0 1px 4px rgba(0,0,0,0.08)" : "none",
-    "&:hover": active ? {} : { bgcolor: "#EAECF0" },
-  }), [active]);
-
-  const iconSx = useMemo(() => ({ color: active ? color : "#6B7280", display: "flex", fontSize: 16 }), [active, color]);
-  const labelSx = useMemo(() => ({ fontSize: "13px", fontWeight: 700, color: active ? "#111827" : "#6B7280", whiteSpace: "nowrap" }), [active]);
-  const badgeSx = useMemo(() => ({
-    minWidth: 20, height: 20, borderRadius: "6px", px: 0.75,
-    display: "flex", alignItems: "center", justifyContent: "center",
-    bgcolor: active ? `${color}18` : "#E5E7EB",
-  }), [active, color]);
-  const countSx = useMemo(() => ({ fontSize: "11px", fontWeight: 800, color: active ? color : "#9CA3AF" }), [active, color]);
-
-  const handleClick = useCallback(() => onClick(tabKey), [onClick, tabKey]);
-
-  return (
-    <Box onClick={handleClick} sx={containerSx}>
-      <Box sx={iconSx}>{icon}</Box>
-      <Typography sx={labelSx}>{label}</Typography>
-      {count !== undefined && (
-        <Box sx={badgeSx}>
-          <Typography sx={countSx}>{count}</Typography>
-        </Box>
-      )}
-    </Box>
-  );
-});
-TabPill.displayName = "TabPill";
-
 // ─── CampaignDetail ───────────────────────────────────────────────────────────
+
+type TabKey = "overview" | "participants" | "sessions" | "configuration";
 
 interface Props {
   campaign: Campaign;
   mode?: "company" | "employee";
   onDelete?: (id: string, title: string) => void;
-  onChangeStatus?: (id: string, status: CampaignStatus) => void;
-  onSaveModuleConfig?: (campaignId: string, moduleType: ModuleType, config: NonNullable<CampaignModule["config"]>) => void;
-  canEdit?: boolean;
-  canDelete?: boolean;
-  canPublish?: boolean;
-}
-
-const CampaignDetail: React.FC<Props> = memo(({
-  campaign, mode = "company", onDelete, onChangeStatus, onSaveModuleConfig,
-  canEdit = true, canDelete = true, canPublish = true,
-}) => {
-  const { t, i18n } = useTranslation("dashboard");
-  const tp = "pages.campaigns.detail";
-  const translationLang = i18n.resolvedLanguage ?? i18n.language;
-  const isEmployee = mode === "employee";
-
-  const [tab,                 setTab]                 = useState<TabKey>("overview");
-  const [deleteOpen,          setDeleteOpen]          = useState(false);
-  const [editOpen,            setEditOpen]            = useState(false);
-  const [configureModuleType, setConfigureModuleType] = useState<ModuleType | null>(null);
-  const [pendingActivate,     setPendingActivate]     = useState(false);
-
-  const deleteMut         = useDeleteCampaignMutation();
-  const participantsTotal = campaign.participantCount ?? 0;
-  const sessionsTotal     = (campaign as any).sessionCount ?? 0;
-  const deleteLoading     = deleteMut.isPending;
-
-  const participantStatusLabel = useCallback((s: ParticipantStatus) =>
-    t(`pages.campaigns.detail.participants.participant_status.${s}`),
-  [t, translationLang]);
-
-  // ─── Event handlers ───────────────────────────────────────────────────────
-
-  const handleTabChange   = useCallback((key: TabKey) => setTab(key), []);
-  const openDelete        = useCallback(() => setDeleteOpen(true), []);
-  const closeDelete       = useCallback(() => setDeleteOpen(false), []);
-  const openEdit          = useCallback(() => setEditOpen(true), []);
-  const closeEdit         = useCallback(() => setEditOpen(false), []);
-  const closeConfig       = useCallback(() => setConfigureModuleType(null), []);
-  const closePending      = useCallback(() => setPendingActivate(false), []);
-  const openPending       = useCallback(() => setPendingActivate(true), []);
-
-  const handleDeleteConfirm = useCallback(() => onDelete?.(campaign._id, campaign.title), [onDelete, campaign._id, campaign.title]);
-  const handleActivateConfirm = useCallback(() => {
-    onChangeStatus?.(campaign._id, "ACTIVE");
-    setPendingActivate(false);
-  }, [onChangeStatus, campaign._id]);
-
-  const handleSaveConfig = useCallback((
+  onChangeStatus?: (id: string, status: CampaignStatus) => void | Promise<void>;
+  onSaveModuleConfig?: (
     campaignId: string,
     moduleType: ModuleType,
     config: NonNullable<CampaignModule["config"]>,
-  ) => {
-    onSaveModuleConfig?.(campaignId, moduleType, config);
-    setConfigureModuleType(null);
-  }, [onSaveModuleConfig]);
+  ) => void | Promise<void>;
+  canEdit?: boolean;
+  canDelete?: boolean;
+  canPublish?: boolean;
+  statusLoading?: boolean;
+  configLoading?: boolean;
+}
 
-  const openConfigureModule = useCallback((type: ModuleType) => setConfigureModuleType(type), []);
+const CampaignDetail: React.FC<Props> = memo(
+  ({
+    campaign,
+    mode = "company",
+    onDelete,
+    onChangeStatus,
+    onSaveModuleConfig,
+    canEdit = true,
+    canDelete = true,
+    canPublish = true,
+    statusLoading = false,
+    configLoading = false,
+  }) => {
+    const { t } = useTranslation("dashboard");
+    const tp = "pages.campaigns.detail";
+    const isEmployee = mode === "employee";
 
-  const handleAssessmentAction = useCallback(() => {
-    const modType = campaign.module?.type;
-    const url = modType === 'QUESTIONNAIRE'
-      ? `/campaign/questionnaire/${campaign._id}`
-      : buildInterviewUrl({ type: 'campaign', campaignId: campaign._id, moduleType: modType as 'AI_INTERVIEW' | 'SKILL_TEST' });
-    window.open(url, "_blank", "noopener,noreferrer");
-  }, [campaign._id, campaign.module?.type]);
+    const [tab, setTab] = useState<TabKey>("overview");
+    const [deleteOpen, setDeleteOpen] = useState(false);
+    const [editOpen, setEditOpen] = useState(false);
+    const [configureModuleType, setConfigureModuleType] =
+      useState<ModuleType | null>(null);
+    const [pendingActivate, setPendingActivate] = useState(false);
 
-  // ─── Derived values ───────────────────────────────────────────────────────
+    const deleteMut = useDeleteCampaignMutation();
+    const participantsTotal = campaign.participantCount ?? 0;
+    const sessionsTotal = (campaign as any).sessionCount ?? 0;
+    const deleteLoading = deleteMut.isPending;
 
-  const modCfg       = useMemo(() => MODULE_CONFIG[campaign.module?.type], [campaign.module?.type]);
-  const ModIcon      = modCfg?.icon;
-  const remaining    = useMemo(() => daysLeft(campaign.deadline), [campaign.deadline]);
-  const isExpired    = useMemo(() => isDeadlinePassed(campaign.deadline), [campaign.deadline]);
-  const pStatus      = campaign.participantStatus ?? "INVITED";
-  const ps           = PARTICIPANT_STATUS_STYLE[pStatus];
-  const campaignAccessible = campaign.status === "ACTIVE";
-  const canStart     = (pStatus === "INVITED" || pStatus === "IN_PROGRESS") && !isExpired && campaignAccessible;
-  const moduleType   = campaign.module?.type;
-  const supportsAction  = moduleType === "AI_INTERVIEW" || moduleType === "SKILL_TEST" || moduleType === "QUESTIONNAIRE";
-  const isLinkBased     = campaign.accessMethod === "LINK";
-  const moduleConfigured = campaign.module?.config != null;
-  const showSetupBanner  = !isEmployee && campaign.status === "DRAFT";
+    const participantStatusLabel = useCallback(
+      (s: ParticipantStatus) =>
+        t(`pages.campaigns.detail.participants.participant_status.${s}`),
+      [t],
+    );
 
-  const score    = campaign.score ?? null;
-  const scoreCol = useMemo(() =>
-    score === null ? "#6B7280" : score >= 80 ? "#16A34A" : score >= 60 ? "#0D9488" : score >= 40 ? "#D97706" : "#EF4444",
-  [score]);
+    // ─── Event handlers ───────────────────────────────────────────────────────
 
-  const moduleLabel = useMemo(() =>
-    campaign.module?.type ? t(`pages.campaigns.module.${campaign.module.type}`) : "—",
-  [campaign.module?.type, t]);
+    const openDelete = useCallback(() => setDeleteOpen(true), []);
+    const closeDelete = useCallback(() => setDeleteOpen(false), []);
+    const openEdit = useCallback(() => setEditOpen(true), []);
+    const closeEdit = useCallback(() => setEditOpen(false), []);
+    const closeConfig = useCallback(() => setConfigureModuleType(null), []);
+    const closePending = useCallback(() => setPendingActivate(false), []);
+    const openPending = useCallback(() => setPendingActivate(true), []);
 
-  const deadlineStatValue = useMemo(() =>
-    remaining === null ? t(`${tp}.stats_no_deadline`)
-      : remaining === 0 ? t(`${tp}.stats_expired`)
-      : t(`${tp}.days_left_short`, { count: remaining }),
-  [remaining, t, tp]);
+    const handleDeleteConfirm = useCallback(
+      () => onDelete?.(campaign._id, campaign.title),
+      [onDelete, campaign._id, campaign.title],
+    );
+    const handleActivateConfirm = useCallback(async () => {
+      await onChangeStatus?.(campaign._id, "ACTIVE");
+      setPendingActivate(false);
+    }, [onChangeStatus, campaign._id]);
 
-  const deadlineColor = useMemo(() =>
-    remaining === null ? "#6B7280" : remaining === 0 ? "#DC2626" : remaining <= 7 ? "#D97706" : "#16A34A",
-  [remaining]);
-  const deadlineBg = useMemo(() =>
-    remaining === null ? "#F3F4F6" : remaining === 0 ? "#FEF2F2" : remaining <= 7 ? "#FFFBEB" : "#F0FDF4",
-  [remaining]);
+    const handleSaveConfig = useCallback(
+      async (
+        campaignId: string,
+        moduleType: ModuleType,
+        config: NonNullable<CampaignModule["config"]>,
+      ) => {
+        await onSaveModuleConfig?.(campaignId, moduleType, config);
+        setConfigureModuleType(null);
+      },
+      [onSaveModuleConfig],
+    );
 
-  const currentModuleConfig = useMemo(() =>
-    configureModuleType ? (campaign.module?.config ?? null) : null,
-  [configureModuleType, campaign.module?.config]);
+    const openConfigureModule = useCallback(
+      (type: ModuleType) => setConfigureModuleType(type),
+      [],
+    );
 
-  const STATS = useMemo(() => (isEmployee
-    ? [
-        { icon: PeopleAltOutlined, color: PURPLE, bg: `${PURPLE}08`, label: t(`${tp}.stats_participants`), value: campaign.participantCount !== undefined ? String(campaign.participantCount) : participantsTotal > 0 ? String(participantsTotal) : "—" },
-        { icon: ModIcon, color: modCfg?.color ?? "#6B7280", bg: `${modCfg?.color ?? "#6B7280"}08`, label: t(`${tp}.stats_module`), value: moduleLabel },
-        pStatus === "COMPLETED" && score !== null
-          ? { icon: EmojiEventsOutlined, color: scoreCol, bg: `${scoreCol}12`, label: t(`${tp}.stats_my_score`), value: `${score} / 100` }
-          : { icon: EmojiEventsOutlined, color: ps.color, bg: ps.bg, label: t(`${tp}.stats_my_status`), value: participantStatusLabel(pStatus) },
-        { icon: AccessTimeOutlined, color: deadlineColor, bg: deadlineBg, label: t(`${tp}.stats_deadline`), value: deadlineStatValue },
-      ]
-    : [
-        { icon: PeopleAltOutlined, color: PURPLE, bg: `${PURPLE}08`, label: t(`${tp}.stats_participants`), value: campaign.participantCount !== undefined ? String(campaign.participantCount) : participantsTotal > 0 ? String(participantsTotal) : "—" },
-        { icon: ModIcon, color: modCfg?.color ?? "#6B7280", bg: `${modCfg?.color ?? "#6B7280"}08`, label: t(`${tp}.stats_module`), value: moduleLabel },
-        { icon: AssignmentOutlined, color: "#0891B2", bg: "#E0F2FE", label: t(`${tp}.stats_sessions`), value: campaign.sessionCount !== undefined ? String(campaign.sessionCount) : sessionsTotal > 0 ? String(sessionsTotal) : "—" },
-        { icon: AccessTimeOutlined, color: deadlineColor, bg: deadlineBg, label: t(`${tp}.stats_deadline`), value: deadlineStatValue },
-      ]),
-  [isEmployee, campaign.participantCount, campaign.sessionCount, participantsTotal, sessionsTotal, modCfg?.color, ModIcon, pStatus, score, scoreCol, ps.color, ps.bg, remaining, t, tp, moduleLabel, deadlineStatValue, deadlineColor, deadlineBg, participantStatusLabel, translationLang]);
+    const handleAssessmentAction = useCallback(() => {
+      window.open(
+        buildCampaignSessionUrl(campaign._id),
+        "_blank",
+        "noopener,noreferrer",
+      );
+    }, [campaign._id]);
 
-  const TABS = useMemo(() => [
-    { key: "overview" as TabKey,      label: t(`${tp}.tab_overview`),      icon: <DashboardOutlined sx={{ fontSize: 16 }} />, color: PURPLE,     count: undefined as number | string | undefined },
-    ...(!isLinkBased  ? [{ key: "participants" as TabKey, label: t(`${tp}.tab_participants`), icon: <PeopleAltOutlined  sx={{ fontSize: 16 }} />, color: PURPLE,     count: participantsTotal || undefined }] : []),
-    ...(!isEmployee   ? [{ key: "sessions"     as TabKey, label: t(`${tp}.tab_sessions`),     icon: <AssignmentOutlined sx={{ fontSize: 16 }} />, color: "#0891B2", count: sessionsTotal || undefined }] : []),
-  ], [t, tp, translationLang, isLinkBased, isEmployee, participantsTotal, sessionsTotal]);
+    // ─── Derived values ───────────────────────────────────────────────────────
 
-  // ─── Employee-mode actions node ───────────────────────────────────────────
+    const modCfg = useMemo(
+      () => MODULE_CONFIG[campaign.module?.type],
+      [campaign.module?.type],
+    );
+    const isExpired = useMemo(
+      () => isDeadlinePassed(campaign.deadline),
+      [campaign.deadline],
+    );
+    const pStatus = campaign.participantStatus ?? "INVITED";
+    const ps = PARTICIPANT_STATUS_STYLE[pStatus];
+    const campaignAccessible = campaign.status === "ACTIVE";
+    const canStart =
+      (pStatus === "INVITED" || pStatus === "IN_PROGRESS") &&
+      !isExpired &&
+      campaignAccessible;
+    const moduleType = campaign.module?.type;
+    const supportsAction =
+      moduleType === "AI_INTERVIEW" ||
+      moduleType === "SKILL_TEST" ||
+      moduleType === "QUESTIONNAIRE";
+    const isLinkBased = campaign.accessMethod === "LINK";
+    const moduleConfigured = campaign.module?.config != null;
+    const showSetupBanner = !isEmployee && campaign.status === "DRAFT";
 
-  const empBadgeSx = useMemo(() => ({
-    display: "inline-flex", alignItems: "center", gap: 0.5,
-    px: 1.125, py: "4px", borderRadius: "999px", bgcolor: ps.bg,
-  }), [ps.bg]);
-  const empDotSx = useMemo(() => ({ width: 6, height: 6, borderRadius: "50%", bgcolor: ps.color }), [ps.color]);
-  const empTextSx = useMemo(() => ({ fontSize: "11px", fontWeight: 700, color: ps.color }), [ps.color]);
-  const ctaBtnSx = useMemo(() => ({
-    display: "flex", alignItems: "center", gap: 0.625,
-    px: 1.625, py: 0.75, borderRadius: "10px", cursor: "pointer",
-    bgcolor: pStatus === "IN_PROGRESS" ? "#FFFBEB" : `${PURPLE}10`,
-    border: `1px solid ${pStatus === "IN_PROGRESS" ? "#FDE68A" : `${PURPLE}30`}`,
-    transition: "all 0.15s", "&:hover": { opacity: 0.85 },
-  }), [pStatus]);
-  const ctaTextSx = useMemo(() => ({ fontSize: "0.775rem", fontWeight: 700, color: pStatus === "IN_PROGRESS" ? "#D97706" : PURPLE }), [pStatus]);
+    const currentModuleConfig = useMemo(
+      () => (configureModuleType ? (campaign.module?.config ?? null) : null),
+      [configureModuleType, campaign.module?.config],
+    );
 
-  const employeeActionsNode = useMemo(() => !isEmployee ? undefined : (
-    <Box sx={{ display: "flex", alignItems: "center", gap: 0.875 }}>
-      <Box sx={empBadgeSx}>
-        <Box sx={empDotSx} />
-        <Typography sx={empTextSx}>{participantStatusLabel(pStatus)}</Typography>
-      </Box>
+    const TABS = useMemo(
+      () => [
+        {
+          key: "overview" as TabKey,
+          label: t(`${tp}.tab_overview`),
+          icon: LayoutDashboard,
+          count: undefined as number | string | undefined,
+        },
+        ...(!isLinkBased
+          ? [
+              {
+                key: "participants" as TabKey,
+                label: t(`${tp}.tab_participants`),
+                icon: Users,
+                count: participantsTotal || undefined,
+              },
+            ]
+          : []),
+        ...(!isEmployee
+          ? [
+              {
+                key: "sessions" as TabKey,
+                label: t(`${tp}.tab_sessions`),
+                icon: ClipboardList,
+                count: sessionsTotal || undefined,
+              },
+            ]
+          : []),
+        ...(!isEmployee && moduleConfigured
+          ? [
+              {
+                key: "configuration" as TabKey,
+                label: t(`${tp}.tab_configuration`),
+                icon: SlidersHorizontal,
+                count: undefined as number | string | undefined,
+              },
+            ]
+          : []),
+      ],
+      [t, tp, isLinkBased, isEmployee, moduleConfigured, participantsTotal, sessionsTotal],
+    );
 
-      {isExpired && pStatus !== "COMPLETED" && (
-        <Box sx={BADGE_EXPIRED_SX}>
-          <Box sx={EXP_DOT_SX} />
-          <Typography sx={EXP_TEXT_SX}>{t(`${tp}.employee_deadline_passed`)}</Typography>
-        </Box>
-      )}
-      {campaign.status === "PAUSED" && (
-        <Box sx={BADGE_PAUSED_SX}>
-          <Box sx={PAU_DOT_SX} />
-          <Typography sx={PAU_TEXT_SX}>{t(`${tp}.employee_campaign_paused`)}</Typography>
-        </Box>
-      )}
-      {campaign.status === "CLOSED" && (
-        <Box sx={BADGE_CLOSED_SX}>
-          <Box sx={CLO_DOT_SX} />
-          <Typography sx={CLO_TEXT_SX}>{t(`${tp}.employee_campaign_closed`)}</Typography>
-        </Box>
-      )}
+    // ─── Employee-mode actions node ───────────────────────────────────────────
 
-      {supportsAction && canStart && (
-        <Box onClick={handleAssessmentAction} sx={ctaBtnSx}>
-          {pStatus === "IN_PROGRESS"
-            ? <ArrowForwardOutlined sx={{ fontSize: 14, color: "#D97706" }} />
-            : <PlayArrowOutlined    sx={{ fontSize: 14, color: PURPLE }} />}
-          <Typography sx={ctaTextSx}>
-            {pStatus === "IN_PROGRESS" ? t(`${tp}.continue`) : moduleType === "QUESTIONNAIRE" ? t(`${tp}.start_questionnaire`) : t(`${tp}.start_assessment`)}
-          </Typography>
-        </Box>
-      )}
+    const employeeActionsNode = useMemo(
+      () =>
+        !isEmployee ? undefined : (
+          <div className="flex items-center gap-2">
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full" style={{ background: ps.bg }}>
+              <span className="size-1.5 rounded-full" style={{ background: ps.color }} />
+              <span className="text-[11px] font-bold" style={{ color: ps.color }}>{participantStatusLabel(pStatus)}</span>
+            </span>
 
-    </Box>
-  ), [isEmployee, pStatus, ps, isExpired, campaign.status, supportsAction, canStart, handleAssessmentAction, moduleType, t, tp, participantStatusLabel, empBadgeSx, empDotSx, empTextSx, ctaBtnSx, ctaTextSx, translationLang]);
+            {isExpired && pStatus !== "COMPLETED" && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-red-50 border border-red-200">
+                <span className="size-1.5 rounded-full bg-red-500" />
+                <span className="text-[11px] font-bold text-red-500">{t(`${tp}.employee_deadline_passed`)}</span>
+              </span>
+            )}
+            {campaign.status === "PAUSED" && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-amber-50 border border-amber-200">
+                <span className="size-1.5 rounded-full bg-amber-600" />
+                <span className="text-[11px] font-bold text-amber-600">{t(`${tp}.employee_campaign_paused`)}</span>
+              </span>
+            )}
+            {campaign.status === "CLOSED" && (
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 border border-blue-200">
+                <span className="size-1.5 rounded-full bg-blue-600" />
+                <span className="text-[11px] font-bold text-blue-600">{t(`${tp}.employee_campaign_closed`)}</span>
+              </span>
+            )}
 
-  return (
-    <Box sx={PAGE_SX}>
-      <CampaignHeader
-        campaign={campaign}
-        onChangeStatus={canPublish ? onChangeStatus : undefined}
-        onDeleteClick={canDelete && !isEmployee ? openDelete : undefined}
-        onEditClick={canEdit && !isEmployee ? openEdit : undefined}
-        backLabel={isEmployee ? t(`${tp}.back_employee`) : t(`${tp}.back_company`)}
-        backUrl={isEmployee ? "/employee/campaigns" : "/company/campaigns"}
-        actionsNode={employeeActionsNode}
-      />
+            {supportsAction && canStart && (
+              <Button
+                variant="ghost"
+                onClick={handleAssessmentAction}
+                className="px-2.5 py-1.5 h-auto rounded-[10px] border hover:opacity-85"
+                style={{
+                  background: pStatus === "IN_PROGRESS" ? "#FFFBEB" : "#8310FF10",
+                  borderColor: pStatus === "IN_PROGRESS" ? "#FDE68A" : "#8310FF30",
+                }}
+              >
+                {pStatus === "IN_PROGRESS" ? (
+                  <ArrowRight className="size-3.5 text-amber-600" />
+                ) : (
+                  <Play className="size-3.5" style={{ color: "#8310FF" }} />
+                )}
+                <span
+                  className="text-[0.775rem] font-bold"
+                  style={{ color: pStatus === "IN_PROGRESS" ? "#D97706" : "#8310FF" }}
+                >
+                  {pStatus === "IN_PROGRESS"
+                    ? t(`${tp}.continue`)
+                    : moduleType === "QUESTIONNAIRE"
+                      ? t(`${tp}.start_questionnaire`)
+                      : t(`${tp}.start_assessment`)}
+                </span>
+              </Button>
+            )}
+          </div>
+        ),
+      [
+        isEmployee, pStatus, ps, isExpired, campaign.status, supportsAction,
+        canStart, handleAssessmentAction, moduleType, t, tp, participantStatusLabel,
+      ],
+    );
 
-      {/* Setup checklist banner */}
-      {showSetupBanner && (
-        <Box sx={SETUP_BANNER_SX}>
-          <Box sx={SETUP_BG_SX} />
-          <Box sx={SETUP_TITLE_ROW_SX}>
-            <Box sx={SETUP_ICON_BOX_SX}>
-              <VisibilityOffOutlined sx={{ fontSize: 16, color: "#D97706" }} />
-            </Box>
-            <Box>
-              <Typography sx={{ fontSize: "13.5px", fontWeight: 700, color: "#111827" }}>{t(`${tp}.setup_banner.title`)}</Typography>
-              <Typography sx={{ fontSize: "11.5px", color: "#9CA3AF", mt: 0.1 }}>{t(`${tp}.setup_banner.subtitle`)}</Typography>
-            </Box>
-          </Box>
-          <Box sx={SETUP_STEPS_SX}>
-            {/* Step 1 */}
-            <Box sx={{ flex: 1, borderRadius: "14px", p: 2, border: `1.5px solid ${moduleConfigured ? "#86EFAC" : "#FDE68A"}`, bgcolor: moduleConfigured ? "#F0FDF4" : "#FFFBEB", display: "flex", flexDirection: "column", gap: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box sx={{ width: 28, height: 28, borderRadius: "8px", flexShrink: 0, bgcolor: moduleConfigured ? "#DCFCE7" : "#FEF3C7", border: `1px solid ${moduleConfigured ? "#86EFAC" : "#FDE68A"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    {moduleConfigured ? <CheckCircleOutlined sx={{ fontSize: 15, color: "#16A34A" }} /> : <TuneOutlined sx={{ fontSize: 15, color: "#D97706" }} />}
-                  </Box>
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: moduleConfigured ? "#15803D" : "#92400E" }}>{t(`${tp}.setup_step1_title`)}</Typography>
-                </Box>
-                {moduleConfigured
-                  ? <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: "#DCFCE7" }}><CheckCircleOutlined sx={{ fontSize: 11, color: "#16A34A" }} /><Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#16A34A" }}>{t(`${tp}.setup_step_done`)}</Typography></Box>
-                  : <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: "#FEF3C7" }}><RadioButtonUncheckedOutlined sx={{ fontSize: 11, color: "#D97706" }} /><Typography sx={{ fontSize: "10px", fontWeight: 700, color: "#D97706" }}>{t(`${tp}.setup_step_pending`)}</Typography></Box>
-                }
-              </Box>
-              <Typography sx={{ fontSize: "11.5px", color: moduleConfigured ? "#166534" : "#78350F", lineHeight: 1.5 }}>
-                {moduleConfigured ? t(`${tp}.setup_step1_desc_done`) : t(`${tp}.setup_step1_desc_pending`)}
-              </Typography>
-              {!moduleConfigured && campaign.module?.type && canEdit && (
-                <Box onClick={() => openConfigureModule(campaign.module!.type)} sx={SETUP_CONFIGURE_BTN_SX}>
-                  <TuneOutlined sx={{ fontSize: 13, color: "#D97706" }} />
-                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#D97706" }}>{t(`${tp}.setup_configure_now`)}</Typography>
-                </Box>
-              )}
-            </Box>
+    return (
+      <div className="flex flex-col gap-3">
+        <CampaignHeader
+          campaign={campaign}
+          onChangeStatus={canPublish ? onChangeStatus : undefined}
+          onDeleteClick={canDelete && !isEmployee ? openDelete : undefined}
+          onEditClick={canEdit && !isEmployee ? openEdit : undefined}
+          backLabel={
+            isEmployee ? t(`${tp}.back_employee`) : t(`${tp}.back_company`)
+          }
+          backUrl={isEmployee ? "/employee/campaigns" : "/company/campaigns"}
+          actionsNode={employeeActionsNode}
+        />
 
-            <Box sx={SETUP_ARROW_SX}>→</Box>
+        {/* Setup checklist banner */}
+        {showSetupBanner && (
+          <div className="relative overflow-hidden bg-background border border-border rounded-2xl p-4 shadow-sm">
+            <div
+              className="absolute inset-0 opacity-[0.035] pointer-events-none"
+              style={{ background: "linear-gradient(135deg, #F59E0B 0%, #8310FF 100%)" }}
+            />
+            <div className="relative flex items-center gap-2 mb-3">
+              <div className="flex items-center justify-center size-7 rounded-lg bg-amber-50 border border-amber-200 shrink-0">
+                <EyeOff className="size-3.5 text-amber-600" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[13px] font-bold text-foreground leading-tight">{t(`${tp}.setup_banner.title`)}</p>
+                <p className="text-[11px] text-muted-foreground mt-0.5">{t(`${tp}.setup_banner.subtitle`)}</p>
+              </div>
+            </div>
 
-            {/* Step 2 */}
-            <Box sx={{ flex: 1, borderRadius: "14px", p: 2, border: `1.5px solid ${moduleConfigured ? "#BFDBFE" : "#E5E7EB"}`, bgcolor: moduleConfigured ? "#EFF6FF" : "#F9FAFB", opacity: moduleConfigured ? 1 : 0.6, display: "flex", flexDirection: "column", gap: 1 }}>
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                  <Box sx={{ width: 28, height: 28, borderRadius: "8px", flexShrink: 0, bgcolor: moduleConfigured ? "#DBEAFE" : "#F3F4F6", border: `1px solid ${moduleConfigured ? "#BFDBFE" : "#E5E7EB"}`, display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <RocketLaunchOutlined sx={{ fontSize: 15, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
-                  </Box>
-                  <Typography sx={{ fontSize: "12.5px", fontWeight: 700, color: moduleConfigured ? "#1E40AF" : "#6B7280" }}>{t(`${tp}.setup_step2_title`)}</Typography>
-                </Box>
-                <Box sx={{ display: "inline-flex", alignItems: "center", gap: 0.4, px: 0.875, py: "2px", borderRadius: "999px", bgcolor: moduleConfigured ? "#DBEAFE" : "#F3F4F6" }}>
-                  <RadioButtonUncheckedOutlined sx={{ fontSize: 11, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
-                  <Typography sx={{ fontSize: "10px", fontWeight: 700, color: moduleConfigured ? "#2563EB" : "#9CA3AF" }}>{t(`${tp}.setup_step_pending`)}</Typography>
-                </Box>
-              </Box>
-              <Typography sx={{ fontSize: "11.5px", color: moduleConfigured ? "#1E40AF" : "#9CA3AF", lineHeight: 1.5 }}>
-                {moduleConfigured ? t(`${tp}.setup_step2_desc_ready`) : t(`${tp}.setup_step2_desc_wait`)}
-              </Typography>
-              {moduleConfigured && canPublish && (
-                <Box onClick={openPending} sx={SETUP_ACTIVATE_BTN_SX}>
-                  <RocketLaunchOutlined sx={{ fontSize: 13, color: "#fff" }} />
-                  <Typography sx={{ fontSize: "12px", fontWeight: 700, color: "#fff" }}>{t(`${tp}.setup_activate_now`)}</Typography>
-                </Box>
-              )}
-            </Box>
-          </Box>
-        </Box>
-      )}
+            <div className="relative flex flex-col sm:flex-row gap-2.5">
+              {/* Step 1 */}
+              <div
+                className="flex-1 rounded-xl p-3 flex flex-col gap-1.5 border-[1.5px]"
+                style={{
+                  borderColor: moduleConfigured ? "#86EFAC" : "#FDE68A",
+                  background: moduleConfigured ? "#F0FDF4" : "#FFFBEB",
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div
+                      className="flex items-center justify-center size-6 rounded-md shrink-0 border"
+                      style={{
+                        background: moduleConfigured ? "#DCFCE7" : "#FEF3C7",
+                        borderColor: moduleConfigured ? "#86EFAC" : "#FDE68A",
+                      }}
+                    >
+                      {moduleConfigured
+                        ? <CircleCheck className="size-3.5 text-green-600" />
+                        : <SlidersHorizontal className="size-3.5 text-amber-600" />}
+                    </div>
+                    <p className="text-[12px] font-bold truncate" style={{ color: moduleConfigured ? "#15803D" : "#92400E" }}>
+                      {t(`${tp}.setup_step1_title`)}
+                    </p>
+                  </div>
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full shrink-0"
+                    style={{ background: moduleConfigured ? "#DCFCE7" : "#FEF3C7" }}
+                  >
+                    {moduleConfigured
+                      ? <CircleCheck className="size-[10px] text-green-600" />
+                      : <Circle className="size-[10px] text-amber-600" />}
+                    <span className="text-[10px] font-bold" style={{ color: moduleConfigured ? "#16A34A" : "#D97706" }}>
+                      {moduleConfigured ? t(`${tp}.setup_step_done`) : t(`${tp}.setup_step_pending`)}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] leading-snug flex-1" style={{ color: moduleConfigured ? "#166534" : "#78350F" }}>
+                    {moduleConfigured ? t(`${tp}.setup_step1_desc_done`) : t(`${tp}.setup_step1_desc_pending`)}
+                  </p>
+                  {campaign.module?.type && canEdit && (
+                    <Button
+                      variant="ghost"
+                      onClick={() => openConfigureModule(campaign.module!.type)}
+                      className={cn(
+                        "shrink-0 px-2 py-1 h-auto rounded-md border text-[11px] font-bold",
+                        moduleConfigured
+                          ? "bg-green-100/70 border-green-300 text-green-700 hover:bg-green-200/70"
+                          : "bg-amber-200/70 border-amber-300 text-amber-700 hover:bg-amber-300/70",
+                      )}
+                    >
+                      {moduleConfigured ? t(`${tp}.setup_edit_configuration`) : t(`${tp}.setup_configure_now`)}
+                    </Button>
+                  )}
+                </div>
+              </div>
 
-      {/* Stats row */}
-      <Box sx={STATS_GRID_SX}>
-        {STATS.map(({ icon: Icon, color, bg, label, value }) => (
-          <Box key={label} sx={STAT_CARD_SX}>
-            <Box sx={{ ...STAT_ICON_SX_BASE, bgcolor: bg, border: `1px solid ${color}20` }}>
-              {Icon && <Icon sx={{ fontSize: 18, color }} />}
-            </Box>
-            <Box>
-              <Typography sx={STAT_LABEL_SX}>{label}</Typography>
-              <Typography sx={STAT_VALUE_SX}>{value}</Typography>
-            </Box>
-          </Box>
-        ))}
-      </Box>
+              <div className="hidden sm:flex items-center text-slate-300 text-base font-light">→</div>
 
-      {/* Tab container */}
-      <Box sx={TAB_SHELL_SX}>
-        <Box sx={TAB_BAR_SX}>
-          <Box sx={TAB_STRIP_SX}>
-            {TABS.map(({ key, label, icon, count, color }) => (
-              <TabPill key={key} tabKey={key} label={label} icon={icon} count={count} color={color} active={tab === key} onClick={handleTabChange} />
-            ))}
-          </Box>
-        </Box>
+              {/* Step 2 */}
+              <div
+                className="flex-1 rounded-xl p-3 flex flex-col gap-1.5 border-[1.5px]"
+                style={{
+                  borderColor: moduleConfigured ? "#BFDBFE" : "#E5E7EB",
+                  background: moduleConfigured ? "#EFF6FF" : "#F9FAFB",
+                  opacity: moduleConfigured ? 1 : 0.6,
+                }}
+              >
+                <div className="flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <div
+                      className="flex items-center justify-center size-6 rounded-md shrink-0 border"
+                      style={{
+                        background: moduleConfigured ? "#DBEAFE" : "#F3F4F6",
+                        borderColor: moduleConfigured ? "#BFDBFE" : "#E5E7EB",
+                      }}
+                    >
+                      <Rocket className="size-3.5" style={{ color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
+                    </div>
+                    <p className="text-[12px] font-bold truncate" style={{ color: moduleConfigured ? "#1E40AF" : "#6B7280" }}>
+                      {t(`${tp}.setup_step2_title`)}
+                    </p>
+                  </div>
+                  <span
+                    className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full shrink-0"
+                    style={{ background: moduleConfigured ? "#DBEAFE" : "#F3F4F6" }}
+                  >
+                    <Circle className="size-[10px]" style={{ color: moduleConfigured ? "#2563EB" : "#9CA3AF" }} />
+                    <span className="text-[10px] font-bold" style={{ color: moduleConfigured ? "#2563EB" : "#9CA3AF" }}>
+                      {t(`${tp}.setup_step_pending`)}
+                    </span>
+                  </span>
+                </div>
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-[11px] leading-snug flex-1" style={{ color: moduleConfigured ? "#1E40AF" : "#9CA3AF" }}>
+                    {moduleConfigured ? t(`${tp}.setup_step2_desc_ready`) : t(`${tp}.setup_step2_desc_wait`)}
+                  </p>
+                  {moduleConfigured && canPublish && (
+                    <Button
+                      variant="ghost"
+                      onClick={openPending}
+                      className="shrink-0 px-2 py-1 h-auto rounded-md bg-blue-600 border border-blue-700 text-[11px] font-bold text-white hover:bg-blue-700 hover:text-white"
+                    >
+                      {t(`${tp}.setup_activate_now`)}
+                    </Button>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
-        <Box sx={TAB_CONTENT_SX}>
-          {tab === "overview" && (
-            <Box sx={OV_GRID_SX}>
-              <Box sx={OV_LEFT_SX}>
-                <CampaignDetailsCard campaign={campaign} />
-                <CampaignModuleCard
-                  module={campaign.module}
-                  onConfigureModule={(canEdit && !isEmployee && campaign.status !== "ACTIVE") ? openConfigureModule : undefined}
-                  showConfigure={canEdit && !isEmployee && campaign.status !== "ACTIVE"}
-                  isEmployee={isEmployee}
+        {/* Tabs */}
+        <Tabs value={tab} onValueChange={(v) => setTab(v as TabKey)} className="gap-4">
+          <div className="flex items-center px-2">
+            <TabsList className="h-auto bg-muted p-1 gap-1">
+              {TABS.map(({ key, label, icon: Icon, count }) => (
+                <TabsTrigger key={key} value={key} className="gap-1.5 px-3 py-1.5 rounded-lg data-[state=active]:shadow-sm">
+                  <Icon className="size-4" />
+                  <span className="text-[13px] font-bold">{label}</span>
+                  {count !== undefined && (
+                    <span className="min-w-5 h-5 px-1.5 rounded-md flex items-center justify-center bg-foreground/10 text-[11px] font-extrabold">
+                      {count}
+                    </span>
+                  )}
+                </TabsTrigger>
+              ))}
+            </TabsList>
+          </div>
+
+          <div className="px-3 pb-3">
+            <TabsContent value="overview" className="flex flex-col gap-1.5 mt-0">
+              <CampaignOverviewCharts
+                campaign={campaign}
+                moduleColor={modCfg?.color ?? "#8310FF"}
+              />
+            </TabsContent>
+            <TabsContent value="participants" className="mt-0">
+              <CampaignParticipantsTab
+                campaignId={campaign._id}
+                mode={mode}
+                anonymityMode={campaign.anonymityMode}
+              />
+            </TabsContent>
+            <TabsContent value="sessions" className="mt-0">
+              <CampaignSessionsTab
+                campaignId={campaign._id}
+                anonymityMode={campaign.anonymityMode}
+              />
+            </TabsContent>
+            {moduleConfigured && (
+              <TabsContent value="configuration" className="mt-0">
+                <CampaignModuleConfigTab
+                  campaign={campaign}
+                  moduleColor={modCfg?.color ?? "#8310FF"}
                 />
-              </Box>
-              <CampaignSidebar campaign={campaign} showLastUpdated={!isEmployee} />
-            </Box>
-          )}
-          {tab === "participants" && (
-            <CampaignParticipantsTab campaignId={campaign._id} mode={mode} anonymityMode={campaign.anonymityMode} />
-          )}
-          {tab === "sessions" && (
-            <CampaignSessionsTab campaignId={campaign._id} anonymityMode={campaign.anonymityMode} />
-          )}
-        </Box>
-      </Box>
+              </TabsContent>
+            )}
+          </div>
+        </Tabs>
 
-      {/* Dialogs (company only) */}
-      {!isEmployee && (
-        <>
-          <EditCampaignModal open={editOpen} campaign={campaign} onClose={closeEdit} onSaved={closeEdit} />
-          <DeleteCampaignDialog
-            open={deleteOpen}
-            campaignTitle={campaign.title}
-            participantCount={campaign.participantCount}
-            loading={deleteLoading}
-            onClose={closeDelete}
-            onConfirm={handleDeleteConfirm}
-          />
-          <ConfigureModuleModal
-            open={configureModuleType !== null}
-            campaignId={campaign._id}
-            moduleType={configureModuleType}
-            currentConfig={currentModuleConfig}
-            onClose={closeConfig}
-            onSave={handleSaveConfig}
-          />
-          <ConfirmStatusChangeDialog
-            open={pendingActivate}
-            campaignTitle={campaign.title}
-            currentStatus={campaign.status}
-            targetStatus="ACTIVE"
-            onClose={closePending}
-            onConfirm={handleActivateConfirm}
-          />
-        </>
-      )}
-    </Box>
-  );
-});
+        {/* Dialogs (company only) */}
+        {!isEmployee && (
+          <>
+            <EditCampaignModal
+              open={editOpen}
+              campaign={campaign}
+              onClose={closeEdit}
+              onSaved={closeEdit}
+            />
+            <DeleteCampaignDialog
+              open={deleteOpen}
+              campaignTitle={campaign.title}
+              participantCount={campaign.participantCount}
+              loading={deleteLoading}
+              onClose={closeDelete}
+              onConfirm={handleDeleteConfirm}
+            />
+            <ConfigureModuleModal
+              open={configureModuleType !== null}
+              campaignId={campaign._id}
+              moduleType={configureModuleType}
+              currentConfig={currentModuleConfig}
+              onClose={closeConfig}
+              onSave={handleSaveConfig}
+              loading={configLoading}
+            />
+            <ConfirmStatusChangeDialog
+              open={pendingActivate}
+              campaignTitle={campaign.title}
+              currentStatus={campaign.status}
+              targetStatus="ACTIVE"
+              onClose={closePending}
+              onConfirm={handleActivateConfirm}
+              loading={statusLoading}
+            />
+          </>
+        )}
+      </div>
+    );
+  },
+);
 
 CampaignDetail.displayName = "CampaignDetail";
 export default CampaignDetail;

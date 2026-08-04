@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import WorkspacePremiumIcon from '@mui/icons-material/WorkspacePremium';
-import AddIcon from '@mui/icons-material/Add';
-import EditIcon from '@mui/icons-material/Edit';
-import { IconButton, Tooltip, CircularProgress } from '@mui/material';
+import { Award as WorkspacePremiumIcon, Plus as AddIcon, Pencil as EditIcon } from 'lucide-react';
 import { Card } from '@/modules/shared/ui/shadcn/card';
 import { Badge } from '@/modules/shared/ui/shadcn/badge';
+import { Button } from '@/modules/shared/ui/shadcn/button';
+import { Spinner } from '@/modules/shared/ui/shadcn/spinner';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '@/modules/shared/ui/shadcn/tooltip';
 import { ADMIN_ACCENT, ADMIN_NEUTRAL, ADMIN_NEUTRAL_BG } from '@/modules/admin/shared';
 import { useUpdatePlanMutation } from '../queries';
 import PlanFormDialog from './PlanFormDialog';
@@ -50,17 +50,19 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
   };
 
   return (
+    <TooltipProvider>
     <div className="mb-6">
       <div className="flex items-center justify-between mb-3">
         <span className="text-[13px] font-semibold text-slate-500 uppercase tracking-wide">Available Plans</span>
-        <button
+        <Button
+          variant="ghost"
           onClick={openCreate}
-          className="flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white transition-colors hover:bg-indigo-700"
+          className="rounded-lg px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-indigo-700 hover:text-white"
           style={{ backgroundColor: ADMIN_ACCENT }}
         >
-          <AddIcon style={{ fontSize: 16 }} />
+          <AddIcon size={16} />
           New Plan
-        </button>
+        </Button>
       </div>
 
       {plans.length > 0 && (
@@ -71,7 +73,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center gap-2">
                     <div className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: ADMIN_NEUTRAL_BG }}>
-                      <WorkspacePremiumIcon style={{ fontSize: 16, color: ADMIN_NEUTRAL }} />
+                      <WorkspacePremiumIcon size={16} color={ADMIN_NEUTRAL} />
                     </div>
                     <span className="text-[13.5px] font-semibold text-slate-900">{plan.name}</span>
                   </div>
@@ -81,10 +83,13 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
                         Inactive
                       </Badge>
                     )}
-                    <Tooltip title="Edit plan">
-                      <IconButton size="small" onClick={() => openEdit(plan)} sx={{ color: '#64748B' }}>
-                        <EditIcon fontSize="small" />
-                      </IconButton>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button onClick={() => openEdit(plan)} className="rounded-md p-1.5 text-[#64748B] hover:bg-slate-100">
+                          <EditIcon size={18} />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent>Edit plan</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>
@@ -104,14 +109,15 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
                   <span className="font-semibold text-slate-700">{plan.monthlyInterviewLimit}</span>
                 </div>
                 <div className="h-px bg-slate-100 my-3" />
-                <button
+                <Button
+                  variant="outline"
                   onClick={() => handleToggleActive(plan)}
                   disabled={togglingName === plan.name}
-                  className="w-full flex items-center justify-center gap-1.5 rounded-lg border border-slate-200 py-1.5 text-[12px] font-semibold text-slate-600 transition-colors hover:bg-slate-50 disabled:opacity-50"
+                  className="w-full rounded-lg py-1.5 text-[12px] font-semibold text-slate-600"
                 >
-                  {togglingName === plan.name && <CircularProgress size={12} sx={{ color: ADMIN_NEUTRAL }} />}
+                  {togglingName === plan.name && <Spinner className="size-3" style={{ color: ADMIN_NEUTRAL }} />}
                   {plan.isActive ? 'Deactivate' : 'Reactivate'}
-                </button>
+                </Button>
               </div>
             </Card>
           ))}
@@ -128,6 +134,7 @@ const PlanOverviewGrid: React.FC<PlanOverviewGridProps> = ({ plans, onSaved, onE
         }}
       />
     </div>
+    </TooltipProvider>
   );
 };
 

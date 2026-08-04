@@ -12,6 +12,8 @@ router.get("/employee/:userId/metrics", requireAuth, authLogMiddleware("Internal
 router.post("/:campaignId/participate/:userId", requireAuth, authLogMiddleware("InternalCampaign"), campaignController.participateInCampaign);
 router.delete("/:campaignId/participate/:participantId", requireAuth, authLogMiddleware("InternalCampaign"), campaignController.removeEmployeeFromCampaign);
 router.get("/metrics", requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("InternalCampaign"), resolveCompanyActor, campaignController.getCampaignMetrics);
+router.get("/analytics", requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("InternalCampaign"), resolveCompanyActor, campaignController.getCampaignAnalytics);
+router.get("/table", requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("InternalCampaign"), resolveCompanyActor, campaignController.getCampaignsOverviewTable);
 router.get("/link/:token", authLogMiddleware("InternalCampaign"), campaignController.getCampaignByLinkToken);
 router.post("/link/:token/join", authLogMiddleware("InternalCampaign"), (req, res, next) => {
   const token = req.headers.authorization?.startsWith("Bearer ") || req.cookies?.jwt_token;
@@ -31,6 +33,7 @@ router.use(requireAuth, controledAcces(["Company", "Employee"]), authLogMiddlewa
 router.post("/", campaignController.createInternalCampaign);
 router.get("/", campaignController.getCompanyCampaigns);
 router.get("/:campaignId/sessions", campaignController.getSessions);
+router.get("/:campaignId/participants/:participantId/results", campaignController.getParticipantResultsForCompany);
 router.get("/:campaignId/non-participants", campaignController.getNonParticipants);
 router.patch("/:campaignId/status", campaignController.updateCampaignStatus);
 router.put("/:campaignId", campaignController.updateInternalCampaign);

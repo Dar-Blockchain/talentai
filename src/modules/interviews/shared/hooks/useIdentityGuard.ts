@@ -25,7 +25,13 @@ export type IdentityGuardStatus =
 
 export interface UseIdentityGuardOptions {
   videoRef: React.RefObject<HTMLVideoElement | null>;
+  /** Runs the detection loop (face count + identity enrollment). True as soon as
+   *  the camera stream is live — including the pre-interview lobby — so the
+   *  Start button can gate on a face actually being visible. */
   active: boolean;
+  /** Allows warnings/notifications and termination to actually fire. False during
+   *  the lobby (nothing to terminate yet); true once the interview is active. */
+  enforce?: boolean;
   onTerminate?: () => void;
   showNotification: Notify;
 }
@@ -56,6 +62,7 @@ export interface UseIdentityGuardReturn {
 export const useIdentityGuard = ({
   videoRef,
   active,
+  enforce = true,
   onTerminate,
   showNotification,
 }: UseIdentityGuardOptions): UseIdentityGuardReturn => {
@@ -81,8 +88,10 @@ export const useIdentityGuard = ({
   // so the init effect isn't torn down and rebuilt on every render.
   const onTerminateRef = useRef(onTerminate);
   const notifyRef = useRef(showNotification);
+  const enforceRef = useRef(enforce);
   useEffect(() => { onTerminateRef.current = onTerminate; }, [onTerminate]);
   useEffect(() => { notifyRef.current = showNotification; }, [showNotification]);
+  useEffect(() => { enforceRef.current = enforce; }, [enforce]);
 
   const [status, setStatus] = useState<IdentityGuardStatus>('idle');
   const [faceCount, setFaceCount] = useState(0);
@@ -131,23 +140,27 @@ export const useIdentityGuard = ({
       if (count === 0) {
         noFaceTicksRef.current += 1;
         multiFaceTicksRef.current = 0;
+        // No toast here — the full-screen FaceAlertOverlay (driven by
+        // faceCount === 0 during an active interview) already communicates
+        // this and blocks the screen; a duplicate toast is just noise.
         if (
+          enforceRef.current &&
           noFaceTicksRef.current >= NO_FACE_WARN_TICKS &&
           now - lastWarnRef.current.noFace > WARN_COOLDOWN_MS
         ) {
           lastWarnRef.current.noFace = now;
-          console.warn(LOG, 'no-face warning fired');
-          notifyRef.current('Please stay in view of the camera.', 'warning');
+          console.warn(LOG, 'no-face warning tick reached (toast suppressed — overlay handles it)');
         }
       } else if (count > 1) {
         multiFaceTicksRef.current += 1;
         noFaceTicksRef.current = 0;
         console.info(LOG, `multi-face tick ${multiFaceTicksRef.current}/${MULTI_FACE_TERMINATE_TICKS}`);
+        if (!enforceRef.current) return;
         if (multiFaceTicksRef.current >= MULTI_FACE_TERMINATE_TICKS && !terminatedRef.current) {
           terminatedRef.current = true;
           setStatus('terminated');
           console.error(LOG, 'multi-face threshold reached → terminating');
-          notifyRef.current('Another person was detected in view — ending the interview.', 'error');
+          notifyRef.current('Interview ended — another person was detected in your camera view.', 'error');
           try { onTerminateRef.current?.(); } catch {}
           return;
         }
@@ -157,7 +170,7 @@ export const useIdentityGuard = ({
         ) {
           lastWarnRef.current.multiFace = now;
           console.warn(LOG, 'multi-face warning fired');
-          notifyRef.current('Only the interview candidate should be visible in the camera.', 'warning');
+          notifyRef.current('Someone else appears to be in view of your camera. Please make sure you are alone, or the interview may end automatically.', 'warning');
         }
       } else {
         noFaceTicksRef.current = 0;
@@ -220,11 +233,13 @@ export const useIdentityGuard = ({
           identityMismatchTicksRef.current += 1;
           console.warn(LOG, `identity mismatch tick ${identityMismatchTicksRef.current}/${IDENTITY_TERMINATE_TICKS}`);
 
+          if (!enforceRef.current) return;
+
           if (identityMismatchTicksRef.current >= IDENTITY_TERMINATE_TICKS && !terminatedRef.current) {
             terminatedRef.current = true;
             setStatus('terminated');
             console.error(LOG, 'identity mismatch confirmed → terminating');
-            notifyRef.current('Different person detected — ending the interview.', 'error');
+            notifyRef.current('Interview ended — we could no longer verify it was you in the camera.', 'error');
             try { onTerminateRef.current?.(); } catch {}
             return;
           }
@@ -235,7 +250,7 @@ export const useIdentityGuard = ({
             now - lastWarnRef.current.identity > WARN_COOLDOWN_MS
           ) {
             lastWarnRef.current.identity = now;
-            notifyRef.current('Face check failed — please make sure only you are in front of the camera.', 'warning');
+            notifyRef.current("We're having trouble confirming it's you — please look at the camera in good lighting, or the interview may end automatically.", 'warning');
           }
         } else {
           identityMismatchTicksRef.current = 0;

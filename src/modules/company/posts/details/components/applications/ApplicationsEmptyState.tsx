@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { Box, Typography } from "@mui/material";
-import PeopleAltOutlined from "@mui/icons-material/PeopleAltOutlined";
+import { Users as PeopleAltOutlined } from "lucide-react";
 
 interface Props {
   hasFilters: boolean;
@@ -11,15 +10,15 @@ const ApplicationsEmptyState: React.FC<Props> = ({ hasFilters }) => {
   const { t } = useTranslation("dashboard");
 
   return (
-    <Box sx={{ py: 10, textAlign: "center", border: "1.5px dashed #E5E7EB", borderRadius: "12px", bgcolor: "#FAFAFA" }}>
-      <PeopleAltOutlined sx={{ fontSize: 44, color: "#D1D5DB", mb: 1.5 }} />
-      <Typography sx={{ fontSize: "14px", fontWeight: 600, color: "#374151", mb: 0.5 }}>
+    <div className="rounded-xl border-[1.5px] border-dashed border-gray-200 bg-[#FAFAFA] py-20 text-center">
+      <PeopleAltOutlined size={44} color="#D1D5DB" className="mx-auto mb-3" />
+      <p className="mb-1 text-[14px] font-semibold text-gray-700">
         {hasFilters ? t("pages.applications.empty_filtered_title") : t("pages.applications.empty_no_apps_title")}
-      </Typography>
-      <Typography sx={{ fontSize: "13px", color: "#9CA3AF" }}>
+      </p>
+      <p className="text-[13px] text-gray-400">
         {hasFilters ? t("pages.applications.empty_filtered_sub") : t("pages.applications.empty_no_apps_sub")}
-      </Typography>
-    </Box>
+      </p>
+    </div>
   );
 };
 

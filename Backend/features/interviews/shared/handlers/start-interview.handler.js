@@ -4,11 +4,12 @@ const logger = require('../../../../utils/logger');
 
 async function handleStartInterview(socket, data, { service, activeSessions, onSessionStarted }) {
   try {
-    const { config, candidateId, postId } = data;
+    const { config, candidateId, postId, source } = data;
     const sessionId = uuidv4();
 
     socket.candidateId     = candidateId || null;
     socket.postId          = postId || null;
+    socket.source          = source || null;
     socket.sessionId       = sessionId;
     socket.interviewType   = config?.interviewType || null;
     socket.interviewConfig = config || null;

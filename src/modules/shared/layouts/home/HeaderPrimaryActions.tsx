@@ -7,7 +7,7 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import { useTranslation } from "react-i18next";
 import { cn } from "@/lib/utils";
 
-const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
+const HeaderPrimaryActions = ({ inverted = false, forceSignup = false }: { inverted?: boolean; forceSignup?: boolean }) => {
   const { t }    = useTranslation("common");
   const router   = useRouter();
   const { user } = useSelector((state: RootState) => state.user.connectedUser);
@@ -17,6 +17,8 @@ const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
     user?.role?.toLowerCase() ||
     (typeof window !== "undefined" ? localStorage.getItem("userType") : null) ||
     "candidate";
+
+  const showSignup = forceSignup || userType === "candidate";
 
   return (
     <div className="flex items-center gap-1">
@@ -42,10 +44,10 @@ const HeaderPrimaryActions = ({ inverted = false }: { inverted?: boolean }) => {
       <Button
         variant="default"
         size="sm"
-        onClick={() => userType === "candidate" ? router.push("/signin") : setVideoOpen(true)}
+        onClick={() => showSignup ? router.push("/register") : setVideoOpen(true)}
         className="rounded-lg px-4 shadow-[0_2px_10px_rgba(13,148,136,0.30)] hover:shadow-[0_4px_16px_rgba(13,148,136,0.42)]"
       >
-        {userType === "candidate" ? t("header.signup") : t("header.watch_demo")}
+        {showSignup ? t("header.signup") : t("header.watch_demo")}
       </Button>
 
       <DemoVideoModal open={videoOpen} onClose={() => setVideoOpen(false)} />

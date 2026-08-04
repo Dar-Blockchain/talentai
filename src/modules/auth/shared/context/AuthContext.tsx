@@ -4,6 +4,7 @@ import {
   useState,
   useCallback,
   useMemo,
+  useEffect,
   type ReactNode,
 } from "react";
 import { flushSync } from "react-dom";
@@ -78,6 +79,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     // 5. Safety valve: if routeChangeComplete never fires, clean up after 8 s.
     setTimeout(finishLoggingOut, 8000);
   }, [finishLoggingOut]);
+
+  // When the browser restores a page from bfcache (e.g. pressing Back after
+  // logout), no navigation or middleware re-check happens — the stale DOM is
+  // simply repainted. Force a real reload so middleware.ts and the auth state
+  // get re-evaluated against the current (now-cleared) token.
+  useEffect(() => {
+    function handlePageShow(event: PageTransitionEvent) {
+      if (event.persisted && !getToken()) {
+        window.location.replace("/signin");
+      }
+    }
+    window.addEventListener("pageshow", handlePageShow);
+    return () => window.removeEventListener("pageshow", handlePageShow);
+  }, []);
 
   const stateValue = useMemo<AuthState>(
     () => ({ isAuthenticated, isLoggingOut }),

@@ -1,6 +1,7 @@
 import React, { useRef, useState } from "react";
 import { FileText, UploadCloud, ExternalLink, Trash2, CheckCircle2 } from "lucide-react";
 import { Spinner } from "@/modules/settings/shared/components";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { candidateApi } from "../api";
 import { emitToast } from "@/utils/toastEmitter";
 import DeleteCvDialog from "./DeleteCvDialog";
@@ -100,18 +101,18 @@ const CvSection: React.FC<Props> = ({ resumeFilename, onUpdated, onDeleted, comp
         </div>
       </div>
       <div className="flex gap-1 shrink-0">
-        <button type="button" onClick={() => window.open(cvUrl, "_blank")}
-          className="inline-flex items-center justify-center size-7 rounded-lg text-primary-dark hover:bg-primary/10 transition-colors cursor-pointer" title="View">
+        <Button variant="ghost" onClick={() => window.open(cvUrl, "_blank")}
+          className="size-7 p-0 rounded-lg text-primary-dark hover:bg-primary/10" title="View">
           <ExternalLink size={13} />
-        </button>
-        <button type="button" onClick={() => !uploading && inputRef.current?.click()} disabled={uploading}
-          className="inline-flex items-center justify-center size-7 rounded-lg text-blue-600 hover:bg-blue-50 transition-colors disabled:opacity-60 cursor-pointer" title="Update">
+        </Button>
+        <Button variant="ghost" onClick={() => !uploading && inputRef.current?.click()} disabled={uploading}
+          className="size-7 p-0 rounded-lg text-blue-600 hover:bg-blue-50" title="Update">
           {uploading ? <Spinner size={11} className="border-blue-200 border-t-blue-600" /> : <UploadCloud size={13} />}
-        </button>
-        <button type="button" disabled={deleting || loadingCount} onClick={handleDeleteClick}
-          className="inline-flex items-center justify-center size-7 rounded-lg text-red-600 hover:bg-red-50 transition-colors disabled:opacity-60 cursor-pointer" title="Delete">
+        </Button>
+        <Button variant="ghost" disabled={deleting || loadingCount} onClick={handleDeleteClick}
+          className="size-7 p-0 rounded-lg text-red-600 hover:bg-red-50" title="Delete">
           {deleting || loadingCount ? <Spinner size={11} className="border-red-200 border-t-red-600" /> : <Trash2 size={13} />}
-        </button>
+        </Button>
       </div>
     </div>
   ) : (

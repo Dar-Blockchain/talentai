@@ -1,44 +1,26 @@
-﻿"use client";
+"use client";
 
 import React, { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import {
-  Box,
-  Typography,
-  FormControl,
-  FormHelperText,
-  Stack,
-  alpha,
-  Divider,
-} from "@mui/material";
-import {
-  CheckCircle as CheckCircleIcon,
-  Check as CheckIcon,
-  Schedule as ScheduleIcon,
-  Checklist as ChecklistIcon,
-  PeopleAlt as PeopleAltIcon,
-  Settings as SettingsIcon,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
-  InsertLink as InsertLinkIcon,
-  Lock as LockIcon,
-  ArrowForward as ArrowForwardIcon,
-  ArrowBack as ArrowBackIcon,
-  AutoAwesome as AutoAwesomeIcon,
-  TitleOutlined as TitleIcon,
-} from "@mui/icons-material";
+  CheckCircle2, Clock, Users,
+  Eye, EyeOff, Link2, Lock, ArrowRight, ArrowLeft,
+  Sparkles, Type, ClipboardList,
+} from "lucide-react";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
 import { getDashboardLayout } from "@/modules/shared/layouts";
 import type { NextPageWithLayout } from "@/pages/_app";
-import AppInput from "@/components/ui/AppInput";
-import { AppDatePicker } from "@/components/ui/DatePicker";
-import {
-  ModuleType,
-  CreateCampaignPayload,
-  CreateCampaignForm,
-} from "@/modules/company/campaigns/types/campaign";
+import { ModuleType, CreateCampaignPayload } from "@/modules/company/campaigns/types/campaign";
 import { MODULE_CONFIG } from "@/modules/shared/constants/campaign";
-import dayjs from "dayjs";
+import { createCampaignFormSchema, CreateCampaignFormValues } from "@/modules/company/campaigns/schemas/createCampaignSchema";
+import { Card } from "@/modules/shared/ui/shadcn/card";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Input } from "@/modules/shared/ui/shadcn/input";
+import { Label } from "@/modules/shared/ui/shadcn/label";
+import { Textarea } from "@/modules/shared/ui/shadcn/textarea";
+import { DatePicker } from "@/modules/shared/ui/DatePicker";
+import { cn } from "@/lib/utils";
 import { useRouter } from "next/navigation";
 import { useCompanyAccess } from "@/hooks/useCompanyAccess";
 import { useCreateCampaignMutation } from "@/modules/company/campaigns/queries";
@@ -46,44 +28,22 @@ import { useToast } from "@/hooks/useToast";
 import { useTranslation } from "react-i18next";
 import ParticipantsStep from "@/modules/company/campaigns/components/new/ParticipantsStep";
 
-// ─── Palette ─────────────────────────────────────────────────────────────────
-
-const P = {
-  indigo:      "#6366F1",
-  indigoDark:  "#4F46E5",
-  indigoLight: "#EEF2FF",
-  violet:      "#8B5CF6",
-  violetLight: "#F5F3FF",
-  emerald:     "#10B981",
-  emeraldLight:"#ECFDF5",
-  slate50:     "#F8FAFC",
-  slate100:    "#F1F5F9",
-  slate200:    "#E2E8F0",
-  slate400:    "#94A3B8",
-  slate600:    "#475569",
-  slate700:    "#334155",
-  slate800:    "#1E293B",
-  white:       "#FFFFFF",
-};
-
-// ─── Options ─────────────────────────────────────────────────────────────────
+// ─── Option data ──────────────────────────────────────────────────────────────
 
 const ACCESS_OPTIONS = [
   {
     value: "LINK",
     label: "Shareable Link",
     desc: "Anyone with the link can participate — no account required",
-    Icon: InsertLinkIcon,
+    Icon: Link2,
     color: "#059669",
-    bg: "#ECFDF5",
   },
   {
     value: "ACCOUNTS",
-    label: "Platform Accounts",
+    label: "Employees Only",
     desc: "Employees log in and see campaigns in their dashboard",
-    Icon: LockIcon,
+    Icon: Lock,
     color: "#4F46E5",
-    bg: "#EEF2FF",
   },
 ];
 
@@ -92,85 +52,79 @@ const ANONYMITY_OPTIONS = [
     value: "NOMINATIVE",
     label: "Nominative",
     desc: "Names visible to organizers",
-    Icon: VisibilityIcon,
+    Icon: Eye,
     color: "#0369A1",
-    bg: "#F0F9FF",
   },
   {
     value: "ANONYMOUS",
     label: "Anonymous",
     desc: "Responses fully anonymized",
-    Icon: VisibilityOffIcon,
+    Icon: EyeOff,
     color: "#7C3AED",
-    bg: "#F5F3FF",
   },
-];
-
-const STEPS = [
-  { label: "Campaign Details", icon: SettingsIcon },
-  { label: "Participants",     icon: PeopleAltIcon },
 ];
 
 // ─── Sub-components ───────────────────────────────────────────────────────────
 
 const SectionLabel: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Typography sx={{
-    fontSize: 10, fontWeight: 800, letterSpacing: 1.2,
-    textTransform: "uppercase", color: P.slate400, mb: 1.5,
-  }}>
+  <p className="text-[11px] font-extrabold uppercase tracking-[0.08em] text-muted-foreground mb-2.5">
     {children}
-  </Typography>
+  </p>
 );
+
+const FieldError: React.FC<{ message?: string }> = ({ message }) =>
+  message ? <p className="text-[12.5px] text-destructive mt-1">{message}</p> : null;
 
 const OptionCard: React.FC<{
   isSelected: boolean;
   onClick: () => void;
   color: string;
-  bg: string;
   Icon: React.ElementType;
   label: string;
   desc: string;
-}> = ({ isSelected, onClick, color, bg, Icon, label, desc }) => (
-  <Box
+}> = ({ isSelected, onClick, color, Icon, label, desc }) => (
+  <div
     onClick={onClick}
-    sx={{
-      position: "relative",
-      display: "flex",
-      alignItems: "flex-start",
-      gap: 1.5,
-      p: 2,
-      borderRadius: "14px",
-      cursor: "pointer",
-      border: `1.5px solid ${isSelected ? color : P.slate200}`,
-      bgcolor: isSelected ? alpha(color, 0.05) : P.white,
-      transition: "all 0.18s ease",
-      "&:hover": {
-        borderColor: color,
-        bgcolor: alpha(color, 0.03),
-        transform: "translateY(-1px)",
-        boxShadow: `0 4px 16px ${alpha(color, 0.12)}`,
-      },
+    className="flex items-center gap-3 p-3 rounded-xl cursor-pointer border-[1.5px] transition-all duration-150 select-none"
+    style={{
+      borderColor:     isSelected ? color : undefined,
+      backgroundColor: isSelected ? `${color}08` : undefined,
     }}
   >
-    <Box sx={{
-      width: 38, height: 38, borderRadius: "10px", flexShrink: 0,
-      bgcolor: isSelected ? alpha(color, 0.15) : bg,
-      display: "flex", alignItems: "center", justifyContent: "center",
-    }}>
-      <Icon sx={{ fontSize: 19, color }} />
-    </Box>
-    <Box sx={{ flex: 1, minWidth: 0 }}>
-      <Typography sx={{ fontSize: 13, fontWeight: 700, color: P.slate800, lineHeight: 1.3 }}>
-        {label}
-      </Typography>
-      <Typography sx={{ fontSize: 11.5, color: P.slate400, mt: 0.25, lineHeight: 1.4 }}>
-        {desc}
-      </Typography>
-    </Box>
-    {isSelected && (
-      <CheckCircleIcon sx={{ fontSize: 17, color, flexShrink: 0, mt: 0.25 }} />
-    )}
-  </Box>
+    <div
+      className="size-8 rounded-lg flex items-center justify-center shrink-0"
+      style={{ backgroundColor: `${color}${isSelected ? "18" : "12"}` }}
+    >
+      <Icon className="size-4" style={{ color }} />
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-[13.5px] font-bold text-card-foreground leading-snug">{label}</p>
+      <p className="text-[12px] text-muted-foreground leading-snug mt-0.5">{desc}</p>
+    </div>
+    {isSelected && <CheckCircle2 className="size-4 shrink-0" style={{ color }} />}
+  </div>
+);
+
+const CardSection: React.FC<{
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  iconBg: string;
+  children: React.ReactNode;
+  className?: string;
+}> = ({ icon, title, subtitle, iconBg, children, className }) => (
+  <Card className={cn("gap-0 py-0 overflow-hidden", className)}>
+    <div className="flex items-center gap-3 px-5 py-3.5 border-b border-border/60">
+      <div className="size-9 rounded-lg flex items-center justify-center shrink-0" style={{ background: iconBg }}>
+        {icon}
+      </div>
+      <div>
+        <p className="text-[14.5px] font-bold text-card-foreground">{title}</p>
+        <p className="text-[12.5px] text-muted-foreground">{subtitle}</p>
+      </div>
+    </div>
+    <div className="p-5">{children}</div>
+  </Card>
 );
 
 // ─── Page ─────────────────────────────────────────────────────────────────────
@@ -191,45 +145,39 @@ const NewCampaignPage: NextPageWithLayout = () => {
     trigger,
     watch,
     formState: { errors, isSubmitting },
-  } = useForm<CreateCampaignForm>({
+  } = useForm<CreateCampaignFormValues>({
+    resolver: zodResolver(createCampaignFormSchema),
     mode: "onChange",
     defaultValues: {
-      title: "",
-      // type: "" as CampaignType, // TODO: re-enable
-      description: "",
+      title:         "",
+      description:   "",
       anonymityMode: "" as "NOMINATIVE" | "ANONYMOUS",
-      accessMethod: "" as "LINK" | "ACCOUNTS",
-      module: "" as ModuleType,
-      deadline: "",
+      accessMethod:  "" as "LINK" | "ACCOUNTS",
+      module:        "" as ModuleType,
+      deadline:      "",
     },
   });
 
   const accessMethod = watch("accessMethod");
   const isAccounts   = accessMethod === "ACCOUNTS";
-  // const selectedType = watch("type"); // TODO: re-enable
 
   const handleNext = async () => {
-    const fields: (keyof CreateCampaignForm)[] = [
-      "title",
-      "description",
-      // "type", // TODO: re-enable
-      "module",
-      "anonymityMode",
-      "accessMethod",
-    ];
-    const valid = await trigger(fields);
+    const valid = await trigger(["title", "description", "module", "anonymityMode", "accessMethod"]);
     if (valid) setActiveStep(1);
   };
 
-  const onSubmit = async (data: CreateCampaignForm) => {
+  const onSubmit = async (data: CreateCampaignFormValues) => {
     try {
-      const formattedPayload: CreateCampaignPayload = {
-        ...data,
+      const payload: CreateCampaignPayload = {
+        title: data.title,
+        description: data.description,
+        anonymityMode: data.anonymityMode,
+        accessMethod: data.accessMethod,
+        deadline: data.deadline,
         module: { type: data.module, config: null },
-        // type and customType omitted until re-enabled
-        ...(selectedParticipants.length > 0 && { participants: selectedParticipants }),
+        ...(selectedParticipants.length > 0 ? { participants: selectedParticipants } : {}),
       };
-      const campaign = await createMutation.mutateAsync(formattedPayload);
+      const campaign = await createMutation.mutateAsync(payload);
       showToast({ message: "Campaign created successfully", severity: "success" });
       router.push(`/company/campaigns/${campaign._id}`);
     } catch (error: any) {
@@ -239,7 +187,6 @@ const NewCampaignPage: NextPageWithLayout = () => {
       });
     }
   };
-
 
   return (
     <>
@@ -253,383 +200,291 @@ const NewCampaignPage: NextPageWithLayout = () => {
         ]}
       />
 
-      {/* ── Stepper ── */}
-      {isAccounts && (
-        <Box sx={{ display: "flex", alignItems: "center", mb: 4, gap: 0 }}>
-          {STEPS.map((step, i) => {
-            const isComplete = activeStep > i;
-            const isActive   = activeStep === i;
-            return (
-              <React.Fragment key={step.label}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1, px: 1.5, py: 0.75,
-                  borderRadius: 99, bgcolor: isActive ? alpha(P.indigo, 0.08) : "transparent",
-                  transition: "all 0.2s" }}>
-                  <Box sx={{
-                    width: 26, height: 26, borderRadius: "50%", flexShrink: 0,
-                    display: "flex", alignItems: "center", justifyContent: "center",
-                    bgcolor: isComplete || isActive ? P.indigo : P.slate200,
-                    transition: "all 0.2s",
-                  }}>
-                    {isComplete
-                      ? <CheckIcon sx={{ fontSize: 13, color: "#fff" }} />
-                      : <Typography sx={{ fontSize: 11, fontWeight: 800, color: isActive ? "#fff" : P.slate400, lineHeight: 1 }}>{i + 1}</Typography>
-                    }
-                  </Box>
-                  <Typography sx={{ fontSize: 13, fontWeight: isActive ? 700 : 500,
-                    color: isActive || isComplete ? P.indigo : P.slate400, whiteSpace: "nowrap" }}>
-                    {step.label}
-                  </Typography>
-                </Box>
-                {i < STEPS.length - 1 && (
-                  <Box sx={{ flex: 1, mx: 1, height: 2, borderRadius: 99, bgcolor: P.slate200, overflow: "hidden", position: "relative" }}>
-                    <Box sx={{ position: "absolute", inset: 0, borderRadius: 99, bgcolor: P.indigo,
-                      transform: isComplete ? "scaleX(1)" : "scaleX(0)", transformOrigin: "left",
-                      transition: "transform 0.4s ease" }} />
-                  </Box>
-                )}
-              </React.Fragment>
-            );
-          })}
-        </Box>
-      )}
 
-      {/* ── Main layout ── */}
-      <Box sx={{ display: "grid", gridTemplateColumns: "1fr", gap: 3, alignItems: "start" }}>
+      <div className="flex flex-col gap-4">
 
-        {/* ── Left: Form ── */}
-        <Box sx={{ display: "flex", flexDirection: "column", gap: 2.5 }}>
+        {/* ── STEP 1: Campaign Details ── */}
+        {activeStep === 0 && (
+          <>
+            <div className="grid grid-cols-1 lg:grid-cols-5 gap-4 items-start">
 
-          {/* ── STEP 1 ── */}
-          {activeStep === 0 && (
-            <>
-              {/* Basic Info */}
-              <Box sx={{ bgcolor: P.white, borderRadius: "18px", border: `1px solid ${P.slate200}`, overflow: "hidden" }}>
-                <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${P.slate100}`,
-                  background: `linear-gradient(135deg, ${alpha(P.indigo, 0.04)} 0%, ${alpha(P.violet, 0.04)} 100%)`,
-                  display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box sx={{ width: 34, height: 34, borderRadius: "10px",
-                    background: `linear-gradient(135deg, ${P.indigo}, ${P.violet})`,
-                    display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <TitleIcon sx={{ fontSize: 17, color: "#fff" }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>Basic Information</Typography>
-                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>Name and description of your campaign</Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 2 }}>
-                  <Controller
-                    name="title"
-                    control={control}
-                    rules={{ required: "Title is required" }}
-                    render={({ field, fieldState }) => (
-                      <AppInput
-                        label="Campaign Title"
-                        placeholder="e.g., Q4 Engineering Skills Assessment"
-                        required
-                        {...field}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                  <Controller
-                    name="description"
-                    control={control}
-                    rules={{ required: "Description is required" }}
-                    render={({ field, fieldState }) => (
-                      <AppInput
-                        label="Description"
-                        placeholder="Describe the purpose, goals and expected outcomes..."
-                        required
-                        multiline
-                        rows={3}
-                        {...field}
-                        error={fieldState.error?.message}
-                      />
-                    )}
-                  />
-                </Box>
-              </Box>
+              {/* ── Left column: Basic Info + Module ── */}
+              <div className="lg:col-span-3 flex flex-col gap-4">
 
-              {/* Settings */}
-              <Box sx={{ bgcolor: P.white, borderRadius: "18px", border: `1px solid ${P.slate200}`, overflow: "hidden" }}>
-                <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${P.slate100}`,
-                  background: `linear-gradient(135deg, ${alpha("#059669", 0.04)} 0%, ${alpha("#0D9488", 0.04)} 100%)`,
-                  display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box sx={{ width: 34, height: 34, borderRadius: "10px",
-                    background: "linear-gradient(135deg, #059669, #0D9488)",
-                    display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <ScheduleIcon sx={{ fontSize: 17, color: "#fff" }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>Campaign Settings</Typography>
-                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>Deadline, visibility and access configuration</Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-
-                  {/* Deadline */}
-                  <Box>
-                    <SectionLabel>Application Deadline</SectionLabel>
+                {/* Basic Information */}
+                <CardSection
+                  icon={<Type className="size-4 text-white" />}
+                  title="Basic Information"
+                  subtitle="Name and description of your campaign"
+                  iconBg="linear-gradient(135deg, #6366F1, #8B5CF6)"
+                >
+                  <div className="flex flex-col gap-3">
                     <Controller
-                      name="deadline"
+                      name="title"
                       control={control}
-                      rules={{
-                        validate: (v) =>
-                          v && dayjs(v).isBefore(dayjs(), "day")
-                            ? "Deadline cannot be in the past"
-                            : true,
-                      }}
-                      render={({ field }) => (
-                        <AppDatePicker
-                          value={field.value}
-                          onChange={field.onChange}
-                          error={errors.deadline?.message}
-                          disablePast
-                          size="small"
-                          fullWidth
-                        />
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="title" className="text-[12.5px] font-semibold text-muted-foreground">
+                            Campaign Title <span className="text-destructive">*</span>
+                          </Label>
+                          <Input
+                            id="title"
+                            placeholder="e.g., Q4 Engineering Skills Assessment"
+                            aria-invalid={!!fieldState.error}
+                            {...field}
+                          />
+                          <FieldError message={fieldState.error?.message} />
+                        </div>
                       )}
                     />
-                  </Box>
 
-                  <Divider sx={{ borderColor: P.slate100 }} />
-
-                  {/* Anonymity */}
-                  <Box>
-                    <SectionLabel>Anonymity Mode</SectionLabel>
                     <Controller
-                      name="anonymityMode"
+                      name="description"
                       control={control}
-                      rules={{ required: "Please select an anonymity mode" }}
-                      render={({ field }) => (
-                        <FormControl fullWidth error={!!errors.anonymityMode}>
-                          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
-                            {ANONYMITY_OPTIONS.map((opt) => (
-                              <OptionCard
-                                key={opt.value}
-                                isSelected={field.value === opt.value}
-                                onClick={() => field.onChange(opt.value)}
-                                {...opt}
-                              />
-                            ))}
-                          </Box>
-                          {errors.anonymityMode && (
-                            <FormHelperText sx={{ ml: 0, mt: 0.75 }}>{errors.anonymityMode.message}</FormHelperText>
-                          )}
-                        </FormControl>
+                      render={({ field, fieldState }) => (
+                        <div className="flex flex-col gap-1.5">
+                          <Label htmlFor="description" className="text-[12.5px] font-semibold text-muted-foreground">
+                            Description <span className="text-destructive">*</span>
+                          </Label>
+                          <Textarea
+                            id="description"
+                            placeholder="Describe the purpose, goals and expected outcomes…"
+                            rows={2}
+                            aria-invalid={!!fieldState.error}
+                            {...field}
+                          />
+                          <FieldError message={fieldState.error?.message} />
+                        </div>
                       )}
                     />
-                  </Box>
+                  </div>
+                </CardSection>
 
-                  <Divider sx={{ borderColor: P.slate100 }} />
-
-                  {/* Access Method */}
-                  <Box>
-                    <SectionLabel>Access Method</SectionLabel>
-                    <Controller
-                      name="accessMethod"
-                      control={control}
-                      rules={{ required: "Please select an access method" }}
-                      render={({ field }) => (
-                        <FormControl fullWidth error={!!errors.accessMethod}>
-                          <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
-                            {ACCESS_OPTIONS.map((opt) => (
-                              <OptionCard
-                                key={opt.value}
-                                isSelected={field.value === opt.value}
-                                onClick={() => field.onChange(opt.value)}
-                                {...opt}
-                              />
-                            ))}
-                          </Box>
-                          {errors.accessMethod && (
-                            <FormHelperText sx={{ ml: 0, mt: 0.75 }}>{errors.accessMethod.message}</FormHelperText>
-                          )}
-                        </FormControl>
-                      )}
-                    />
-                  </Box>
-                </Box>
-              </Box>
-
-              {/* Modules */}
-              <Box sx={{ bgcolor: P.white, borderRadius: "18px", border: `1px solid ${P.slate200}`, overflow: "hidden" }}>
-                <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${P.slate100}`,
-                  background: `linear-gradient(135deg, ${alpha(P.violet, 0.04)} 0%, ${alpha("#EC4899", 0.04)} 100%)`,
-                  display: "flex", alignItems: "center", gap: 1.5 }}>
-                  <Box sx={{ width: 34, height: 34, borderRadius: "10px",
-                    background: `linear-gradient(135deg, ${P.violet}, #EC4899)`,
-                    display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <ChecklistIcon sx={{ fontSize: 17, color: "#fff" }} />
-                  </Box>
-                  <Box>
-                    <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>Assessment Module</Typography>
-                    <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>Choose one module for this campaign</Typography>
-                  </Box>
-                </Box>
-                <Box sx={{ p: 3 }}>
+                {/* Assessment Module */}
+                <CardSection
+                  icon={<ClipboardList className="size-4 text-white" />}
+                  title="Assessment Module"
+                  subtitle="Choose one module for this campaign"
+                  iconBg="linear-gradient(135deg, #8B5CF6, #EC4899)"
+                >
                   <Controller
                     name="module"
                     control={control}
-                    rules={{ validate: (v) => !!v || "Select a module" }}
                     render={({ field }) => (
-                      <FormControl error={!!errors.module} fullWidth>
-                        <Box sx={{ display: "grid", gridTemplateColumns: { xs: "1fr", sm: "1fr 1fr" }, gap: 1.5 }}>
-                          {Object.keys(MODULE_CONFIG).map((mod) => {
-                            const m = MODULE_CONFIG[mod as ModuleType];
-                            const Icon = m.icon;
-                            const isSelected   = field.value === mod;
-                            const isComingSoon = mod === "TRAINING_PATH";
+                      <div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                          {(Object.keys(MODULE_CONFIG) as ModuleType[]).map((mod) => {
+                            const m          = MODULE_CONFIG[mod];
+                            const Icon       = m.icon;
+                            const isSelected = field.value === mod;
+                            const isSoon     = mod === "TRAINING_PATH";
                             return (
-                              <Box
+                              <div
                                 key={mod}
-                                onClick={() => { if (!isComingSoon) field.onChange(isSelected ? "" : mod); }}
-                                sx={{
-                                  position: "relative",
-                                  display: "flex", alignItems: "flex-start", gap: 1.5,
-                                  p: 2, borderRadius: "14px", cursor: isComingSoon ? "not-allowed" : "pointer",
-                                  border: `1.5px solid ${isSelected ? m.color : P.slate200}`,
-                                  bgcolor: isSelected ? alpha(m.color, 0.05) : P.white,
-                                  opacity: isComingSoon ? 0.55 : 1,
-                                  transition: "all 0.18s ease",
-                                  ...(!isComingSoon && {
-                                    "&:hover": {
-                                      borderColor: m.color,
-                                      bgcolor: alpha(m.color, 0.03),
-                                      transform: "translateY(-1px)",
-                                      boxShadow: `0 4px 16px ${alpha(m.color, 0.12)}`,
-                                    },
-                                  }),
+                                onClick={() => { if (!isSoon) field.onChange(isSelected ? "" : mod); }}
+                                className={cn(
+                                  "flex items-center gap-3 p-3 rounded-xl border-[1.5px] transition-all duration-150 select-none",
+                                  isSoon ? "cursor-not-allowed opacity-55" : "cursor-pointer",
+                                )}
+                                style={{
+                                  borderColor:     isSelected ? m.color : undefined,
+                                  backgroundColor: isSelected ? `${m.color}08` : undefined,
                                 }}
                               >
-                                <Box sx={{
-                                  width: 38, height: 38, borderRadius: "10px", flexShrink: 0,
-                                  bgcolor: isSelected ? alpha(m.color, 0.15) : alpha(m.color, 0.08),
-                                  display: "flex", alignItems: "center", justifyContent: "center",
-                                }}>
-                                  <Icon sx={{ fontSize: 19, color: m.color }} />
-                                </Box>
-                                <Box sx={{ flex: 1, minWidth: 0 }}>
-                                  <Box sx={{ display: "flex", alignItems: "center", gap: 0.75, flexWrap: "wrap" }}>
-                                    <Typography sx={{ fontSize: 13, fontWeight: 700, color: P.slate800 }}>
-                                      {m.label}
-                                    </Typography>
-                                    {isComingSoon && (
-                                      <Box sx={{ px: 0.75, py: "1px", borderRadius: 99,
-                                        bgcolor: P.violetLight, border: `1px solid #DDD6FE`,
-                                        display: "inline-flex" }}>
-                                        <Typography sx={{ fontSize: 9, fontWeight: 800, color: P.violet,
-                                          letterSpacing: 0.6, textTransform: "uppercase" }}>
-                                          Soon
-                                        </Typography>
-                                      </Box>
-                                    )}
-                                  </Box>
-                                  <Typography sx={{ fontSize: 11.5, color: P.slate400, mt: 0.25, lineHeight: 1.4 }}>
-                                    {m.description}
-                                  </Typography>
-                                </Box>
+                                <div
+                                  className="size-8 rounded-lg flex items-center justify-center shrink-0"
+                                  style={{ backgroundColor: `${m.color}${isSelected ? "18" : "12"}` }}
+                                >
+                                  <Icon size={16} color={m.color} />
+                                </div>
+                                <div className="flex items-center gap-1.5 flex-1 min-w-0">
+                                  <p className="text-[13.5px] font-bold text-card-foreground truncate">{m.label}</p>
+                                  {isSoon && (
+                                    <span className="inline-flex items-center px-1.5 py-px rounded-full text-[9px] font-extrabold uppercase tracking-wide bg-violet-50 text-violet-600 border border-violet-200 shrink-0">
+                                      Soon
+                                    </span>
+                                  )}
+                                </div>
                                 {isSelected && (
-                                  <CheckCircleIcon sx={{ fontSize: 17, color: m.color, flexShrink: 0, mt: 0.25 }} />
+                                  <CheckCircle2 className="size-4 shrink-0" style={{ color: m.color }} />
                                 )}
-                              </Box>
+                              </div>
                             );
                           })}
-                        </Box>
-                        {errors.module && (
-                          <FormHelperText error sx={{ mt: 0.75 }}>{errors.module.message}</FormHelperText>
-                        )}
-                      </FormControl>
+                        </div>
+                        <FieldError message={errors.module?.message} />
+                      </div>
                     )}
                   />
-                </Box>
-              </Box>
+                </CardSection>
+              </div>
 
-              {/* Action */}
-              <Box sx={{ display: "flex", justifyContent: "flex-end", pt: 0.5 }}>
-                <Box
-                  onClick={isAccounts ? handleNext : handleSubmit(onSubmit)}
-                  sx={{
-                    display: "inline-flex", alignItems: "center", gap: 1.5,
-                    px: 3.5, py: 1.25, borderRadius: "12px", cursor: "pointer",
-                    background: `linear-gradient(135deg, ${P.indigo}, ${P.violet})`,
-                    boxShadow: `0 4px 20px ${alpha(P.indigo, 0.35)}`,
-                    transition: "all 0.2s",
-                    "&:hover": { transform: "translateY(-1px)", boxShadow: `0 6px 24px ${alpha(P.indigo, 0.45)}` },
-                    "&:active": { transform: "translateY(0)" },
-                    ...((!isAccounts && isSubmitting) && { opacity: 0.6, pointerEvents: "none" }),
-                  }}
+              {/* ── Right column: Campaign Settings ── */}
+              <div className="lg:col-span-2">
+                <CardSection
+                  icon={<Clock className="size-4 text-white" />}
+                  title="Campaign Settings"
+                  subtitle="Deadline, visibility and access"
+                  iconBg="linear-gradient(135deg, #059669, #0D9488)"
                 >
-                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
-                    {isAccounts ? "Next: Who Can Participate" : isSubmitting ? "Creating…" : "Create Campaign"}
-                  </Typography>
-                  {isAccounts
-                    ? <ArrowForwardIcon sx={{ fontSize: 16, color: "#fff" }} />
-                    : <AutoAwesomeIcon sx={{ fontSize: 16, color: "#fff" }} />
-                  }
-                </Box>
-              </Box>
-            </>
-          )}
+                  <div className="flex flex-col gap-4">
 
-          {/* ── STEP 2 ── */}
-          {activeStep === 1 && (
-            <Box sx={{ bgcolor: P.white, borderRadius: "18px", border: `1px solid ${P.slate200}`, overflow: "hidden" }}>
-              <Box sx={{ px: 3, py: 2.5, borderBottom: `1px solid ${P.slate100}`,
-                background: `linear-gradient(135deg, ${alpha(P.emerald, 0.04)} 0%, ${alpha("#0D9488", 0.04)} 100%)`,
-                display: "flex", alignItems: "center", gap: 1.5 }}>
-                <Box sx={{ width: 34, height: 34, borderRadius: "10px",
-                  background: `linear-gradient(135deg, ${P.emerald}, #0D9488)`,
-                  display: "flex", alignItems: "center", justifyContent: "center" }}>
-                  <PeopleAltIcon sx={{ fontSize: 17, color: "#fff" }} />
-                </Box>
-                <Box>
-                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: P.slate800 }}>Who Can Participate</Typography>
-                  <Typography sx={{ fontSize: 11.5, color: P.slate400 }}>Leave empty to allow all employees</Typography>
-                </Box>
-              </Box>
-              <Box sx={{ p: 3 }}>
-                <ParticipantsStep selected={selectedParticipants} onChange={setSelectedParticipants} />
-              </Box>
-              <Box sx={{ px: 3, py: 2.5, borderTop: `1px solid ${P.slate100}`,
-                display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <Box
-                  onClick={() => setActiveStep(0)}
-                  sx={{
-                    display: "inline-flex", alignItems: "center", gap: 1,
-                    px: 2.5, py: 1, borderRadius: "10px", cursor: "pointer",
-                    border: `1.5px solid ${P.slate200}`, bgcolor: P.white,
-                    transition: "all 0.18s",
-                    "&:hover": { borderColor: P.slate400, bgcolor: P.slate50 },
-                  }}
-                >
-                  <ArrowBackIcon sx={{ fontSize: 15, color: P.slate600 }} />
-                  <Typography sx={{ fontSize: 13, fontWeight: 600, color: P.slate600 }}>Back</Typography>
-                </Box>
-                <Box
+                    {/* Deadline */}
+                    <div>
+                      <SectionLabel>Application Deadline</SectionLabel>
+                      <Controller
+                        name="deadline"
+                        control={control}
+                        render={({ field }) => (
+                          <DatePicker
+                            value={field.value}
+                            onChange={field.onChange}
+                            placeholder="Pick a deadline date"
+                            minDate={new Date()}
+                            clearable
+                            error={errors.deadline?.message}
+                          />
+                        )}
+                      />
+                    </div>
+
+                    <hr className="border-border/60" />
+
+                    {/* Anonymity */}
+                    <div>
+                      <SectionLabel>Anonymity Mode</SectionLabel>
+                      <Controller
+                        name="anonymityMode"
+                        control={control}
+                        render={({ field }) => (
+                          <div>
+                            <div className="flex flex-col gap-2">
+                              {ANONYMITY_OPTIONS.map((opt) => (
+                                <OptionCard
+                                  key={opt.value}
+                                  isSelected={field.value === opt.value}
+                                  onClick={() => field.onChange(opt.value)}
+                                  {...opt}
+                                />
+                              ))}
+                            </div>
+                            <FieldError message={errors.anonymityMode?.message} />
+                          </div>
+                        )}
+                      />
+                    </div>
+
+                    <hr className="border-border/60" />
+
+                    {/* Access Method */}
+                    <div>
+                      <SectionLabel>Access Method</SectionLabel>
+                      <Controller
+                        name="accessMethod"
+                        control={control}
+                        render={({ field }) => (
+                          <div>
+                            <div className="flex flex-col gap-2">
+                              {ACCESS_OPTIONS.map((opt) => (
+                                <OptionCard
+                                  key={opt.value}
+                                  isSelected={field.value === opt.value}
+                                  onClick={() => field.onChange(opt.value)}
+                                  {...opt}
+                                />
+                              ))}
+                            </div>
+                            <FieldError message={errors.accessMethod?.message} />
+                          </div>
+                        )}
+                      />
+                    </div>
+                  </div>
+                </CardSection>
+              </div>
+            </div>
+
+            {/* Action bar */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 p-4 rounded-xl border border-border bg-muted/40">
+              <div className="flex items-center gap-3">
+                <div className="size-9 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                  <Sparkles className="size-[18px] text-primary" />
+                </div>
+                <div>
+                  <p className="text-[14px] font-semibold text-foreground">
+                    {isAccounts ? "Almost there!" : "Ready to launch?"}
+                  </p>
+                  <p className="text-[12.5px] text-muted-foreground">
+                    {isAccounts
+                      ? "Next you'll select who can participate."
+                      : "Review your settings above before creating."}
+                  </p>
+                </div>
+              </div>
+              <Button
+                type="button"
+                className="gap-2 px-6 w-full sm:w-auto"
+                loading={!isAccounts && isSubmitting}
+                onClick={isAccounts ? handleNext : handleSubmit(onSubmit)}
+              >
+                {isAccounts ? "Next: Participants" : isSubmitting ? "Creating…" : "Create Campaign"}
+                {isAccounts ? <ArrowRight className="size-4" /> : <Sparkles className="size-4" />}
+              </Button>
+            </div>
+          </>
+        )}
+
+        {/* ── STEP 2: Participants ── */}
+        {activeStep === 1 && (
+          <Card className="gap-0 py-0 overflow-hidden">
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-border/60">
+              <div
+                className="size-9 rounded-xl flex items-center justify-center shrink-0"
+                style={{ background: "linear-gradient(135deg, #10B981, #0D9488)" }}
+              >
+                <Users className="size-4 text-white" />
+              </div>
+              <div>
+                <p className="text-[15px] font-bold text-card-foreground">Who Can Participate</p>
+                <p className="text-[12.5px] text-muted-foreground">Leave empty to allow all employees</p>
+              </div>
+            </div>
+
+            <div className="p-5">
+              <ParticipantsStep selected={selectedParticipants} onChange={setSelectedParticipants} />
+            </div>
+
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 px-5 py-4 border-t border-border/60 bg-muted">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                className="gap-1.5 w-full sm:w-auto"
+                onClick={() => setActiveStep(0)}
+              >
+                <ArrowLeft className="size-4" />
+                Back to Details
+              </Button>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+                {selectedParticipants.length > 0 && (
+                  <span className="text-[13px] text-muted-foreground text-center sm:text-left">
+                    <span className="font-semibold text-foreground">{selectedParticipants.length}</span> participant{selectedParticipants.length !== 1 ? "s" : ""} selected
+                  </span>
+                )}
+                <Button
+                  type="button"
+                  className="gap-2 px-6 w-full sm:w-auto"
+                  loading={isSubmitting}
                   onClick={handleSubmit(onSubmit)}
-                  sx={{
-                    display: "inline-flex", alignItems: "center", gap: 1.5,
-                    px: 3.5, py: 1.25, borderRadius: "12px", cursor: "pointer",
-                    background: `linear-gradient(135deg, ${P.emerald}, #0D9488)`,
-                    boxShadow: `0 4px 20px ${alpha(P.emerald, 0.35)}`,
-                    transition: "all 0.2s",
-                    "&:hover": { transform: "translateY(-1px)", boxShadow: `0 6px 24px ${alpha(P.emerald, 0.45)}` },
-                    ...(isSubmitting && { opacity: 0.6, pointerEvents: "none" }),
-                  }}
                 >
-                  <Typography sx={{ fontSize: 14, fontWeight: 700, color: "#fff" }}>
-                    {isSubmitting ? "Creating…" : "Create Campaign"}
-                  </Typography>
-                  <AutoAwesomeIcon sx={{ fontSize: 16, color: "#fff" }} />
-                </Box>
-              </Box>
-            </Box>
-          )}
-        </Box>
-
-      </Box>
+                  {isSubmitting ? "Creating…" : "Create Campaign"}
+                  <Sparkles className="size-4" />
+                </Button>
+              </div>
+            </div>
+          </Card>
+        )}
+      </div>
     </>
   );
 };

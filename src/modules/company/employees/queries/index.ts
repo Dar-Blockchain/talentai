@@ -79,7 +79,8 @@ export function useInviteEmployeeMutation() {
   return useMutation({
     mutationFn: (payload: AddMemberPayload) => employeesApi.inviteEmployee(payload),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["employees"] });
+      void qc.invalidateQueries({ queryKey: EMPLOYEE_QUERY_KEYS.invitations() });
+      void qc.invalidateQueries({ queryKey: EMPLOYEE_QUERY_KEYS.stats() });
     },
   });
 }
@@ -89,7 +90,8 @@ export function useUpdateRoleMutation() {
   return useMutation({
     mutationFn: (payload: UpdateRolePayload) => employeesApi.updateRole(payload),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["employees"] });
+      void qc.invalidateQueries({ queryKey: ["employees", "list"] });
+      void qc.invalidateQueries({ queryKey: ["employees", "detail"] });
     },
   });
 }
@@ -99,7 +101,8 @@ export function useRemoveMemberMutation() {
   return useMutation({
     mutationFn: (membershipId: string) => employeesApi.removeMember(membershipId),
     onSuccess: () => {
-      void qc.invalidateQueries({ queryKey: ["employees"] });
+      void qc.invalidateQueries({ queryKey: ["employees", "list"] });
+      void qc.invalidateQueries({ queryKey: EMPLOYEE_QUERY_KEYS.stats() });
     },
   });
 }

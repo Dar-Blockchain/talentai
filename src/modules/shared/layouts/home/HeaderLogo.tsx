@@ -1,6 +1,5 @@
 "use client";
 import React, { useCallback } from "react";
-import { Box } from "@mui/material";
 import { useRouter } from "next/router";
 
 const HeaderLogo = () => {
@@ -15,24 +14,12 @@ const HeaderLogo = () => {
   }, [router]);
 
   return (
-    <Box
+    <div
       onClick={goHome}
-      sx={{
-        display: "inline-flex",
-        alignItems: "center",
-        justifyContent: "center",
-        cursor: "pointer",
-        transition: "opacity 0.2s",
-        "&:hover": { opacity: 0.82 },
-      }}
+      className="inline-flex cursor-pointer items-center justify-center transition-opacity duration-200 hover:opacity-[0.82]"
     >
-      <Box
-        component="img"
-        src="/images/home/logo.svg"
-        alt="TalentAI"
-        sx={{ height: 36, display: "block", userSelect: "none" }}
-      />
-    </Box>
+      <img src="/logo.svg" alt="TalentAI" className="block h-9 select-none" />
+    </div>
   );
 };
 

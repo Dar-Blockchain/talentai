@@ -3,10 +3,9 @@ const router = express.Router();
 const teamRequestController = require('./team-request.controller');
 const teamConversationController = require('./team-conversation.controller');
 const teamMessageController = require('./team-message.controller');
-const { requireAuth } = require('../../middleware/security/auth.middleware');
-const { controledAcces } = require('../../middleware/authorize.middleware');
 
-router.use(requireAuth, controledAcces(['Company', 'Employee']));
+// Auth (requireAuth) and role gating (controledAcces) are applied by the
+// parent chat router when mounting this router under /chat/team.
 
 router.post('/requests', teamRequestController.createRequest);
 router.get('/conversations', teamConversationController.listConversations);

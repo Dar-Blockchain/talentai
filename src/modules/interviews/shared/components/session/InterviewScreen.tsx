@@ -4,8 +4,10 @@ import { useSelector } from 'react-redux';
 import { useTranslation } from 'react-i18next';
 import { type RootState } from '@/store/store';
 import { Progress } from '@/modules/shared/ui/shadcn/progress';
+import { Button } from '@/modules/shared/ui/shadcn/button';
 import QuestionPanel from './QuestionPanel';
 import CameraPreview from './CameraPreview';
+import FaceAlertOverlay from './FaceAlertOverlay';
 import InterviewControlsPanel from './InterviewControlsPanel';
 import InterviewContainer from './InterviewContainer';
 import InterviewConnectionBanner from './InterviewConnectionBanner';
@@ -22,6 +24,7 @@ import { type UseInterviewTimerReturn } from '../../types/hooks';
 import { type UseCameraReturn } from '../../types/hooks';
 import { type UseSecurityMonitoringReturn } from '../../types/hooks';
 import type { UseIdentityGuardReturn } from '../../hooks/useIdentityGuard';
+import type { UseCameraGuardReturn } from '../../hooks/useCameraGuard';
 
 interface InterviewScreenProps {
   session: {
@@ -31,6 +34,7 @@ interface InterviewScreenProps {
     camera: UseCameraReturn;
     security: UseSecurityMonitoringReturn;
     identityGuard?: UseIdentityGuardReturn;
+    cameraGuard?: UseCameraGuardReturn;
     coverage: Coverage | null;
     resultsReady: boolean;
     assessmentId?: string | null;
@@ -42,12 +46,18 @@ interface InterviewScreenProps {
     jobData: any;
     interviewConfig: InterviewConfig | null;
   };
+  /** Overrides the header's computed job/assessment title (e.g. campaign title + module type for campaign interviews). */
+  titleOverride?: string;
+  /** Overrides the lobby's "Back to post details" label (e.g. "Back to campaign" for campaign interviews). */
+  backLabel?: string;
   onBack?: () => void;
 }
 
 export default function InterviewScreen({
   session,
   configData,
+  titleOverride,
+  backLabel,
   onBack,
 }: InterviewScreenProps) {
   const router = useRouter();
@@ -69,33 +79,14 @@ export default function InterviewScreen({
   });
 
   const {
-    socket, audio, timer, camera, security, identityGuard,
+    socket, audio, timer, camera, security, identityGuard, cameraGuard,
     coverage, resultsReady, assessmentId,
     startInterview, endInterview, skipQuestion,
   } = session;
 
-  const guardBadge = (() => {
-    if (!identityGuard) return null;
-    const s = identityGuard.status;
-    const dist = identityGuard.identityDistance;
-    const idPart =
-      s === 'watching' && identityGuard.enrolled && dist !== null
-        ? ` · id ${dist.toFixed(2)}`
-        : s === 'watching' && !identityGuard.enrolled
-        ? ` · enrolling ${identityGuard.enrollmentProgress}/${identityGuard.enrollmentTarget}`
-        : '';
-    const colour =
-      s === 'watching'       ? { bg: '#DCFCE7', fg: '#166534', label: `Guard: watching · ${identityGuard.faceCount} face(s)${idPart}` } :
-      s === 'terminated'     ? { bg: '#FEE2E2', fg: '#991B1B', label: 'Guard: terminated' } :
-      s === 'failed'         ? { bg: '#FEE2E2', fg: '#991B1B', label: `Guard: failed${identityGuard.lastError ? ` — ${identityGuard.lastError.slice(0, 60)}` : ''}` } :
-      s === 'waiting-video'  ? { bg: '#FEF3C7', fg: '#92400E', label: 'Guard: waiting for camera' } :
-      s === 'loading-model'  ? { bg: '#DBEAFE', fg: '#1E40AF', label: 'Guard: loading model…' } :
-      s === 'loading-wasm'   ? { bg: '#DBEAFE', fg: '#1E40AF', label: 'Guard: loading engine…' } :
-                                 { bg: '#F3F4F6', fg: '#374151', label: 'Guard: idle' };
-    return colour;
-  })();
-
   const { jobData, interviewConfig } = configData;
+
+  const faceDetected = !!identityGuard && identityGuard.status === 'watching' && identityGuard.faceCount === 1;
 
   const SKILL_TYPES = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
   const isSkillInterview = !!interviewConfig && SKILL_TYPES.includes(interviewConfig.interviewType);
@@ -104,6 +95,12 @@ export default function InterviewScreen({
     : undefined;
 
   const isActive = socket.interviewStatus === 'active';
+
+  // Camera is on but no face is currently visible — blocks the whole screen
+  // (and, via the audio hook's cameraLive gate below, pauses mic/submit too)
+  // until the candidate is back in frame.
+  const noFaceBlocking = isActive && identityGuard?.status === 'watching' && identityGuard.faceCount === 0;
+  const canSpeak = (cameraGuard?.cameraLive ?? true) && !noFaceBlocking;
 
   // Confirm-leave + feedback modal
   const [confirmOpen,  setConfirmOpen]  = useState(false);
@@ -161,29 +158,6 @@ export default function InterviewScreen({
 
   return (
     <div className={interviewScreenStyles.root}>
-      {/* Identity guard live status (temporary — for diagnosis) */}
-      {guardBadge && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 12,
-            right: 12,
-            zIndex: 60,
-            padding: '6px 10px',
-            borderRadius: 999,
-            background: guardBadge.bg,
-            color: guardBadge.fg,
-            fontSize: 12,
-            fontWeight: 600,
-            fontFamily: 'ui-sans-serif, system-ui, sans-serif',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.08)',
-            border: '1px solid rgba(0,0,0,0.06)',
-          }}
-        >
-          {guardBadge.label}
-        </div>
-      )}
-
       {/* Connection warning banner */}
       {socket.isHydrated && socket.connectionStatus !== 'connected' && (
         <InterviewConnectionBanner text={connectionBannerText} />
@@ -195,6 +169,7 @@ export default function InterviewScreen({
         <InterviewSessionHeader
           jobData={jobData}
           interviewConfig={interviewConfig}
+          titleOverride={titleOverride}
           isActive={isActive}
           elapsedTime={timer.elapsedTime}
           timeWarning={timer.timeWarning}
@@ -271,6 +246,8 @@ export default function InterviewScreen({
               audioContextRef={audio.audioContextRef}
               audioStreamRef={audio.audioStreamRef}
               attachStream={camera.attachStream}
+              identityGuard={identityGuard}
+              cameraGuard={cameraGuard}
             />
           </div>
 
@@ -314,15 +291,15 @@ export default function InterviewScreen({
 
               <div className="w-full flex flex-col gap-2.5">
                 {reportPath && (
-                  <button onClick={() => router.push(reportPath)}
-                    className="w-full py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white text-sm font-bold transition-all shadow-md shadow-violet-200 cursor-pointer">
+                  <Button variant="ghost" onClick={() => router.push(reportPath)}
+                    className="w-full h-auto py-3 rounded-2xl bg-violet-600 hover:bg-violet-700 active:scale-95 text-white hover:text-white text-sm font-bold shadow-md shadow-violet-200">
                     View Report
-                  </button>
+                  </Button>
                 )}
-                <button onClick={() => router.push(dashboardPath)}
-                  className="w-full py-3 rounded-2xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 active:scale-95 transition-all cursor-pointer">
+                <Button variant="outline" onClick={() => router.push(dashboardPath)}
+                  className="w-full h-auto py-3 rounded-2xl text-gray-600 text-sm font-semibold active:scale-95">
                   Go to Dashboard
-                </button>
+                </Button>
               </div>
             </div>
           ) : isActive ? (
@@ -334,6 +311,8 @@ export default function InterviewScreen({
               agentState={audio.agentState}
               currentTranscript={audio.currentTranscript}
               canSubmit={audio.canSubmit}
+              cameraLive={canSpeak}
+              cameraBlockedSubmit={audio.cameraBlockedSubmit}
               resultsReady={resultsReady}
               isVoiceActive={audio.isVoiceActive}
               isInReadingTime={audio.isInReadingTime}
@@ -353,6 +332,7 @@ export default function InterviewScreen({
                 agentState={audio.agentState}
                 currentTranscript={audio.currentTranscript}
                 resultsReady={false}
+                faceDetected={faceDetected}
                 onStartInterview={startInterview}
               />
             </div>
@@ -369,8 +349,10 @@ export default function InterviewScreen({
                   agentState={audio.agentState}
                   currentTranscript={audio.currentTranscript}
                   resultsReady={resultsReady}
+                  faceDetected={faceDetected}
                   onStartInterview={startInterview}
                   onBack={handleBack}
+                  backLabel={backLabel}
                   dashboardPath={dashboardPath}
                   reportPath={reportPath}
                   jobTitle={jobData?.jobDetails?.title || jobData?.title || ''}
@@ -388,7 +370,18 @@ export default function InterviewScreen({
         </div>
       </div>
 
+      <FaceAlertOverlay active={noFaceBlocking} onComplete={endInterview} />
+
       <ConfirmLeaveModal open={confirmOpen} onConfirm={handleConfirmLeave} onCancel={handleCancelLeave} />
+
+      <SecurityModals
+        showFirstViolationModal={security.showFirstViolationModal}
+        showSecurityModal={security.showSecurityModal}
+        violationType={security.violationType}
+        securityViolationCount={security.securityViolationCount}
+        onDismissFirst={() => security.setShowFirstViolationModal(false)}
+        onReturnToDashboard={() => router.push(dashboardPath)}
+      />
 
       <GDPRConsentModal
         open={!camera.consentGiven}

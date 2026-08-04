@@ -121,7 +121,7 @@ const AppOtpVerifyStep: React.FC<Props> = ({
               variant="gradient"
               size="lg"
               className="w-full mt-4 sm:mt-5 font-sans font-semibold text-sm sm:text-base"
-              disabled={timer.isExpired || otp.otpCode.join("").length < OTP_CODE_LENGTH}
+              disabled={loading || timer.isExpired || otp.otpCode.join("").length < OTP_CODE_LENGTH}
               loading={loading}
               onClick={!loading ? onVerify : undefined}
             >

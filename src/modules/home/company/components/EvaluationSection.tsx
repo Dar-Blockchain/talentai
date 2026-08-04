@@ -1,4 +1,5 @@
 import { useState } from "react";
+import Image from "next/image";
 import { CheckCircle2, Play, Sparkles, ShieldCheck, Target, BarChart3 } from "lucide-react";
 import { Button }       from "@/modules/shared/ui/shadcn/button";
 import DemoVideoModal   from "./DemoVideoModal";
@@ -68,7 +69,13 @@ const EvaluationSection: React.FC = () => {
             onClick={() => setVideoOpen(true)}
             className="relative rounded-2xl overflow-hidden cursor-pointer group shadow-[0_12px_40px_rgba(0,0,0,0.14),_0_0_0_1px_rgba(13,148,136,0.12)] hover:shadow-[0_20px_56px_rgba(0,0,0,0.18),_0_0_0_2px_rgba(13,148,136,0.30)] hover:-translate-y-1 transition-all duration-250"
           >
-            <img src="/images/home/Iframe.png" alt="AI Interview Demo" className="w-full h-auto block" />
+            <Image
+              src="/images/home/home-video-poster.png"
+              alt="AI Interview Demo"
+              width={1440}
+              height={1024}
+              className="w-full h-auto block"
+            />
 
             {/* Overlay */}
             <div className="absolute inset-0 bg-gradient-to-br from-black/35 via-black/10 to-transparent" />
@@ -135,7 +142,7 @@ const EvaluationSection: React.FC = () => {
               const Icon = BULLET_ICONS[i];
               return (
                 <motion.div
-                  key={b}
+                  key={i}
                   variants={{ hidden: { opacity: 0, x: 18 }, visible: { opacity: 1, x: 0, transition: { duration: 0.42, ease } } }}
                   whileHover={{ x: 4, transition: { type: "spring", stiffness: 300, damping: 22 } }}
                 >

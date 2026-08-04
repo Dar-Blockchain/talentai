@@ -1,30 +1,9 @@
-import React, { memo, useCallback, useMemo, useState } from "react";
-import { Box, Typography, TextField, InputAdornment, FormControl, Select, MenuItem } from "@mui/material";
-import SearchOutlined from "@mui/icons-material/SearchOutlined";
-import BusinessOutlined from "@mui/icons-material/BusinessOutlined";
+import React, { memo, useCallback, useMemo, useState, useRef, useEffect } from "react";
+import { Search, X, ChevronDown, Building2 } from "lucide-react";
 import { Department } from "@/modules/company/departments/types";
 import { useTranslation } from "react-i18next";
-import { PURPLE, INLINE_SELECT_SX } from "./constants";
-
-const MENU_PAPER_SX = {
-  maxHeight: 320, borderRadius: 2, mt: 0.5,
-  boxShadow: "0 8px 32px rgba(0,0,0,0.14)",
-  border: "1px solid #E5E7EB", minWidth: 220,
-} as const;
-
-const STICKY_ITEM_SX = {
-  position: "sticky", top: 0, zIndex: 1, bgcolor: "#fff", p: 1,
-  borderBottom: "1px solid #f3f4f6",
-  "&:hover": { bgcolor: "#fff" }, "&.Mui-focusVisible": { bgcolor: "#fff" },
-} as const;
-
-const FIELD_SX = {
-  "& .MuiOutlinedInput-root": {
-    borderRadius: 1.5, fontSize: "13px", bgcolor: "#F8FAFC",
-    "& fieldset": { borderColor: "#E2E8F0" },
-    "&.Mui-focused fieldset": { borderColor: PURPLE, borderWidth: 2 },
-  },
-} as const;
+import { Popover, PopoverContent, PopoverTrigger } from "@/modules/shared/ui/shadcn/popover";
+import { cn } from "@/lib/utils";
 
 interface Props {
   value: string;
@@ -36,91 +15,111 @@ const DeptFilterSelect: React.FC<Props> = memo(({ value, onChange, departments }
   const { t } = useTranslation("dashboard");
   const pf = useCallback((key: string, opts?: Record<string, string | number>) =>
     t(`pages.employees.filters.${key}`, opts), [t]);
+
+  const [open, setOpen] = useState(false);
   const [search, setSearch] = useState("");
+  const searchRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (open) setTimeout(() => searchRef.current?.focus(), 50);
+    else setSearch("");
+  }, [open]);
+
+  const selected = value && value !== "all" ? departments.find((d) => d._id === value) : null;
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
     return !q ? departments : departments.filter((d) => d.name.toLowerCase().includes(q));
   }, [departments, search]);
 
-  const handleChange      = useCallback((e: { target: { value: string } }) => onChange(e.target.value), [onChange]);
-  const handleClose       = useCallback(() => setSearch(""), []);
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => setSearch(e.target.value), []);
-  const stopPropagation   = useCallback((e: React.KeyboardEvent) => e.stopPropagation(), []);
-
-  const renderValue = useCallback((val: string) => {
-    if (!val || val === "all") {
-      return (
-        <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-          <BusinessOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} />
-          <Typography sx={{ fontSize: "13px", color: "#6B7280", fontWeight: 500 }}>{pf("department_placeholder")}</Typography>
-        </Box>
-      );
-    }
-    const d = departments.find((d) => d._id === val);
-    return (
-      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
-        <BusinessOutlined sx={{ fontSize: 14, color: "#0891B2" }} />
-        <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#0891B2" }}>{d?.name ?? val}</Typography>
-      </Box>
-    );
-  }, [departments, pf]);
+  const handleSelect = useCallback((v: string) => {
+    onChange(v);
+    setOpen(false);
+  }, [onChange]);
 
   return (
-    <FormControl size="small" sx={{ minWidth: 0, flex: "0 0 auto" }}>
-      <Select
-        value={value}
-        onChange={handleChange}
-        onClose={handleClose}
-        displayEmpty
-        MenuProps={{ PaperProps: { sx: MENU_PAPER_SX }, autoFocus: false }}
-        renderValue={renderValue}
-        sx={INLINE_SELECT_SX}
-      >
-        <MenuItem disableRipple onKeyDown={stopPropagation} sx={STICKY_ITEM_SX}>
-          <TextField
-            size="small" fullWidth autoFocus
-            placeholder={pf("search_departments")}
+    <Popover open={open} onOpenChange={setOpen}>
+      <PopoverTrigger asChild>
+        <button
+          type="button"
+          className="flex h-full min-h-[36px] items-center gap-1.5 px-3 text-sm transition-colors hover:bg-gray-50"
+        >
+          {selected ? (
+            <>
+              <Building2 className="size-[14px] text-[#0891B2]" />
+              <span className="text-[13px] font-bold text-[#0891B2]">{selected.name}</span>
+            </>
+          ) : (
+            <>
+              <Building2 className="size-[14px] text-[#9CA3AF]" />
+              <span className="text-[13px] font-medium text-[#6B7280]">{pf("department_placeholder")}</span>
+            </>
+          )}
+          <ChevronDown className={cn("size-3.5 text-[#9CA3AF] transition-transform duration-200", open && "rotate-180")} />
+        </button>
+      </PopoverTrigger>
+      <PopoverContent align="start" sideOffset={4} className="max-h-[320px] w-56 overflow-hidden rounded-2xl border border-[#E5E7EB] p-0 shadow-[0_8px_32px_rgba(0,0,0,0.14)]">
+        {/* Search */}
+        <div className="sticky top-0 z-10 flex items-center gap-2 border-b border-[#f3f4f6] bg-white p-2">
+          <Search className="size-3.5 shrink-0 text-[#9CA3AF]" />
+          <input
+            ref={searchRef}
             value={search}
-            onChange={handleSearchChange}
-            onKeyDown={stopPropagation}
-            InputProps={{ startAdornment: <InputAdornment position="start"><SearchOutlined sx={{ fontSize: 14, color: "#9CA3AF" }} /></InputAdornment> }}
-            sx={FIELD_SX}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder={pf("search_departments")}
+            className="flex-1 bg-transparent text-[13px] outline-none placeholder:text-[#9CA3AF]"
           />
-        </MenuItem>
+          {search && (
+            <button onClick={() => setSearch("")} className="text-[#9CA3AF] hover:text-[#374151]">
+              <X className="size-3" />
+            </button>
+          )}
+        </div>
 
-        <MenuItem value="all" sx={{ py: 0.875, px: 1.5 }}>
-          <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-            <Box sx={{ width: 26, height: 26, borderRadius: 1.25, bgcolor: "#F3F4F6", display: "flex", alignItems: "center", justifyContent: "center", color: "#6B7280", "& svg": { fontSize: 14 } }}>
-              <BusinessOutlined />
-            </Box>
-            <Typography sx={{ fontSize: "13px", fontWeight: 700, color: "#374151" }}>{pf("all_departments")}</Typography>
-          </Box>
-        </MenuItem>
+        {/* List */}
+        <div className="max-h-[260px] overflow-y-auto p-1">
+          <button
+            onClick={() => handleSelect("all")}
+            className={cn(
+              "flex w-full items-center gap-[10px] rounded-lg px-3 py-[7px] text-left transition-colors hover:bg-gray-50",
+              (value === "all" || !value) && "bg-gray-50",
+            )}
+          >
+            <span className="flex size-[26px] shrink-0 items-center justify-center rounded-[10px] bg-[#F3F4F6] text-[#6B7280]">
+              <Building2 className="size-3.5" />
+            </span>
+            <span className="text-[13px] font-bold text-[#374151]">{pf("all_departments")}</span>
+          </button>
 
-        {filtered.map((d) => (
-          <MenuItem key={d._id} value={d._id} sx={{ py: 0.875, px: 1.5 }}>
-            <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-              <Box sx={{ width: 26, height: 26, borderRadius: 1.25, bgcolor: "#EFF6FF", display: "flex", alignItems: "center", justifyContent: "center", color: "#0891B2", "& svg": { fontSize: 14 } }}>
-                <BusinessOutlined />
-              </Box>
-              <Typography sx={{ fontSize: "13px", fontWeight: 600, color: "#111827" }}>{d.name}</Typography>
-            </Box>
-          </MenuItem>
-        ))}
+          {filtered.map((d) => (
+            <button
+              key={d._id}
+              onClick={() => handleSelect(d._id)}
+              className={cn(
+                "flex w-full items-center gap-[10px] rounded-lg px-3 py-[7px] text-left transition-colors hover:bg-gray-50",
+                value === d._id && "bg-gray-50",
+              )}
+            >
+              <span className="flex size-[26px] shrink-0 items-center justify-center rounded-[10px] bg-[#EFF6FF] text-[#0891B2]">
+                <Building2 className="size-3.5" />
+              </span>
+              <span className="text-[13px] font-semibold text-[#111827]">{d.name}</span>
+            </button>
+          ))}
 
-        {filtered.length === 0 && departments.length > 0 && (
-          <MenuItem disabled sx={{ py: 2, justifyContent: "center" }}>
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>{pf("no_departments_match", { term: search })}</Typography>
-          </MenuItem>
-        )}
-        {departments.length === 0 && (
-          <MenuItem disabled sx={{ py: 2, justifyContent: "center" }}>
-            <Typography sx={{ fontSize: "12px", color: "#9CA3AF" }}>{pf("no_departments_yet")}</Typography>
-          </MenuItem>
-        )}
-      </Select>
-    </FormControl>
+          {filtered.length === 0 && departments.length > 0 && (
+            <p className="py-4 text-center text-xs text-[#9CA3AF]">
+              {pf("no_departments_match", { term: search })}
+            </p>
+          )}
+          {departments.length === 0 && (
+            <p className="py-4 text-center text-xs text-[#9CA3AF]">
+              {pf("no_departments_yet")}
+            </p>
+          )}
+        </div>
+      </PopoverContent>
+    </Popover>
   );
 });
 

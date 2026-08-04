@@ -601,14 +601,32 @@ exports.getPostsInAlertKPI = async (req, res) => {
   }
 };
 
-exports.getPostsStatusKPI = async (req, res) => {
+exports.getPostsByDepartmentKPI = async (req, res) => {
   try {
     const userId = req.user._id;
-    const page   = Math.max(1, parseInt(req.query.page)  || 1);
-    const limit  = Math.max(1, parseInt(req.query.limit) || 3);
-    const postId = req.query.postId || null;
+    const data = await postService.getPostsByDepartmentKPI(userId);
 
-    const result = await postService.getPostsStatusKPI(userId, page, limit, postId);
+    res.status(200).json({
+      success: true,
+      message: "Posts by department KPI retrieved successfully",
+      data,
+    });
+  } catch (error) {
+    handleError(res, error, 500);
+  }
+};
+
+exports.getPostsStatusKPI = async (req, res) => {
+  try {
+    const userId   = req.user._id;
+    const page     = Math.max(1, parseInt(req.query.page)  || 1);
+    const limit    = Math.max(1, parseInt(req.query.limit) || 4);
+    const postId   = req.query.postId || null;
+    const dateFrom = req.query.dateFrom || null;
+    const sortBy   = req.query.sortBy  || null;
+    const sortDir  = req.query.sortDir || null;
+
+    const result = await postService.getPostsStatusKPI(userId, page, limit, postId, dateFrom, sortBy, sortDir);
 
     res.status(200).json({
       success: true,

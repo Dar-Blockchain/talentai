@@ -3,7 +3,7 @@
 import React, { memo, useState, useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
-import { Briefcase } from "lucide-react";
+import { Briefcase, Link2 } from "lucide-react";
 import { ApplicationSummaryItem } from "@/modules/company/applications/types";
 import { ContactTarget } from "./ContactCandidateModal";
 import { InviteTarget } from "./InviteToInterviewModal";
@@ -11,6 +11,8 @@ import InviteToInterviewModal from "./InviteToInterviewModal";
 import ApplicationCardActions from "./ApplicationCardActions";
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { APPLICATION_SOURCE_LABELS } from "@/modules/shared/constants/applicationSource";
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -35,6 +37,12 @@ export const STATUS_STYLE: Record<string, { i18nKey: string; bg: string; color: 
   visited:             { i18nKey: "pages.applications.status.visited",             bg: "#EFF6FF", color: "#2563EB" },
   interview_completed: { i18nKey: "pages.applications.status.interview_completed", bg: "#D1FAE5", color: "#059669" },
   withdrawn:           { i18nKey: "pages.applications.status.withdrawn",           bg: "#F3F4F6", color: "#6B7280" },
+};
+
+const DECISION_STYLE: Record<string, { bg: string; color: string; label: string }> = {
+  shortlisted: { bg: "#F0FDF4", color: "#16A34A", label: "Shortlisted" },
+  rejected:    { bg: "#FEF2F2", color: "#DC2626", label: "Rejected" },
+  not_matched: { bg: "#F8FAFC", color: "#64748B", label: "Not Matched" },
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -110,7 +118,7 @@ const ApplicationCard = memo<ApplicationCardProps>(({
     if (app.postId) router.push(`/company/posts/${app.postId}`);
   }, [app.postId, router]);
 
-  const decisionIsShortlisted = app.recruiterDecision === "shortlisted";
+  const decisionStyle = app.recruiterDecision ? DECISION_STYLE[app.recruiterDecision] : null;
 
   return (
     <>
@@ -144,31 +152,37 @@ const ApplicationCard = memo<ApplicationCardProps>(({
               {t(statusDef.i18nKey)}
             </span>
 
-            {app.recruiterDecision && (
+            {decisionStyle && (
               <span
                 className="text-[10px] font-semibold px-1.5 py-0.5 rounded"
-                style={{
-                  backgroundColor: decisionIsShortlisted ? "#F0FDF4" : "#FEF2F2",
-                  color:           decisionIsShortlisted ? "#16A34A" : "#DC2626",
-                }}
+                style={{ backgroundColor: decisionStyle.bg, color: decisionStyle.color }}
               >
-                {decisionIsShortlisted ? "Shortlisted" : "Rejected"}
+                {decisionStyle.label}
               </span>
             )}
 
             {showPostTitle && app.postTitle && (
-              <button
+              <Button
+                variant="ghost"
                 onClick={handlePostClick}
-                className="flex items-center gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded cursor-pointer"
+                className="h-auto gap-0.5 text-[10px] font-semibold px-1.5 py-0.5 rounded"
                 style={{ backgroundColor: "#F0FDFA", color: "#0D9488" }}
               >
                 <Briefcase size={10} />
                 {app.postTitle}
-              </button>
+              </Button>
             )}
           </div>
 
           <div className="text-[11px] text-slate-500 mt-0.5 truncate">{app.email || "—"}</div>
+
+          {app.source?.type && (
+            <div className="flex items-center gap-1 text-[10px] text-slate-400 mt-0.5">
+              <Link2 size={10} className="shrink-0" />
+              Saw this via {APPLICATION_SOURCE_LABELS[app.source.type] ?? app.source.type}
+              {app.source.type === "other" && app.source.detail && ` (${app.source.detail})`}
+            </div>
+          )}
 
           {app.appliedAt && (
             <div className="text-[10px] text-slate-400 mt-0.5">

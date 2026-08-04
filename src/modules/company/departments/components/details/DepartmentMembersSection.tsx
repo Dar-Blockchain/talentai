@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation }           from "react-i18next";
-import { Users, UserPlus, Mail, Loader2, AlertTriangle } from "lucide-react";
+import { Users, UserPlus, UserCog, Mail, Loader2, AlertTriangle } from "lucide-react";
 import type { Member } from "@/modules/company/members/types";
 import {
   useMembersQuery,
@@ -17,6 +17,7 @@ import { Button }                   from "@/modules/shared/ui/shadcn/button";
 import { useToast }                 from "@/hooks/useToast";
 import { cn }                       from "@/lib/utils";
 import AddEmployeeModal from "@/modules/company/employees/components/create/AddEmployeeModal";
+import { AddExistingMemberModal } from "@/modules/company/departments/components/shared";
 import { AMBER, EmployeeCard, EmployeesFilterBar, EmployeeSkeletonCard, InvitationCard, RoleFilter, SortOption } from "@/modules/company/employees/components/list";
 import { PURPLE } from "@/modules/company/constants";
 import { Pagination } from "@/modules/shared/ui/shadcn/pagination";
@@ -31,6 +32,7 @@ const SORT_MAP: Record<SortOption, { sortBy: "date" | "name"; order: "asc" | "de
 
 interface DepartmentMembersSectionProps {
   departmentId:    string;
+  departmentName?: string;
   canManage?:      boolean;
   canAssignRoles?: boolean;
   canRemove?:      boolean;
@@ -75,7 +77,7 @@ const TabPill: React.FC<{
 );
 
 const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
-  departmentId, canManage = true, canAssignRoles = true, canRemove = true,
+  departmentId, departmentName = "", canManage = true, canAssignRoles = true, canRemove = true,
   onEdit, onDelete,
 }) => {
   const { t }        = useTranslation("dashboard");
@@ -88,6 +90,7 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
   const [sortBy,          setSortBy]          = useState<SortOption>("newest");
   const [page,            setPage]            = useState(1);
   const [inviteOpen,      setInviteOpen]      = useState(false);
+  const [addExistingOpen, setAddExistingOpen] = useState(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { sortBy: sb, order } = SORT_MAP[sortBy];
@@ -174,7 +177,14 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
         )}
 
         {canManage && (
-          <div className="ml-auto">
+          <div className="ml-auto flex items-center gap-2">
+            <Button
+              size="sm"
+              onClick={() => setAddExistingOpen(true)}
+            >
+              <UserCog className="size-3.5" />
+              {t("pages.departments.members_panel.add_existing")}
+            </Button>
             <Button size="sm" onClick={() => setInviteOpen(true)}>
               <UserPlus className="size-3.5" />
               {t("pages.departments.members_panel.invite_employee")}
@@ -261,6 +271,13 @@ const DepartmentMembersSection: React.FC<DepartmentMembersSectionProps> = ({
         onClose={() => setInviteOpen(false)}
         onSave={handleInvite}
         defaultDepartmentId={departmentId}
+      />
+
+      <AddExistingMemberModal
+        open={addExistingOpen}
+        onClose={() => setAddExistingOpen(false)}
+        departmentId={departmentId}
+        departmentName={departmentName}
       />
     </div>
   );

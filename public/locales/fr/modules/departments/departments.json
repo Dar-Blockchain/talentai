@@ -94,6 +94,17 @@
     "empty_invitations_hint": "Les invitations envoyées pour ce département apparaîtront ici.",
     "toast_invite_sent": "Invitation envoyée avec succès.",
     "toast_invite_resent": "Invitation renvoyée.",
-    "toast_invite_cancelled": "Invitation annulée."
+    "toast_invite_cancelled": "Invitation annulée.",
+    "add_existing": "Ajouter un collaborateur existant",
+    "add_existing_title": "Ajouter un collaborateur existant",
+    "add_existing_subtitle": "Rattachez un collaborateur déjà présent dans l'entreprise à ce département.",
+    "add_existing_subtitle_named": "Rattachez un collaborateur déjà présent dans l'entreprise à {{department}}.",
+    "add_existing_search_placeholder": "Rechercher par nom ou e-mail…",
+    "add_existing_empty_all_assigned": "Tous les collaborateurs appartiennent déjà à ce département.",
+    "add_existing_empty_no_match": "Aucun collaborateur ne correspond à votre recherche.",
+    "add_existing_current_department": "Actuellement dans {{department}}",
+    "add_existing_no_department": "Aucun département",
+    "add_existing_action": "Ajouter",
+    "toast_member_added": "Collaborateur ajouté à ce département."
   }
 }
