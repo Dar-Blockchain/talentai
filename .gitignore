@@ -187,3 +187,4 @@ dist
 ./Backend/package-lock.json
 ./Backend/yarn.lock
 nul
+managementServer.pem
