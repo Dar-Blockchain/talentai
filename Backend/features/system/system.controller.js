@@ -1,12 +1,19 @@
-// Calculated ONCE at server startup — never changes until next deploy
-const VERSION = Date.now().toString();
-const DEPLOYED_AT = new Date().toISOString();
+const { execSync } = require("child_process");
 
-const getVersion = async (req, res) => {
-  return res.json({
-    version: VERSION,
-    deployedAt: DEPLOYED_AT,
-  });
-};
+class SystemController {
+  static async getVersion(req, res) {
+    let version = "unknown";
+    try {
+      version = execSync("git rev-parse --short HEAD").toString().trim();
+    } catch (error) {
+      console.error("❌ Failed to resolve git commit hash:", error.message);
+    }
 
-module.exports = { getVersion };
+    return res.json({
+      version,
+      deployedAt: new Date().toISOString(),
+    });
+  }
+}
+
+module.exports = SystemController;

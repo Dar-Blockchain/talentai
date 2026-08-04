@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const { getVersion } = require("./system.controller");
+const SystemController = require("./system.controller");
 
-router.get("/version", getVersion);
+router.get("/version", SystemController.getVersion);
 
 module.exports = router;
