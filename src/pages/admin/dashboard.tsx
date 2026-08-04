@@ -35,7 +35,7 @@ const DashboardAdmin = () => {
   const openUserDialog = (user: User) => { setSelectedUser(user); setUserDialogOpen(true); };
 
   return (
-    <div className="flex min-h-screen bg-[#FAFBFC]">
+    <div className="flex h-dvh bg-[#FAFBFC]">
       <AdminSidebar
         activeTab={activeTab}
         onTabChange={handleTabChange}
@@ -44,7 +44,7 @@ const DashboardAdmin = () => {
         onDrawerClose={() => setDrawerOpen(false)}
       />
 
-      <main className="flex flex-col flex-1 min-h-screen p-2 sm:p-4 md:p-8">
+      <main className="flex flex-col flex-1 min-w-0 overflow-y-auto p-2 sm:p-4 md:p-8">
         <div className="flex items-center mb-4 md:hidden">
           <button
             onClick={() => setDrawerOpen(true)}

@@ -127,7 +127,7 @@ const AdminSidebar: React.FC<AdminSidebarProps> = (props) => {
     <>
       {/* Desktop — persistent */}
       <aside
-        className="hidden md:flex flex-col shrink-0 sticky top-0 h-screen border-r border-gray-200 shadow-[2px_0_12px_rgba(0,0,0,0.06)]"
+        className="hidden md:flex flex-col shrink-0 border-r border-gray-200 shadow-[2px_0_12px_rgba(0,0,0,0.06)]"
         style={{ width: DRAWER_WIDTH }}
       >
         <SidebarContent {...props} onDrawerClose={() => {}} />
