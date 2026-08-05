@@ -27,7 +27,7 @@ function registerMiddlewares(app) {
   // ── CORS must come before rate limiting so preflight OPTIONS requests
   //    receive proper CORS headers even when the rate limit is exceeded.
   const corsOrigins = [
-    proceess.env.BASE_URL,
+    process.env.BASE_URL,
     "https://test-1-yw74.onrender.com",
   ];
   if (process.env.BASE_URL && !corsOrigins.includes(process.env.BASE_URL)) {
