@@ -19,7 +19,10 @@ const PUBLIC_PATHS = [
   "/payments/stripe/callback",
   "/ui-kit",
   "/webinar",
-  "/blog"
+  "/blog",
+  "/robots.txt",
+  "/sitemap.xml",
+  "/sitemap-blog.xml"
 ];
 
 const PUBLIC_PREFIXES = ["/api/", "/_next/", "/favicon", "/logo", "/static/"];
@@ -151,6 +154,6 @@ export function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|ico|css|js)$).*)",
+    "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|ico|css|js|txt|xml)$).*)",
   ],
 };
