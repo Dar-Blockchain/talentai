@@ -55,17 +55,16 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
 
   const HEADER_OFFSET = 96;
 
-  const handleNavClick = (item: NavItem) => {
+  const getHref = (item: NavItem) => item.href ?? (item.id ? `/#${item.id}` : "#");
+
+  const handleNavClick = (item: NavItem) => (e: React.MouseEvent) => {
     if (item.id) {
       const el = document.getElementById(item.id);
       if (el) {
+        e.preventDefault();
         const top = el.getBoundingClientRect().top + window.scrollY - HEADER_OFFSET;
         window.scrollTo({ top, behavior: "smooth" });
-      } else {
-        router.push(`/#${item.id}`);
       }
-    } else if (item.href) {
-      router.push(item.href);
     }
   };
 
@@ -82,10 +81,10 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
           const active = isActive(item);
           const Icon   = NAV_ICON_MAP[item.id ?? item.href ?? ""] ?? Sparkles;
           return (
-            <button
+            <a
               key={item.id || item.href}
-              type="button"
-              onClick={() => handleNavClick(item)}
+              href={getHref(item)}
+              onClick={handleNavClick(item)}
               className={cn(
                 "group flex items-center gap-2.5 w-full text-left",
                 "px-2 py-[9px] rounded-[10px] cursor-pointer",
@@ -115,7 +114,7 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
                   ? "text-primary/50"
                   : "text-gray-300 opacity-0 group-hover:opacity-100 group-hover:translate-x-0.5"
               )} />
-            </button>
+            </a>
           );
         })}
       </div>
@@ -131,7 +130,8 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
           return (
             <NavigationMenuItem key={item.id || item.href}>
               <NavigationMenuLink
-                onClick={() => handleNavClick(item)}
+                href={getHref(item)}
+                onClick={handleNavClick(item)}
                 data-active={active}
                 className={cn(
                   // shape & spacing
