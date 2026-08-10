@@ -4,7 +4,7 @@ import Image from "next/image";
 import { useForm, Controller } from "react-hook-form";
 import { useUpdatePostMutation } from "@/modules/company/posts/details/queries";
 import { useToast } from "@/hooks/useToast";
-import { validateEditPost } from "@/validations/postValidation";
+import { validateEditPost } from "@/modules/company/posts/utils/postValidation";
 import SalaryRange from "@/modules/company/posts/create/components/SalaryRange";
 import SkillEditorModal from "@/modules/company/posts/create/components/SkillEditorModal";
 import { contractTypes, experienceLevels, workModes } from "@/modules/company/posts/shared/constants";

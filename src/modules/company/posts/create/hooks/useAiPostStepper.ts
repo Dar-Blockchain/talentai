@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
-import { validateAIPostStep0 } from "@/validations/postValidation";
+import { validateAIPostStep0 } from "@/modules/company/posts/utils/postValidation";
 import { useToast } from "@/hooks/useToast";
 import { useSavePostMutation } from "../queries/useCreatePostQueries";
 import { clearPost, PostGenerationResponse } from "../store/createPostSlice";
