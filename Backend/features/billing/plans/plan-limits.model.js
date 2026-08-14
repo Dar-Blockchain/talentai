@@ -11,6 +11,14 @@ const planLimitsSchema = new mongoose.Schema(
       required: true,
       default: 5,
     },
+    // How many times AI job-post generation can be called, independent of
+    // postsLimit — generation costs money (LLM calls) whether or not the
+    // draft is ever saved, so it's metered separately from saved posts.
+    postGenerationsLimit: {
+      type: Number,
+      required: true,
+      default: 20,
+    },
     monthlyInterviewLimit: {
       type: Number,
       required: true,

@@ -3,11 +3,14 @@ const PlanLimits = require("../features/billing/plans/plan-limits.model");
 require("dotenv").config();
 
 const DEFAULT_PLANS = [
-  { name: "Trial",     postsLimit: 1,  monthlyInterviewLimit: 5,   durationDays: 30, priceUsd: 0,    description: "Get started for free with basic hiring features",       isActive: true },
-  { name: "Starter",   postsLimit: 3,  monthlyInterviewLimit: 15,  durationDays: 30, priceUsd: 99,   description: "Perfect for small teams getting started with AI hiring", isActive: true },
-  { name: "Pro",       postsLimit: 10, monthlyInterviewLimit: 50,  durationDays: 30, priceUsd: 299,  description: "For growing teams with structured hiring needs",          isActive: true },
-  { name: "Business",  postsLimit: 25, monthlyInterviewLimit: 150, durationDays: 30, priceUsd: 749,  description: "For scaling companies with high-volume recruitment",      isActive: true },
-  { name: "Unlimited", postsLimit: -1, monthlyInterviewLimit: 700, durationDays: 30, priceUsd: 1499, description: "Unlimited posts and pipelines for enterprise teams",      isActive: true },
+  // postGenerationsLimit caps AI generate-job-post calls (costs money whether
+  // or not the draft is saved), kept more generous than postsLimit so users
+  // can iterate on a few drafts per post they actually keep.
+  { name: "Trial",     postsLimit: 1,  postGenerationsLimit: 5,   monthlyInterviewLimit: 5,   durationDays: 30, priceUsd: 0,    description: "Get started for free with basic hiring features",       isActive: true },
+  { name: "Starter",   postsLimit: 3,  postGenerationsLimit: 15,  monthlyInterviewLimit: 15,  durationDays: 30, priceUsd: 99,   description: "Perfect for small teams getting started with AI hiring", isActive: true },
+  { name: "Pro",       postsLimit: 10, postGenerationsLimit: 50,  monthlyInterviewLimit: 50,  durationDays: 30, priceUsd: 299,  description: "For growing teams with structured hiring needs",          isActive: true },
+  { name: "Business",  postsLimit: 25, postGenerationsLimit: 125, monthlyInterviewLimit: 150, durationDays: 30, priceUsd: 749,  description: "For scaling companies with high-volume recruitment",      isActive: true },
+  { name: "Unlimited", postsLimit: -1, postGenerationsLimit: -1,  monthlyInterviewLimit: 700, durationDays: 30, priceUsd: 1499, description: "Unlimited posts and pipelines for enterprise teams",      isActive: true },
 ];
 
 const seedPlans = async () => {

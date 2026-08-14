@@ -1,5 +1,6 @@
 export { default as SubscriptionBanner } from "./SubscriptionBanner";
 export { default as PlanCard } from "./PlanCard";
+export { default as PlanCardSkeleton } from "./PlanCardSkeleton";
 export { default as ContactUsModal } from "./ContactUsModal";
 export { default as CancelDialog } from "./CancelDialog";
 export { default as DowngradeDialog } from "./DowngradeDialog";

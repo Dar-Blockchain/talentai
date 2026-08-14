@@ -11,7 +11,7 @@ import PostsStats        from "./PostsStats";
 import DeletePostModal   from "./DeletePostModal";
 import PublishConfirmModal from "./PublishConfirmModal";
 import PostsToolbar      from "./PostsToolbar";
-import NoPlanModal       from "./NoPlanModal";
+import NoPlanModal       from "../../shared/components/NoPlanModal";
 import { useDeletePost }  from "../hooks/useDeletePost";
 import { useMyPosts }     from "../hooks/useMyPosts";
 import { usePublishPost } from "../hooks/usePublishPost";
@@ -36,6 +36,9 @@ const PostsPageContent: React.FC = () => {
   const postsUsed    = combined?.combined?.usage?.posts?.used  ?? 0;
   const postsLimit   = combined?.combined?.usage?.posts?.limit ?? Infinity;
   const postsAtLimit = !!combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit;
+  const generationsUsed    = combined?.combined?.usage?.postGenerations?.used  ?? 0;
+  const generationsLimit   = combined?.combined?.usage?.postGenerations?.limit ?? Infinity;
+  const generationsAtLimit = !!combined && generationsLimit !== Infinity && generationsLimit !== -1 && generationsUsed >= generationsLimit;
   const hasNoPlan    = !combined;
 
   const [planModalOpen, setPlanModalOpen] = useState(false);
@@ -58,8 +61,12 @@ const PostsPageContent: React.FC = () => {
     onError:   () => showToast({ message: t("publish_error"),     severity: "error"   }),
   });
 
+  // A post-quota limit alone doesn't block entry — generating (and previewing)
+  // a draft only spends the separate, more generous postGenerations quota;
+  // postsLimit is only enforced at save time. Only block navigation outright
+  // when there's truly nothing usable left: no plan, or both quotas are gone.
   const handleCreateClick = () => {
-    if (hasNoPlan || postsAtLimit) { setPlanModalOpen(true); return; }
+    if (hasNoPlan || (postsAtLimit && generationsAtLimit)) { setPlanModalOpen(true); return; }
     router.push("/company/posts/create");
   };
   const totalCount = (pagination as any)?.total ?? posts.length;
@@ -100,9 +107,9 @@ const PostsPageContent: React.FC = () => {
 
       <NoPlanModal
         open={planModalOpen}
-        isAtLimit={postsAtLimit}
-        postsUsed={postsUsed}
-        postsLimit={postsLimit !== Infinity ? postsLimit : undefined}
+        reason={hasNoPlan ? "no_plan" : "posts_limit"}
+        used={postsUsed}
+        limit={postsLimit !== Infinity ? postsLimit : undefined}
         onClose={() => setPlanModalOpen(false)}
       />
     </div>

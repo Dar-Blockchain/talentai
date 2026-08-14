@@ -61,6 +61,41 @@ module.exports.getCompanySubscriptions = async (companyProfileId) => {
   }
 };
 
+// Enforces "single active plan, upgrade-only" purchasing: a company may not
+// buy a second plan while one is active unless the new plan is a genuine
+// upgrade (strictly higher price) over their highest active paid plan.
+module.exports.assertUpgradeEligible = async (companyProfileId, targetPlan) => {
+  if (!companyProfileId || !targetPlan) {
+    const err = new Error("Company profile and target plan are required");
+    err.status = 400;
+    throw err;
+  }
+
+  const activeSubs = await Subscription.find({
+    companyProfileId,
+    status: "active",
+    endDate: { $gt: new Date() },
+  }).populate("planId");
+
+  const paidSubs = activeSubs.filter((s) => s.planId && s.planId.name !== "Trial");
+
+  if (!paidSubs.length) {
+    return { previousSubscriptionIds: [] };
+  }
+
+  const highestActivePrice = Math.max(...paidSubs.map((s) => s.planId.priceUsd || 0));
+
+  if ((targetPlan.priceUsd || 0) <= highestActivePrice) {
+    const err = new Error(
+      "You already have an active plan. You can only upgrade to a higher-tier plan — wait for your current plan to expire, or choose a higher plan to upgrade now."
+    );
+    err.status = 409;
+    throw err;
+  }
+
+  return { previousSubscriptionIds: paidSubs.map((s) => s._id) };
+};
+
 module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
   try {
     const allActive = await Subscription.find({
@@ -104,6 +139,11 @@ module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
       limit = active.some((s) => s.planId?.postsLimit === -1)
         ? -1
         : active.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
+    } else if (limitType === "postGenerations") {
+      used  = active.reduce((sum, s) => sum + (s.postGenerationsUsed || 0), 0);
+      limit = active.some((s) => s.planId?.postGenerationsLimit === -1)
+        ? -1
+        : active.reduce((sum, s) => sum + (s.planId?.postGenerationsLimit || 0), 0);
     } else if (limitType === "monthlyInterviews") {
       await Promise.all(active.map((s) => module.exports.resetMonthlyInterviewIfNeeded(s._id)));
       const refreshed = await Subscription.find({ _id: { $in: active.map((s) => s._id) } });
@@ -147,7 +187,7 @@ module.exports.incrementUsage = async (subscriptionId, usageType, amount = 1) =>
       throw err;
     }
 
-    if (!["postsUsed", "monthlyInterviewsUsed"].includes(usageType)) {
+    if (!["postsUsed", "monthlyInterviewsUsed", "postGenerationsUsed"].includes(usageType)) {
       const err = new Error("Invalid usage type");
       err.status = 400;
       throw err;
@@ -388,12 +428,15 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
     }
 
     const now = new Date();
-    const hasUnlimitedPosts      = subscriptions.some((s) => s.planId?.postsLimit === -1);
-    const hasUnlimitedInterviews = subscriptions.some((s) => s.planId?.monthlyInterviewLimit === -1);
-    const totalPostsLimit     = hasUnlimitedPosts ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
-    const totalInterviewLimit = hasUnlimitedInterviews ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
-    const totalPostsUsed      = subscriptions.reduce((sum, s) => sum + (s.postsUsed || 0), 0);
-    const totalInterviewsUsed = subscriptions.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0);
+    const hasUnlimitedPosts       = subscriptions.some((s) => s.planId?.postsLimit === -1);
+    const hasUnlimitedInterviews  = subscriptions.some((s) => s.planId?.monthlyInterviewLimit === -1);
+    const hasUnlimitedGenerations = subscriptions.some((s) => s.planId?.postGenerationsLimit === -1);
+    const totalPostsLimit       = hasUnlimitedPosts ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.postsLimit || 0), 0);
+    const totalInterviewLimit   = hasUnlimitedInterviews ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.monthlyInterviewLimit || 0), 0);
+    const totalGenerationsLimit = hasUnlimitedGenerations ? -1 : subscriptions.reduce((sum, s) => sum + (s.planId?.postGenerationsLimit || 0), 0);
+    const totalPostsUsed       = subscriptions.reduce((sum, s) => sum + (s.postsUsed || 0), 0);
+    const totalInterviewsUsed  = subscriptions.reduce((sum, s) => sum + (s.monthlyInterviewsUsed || 0), 0);
+    const totalGenerationsUsed = subscriptions.reduce((sum, s) => sum + (s.postGenerationsUsed || 0), 0);
     const soonestExpiry = subscriptions.reduce((min, s) => s.endDate < min ? s.endDate : min, subscriptions[0].endDate);
     const daysRemaining = Math.max(0, Math.ceil((new Date(soonestExpiry) - now) / 86400000));
 
@@ -408,6 +451,8 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
           endDate: s.endDate,
           postsUsed: s.postsUsed,
           postsLimit: s.planId?.postsLimit,
+          postGenerationsUsed: s.postGenerationsUsed,
+          postGenerationsLimit: s.planId?.postGenerationsLimit,
           monthlyInterviewsUsed: s.monthlyInterviewsUsed,
           monthlyInterviewLimit: s.planId?.monthlyInterviewLimit,
           autoRenew: s.autoRenew,
@@ -421,6 +466,11 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
               used: totalPostsUsed,
               limit: totalPostsLimit,
               remaining: totalPostsLimit === -1 ? -1 : Math.max(0, totalPostsLimit - totalPostsUsed),
+            },
+            postGenerations: {
+              used: totalGenerationsUsed,
+              limit: totalGenerationsLimit,
+              remaining: totalGenerationsLimit === -1 ? -1 : Math.max(0, totalGenerationsLimit - totalGenerationsUsed),
             },
             monthlyInterviews: {
               used: totalInterviewsUsed,

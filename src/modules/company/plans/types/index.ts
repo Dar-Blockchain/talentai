@@ -20,6 +20,7 @@ export interface SubscriptionItem {
   id: string;
   planName: string;
   autoRenew: boolean;
+  startDate: string;
   endDate: string;
 }
 
@@ -37,6 +38,7 @@ export interface CombinedUsage {
 export interface CombinedMeta {
   planNames: string[];
   daysRemaining: number;
+  soonestExpiry: string;
   usage: CombinedUsage;
 }
 

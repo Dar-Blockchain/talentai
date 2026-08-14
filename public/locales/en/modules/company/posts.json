@@ -126,6 +126,7 @@
       "error_prompt": "Please describe the role",
       "error_invalid_input": "Your input contains inappropriate or unrecognizable content. Please revise it.",
       "error_insufficient_detail": "Please provide more details about the role so AI can understand what you need.",
+      "error_generation_limit": "You've reached your AI generation limit for this billing period. Upgrade your plan or wait for it to renew.",
       "error_salary_required": "Currency, min and max are required",
       "error_salary_max": "Max salary must be greater than min",
       "error_required": "Required"

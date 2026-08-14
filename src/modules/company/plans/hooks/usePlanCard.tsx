@@ -1,6 +1,6 @@
 import React, { useMemo } from "react";
 import { useTranslation } from "react-i18next";
-import { Video, Briefcase } from "lucide-react";
+import { Video, Briefcase, Sparkles } from "lucide-react";
 import { PlanLimit } from "@/store/slices/planLimitsSlice";
 import { PLAN_CONFIG, ORDERED_PLANS } from "../constants";
 
@@ -11,7 +11,7 @@ export function usePlanCard(
 ) {
   const { t, i18n } = useTranslation("dashboard");
 
-  const cfg          = PLAN_CONFIG[plan.name] ?? { color: "#6b7280" };
+  const cfg          = PLAN_CONFIG[plan.name] ?? {};
   const isTrial      = plan.priceUsd === 0;
   const isEnterprise = plan.name === "Unlimited";
   const isPopular    = cfg.badge === "Popular";
@@ -20,6 +20,13 @@ export function usePlanCard(
   const isDowngrade  = !isActive
     && currentPlanName !== null
     && ORDERED_PLANS.indexOf(plan.name) < ORDERED_PLANS.indexOf(currentPlanName);
+  // An "upgrade" target: the company already holds a paid (non-Trial) plan
+  // and this card is a strictly higher tier. Only upgrades may be purchased
+  // while a plan is active — see subscriptionService.assertUpgradeEligible.
+  const isUpgrade = !isActive
+    && currentPlanName !== null
+    && currentPlanName !== "Trial"
+    && ORDERED_PLANS.indexOf(plan.name) > ORDERED_PLANS.indexOf(currentPlanName);
 
   const priceLocale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
 
@@ -50,10 +57,17 @@ export function usePlanCard(
         ? t("pages.subscription.card.job_posts_unlimited")
         : t("pages.subscription.card.job_posts", { count: plan.postsLimit }),
     },
-  ], [plan.monthlyInterviewLimit, plan.postsLimit, t]);
+    {
+      key: "generations",
+      icon: <Sparkles size={15} />,
+      label: plan.postGenerationsLimit === -1
+        ? t("pages.subscription.card.generations_unlimited")
+        : t("pages.subscription.card.generations_month", { count: plan.postGenerationsLimit }),
+    },
+  ], [plan.monthlyInterviewLimit, plan.postsLimit, plan.postGenerationsLimit, t]);
 
   return {
-    cfg, isTrial, isEnterprise, isPopular, isActive, isHighlighted, isDowngrade,
+    cfg, isTrial, isEnterprise, isPopular, isActive, isHighlighted, isDowngrade, isUpgrade,
     priceLabel, badgeLabel, features,
   };
 }

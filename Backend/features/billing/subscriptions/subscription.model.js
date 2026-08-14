@@ -32,6 +32,10 @@ const subscriptionSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    postGenerationsUsed: {
+      type: Number,
+      default: 0,
+    },
     monthlyInterviewsUsed: {
       type: Number,
       default: 0,

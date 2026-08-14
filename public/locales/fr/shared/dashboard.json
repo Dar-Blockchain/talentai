@@ -138,6 +138,7 @@
     "subscription": {
       "remaining_label": "Restant ce cycle",
       "posts_short": "offres",
+      "generations_short": "IA gén.",
       "interviews_short": "entretiens",
       "unlimited_short": "∞",
       "multi_plan": "{{count}} forfaits actifs",

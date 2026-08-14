@@ -13,7 +13,16 @@ export function usePostLimitCheck() {
 
   const postsUsed  = combined?.combined.usage.posts.used ?? 0;
   const postsLimit = combined?.combined.usage.posts.limit ?? Infinity;
-  const atLimit    = !!(combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit);
+  const postsAtLimit = !!(combined && postsLimit !== Infinity && postsLimit !== -1 && postsUsed >= postsLimit);
 
-  return { postsUsed, postsLimit, atLimit };
+  const generationsUsed  = combined?.combined.usage.postGenerations.used ?? 0;
+  const generationsLimit = combined?.combined.usage.postGenerations.limit ?? Infinity;
+  const generationsAtLimit = !!(combined && generationsLimit !== Infinity && generationsLimit !== -1 && generationsUsed >= generationsLimit);
+
+  // Generating (and previewing) a draft only spends the separate, more
+  // generous postGenerations quota — postsLimit is only enforced at save
+  // time — so entry is only blocked when there's nothing usable left at all.
+  const atLimit = postsAtLimit && generationsAtLimit;
+
+  return { postsUsed, postsLimit, postsAtLimit, generationsUsed, generationsLimit, generationsAtLimit, atLimit };
 }

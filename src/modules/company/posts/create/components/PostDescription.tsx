@@ -14,6 +14,7 @@ import SalaryFields from "./post-description/SalaryFields";
 import GenerateButton from "./post-description/GenerateButton";
 import { useGeneratePostMutation, postKeys, NormalizedGeneratedPost } from "../queries/useCreatePostQueries";
 import { useToast } from "@/hooks/useToast";
+import NoPlanModal from "../../shared/components/NoPlanModal";
 
 interface PostDescriptionProps {
   onGeneratingChange?: (generating: boolean) => void;
@@ -33,6 +34,7 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
   const loading = generateMutation.isPending;
   const [errors, setErrors] = useState({ promptDescription: "", salary: "", employmentType: "", workMode: "" });
   const [langModalOpen, setLangModalOpen] = useState(false);
+  const [generationLimit, setGenerationLimit] = useState<{ used?: number; limit?: number } | null>(null);
   const clear = (key: string) => setErrors((prev) => ({ ...prev, [key]: "" }));
 
   const validate = () => {
@@ -64,11 +66,15 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
         },
         onSettled: () => onGeneratingChange?.(false),
         onError: (err: unknown) => {
-          const errorCode = (err as { response?: { data?: { error?: string } } }).response?.data?.error;
-          if (errorCode === "invalid_input") {
+          const data = (err as { response?: { data?: {
+            error?: string; generationsUsed?: number; generationsLimit?: number;
+          } } }).response?.data;
+          if (data?.error === "invalid_input") {
             setErrors((prev) => ({ ...prev, promptDescription: t("create.form.error_invalid_input") }));
-          } else if (errorCode === "insufficient_detail") {
+          } else if (data?.error === "insufficient_detail") {
             setErrors((prev) => ({ ...prev, promptDescription: t("create.form.error_insufficient_detail") }));
+          } else if (data?.error === "generation_limit_reached") {
+            setGenerationLimit({ used: data.generationsUsed, limit: data.generationsLimit });
           } else {
             const message = err instanceof Error ? err.message : "Failed to generate job post. Please try again.";
             showToast({ message, severity: "error" });
@@ -136,6 +142,14 @@ const PostDescription = ({ onGeneratingChange }: PostDescriptionProps) => {
         loading={loading}
         onConfirm={handleConfirmLanguage}
         onClose={() => setLangModalOpen(false)}
+      />
+
+      <NoPlanModal
+        open={!!generationLimit}
+        reason="generation_limit"
+        used={generationLimit?.used}
+        limit={generationLimit?.limit}
+        onClose={() => setGenerationLimit(null)}
       />
     </div>
   );

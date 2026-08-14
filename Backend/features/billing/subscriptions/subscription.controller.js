@@ -74,6 +74,7 @@ module.exports.getCombinedActiveDetails = async (req, res) => {
         soonestExpiry: null,
         usage: {
           posts: { used: 0, limit: -1, remaining: -1 },
+          postGenerations: { used: 0, limit: -1, remaining: -1 },
           monthlyInterviews: { used: 0, limit: -1, remaining: -1 },
         },
       },

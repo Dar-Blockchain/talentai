@@ -86,6 +86,23 @@ paymentSchema.post("save", async function (doc) {
               autoRenew: true,
             });
 
+            // Single-active-plan invariant: this purchase was only allowed
+            // through as an upgrade (see subscriptionService.assertUpgradeEligible),
+            // so retire whatever was active before instead of stacking it.
+            await Subscription.updateMany(
+              {
+                companyProfileId: payment.companyProfileId,
+                status: "active",
+                _id: { $ne: subscription._id },
+              },
+              {
+                status: "cancelled",
+                autoRenew: false,
+                cancelledAt: new Date(),
+                cancellationReason: `Replaced by upgrade to ${plan.name}`,
+              }
+            );
+
             payment.subscriptionId = subscription._id;
             await payment.save({ validateBeforeSave: false });
 

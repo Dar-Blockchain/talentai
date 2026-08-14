@@ -27,7 +27,6 @@ interface SidebarProps {
 
 // Brand colors from logo
 const GREEN_DARK = "#10453f";   // dark forest green (logo text)
-const GREEN_MID  = "#6ad39c";   // mint green (logo circle accents)
 const GREEN_VIVID = "#52e899";  // bright green (logo "ai")
 
 const GROUPS = [
@@ -44,7 +43,7 @@ const Sidebar: React.FC<SidebarProps> = ({
   mobileOpen,
   onCloseMobile,
 }) => {
-  const { t, i18n } = useTranslation("dashboard");
+  const { t } = useTranslation("dashboard");
   const router = useRouter();
   const dispatch = useDispatch<AppDispatch>();
   const handleLogout = useLogout("/signin");
@@ -186,7 +185,6 @@ const Sidebar: React.FC<SidebarProps> = ({
 
   const content = (mobile = false) => {
     const isCollapsed = collapsed && !mobile;
-    const planTooltipDateLocale = i18n.language?.startsWith("fr") ? "fr-FR" : "en-US";
 
     return (
       <div className="flex h-full flex-col bg-white">
@@ -307,60 +305,12 @@ const Sidebar: React.FC<SidebarProps> = ({
                   {activePlanLabel && (
                     <div
                       onClick={(e) => { e.stopPropagation(); router.push("/company/plans"); }}
-                      className="group/plan relative inline-flex shrink-0"
+                      className="inline-flex shrink-0 cursor-pointer items-center rounded px-1.5 py-[1px] transition-all duration-150 hover:bg-[rgba(82,232,153,0.22)]"
+                      style={{ backgroundColor: "rgba(82,232,153,0.12)", border: "1px solid rgba(82,232,153,0.35)" }}
                     >
-                      {/* Badge */}
-                      <div className="inline-flex items-center rounded px-1.5 py-[1px] transition-all duration-150 hover:bg-[rgba(82,232,153,0.22)]"
-                        style={{ backgroundColor: "rgba(82,232,153,0.12)", border: "1px solid rgba(82,232,153,0.35)" }}
-                      >
-                        <span className="text-[9px] font-bold leading-[1.4] tracking-[0.04em]" style={{ color: GREEN_DARK }}>
-                          {activePlanLabel}
-                        </span>
-                      </div>
-
-                      {/* Pure-CSS tooltip — pb bridges the gap so hover doesn't drop */}
-                      <div className="plan-tooltip pointer-events-none absolute bottom-full left-0 z-[9999] pb-2 opacity-0 transition-opacity duration-150 group-hover/plan:pointer-events-auto group-hover/plan:opacity-100">
-                        <div className="min-w-[200px] overflow-hidden rounded-[10px] border border-gray-200 bg-white shadow-[0_8px_32px_rgba(0,0,0,0.12)]">
-                          <div className="px-[14px] pb-1.5 pt-2.5">
-                            <span className="text-[9px] font-bold uppercase tracking-[0.08em] text-gray-500">
-                              {t("sidebar.plan.active_plans")}
-                            </span>
-                          </div>
-                          <hr className="border-gray-200" />
-                          <div className="py-1.5">
-                            {combinedDetails?.subscriptions?.length
-                              ? combinedDetails.subscriptions
-                                  .filter((s) => s.planName !== "Trial")
-                                  .map((s) => {
-                                    const col = ({ Standard: "#0D9488", Gold: "#7C3AED", Platinum: "#0891B2", Diamond: "#D97706" } as Record<string, string>)[s.planName] ?? GREEN_MID;
-                                    const exp = new Date(s.endDate).toLocaleDateString(planTooltipDateLocale, { month: "short", day: "numeric", year: "numeric" });
-                                    return (
-                                      <div key={s.id} className="flex items-center gap-2 px-[14px] py-[5px]">
-                                        <span className="size-[7px] shrink-0 rounded-full" style={{ backgroundColor: col }} />
-                                        <div className="min-w-0 flex-1">
-                                          <p className="text-[11px] font-bold leading-[1.3] text-gray-900">{s.planName}</p>
-                                          <p className="text-[9.5px] leading-[1.3] text-gray-500">
-                                            {t("sidebar.plan.expires", { date: exp })}
-                                          </p>
-                                        </div>
-                                      </div>
-                                    );
-                                  })
-                              : (
-                                <div className="px-[14px] py-[5px]">
-                                  <p className="text-[11px] text-gray-500">{t("sidebar.plan.trial")}</p>
-                                </div>
-                              )
-                            }
-                          </div>
-                          <hr className="border-gray-200" />
-                          <div className="px-[14px] py-2">
-                            <p className="text-[10px] font-semibold" style={{ color: GREEN_DARK }}>
-                              {t("sidebar.plan.view_all")}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
+                      <span className="text-[9px] font-bold leading-[1.4] tracking-[0.04em]" style={{ color: GREEN_DARK }}>
+                        {activePlanLabel}
+                      </span>
                     </div>
                   )}
                 </div>

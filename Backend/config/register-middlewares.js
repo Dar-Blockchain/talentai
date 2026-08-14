@@ -26,13 +26,13 @@ function registerMiddlewares(app) {
 
   // ── CORS must come before rate limiting so preflight OPTIONS requests
   //    receive proper CORS headers even when the rate limit is exceeded.
+  // Browsers never send a trailing slash in the Origin header, but BASE_URL
+  // is stored with one (other code depends on that, e.g. email.service.js
+  // template strings) — strip it here so the exact-match check still works.
   const corsOrigins = [
-    process.env.BASE_URL,
+    (process.env.BASE_URL || "").replace(/\/+$/, ""),
     "https://test-1-yw74.onrender.com",
-  ];
-  if (process.env.BASE_URL && !corsOrigins.includes(process.env.BASE_URL)) {
-    corsOrigins.push(process.env.BASE_URL);
-  }
+  ].filter(Boolean);
   app.use(
     cors({
       origin: corsOrigins,

@@ -698,11 +698,55 @@ exports.generateJobPost = async (req, res) => {
       });
     }
 
+    // Generation costs an LLM call whether or not the draft is ever saved, so
+    // it's gated on its own postGenerations limit — separate from postsLimit,
+    // which only decrements when a post is actually saved (post.service.js
+    // createPostWithSideEffects).
+    const userProfile = await Profile.findOne({ userId: user._id }).populate("activeSubscription");
+
+    if (userProfile?.type === "Company") {
+      try {
+        const limitCheck = await subscriptionService.checkSubscriptionLimit(
+          userProfile._id,
+          "postGenerations"
+        );
+
+        if (!limitCheck.canUse) {
+          return res.status(403).json({
+            success: false,
+            error: "generation_limit_reached",
+            message: limitCheck.message,
+            planName: limitCheck.limitData?.planName,
+            generationsLimit: limitCheck.limitData?.limit,
+            generationsUsed: limitCheck.limitData?.used,
+          });
+        }
+      } catch (limitError) {
+        console.error("Error checking generation limit:", limitError);
+        return res.status(400).json({
+          success: false,
+          error: "Error checking plan limits",
+          message: limitError.message,
+        });
+      }
+    }
+
     const result = await postService.generateJobPost(
       description,
       user,
       { workMode, contractType, language, interviewLanguages },
     );
+
+    // Count the attempt regardless of outcome below — the LLM call already
+    // happened and cost money by this point, whether the result is a usable
+    // draft or a validation rejection.
+    if (userProfile?.type === "Company" && userProfile.activeSubscription) {
+      try {
+        await subscriptionService.incrementUsage(userProfile.activeSubscription._id, "postGenerationsUsed", 1);
+      } catch (usageError) {
+        console.error("⚠️ [generateJobPost] Warning: Could not update generation usage:", usageError.message);
+      }
+    }
 
     if (result?.error === "invalid_input")       return res.status(404).json({ error: "invalid_input" });
     if (result?.error === "insufficient_detail") return res.status(422).json({ error: "insufficient_detail" });

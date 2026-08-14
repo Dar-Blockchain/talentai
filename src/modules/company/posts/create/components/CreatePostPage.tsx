@@ -9,6 +9,7 @@ import { useAiPostStepper } from "../hooks";
 import PostDetailsStep from "./PostDetailsStep";
 import InterviewLanguagesModal from "./InterviewLanguagesModal";
 import PageHeader from "@/modules/shared/layouts/dashboard/PageHeader";
+import NoPlanModal from "../../shared/components/NoPlanModal";
 
 const CreatePostPage: React.FC = () => {
   const dispatch = useDispatch<AppDispatch>();
@@ -20,7 +21,7 @@ const CreatePostPage: React.FC = () => {
   const { t } = useTranslation("posts");
   const { t: td } = useTranslation("dashboard");
 
-  const { isFinishing, handleNext, handleBack } = useAiPostStepper(
+  const { isFinishing, handleNext, handleBack, postsLimitInfo, closePostsLimitModal } = useAiPostStepper(
     generatedPost,
     savedPostId,
     interviewLanguages
@@ -79,6 +80,14 @@ const CreatePostPage: React.FC = () => {
         open={langModalOpen}
         onConfirm={handleLanguageConfirm}
         onClose={() => setLangModalOpen(false)}
+      />
+
+      <NoPlanModal
+        open={!!postsLimitInfo}
+        reason="posts_limit"
+        used={postsLimitInfo?.used}
+        limit={postsLimitInfo?.limit}
+        onClose={closePostsLimitModal}
       />
     </div>
   );

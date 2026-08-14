@@ -3,10 +3,9 @@ import { useTranslation } from "react-i18next";
 import Link from "next/link";
 import { Receipt } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
-import LoadingState from "@/modules/shared/ui/LoadingState";
 import { usePlans } from "@/modules/company/plans/hooks";
 import {
-  SubscriptionBanner, PlanCard, ContactUsModal,
+  SubscriptionBanner, PlanCard, PlanCardSkeleton, ContactUsModal,
   CancelDialog, DowngradeDialog,
 } from "@/modules/company/plans/components";
 import { getDashboardLayout, PageHeader } from "@/modules/shared/layouts";
@@ -62,7 +61,11 @@ const PlansPage: NextPageWithLayout = function PlansPage() {
       <SubscriptionBanner />
 
       {plansLoading || combinedLoading ? (
-        <LoadingState message={t("pages.subscription.loading", "Loading plans…")} color="#0D9488" />
+        <div className="mt-1 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <PlanCardSkeleton key={i} />
+          ))}
+        </div>
       ) : (
         <div className="mt-1 grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5">
           {sortedPlans.map((plan: any) => (

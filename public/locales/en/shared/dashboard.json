@@ -138,6 +138,7 @@
     "subscription": {
       "remaining_label": "Remaining This Cycle",
       "posts_short": "posts",
+      "generations_short": "AI gens",
       "interviews_short": "interviews",
       "unlimited_short": "∞",
       "multi_plan": "{{count}} active plans",

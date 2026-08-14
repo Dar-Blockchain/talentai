@@ -66,6 +66,8 @@ export interface CombinedSubscriptionDetails {
     endDate: string;
     postsUsed: number;
     postsLimit: number;
+    postGenerationsUsed: number;
+    postGenerationsLimit: number;
     monthlyInterviewsUsed: number;
     monthlyInterviewLimit: number;
     autoRenew: boolean;
@@ -76,6 +78,7 @@ export interface CombinedSubscriptionDetails {
     soonestExpiry: string;
     usage: {
       posts: { used: number; limit: number; remaining: number };
+      postGenerations: { used: number; limit: number; remaining: number };
       monthlyInterviews: { used: number; limit: number; remaining: number };
     };
   };

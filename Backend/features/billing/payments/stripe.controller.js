@@ -40,6 +40,10 @@ exports.createCheckoutSession = async (req, res) => {
     });
   } catch (error) {
     console.error("Stripe error:", error);
-    return res.status(500).json({ message: "Payment failed.", error: error?.message || "Unknown error" });
+    const status = error?.status || 500;
+    return res.status(status).json({
+      message: status === 500 ? "Payment failed." : error.message,
+      error: error?.message || "Unknown error",
+    });
   }
 };

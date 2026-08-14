@@ -2,7 +2,7 @@ import React from "react";
 import { Download } from "lucide-react";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Payment } from "@/store/slices/paymentSlice";
-import { STATUS_CONFIG, PLAN_COLORS, SUB_STATUS_STYLE } from "../constants";
+import { STATUS_CONFIG, SUB_STATUS_STYLE, ACCENT } from "../constants";
 import { downloadInvoice } from "../utils/invoice";
 
 interface Props {
@@ -13,7 +13,6 @@ interface Props {
 
 const PaymentRow: React.FC<Props> = ({ payment, index, subStatus }) => {
   const statusCfg = STATUS_CONFIG[payment.status] || STATUS_CONFIG.pending;
-  const planColor = PLAN_COLORS[payment.planName] || "#6b7280";
   const amount    = payment.amountCents
     ? `$${(payment.amountCents / 100).toFixed(2)}`
     : payment.planPrice ? `$${payment.planPrice.toFixed(2)}` : "—";
@@ -31,7 +30,7 @@ const PaymentRow: React.FC<Props> = ({ payment, index, subStatus }) => {
 
       <td className="px-4 py-3">
         <div className="flex items-center gap-2">
-          <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: planColor }} />
+          <span className="h-2 w-2 flex-shrink-0 rounded-full" style={{ backgroundColor: ACCENT }} />
           <span className="text-[0.875rem] font-semibold text-gray-900">
             {payment.planName || "—"}
           </span>

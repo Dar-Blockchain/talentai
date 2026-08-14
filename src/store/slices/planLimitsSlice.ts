@@ -8,6 +8,7 @@ export interface PlanLimit {
   _id: string;
   name: string;
   postsLimit: number;
+  postGenerationsLimit: number;
   monthlyInterviewLimit: number;
   durationDays?: number;
   priceUsd?: number;

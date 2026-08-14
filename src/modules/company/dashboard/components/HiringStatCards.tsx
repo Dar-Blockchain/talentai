@@ -67,6 +67,13 @@ const HiringStatCards = memo<Props>(({ stats, appMetrics: appMet, loadingStats: 
               <div className="w-px h-5 bg-slate-200" />
               <div>
                 <span className="tabular-nums">
+                  {c?.usage.postGenerations.remaining === -1 ? t("overview.subscription.unlimited_short", "∞") : c?.usage.postGenerations.remaining ?? 0}
+                </span>
+                <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.generations_short", "AI gens")}</span>
+              </div>
+              <div className="w-px h-5 bg-slate-200" />
+              <div>
+                <span className="tabular-nums">
                   {c?.usage.monthlyInterviews.remaining === -1 ? t("overview.subscription.unlimited_short", "∞") : c?.usage.monthlyInterviews.remaining ?? 0}
                 </span>
                 <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.interviews_short", "interviews")}</span>

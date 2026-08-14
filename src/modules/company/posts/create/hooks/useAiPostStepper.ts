@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useRouter } from "next/router";
 import { useDispatch, useSelector } from "react-redux";
 import { AppDispatch, RootState } from "@/store/store";
@@ -19,6 +20,7 @@ export const useAiPostStepper = (
   const generatedLanguage = useSelector((state: RootState) => state.postGeneration.generatedLanguage);
 
   const saveMutation = useSavePostMutation();
+  const [postsLimitInfo, setPostsLimitInfo] = useState<{ used?: number; limit?: number } | null>(null);
 
   // forcedLanguages: when the language modal overrides the stored interviewLanguages (e.g. first-time generate)
   const handleNext = (forcedLanguages?: string[]) => {
@@ -41,10 +43,22 @@ export const useAiPostStepper = (
           router.push(postId ? `/company/posts/${postId}` : "/company/posts");
         },
         onError: (err: unknown) => {
+          const data = (err as { response?: { data?: {
+            error?: string; message?: string; postsUsed?: number; postsLimit?: number;
+          } } }).response?.data;
+
+          // Reachable more often now that reaching Save no longer requires an
+          // available post slot upfront (generating only spends the separate
+          // postGenerations quota) — show the same upgrade modal used
+          // elsewhere instead of just a toast.
+          if (data?.error === "Posts limit reached") {
+            setPostsLimitInfo({ used: data.postsUsed, limit: data.postsLimit });
+            return;
+          }
+
           const message =
-            err instanceof Error ? err.message
-            : typeof err === "string" ? err
-            : "Failed to save job post.";
+            data?.message
+            || (err instanceof Error ? err.message : typeof err === "string" ? err : "Failed to save job post.");
           showToast({ message, severity: "error" });
         },
       }
@@ -53,5 +67,8 @@ export const useAiPostStepper = (
 
   const handleBack = () => router.push("/company/posts");
 
-  return { isFinishing: saveMutation.isPending, handleNext, handleBack };
+  return {
+    isFinishing: saveMutation.isPending, handleNext, handleBack,
+    postsLimitInfo, closePostsLimitModal: () => setPostsLimitInfo(null),
+  };
 };

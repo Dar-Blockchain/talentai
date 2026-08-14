@@ -1,6 +1,7 @@
 import React from "react";
 import { FileText, Receipt, Loader2 } from "lucide-react";
 import { Payment } from "@/store/slices/paymentSlice";
+import { ACCENT_DARK } from "../constants";
 import PaymentRow from "./PaymentRow";
 
 interface Props {
@@ -14,13 +15,13 @@ const COLUMNS = ["#", "Plan", "Amount", "Payment", "Subscription", "Date", "Invo
 const PaymentTable: React.FC<Props> = ({ history, loading, subByPaymentId }) => (
   <div className="overflow-hidden rounded-2xl bg-white shadow-[0_2px_12px_rgba(0,0,0,0.06)]">
     <div className="flex items-center gap-2 border-b border-gray-100 px-6 py-5">
-      <FileText size={20} className="text-teal-600" />
+      <FileText size={20} style={{ color: ACCENT_DARK }} />
       <h2 className="text-[1rem] font-bold text-gray-900">Payment History</h2>
     </div>
 
     {loading ? (
       <div className="flex justify-center py-16">
-        <Loader2 size={36} className="animate-spin text-teal-600" />
+        <Loader2 size={36} className="animate-spin text-gray-400" />
       </div>
     ) : history.length === 0 ? (
       <div className="py-16 text-center">

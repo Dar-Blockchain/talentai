@@ -1,6 +1,7 @@
 const Stripe = require("stripe");
 require("dotenv").config();
 const planLimitsService = require("../plans/plan-limits.service");
+const subscriptionService = require("../subscriptions/subscription.service");
 const Payment = require("./payment.model");
 
 const stripe = Stripe(process.env.STRIPE_SECRET_KEY);
@@ -14,6 +15,11 @@ exports.createCheckoutSession = async ({ planId, baseUrl, userId, companyProfile
     }
 
     const plan = result.data;
+
+    // Single-active-plan rule: buying a second plan is only allowed when it's
+    // an upgrade over the company's current highest active paid plan.
+    await subscriptionService.assertUpgradeEligible(companyProfileId, plan);
+
     const amountCents = Math.round((plan.priceUsd || 0) * 100);
 
     const session = await stripe.checkout.sessions.create({
