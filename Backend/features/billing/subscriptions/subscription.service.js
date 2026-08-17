@@ -130,7 +130,14 @@ module.exports.checkSubscriptionLimit = async (companyProfileId, limitType) => {
       }
     }
 
-    const active = valid.length ? valid : allActive;
+    let active = valid.length ? valid : allActive;
+
+    // Same "prefer paid over a leftover Trial" rule as getCombinedActiveDetails
+    // — otherwise a stale still-active Trial (100-year endDate) combines its
+    // tiny limits into a real paid plan's, silently over-granting quota.
+    const paidActive = active.filter((s) => s.planId?.name !== "Trial");
+    if (paidActive.length) active = paidActive;
+
     let used = 0;
     let limit = 0;
 
@@ -419,7 +426,16 @@ module.exports.getCombinedActiveDetails = async (companyProfileId) => {
       }
     }
 
-    const subscriptions = valid.length ? valid : allActive;
+    let subscriptions = valid.length ? valid : allActive;
+
+    // A leftover Trial subscription can still be "active" (its endDate is
+    // set 100 years out) even after a real plan is purchased — legacy data
+    // from before purchases started retiring other active subscriptions on
+    // upgrade (see payment.model.js). Prefer the paid plan(s) so the UI
+    // shows exactly one current plan instead of Trial + the paid plan both,
+    // matching getActiveSubscription's existing same-shaped filter.
+    const paidSubscriptions = subscriptions.filter((s) => s.planId?.name !== "Trial");
+    if (paidSubscriptions.length) subscriptions = paidSubscriptions;
 
     if (!subscriptions.length || subscriptions.every((s) => !s.planId)) {
       const err = new Error("No active subscription found");

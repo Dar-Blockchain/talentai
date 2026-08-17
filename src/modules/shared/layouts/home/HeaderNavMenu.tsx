@@ -14,6 +14,10 @@ import { Sparkles, ListChecks, Briefcase, Mail, Newspaper, ChevronRight } from "
 
 type NavItem = { label: string; id?: string; href?: string };
 
+// Routes where the marketing nav (Find Jobs / How it works / Blog) would
+// distract from the task at hand — the interview session itself.
+const HIDDEN_NAV_ROUTES = ["/interviews/[sessionId]"];
+
 const NAV_ICON_MAP: Record<string, React.ElementType> = {
   features:   Sparkles,
   howitworks: ListChecks,
@@ -32,6 +36,8 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
   const { t }    = useTranslation("home");
   const router   = useRouter();
   const userType = useSelector((state: RootState) => state.user.userType) ?? "candidate";
+
+  if (HIDDEN_NAV_ROUTES.includes(router.pathname)) return null;
 
   const getNavItems = (): NavItem[] => {
     if (userType === "company") return [

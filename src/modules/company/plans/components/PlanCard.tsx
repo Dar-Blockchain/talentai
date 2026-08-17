@@ -92,22 +92,18 @@ const PlanCard: React.FC<PlanCardProps> = ({
         </div>
 
         {isActive ? (
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center justify-center gap-1.5 rounded-[10px] bg-gray-50 py-2.5">
-              <span className="text-[0.82rem] font-bold text-gray-700">
-                {t("pages.subscription.card.current_plan_banner")}
-              </span>
-            </div>
-            {!isTrial && (
-              <AutoRenewalCta
-                autoRenew={autoRenew}
-                cancelling={cancelling}
-                subscriptionId={activeSubscriptionId!}
-                onCancel={onCancelClick}
-                onReEnable={onEnableAutoRenewClick}
-              />
-            )}
-          </div>
+          // Already conveyed by the "Active" badge in the top-right corner —
+          // no need to repeat it here too. Auto-renew status/toggle is the
+          // only thing this slot still needs to show for a paid plan.
+          !isTrial && (
+            <AutoRenewalCta
+              autoRenew={autoRenew}
+              cancelling={cancelling}
+              subscriptionId={activeSubscriptionId!}
+              onCancel={onCancelClick}
+              onReEnable={onEnableAutoRenewClick}
+            />
+          )
         ) : isEnterprise ? (
           <Button variant="default" className="w-full" onClick={onContactUs}>
             {t("pages.subscription.card.contact_us")}

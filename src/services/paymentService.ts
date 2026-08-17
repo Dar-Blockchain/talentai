@@ -45,11 +45,29 @@ export const paymentService = {
   },
 
   createCheckoutSession: async (planId: string) => {
-    const res = await axiosInstance.post('stripe/create-checkout-session', { planId });
-    const { url, sessionId, paymentId } = res.data;
-    if (!url) throw new Error('Stripe session URL missing');
-    if (paymentId) localStorage.setItem('pending_payment_id', paymentId);
-    window.open(url, '_blank', 'noopener,noreferrer');
-    return { url, sessionId, paymentId };
+    // window.open must fire synchronously inside the click handler to count
+    // as a trusted user gesture — opening it here (before the await) and
+    // redirecting it once the URL is known avoids the popup blocker that
+    // kicks in when window.open runs after a network call.
+    // NOTE: "noopener"/"noreferrer" here would make window.open() return
+    // null (no reference to redirect later), which defeats the whole
+    // point — omit them on this call specifically.
+    const checkoutWindow = window.open('', '_blank');
+    try {
+      const res = await axiosInstance.post('stripe/create-checkout-session', { planId });
+      const { url, sessionId, paymentId } = res.data;
+      if (!url) throw new Error('Stripe session URL missing');
+      if (paymentId) localStorage.setItem('pending_payment_id', paymentId);
+      if (checkoutWindow && !checkoutWindow.closed) {
+        checkoutWindow.opener = null; // sever the opener link before navigating away, same mitigation noopener would've given
+        checkoutWindow.location.href = url;
+      } else {
+        window.open(url, '_blank', 'noopener,noreferrer');
+      }
+      return { url, sessionId, paymentId };
+    } catch (err) {
+      checkoutWindow?.close();
+      throw err;
+    }
   },
 };
