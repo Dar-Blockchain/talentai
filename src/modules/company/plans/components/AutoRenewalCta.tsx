@@ -1,7 +1,6 @@
 import React from "react";
 import { useTranslation } from "react-i18next";
-import { BellOff } from "lucide-react";
-import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Switch } from "@/modules/shared/ui/shadcn/switch";
 
 interface Props {
   autoRenew: boolean;
@@ -14,41 +13,35 @@ interface Props {
 const AutoRenewalCta: React.FC<Props> = ({ autoRenew, cancelling, subscriptionId, onCancel, onReEnable }) => {
   const { t } = useTranslation("dashboard");
 
-  if (autoRenew) {
-    return (
-      <Button
-        variant="outline"
-        className="w-full border-red-500 text-red-500 hover:border-red-600 hover:bg-red-50"
-        loading={cancelling}
-        onClick={() => onCancel(subscriptionId)}
-      >
-        {t("pages.subscription.card.disable_auto_renewal")}
-      </Button>
-    );
-  }
+  const handleToggle = (checked: boolean) => {
+    if (checked) onReEnable(subscriptionId);
+    else onCancel(subscriptionId);
+  };
 
   return (
-    <div className="flex flex-col gap-2 rounded-[10px] border border-amber-200 bg-amber-50 px-3 py-2">
-      <div className="flex items-center gap-2">
-        <BellOff size={16} className="flex-shrink-0 text-amber-600" />
-        <div className="min-w-0 flex-1">
-          <p className="text-[0.73rem] font-bold text-amber-800">
-            {t("pages.subscription.card.auto_renewal_off")}
-          </p>
-          <p className="text-[0.68rem] text-amber-700">
-            {t("pages.subscription.card.wont_renew_detail")}
-          </p>
-        </div>
+    <div
+      className={`flex flex-col gap-1.5 rounded-[10px] border px-3 py-2.5 transition-colors ${
+        autoRenew ? "border-gray-200 bg-gray-50" : "border-amber-200 bg-amber-50"
+      }`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <span className={`text-[0.78rem] font-bold ${autoRenew ? "text-gray-700" : "text-amber-800"}`}>
+          {autoRenew
+            ? t("pages.subscription.card.auto_renewal_on")
+            : t("pages.subscription.card.auto_renewal_off")}
+        </span>
+        <Switch
+          checked={autoRenew}
+          disabled={cancelling}
+          onCheckedChange={handleToggle}
+          aria-label={t("pages.subscription.card.disable_auto_renewal")}
+        />
       </div>
-      <Button
-        variant="warning"
-        size="sm"
-        loading={cancelling}
-        onClick={() => onReEnable(subscriptionId)}
-        className="w-full"
-      >
-        {t("pages.subscription.card.reenable")}
-      </Button>
+      {!autoRenew && (
+        <p className="text-[0.68rem] text-amber-700">
+          {t("pages.subscription.card.wont_renew_detail")}
+        </p>
+      )}
     </div>
   );
 };

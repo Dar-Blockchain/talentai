@@ -40,6 +40,7 @@
     "current_subscription": "Your Current Subscription",
     "processing": "Processing…",
     "disable_auto_renewal": "Disable Auto-Renewal",
+    "auto_renewal_on": "Auto-renew on",
     "auto_renewal_off": "Auto-renewal off",
     "active_until_expiry": "Active until expiry · won't renew",
     "reenable": "Re-enable",

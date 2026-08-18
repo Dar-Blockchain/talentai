@@ -40,6 +40,7 @@
     "current_subscription": "Votre abonnement actuel",
     "processing": "Traitement…",
     "disable_auto_renewal": "Désactiver le renouvellement automatique",
+    "auto_renewal_on": "Renouvellement automatique activé",
     "auto_renewal_off": "Renouvellement automatique désactivé",
     "active_until_expiry": "Actif jusqu'à expiration · ne se renouvellera pas",
     "reenable": "Réactiver",

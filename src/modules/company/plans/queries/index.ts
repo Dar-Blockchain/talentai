@@ -20,6 +20,11 @@ export const useCombinedQuery = () =>
     queryKey:  QUERY_KEYS.combined,
     queryFn:   plansApi.fetchCombined,
     staleTime: 60 * 1000,
+    // daysRemaining is computed live server-side from a fixed endDate, but a
+    // tab left open for days with no remount/refocus would otherwise never
+    // re-trigger a fetch and would visibly freeze — poll periodically so it
+    // stays accurate without requiring a reload.
+    refetchInterval: 5 * 60 * 1000,
   });
 
 // ─── Mutations ────────────────────────────────────────────

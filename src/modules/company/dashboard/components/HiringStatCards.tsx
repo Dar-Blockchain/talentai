@@ -9,6 +9,7 @@ import {
   CreditCard as CreditCardOutlined,
 } from "lucide-react";
 import { useCombinedDetailsQuery } from "@/modules/company/billing/queries";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/modules/shared/ui/shadcn/hover-card";
 
 interface Props {
   stats:       { interviewsCount?: number; activeJobPosts?: number } | undefined;
@@ -52,37 +53,53 @@ const HiringStatCards = memo<Props>(({ stats, appMetrics: appMet, loadingStats: 
         href="/company/applications"
       />
       {(l2 || hasSub) && (
-        <StatCard
-          icon={CreditCardOutlined}
-          color="#DB2777" bg="#FDF2F8"
-          loading={l2}
-          value={
-            <div className="flex items-center gap-2.5">
-              <div>
-                <span className="tabular-nums">
+        <HoverCard openDelay={150} closeDelay={100}>
+          <HoverCardTrigger asChild>
+            {/* Needs a real box (not display:contents) — Radix positions
+                HoverCardContent off this element's own bounding rect, and an
+                element with no box has nothing to anchor against. h-full
+                keeps it matching its StatCard sibling's height in the grid. */}
+            <div className="h-full">
+              <StatCard
+                icon={CreditCardOutlined}
+                color="#DB2777" bg="#FDF2F8"
+                loading={l2}
+                // StatCard's value slot is styled text-2xl/font-black for
+                // short numeric metrics — a plan name is a word/phrase, not
+                // a number, so it needs its own smaller weight here instead
+                // of inheriting that sizing.
+                value={<span className="block truncate text-base font-bold text-slate-800">{planLabelText}</span>}
+                label={t("pages.subscription.card.current_plan_banner", "Current Plan")}
+                href="/company/plans"
+              />
+            </div>
+          </HoverCardTrigger>
+          <HoverCardContent align="start" className="w-56">
+            <p className="mb-2.5 text-[11px] font-bold uppercase tracking-wide text-slate-400">
+              {t("overview.subscription.remaining_label", "Remaining This Cycle")}
+            </p>
+            <div className="flex flex-col gap-2">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">{t("overview.subscription.posts_short", "posts")}</span>
+                <span className="text-sm font-bold tabular-nums text-slate-800">
                   {c?.usage.posts.remaining === -1 ? t("overview.subscription.unlimited_short", "∞") : c?.usage.posts.remaining ?? 0}
                 </span>
-                <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.posts_short", "posts")}</span>
               </div>
-              <div className="w-px h-5 bg-slate-200" />
-              <div>
-                <span className="tabular-nums">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">{t("overview.subscription.generations_short", "AI gens")}</span>
+                <span className="text-sm font-bold tabular-nums text-slate-800">
                   {c?.usage.postGenerations.remaining === -1 ? t("overview.subscription.unlimited_short", "∞") : c?.usage.postGenerations.remaining ?? 0}
                 </span>
-                <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.generations_short", "AI gens")}</span>
               </div>
-              <div className="w-px h-5 bg-slate-200" />
-              <div>
-                <span className="tabular-nums">
+              <div className="flex items-center justify-between">
+                <span className="text-xs text-slate-500">{t("overview.subscription.interviews_short", "interviews")}</span>
+                <span className="text-sm font-bold tabular-nums text-slate-800">
                   {c?.usage.monthlyInterviews.remaining === -1 ? t("overview.subscription.unlimited_short", "∞") : c?.usage.monthlyInterviews.remaining ?? 0}
                 </span>
-                <span className="text-[11px] font-semibold text-slate-400 ml-1">{t("overview.subscription.interviews_short", "interviews")}</span>
               </div>
             </div>
-          }
-          label={planLabelText}
-          href="/company/plans"
-        />
+          </HoverCardContent>
+        </HoverCard>
       )}
     </div>
   );
