@@ -1,11 +1,17 @@
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
-import { Loader2, Search, Briefcase, Users, LayoutDashboard, SlidersHorizontal, ArrowRight } from "lucide-react";
+import { Loader2, Search, Briefcase, Building2, Target } from "lucide-react";
 import { useRouter } from "next/router";
 import axiosInstance from "@/utils/axiosInstance";
 import { Popover, PopoverTrigger, PopoverContent } from "@/modules/shared/ui/shadcn/popover";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import { cn } from "@/lib/utils";
+
+const SEARCH_DEBOUNCE_MS = 300;
+// Five result categories in one dropdown adds up fast — cap each tighter
+// than a single-category search would need, so the list stays scannable.
+const RESULTS_PER_CATEGORY = 3;
 
 const TEAL = "#0D9488";
 
@@ -14,16 +20,13 @@ const STATUS_COLOR: Record<string, string> = {
   closed: "#6B7280", expired: "#6B7280",
 };
 
-const QUICK_LINKS = [
-  { label: "Hiring Dashboard", href: "/company/dashboard?tab=hiring", Icon: LayoutDashboard },
-  // { label: "Team Dashboard",   href: "/company/dashboard?tab=team",   Icon: LayoutDashboard },
-  { label: "Posts",            href: "/company/posts",            Icon: Briefcase },
-  { label: "Applications",     href: "/company/applications",     Icon: Users },
-  { label: "Settings",         href: "/settings",                 Icon: SlidersHorizontal },
-];
+const CAMPAIGN_STATUS_COLOR: Record<string, string> = {
+  ACTIVE: "#059669", DRAFT: "#D97706", PAUSED: "#D97706",
+  CLOSED: "#6B7280", EXPIRED: "#6B7280",
+};
 
 interface SearchResult {
-  type: "post" | "application";
+  type: "post" | "application" | "employee" | "department" | "campaign";
   id: string;
   title: string;
   subtitle: string;
@@ -42,7 +45,8 @@ const GlobalSearch: React.FC = () => {
 
   const anchorRef  = useRef<HTMLDivElement>(null);
   const inputRef   = useRef<HTMLInputElement>(null);
-  const debounce   = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+
+  const debouncedQuery = useDebouncedValue(query, SEARCH_DEBOUNCE_MS);
 
   // Ctrl+K / Cmd+K shortcut
   useEffect(() => {
@@ -60,62 +64,117 @@ const GlobalSearch: React.FC = () => {
     return () => window.removeEventListener("keydown", handler);
   }, []);
 
-  // Debounced search
+  // Instant spinner feedback while the debounce settles, ahead of the fetch.
   useEffect(() => {
-    if (!query.trim()) { setResults([]); setLoading(false); return; }
-
-    setLoading(true);
-    clearTimeout(debounce.current);
-    debounce.current = setTimeout(async () => {
-      try {
-        const [postsRes, appsRes] = await Promise.all([
-          axiosInstance.get("/post/my-posts", { params: { search: query, limit: 5 } }),
-          axiosInstance.get("/job-applications/company/my/summary", { params: { search: query, limit: 5 } }),
-        ]);
-
-        const posts: SearchResult[] = (postsRes.data?.results || []).map((p: any) => ({
-          type:       "post",
-          id:         p._id,
-          title:      p.jobDetails?.title || "Untitled Post",
-          subtitle:   [p.jobDetails?.location, p.jobDetails?.employmentType].filter(Boolean).join(" · ") || "Job post",
-          badge:      p.status,
-          badgeColor: STATUS_COLOR[p.status] || "#6B7280",
-          href:       `/company/posts/${p._id}`,
-        }));
-
-        const apps: SearchResult[] = (appsRes.data?.data || []).map((a: any) => ({
-          type:     "application",
-          id:       a.id,
-          title:    [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email || "Unknown Candidate",
-          subtitle: a.postTitle || "Application",
-          badge:    a.matchScore != null ? `${Math.round(a.matchScore)}%` : undefined,
-          badgeColor: TEAL,
-          href:     `/company/applications`,
-        }));
-
-        setResults([...posts, ...apps]);
-      } catch {
-        setResults([]);
-      } finally {
-        setLoading(false);
-      }
-    }, 300);
+    if (query.trim()) setLoading(true);
   }, [query]);
 
+  // Fires SEARCH_DEBOUNCE_MS after typing pauses. Aborts the previous
+  // in-flight request when a newer search starts — without this, a slower
+  // older response could resolve after a faster newer one and overwrite its
+  // results with stale data.
+  useEffect(() => {
+    const trimmed = debouncedQuery.trim();
+    if (!trimmed) { setResults([]); setLoading(false); return; }
+
+    const controller = new AbortController();
+    const params = { search: trimmed, limit: RESULTS_PER_CATEGORY };
+
+    (async () => {
+      try {
+        // allSettled — one flaky category (e.g. campaigns) shouldn't blank
+        // out results from the other four that succeeded.
+        const [postsRes, appsRes, employeesRes, departmentsRes, campaignsRes] = await Promise.allSettled([
+          axiosInstance.get("/post/my-posts", { params, signal: controller.signal }),
+          axiosInstance.get("/job-applications/company/my/summary", { params, signal: controller.signal }),
+          axiosInstance.get("/company-memberships/memberships", { params, signal: controller.signal }),
+          axiosInstance.get("/departments", { params, signal: controller.signal }),
+          axiosInstance.get("/internal-campaigns", { params, signal: controller.signal }),
+        ]);
+
+        // All 5 share one AbortSignal, so if this cycle was superseded by a
+        // newer search they'd all reject together — bail without touching
+        // results (the newer cycle's own effect run owns setResults now).
+        if (controller.signal.aborted) return;
+
+        const posts: SearchResult[] = postsRes.status === "fulfilled"
+          ? (postsRes.value.data?.results || []).map((p: any) => ({
+              type:       "post",
+              id:         p._id,
+              title:      p.jobDetails?.title || "Untitled Post",
+              subtitle:   [p.jobDetails?.location, p.jobDetails?.employmentType].filter(Boolean).join(" · ") || "Job post",
+              badge:      p.status,
+              badgeColor: STATUS_COLOR[p.status] || "#6B7280",
+              href:       `/company/posts/${p._id}`,
+            }))
+          : [];
+
+        const apps: SearchResult[] = appsRes.status === "fulfilled"
+          ? (appsRes.value.data?.data || []).map((a: any) => ({
+              type:       "application",
+              id:         a.id,
+              title:      [a.firstName, a.lastName].filter(Boolean).join(" ") || a.email || "Unknown Candidate",
+              subtitle:   a.postTitle || "Application",
+              badge:      a.matchScore != null ? `${Math.round(a.matchScore)}%` : undefined,
+              badgeColor: TEAL,
+              href:       `/company/applications`,
+            }))
+          : [];
+
+        const employees: SearchResult[] = employeesRes.status === "fulfilled"
+          ? (employeesRes.value.data?.memberships || []).map((m: any) => ({
+              type:     "employee",
+              id:       m.userId,
+              title:    [m.firstName, m.lastName].filter(Boolean).join(" ") || m.username || m.email || "Unnamed",
+              subtitle: [m.role, m.department?.name].filter(Boolean).join(" · ") || "Team member",
+              href:     `/company/employees/${m.userId}`,
+            }))
+          : [];
+
+        const departments: SearchResult[] = departmentsRes.status === "fulfilled"
+          ? (departmentsRes.value.data?.data || []).map((d: any) => ({
+              type:     "department",
+              id:       d._id,
+              title:    d.name,
+              subtitle: d.description || "Department",
+              href:     `/company/departments/${d._id}`,
+            }))
+          : [];
+
+        const campaigns: SearchResult[] = campaignsRes.status === "fulfilled"
+          ? (campaignsRes.value.data?.data || []).map((c: any) => ({
+              type:       "campaign",
+              id:         c._id,
+              title:      c.title,
+              subtitle:   `${c.targetEmployeeCount ?? 0} participant${c.targetEmployeeCount === 1 ? "" : "s"}`,
+              badge:      c.status,
+              badgeColor: CAMPAIGN_STATUS_COLOR[c.status] || "#6B7280",
+              href:       `/company/campaigns/${c._id}`,
+            }))
+          : [];
+
+        setResults([...posts, ...apps, ...employees, ...departments, ...campaigns]);
+      } catch {
+        if (!controller.signal.aborted) setResults([]);
+      } finally {
+        if (!controller.signal.aborted) setLoading(false);
+      }
+    })();
+
+    return () => controller.abort();
+  }, [debouncedQuery]);
+
   // Keyboard navigation
-  const totalItems = query.trim()
-    ? results.length
-    : QUICK_LINKS.length;
+  const totalItems = results.length;
 
   const handleKeyDown = useCallback((e: React.KeyboardEvent) => {
     if (e.key === "ArrowDown") { e.preventDefault(); setFocused((f) => Math.min(f + 1, totalItems - 1)); }
     if (e.key === "ArrowUp")   { e.preventDefault(); setFocused((f) => Math.max(f - 1, 0)); }
     if (e.key === "Enter" && focused >= 0) {
-      const items = query.trim() ? results : QUICK_LINKS;
-      const target = items[focused];
-      if (target) { router.push((target as any).href); setOpen(false); setQuery(""); }
+      const target = results[focused];
+      if (target) { router.push(target.href); setOpen(false); setQuery(""); }
     }
-  }, [focused, results, query, router, totalItems]);
+  }, [focused, results, router, totalItems]);
 
   const handleNavigate = (href: string) => {
     router.push(href);
@@ -124,10 +183,20 @@ const GlobalSearch: React.FC = () => {
     setFocused(-1);
   };
 
-  const postResults   = results.filter((r) => r.type === "post");
-  const appResults    = results.filter((r) => r.type === "application");
+  const postResults       = results.filter((r) => r.type === "post");
+  const appResults        = results.filter((r) => r.type === "application");
+  const employeeResults   = results.filter((r) => r.type === "employee");
+  const departmentResults = results.filter((r) => r.type === "department");
+  const campaignResults   = results.filter((r) => r.type === "campaign");
   const hasResults    = results.length > 0;
   const showEmpty     = query.trim().length > 0 && !loading && !hasResults;
+
+  // Cumulative offsets — matches setResults' [...posts, ...apps, ...employees,
+  // ...departments, ...campaigns] concat order, so focused-index math and
+  // keyboard nav line up with what's actually on screen.
+  const employeeOffset   = postResults.length + appResults.length;
+  const departmentOffset = employeeOffset + employeeResults.length;
+  const campaignOffset   = departmentOffset + departmentResults.length;
 
   return (
     <Popover
@@ -191,32 +260,6 @@ const GlobalSearch: React.FC = () => {
         </form>
 
         <div className="max-h-[400px] overflow-y-auto">
-
-          {/* Quick links (no query) */}
-          {!query.trim() && (
-            <div className="p-1">
-              <p className="px-1 pb-[3px] pt-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[#C4C9D4]">
-                Quick navigation
-              </p>
-              {QUICK_LINKS.map((link, i) => (
-                <div
-                  key={link.href}
-                  onClick={() => handleNavigate(link.href)}
-                  onMouseEnter={() => setFocused(i)}
-                  className={cn(
-                    "flex cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 py-[7px] transition-colors duration-100 hover:bg-gray-50",
-                    focused === i ? "bg-gray-100" : "bg-transparent",
-                  )}
-                >
-                  <div className="flex size-[26px] shrink-0 items-center justify-center rounded-[7px] bg-gray-100">
-                    <link.Icon size={13} color="#6B7280" />
-                  </div>
-                  <span className="text-[13px] font-medium text-gray-700">{link.label}</span>
-                  <ArrowRight size={12} color="#D1D5DB" className="ml-auto" />
-                </div>
-              ))}
-            </div>
-          )}
 
           {/* Post results */}
           {postResults.length > 0 && (
@@ -290,6 +333,109 @@ const GlobalSearch: React.FC = () => {
                         style={{ color: TEAL, backgroundColor: `${TEAL}12` }}
                       >
                         {r.badge}
+                      </span>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Employee results */}
+          {employeeResults.length > 0 && (
+            <div className={cn("p-1", (postResults.length > 0 || appResults.length > 0) && "border-t border-gray-100")}>
+              <p className="px-1 pb-[3px] pt-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[#C4C9D4]">
+                Employees
+              </p>
+              {employeeResults.map((r, i) => {
+                const idx = employeeOffset + i;
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => handleNavigate(r.href)}
+                    onMouseEnter={() => setFocused(idx)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 py-[7px] hover:bg-gray-50",
+                      focused === idx ? "bg-gray-100" : "bg-transparent",
+                    )}
+                  >
+                    <div className="flex size-[26px] shrink-0 items-center justify-center rounded-full" style={{ backgroundColor: `${TEAL}12` }}>
+                      <span className="text-[10px] font-bold" style={{ color: TEAL }}>
+                        {r.title[0]?.toUpperCase()}
+                      </span>
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-gray-900">{r.title}</p>
+                      <p className="truncate text-[11px] text-gray-400">{r.subtitle}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Department results */}
+          {departmentResults.length > 0 && (
+            <div className={cn("p-1", (postResults.length > 0 || appResults.length > 0 || employeeResults.length > 0) && "border-t border-gray-100")}>
+              <p className="px-1 pb-[3px] pt-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[#C4C9D4]">
+                Departments
+              </p>
+              {departmentResults.map((r, i) => {
+                const idx = departmentOffset + i;
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => handleNavigate(r.href)}
+                    onMouseEnter={() => setFocused(idx)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 py-[7px] hover:bg-gray-50",
+                      focused === idx ? "bg-gray-100" : "bg-transparent",
+                    )}
+                  >
+                    <div className="flex size-[26px] shrink-0 items-center justify-center rounded-[7px]" style={{ backgroundColor: `${TEAL}0F` }}>
+                      <Building2 size={13} color={TEAL} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-gray-900">{r.title}</p>
+                      <p className="truncate text-[11px] text-gray-400">{r.subtitle}</p>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+
+          {/* Campaign results */}
+          {campaignResults.length > 0 && (
+            <div className={cn("p-1", (postResults.length > 0 || appResults.length > 0 || employeeResults.length > 0 || departmentResults.length > 0) && "border-t border-gray-100")}>
+              <p className="px-1 pb-[3px] pt-0.5 text-[9.5px] font-bold uppercase tracking-[0.08em] text-[#C4C9D4]">
+                Campaigns
+              </p>
+              {campaignResults.map((r, i) => {
+                const idx = campaignOffset + i;
+                return (
+                  <div
+                    key={r.id}
+                    onClick={() => handleNavigate(r.href)}
+                    onMouseEnter={() => setFocused(idx)}
+                    className={cn(
+                      "flex cursor-pointer items-center gap-2.5 rounded-[9px] px-2.5 py-[7px] hover:bg-gray-50",
+                      focused === idx ? "bg-gray-100" : "bg-transparent",
+                    )}
+                  >
+                    <div className="flex size-[26px] shrink-0 items-center justify-center rounded-[7px]" style={{ backgroundColor: `${TEAL}0F` }}>
+                      <Target size={13} color={TEAL} />
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-[13px] font-semibold text-gray-900">{r.title}</p>
+                      <p className="truncate text-[11px] text-gray-400">{r.subtitle}</p>
+                    </div>
+                    {r.badge && (
+                      <span
+                        className="shrink-0 rounded-[5px] px-1.5 py-0.5 text-[9.5px] font-bold capitalize"
+                        style={{ color: r.badgeColor, backgroundColor: `${r.badgeColor}15` }}
+                      >
+                        {r.badge.toLowerCase()}
                       </span>
                     )}
                   </div>
