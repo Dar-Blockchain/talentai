@@ -34,11 +34,12 @@ const DowngradeCta: React.FC<Props> = ({ plan, currentSubId, currentAutoRenew, c
   return (
     <Button
       variant="outline"
-      size="sm"
-      className="w-full border-amber-600 text-[0.78rem] text-amber-600 hover:border-amber-700 hover:bg-amber-50 hover:text-amber-700"
+      size="default"
+      className="w-full gap-1.5 border-amber-200 bg-amber-50 text-[0.78rem] text-amber-700 shadow-sm transition-all duration-150 hover:-translate-y-px hover:border-amber-300 hover:bg-amber-100 hover:text-amber-800 hover:shadow-md active:translate-y-0 active:shadow-sm"
       disabled={checkingOut}
       onClick={() => onDowngrade(plan, currentSubId)}
     >
+      <ArrowDown size={16} className="text-amber-700" />
       {t("pages.subscription.card.downgrade_to", "Downgrade to this plan")}
     </Button>
   );
