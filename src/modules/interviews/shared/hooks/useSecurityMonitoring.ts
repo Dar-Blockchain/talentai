@@ -58,10 +58,9 @@ export const useSecurityMonitoring = ({
       handleSecurityViolation('Pasting content');
     };
 
-    // ── Block right-click context menu ────────────────────────────────
+    // ── Block right-click context menu (silently — no violation/modal) ──
     const handleContextMenu = (e: MouseEvent) => {
       e.preventDefault();
-      handleSecurityViolation('Right-click menu');
     };
 
     // ── Block keyboard shortcuts ──────────────────────────────────────
