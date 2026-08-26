@@ -33,7 +33,10 @@ const rootReducer = combineReducers({
 const persistConfig = {
   key: 'root',
   storage,
-  whitelist: ['user', 'planLimits']
+  // postGeneration: so an accidental refresh/tab-close mid-draft (create-post
+  // form) doesn't lose the candidate's work — see createPostSlice.ts, it's
+  // pure serializable form data with no loading flags mixed in.
+  whitelist: ['user', 'planLimits', 'postGeneration']
 };
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
