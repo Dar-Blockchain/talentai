@@ -90,7 +90,42 @@ export default function EligibilityGate({ status, meta }: EligibilityGateProps) 
             </>
           }
           actions={[{ ...action, color: '#DC2626', hoverColor: '#B91C1C' }]}
-        />
+        >
+          {meta?.reasoning && (
+            <>
+              <div className="h-px bg-[#F1F5F9] my-5" />
+              <p className="font-[Poppins] text-[0.72rem] font-bold uppercase tracking-widest text-[#94A3B8] mb-1.5 text-left">
+                {t("under_threshold.reasoning_title", "Why this score")}
+              </p>
+              <p className="font-[Poppins] text-[0.85rem] text-[#475569] leading-[1.7] text-left whitespace-pre-wrap">
+                {meta.reasoning}
+              </p>
+            </>
+          )}
+          {!!meta?.breakdown?.length && (
+            <>
+              <div className="h-px bg-[#F1F5F9] my-5" />
+              <p className="font-[Poppins] text-[0.72rem] font-bold uppercase tracking-widest text-[#94A3B8] mb-2 text-left">
+                {t("under_threshold.breakdown_title", "Score breakdown")}
+              </p>
+              <div className="flex flex-col gap-2 text-left">
+                {meta.breakdown.map((b) => (
+                  <div key={b.key}>
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-[Poppins] text-[0.8rem] font-semibold text-[#334155]">{b.label}</span>
+                      <span className="shrink-0 font-[Poppins] text-[0.78rem] font-bold tabular-nums text-[#64748B]">
+                        {b.score}/{b.maxScore}
+                      </span>
+                    </div>
+                    {b.score < b.maxScore && b.note && (
+                      <p className="font-[Poppins] text-[0.76rem] text-[#94A3B8] leading-relaxed mt-0.5">{b.note}</p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </>
+          )}
+        </EligibilityBlockedScreen>
       );
 
     case "limit_reached":

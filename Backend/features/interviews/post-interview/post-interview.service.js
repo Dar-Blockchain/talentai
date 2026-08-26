@@ -317,13 +317,17 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
   if (candidateProfile) {
     const JobApplication = require("../../job-applications/job-application.model");
     let matchScore = null;
+    let candidateReasoning = null;
+    let matchBreakdown = null;
     let invitedAt = null;
 
     const existing = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
-      .select("matchScore invitedAt").lean();
+      .select("matchScore candidateReasoning matchBreakdown invitedAt").lean();
 
     if (existing) {
       matchScore = existing.matchScore;
+      candidateReasoning = existing.candidateReasoning;
+      matchBreakdown = existing.matchBreakdown;
       invitedAt = existing.invitedAt;
     } else {
       // First visit: await creation so the AI-computed matchScore is available for the
@@ -336,12 +340,16 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
           company: post.user,
         });
         matchScore = created?.matchScore ?? null;
+        candidateReasoning = created?.candidateReasoning ?? null;
+        matchBreakdown = created?.matchBreakdown ?? [];
       } catch (err) {
         if (err?.status === 409) {
           // Race: another concurrent request created it — re-fetch
           const raced = await JobApplication.findOne({ profile: candidateProfile._id, post: postId })
-            .select("matchScore").lean();
+            .select("matchScore candidateReasoning matchBreakdown").lean();
           matchScore = raced?.matchScore ?? null;
+          candidateReasoning = raced?.candidateReasoning ?? null;
+          matchBreakdown = raced?.matchBreakdown ?? [];
         }
         // Other errors: fail open — don't block the candidate due to a technical fault
       }
@@ -350,7 +358,7 @@ module.exports.checkInterviewEligibility = async (candidateId, postId, userRole)
     // A manual recruiter invite overrides the threshold block — they've already
     // chosen to interview this candidate despite the raw CV match score.
     if (!invitedAt && post.thresholdScore != null && matchScore != null && matchScore < post.thresholdScore) {
-      return { status: "under_threshold", meta: { required: post.thresholdScore, score: matchScore } };
+      return { status: "under_threshold", meta: { required: post.thresholdScore, score: matchScore, reasoning: candidateReasoning, breakdown: matchBreakdown } };
     }
   }
 

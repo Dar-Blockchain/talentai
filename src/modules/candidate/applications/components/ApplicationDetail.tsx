@@ -194,6 +194,10 @@ const ApplicationDetail: React.FC<Props> = ({ id }) => {
   const sc = STATUS_CLASSES[rawStatus] ?? STATUS_CLASSES.visited;
   const isScheduled = rawStatus === ("interview_scheduled" as any);
   const score = app?.matchScore ?? app?.cvAnalysis?.analysisScore ?? null;
+  // Fallback to the older third-person field for applications scored before
+  // candidateReasoning existed (they'll pick up the new field next recalc).
+  const matchReasoning = app?.candidateReasoning ?? app?.matchReasoning ?? null;
+  const matchBreakdown: { key: string; label: string; score: number; maxScore: number; note: string }[] = app?.matchBreakdown ?? [];
   const appliedDate = fmtDate(app?.appliedAt || app?.createdAt);
 
   // ── Render ─────────────────────────────────────────────────────────────────
@@ -373,6 +377,40 @@ const ApplicationDetail: React.FC<Props> = ({ id }) => {
                   </p>
                 </div>
               </div>
+              {matchReasoning && (
+                <>
+                  <Separator className="my-3" />
+                  <p className="text-[0.7rem] font-bold uppercase tracking-widest text-gray-400 mb-1.5">
+                    {s("cv_match_score.reasoning_title", "Why this score")}
+                  </p>
+                  <p className="text-[0.82rem] text-gray-600 leading-relaxed whitespace-pre-wrap">
+                    {matchReasoning}
+                  </p>
+                </>
+              )}
+              {matchBreakdown.length > 0 && (
+                <>
+                  <Separator className="my-3" />
+                  <p className="text-[0.7rem] font-bold uppercase tracking-widest text-gray-400 mb-2">
+                    {s("cv_match_score.breakdown_title", "Score breakdown")}
+                  </p>
+                  <div className="flex flex-col gap-2.5">
+                    {matchBreakdown.map((b) => (
+                      <div key={b.key}>
+                        <div className="flex items-center justify-between gap-2">
+                          <span className="text-[0.8rem] font-semibold text-gray-700">{b.label}</span>
+                          <span className="shrink-0 text-[0.78rem] font-bold tabular-nums text-gray-500">
+                            {b.score}/{b.maxScore}
+                          </span>
+                        </div>
+                        {b.note && (
+                          <p className="text-[0.76rem] text-gray-400 leading-relaxed mt-0.5">{b.note}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
             </Section>
           )}
 

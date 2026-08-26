@@ -93,6 +93,7 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
 
     const matchScore = Math.min(100, Math.max(0, parseInt(result.matchScore) || 0));
     const reasoning = result.reasoning || "No reasoning provided";
+    const candidateReasoning = result.candidateReasoning || reasoning;
     const recommendation = result.recommendation || "";
     const breakdown = Array.isArray(result.breakdown) ? result.breakdown : [];
 
@@ -101,9 +102,10 @@ const calculateMatchScoreWithBedrock = async (candidateProfile, jobPost, resumeA
       recommendation,
       breakdown,
       reasoning,
+      candidateReasoning,
     };
   } catch (error) {
-    return { matchScore: 0, reasoning: `Bedrock call failed: ${error.message}` };
+    return { matchScore: 0, reasoning: `Bedrock call failed: ${error.message}`, candidateReasoning: `Bedrock call failed: ${error.message}` };
   }
 };
 
@@ -119,16 +121,18 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
       return {
         matchScore: 0,
         reasoning: "Candidate profile not found.",
+        candidateReasoning: "Candidate profile not found.",
       };
     }
     profile.skills     = profileSkills;
     profile.softSkills = profileSoftSkills;
-  
+
     const post = await Post.findById(postId).populate("skillAnalysis");
     if (!post) {
       return {
         matchScore: 0,
         reasoning: "Job post not found.",
+        candidateReasoning: "Job post not found.",
       };
     }
     
@@ -159,18 +163,27 @@ const calculateApplicationMatchScore = async (profileId, postId, companyId) => {
     }
 
     const matchResult = await calculateMatchScoreWithBedrock(profile, post, resumeAnalysis, resumeText);
-    
+
     const score = matchResult.matchScore || 0;
     const reasoning = matchResult.reasoning || "No reasoning provided";
+    const candidateReasoning = matchResult.candidateReasoning || reasoning;
 
     return {
       matchScore: score,
       reasoning,
+      candidateReasoning,
+      // These were previously dropped here even though calculateMatchScoreWithBedrock
+      // already computes them — every caller downstream (createJobApplication,
+      // recalculateScoresForVisitedApps, reactivateApplication) reads
+      // matchResult.recommendation/matchResult.breakdown expecting them to exist.
+      recommendation: matchResult.recommendation || null,
+      breakdown: Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [],
     };
   } catch (error) {
     return {
       matchScore: 0,
       reasoning: `Match score calculation failed: ${error.message}`,
+      candidateReasoning: `Match score calculation failed: ${error.message}`,
     };
   }
 };
@@ -203,6 +216,7 @@ module.exports.createJobApplication = async (applicationData) => {
     // Add calculated match score and reasoning to application data
     cleanData.matchScore = matchResult.matchScore;
     cleanData.matchReasoning = matchResult.reasoning;
+    cleanData.candidateReasoning = matchResult.candidateReasoning || null;
     cleanData.matchRecommendation = matchResult.recommendation || null;
     cleanData.matchBreakdown = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
     cleanData.status = "visited";
@@ -279,6 +293,7 @@ module.exports.recalculateScoresForVisitedApps = async (profileId, newCvAnalysis
       const matchResult       = await calculateApplicationMatchScore(profileId, app.post, app.company);
       app.matchScore          = matchResult.matchScore;
       app.matchReasoning      = matchResult.reasoning;
+      app.candidateReasoning  = matchResult.candidateReasoning || null;
       app.matchRecommendation = matchResult.recommendation || null;
       app.matchBreakdown      = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
 
@@ -350,6 +365,7 @@ module.exports.reactivateApplication = async (applicationId, profileId) => {
     const matchResult = await calculateApplicationMatchScore(profileId, app.post, app.company);
     app.matchScore          = matchResult.matchScore;
     app.matchReasoning      = matchResult.reasoning;
+    app.candidateReasoning  = matchResult.candidateReasoning || null;
     app.matchRecommendation = matchResult.recommendation || null;
     app.matchBreakdown      = Array.isArray(matchResult.breakdown) ? matchResult.breakdown : [];
 
@@ -786,7 +802,7 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
 
     // â”€â”€ Fetch applications (all, for in-memory interviewScore sort/filter) â”€â”€â”€
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile recruiterDecision invitedAt source")
+      .select("_id status matchScore matchReasoning matchBreakdown appliedAt profile recruiterDecision invitedAt source")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -819,6 +835,8 @@ module.exports.getApplicationsSummaryByPost = async (postId, filters = {}, page 
         email: p.email || p.userId?.email || null,
         userImage: p.user_image || null,
         matchScore: app.matchScore ?? null,
+        matchReasoning: app.matchReasoning ?? null,
+        matchBreakdown: Array.isArray(app.matchBreakdown) ? app.matchBreakdown : [],
         interviewScore: interviewScore !== undefined ? interviewScore : null,
         appliedAt: app.appliedAt || null,
         completedAt: assessment?.createdAt || null,
@@ -926,7 +944,7 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
     }
 
     const applications = await JobApplication.find(query)
-      .select("_id status matchScore appliedAt profile post recruiterDecision invitedAt source")
+      .select("_id status matchScore matchReasoning matchBreakdown appliedAt profile post recruiterDecision invitedAt source")
       .populate({
         path: "profile",
         select: "firstName lastName email user_image userId resume",
@@ -960,6 +978,8 @@ module.exports.getApplicationsSummaryByCompany = async (companyId, filters = {},
         email: p.email || p.userId?.email || null,
         userImage: p.user_image || null,
         matchScore: app.matchScore ?? null,
+        matchReasoning: app.matchReasoning ?? null,
+        matchBreakdown: Array.isArray(app.matchBreakdown) ? app.matchBreakdown : [],
         interviewScore: interviewScore !== undefined ? interviewScore : null,
         appliedAt: app.appliedAt || null,
         completedAt: assessment?.createdAt || null,

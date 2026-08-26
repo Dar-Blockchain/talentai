@@ -16,10 +16,21 @@ export interface ApplicationCompany {
   logo?: string;
 }
 
+export interface MatchBreakdownItem {
+  key: string;
+  label: string;
+  score: number;
+  maxScore: number;
+  note: string;
+}
+
 export interface CandidateApplication {
   _id: string;
   status: ApplicationStatus;
   matchScore?: number | null;
+  matchReasoning?: string | null;
+  candidateReasoning?: string | null;
+  matchBreakdown?: MatchBreakdownItem[];
   appliedAt?: string;
   createdAt?: string;
   post?: { _id?: string; jobDetails?: ApplicationJobDetails };

@@ -110,9 +110,19 @@ export type EligibilityStatus =
   | 'no_cv'
   | 'withdrawn';
 
+export interface MatchBreakdownItem {
+  key: string;
+  label: string;
+  maxScore: number;
+  score: number;
+  note: string;
+}
+
 export interface EligibilityMeta {
   required?: number;
   score?: number;
+  reasoning?: string | null;
+  breakdown?: MatchBreakdownItem[];
   jobTitle?: string;
   companyName?: string;
 }

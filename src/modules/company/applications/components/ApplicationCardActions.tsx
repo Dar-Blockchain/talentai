@@ -12,6 +12,7 @@ import {
   DropdownMenuItem,
   DropdownMenuSeparator,
 } from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "@/modules/shared/ui/shadcn/hover-card";
 import { MoreOptionsMenu } from "@/modules/shared/ui/MoreOptionsMenu";
 
 const TEAL   = "#0D9488";
@@ -177,8 +178,39 @@ const ApplicationCardActions = memo<ApplicationCardActionsProps>(({
   return (
     <>
       {/* Score circles */}
-      <div className="flex gap-5 shrink-0">
-        <ScoreCircle value={app.matchScore}     label={t("pages.applications.actions.score_match")} />
+      <div className="flex gap-5 shrink-0" onClick={stopProp}>
+        {app.matchReasoning ? (
+          <HoverCard openDelay={150} closeDelay={100}>
+            <HoverCardTrigger asChild>
+              <div>
+                <ScoreCircle value={app.matchScore} label={t("pages.applications.actions.score_match")} />
+              </div>
+            </HoverCardTrigger>
+            <HoverCardContent align="start" className="w-80">
+              <p className="mb-1.5 text-[10px] font-bold uppercase tracking-wide text-slate-400">
+                {t("pages.applications.actions.match_reasoning_title", "Why this score")}
+              </p>
+              <p className="text-[12px] leading-relaxed text-slate-600">{app.matchReasoning}</p>
+              {!!app.matchBreakdown?.length && (
+                <>
+                  <div className="my-2.5 h-px bg-slate-100" />
+                  <div className="flex flex-col gap-1">
+                    {app.matchBreakdown.map((b) => (
+                      <div key={b.key} className="flex items-center justify-between gap-2">
+                        <span className="truncate text-[11px] text-slate-500">{b.label}</span>
+                        <span className="shrink-0 text-[11px] font-semibold tabular-nums text-slate-700">
+                          {b.score}/{b.maxScore}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              )}
+            </HoverCardContent>
+          </HoverCard>
+        ) : (
+          <ScoreCircle value={app.matchScore} label={t("pages.applications.actions.score_match")} />
+        )}
         <ScoreCircle value={app.interviewScore} label={t("pages.applications.actions.score_interview")} />
       </div>
 

@@ -71,6 +71,13 @@ Step 7 — Apply the recommendation threshold:
   30–49  → "Non retenu"
    0–29  → "Hors profil"
 
+Step 8 — Write the two reasoning fields:
+  - Both fields must be grounded in the SAME breakdown criteria — don't introduce claims not reflected in a criterion's note.
+  - "reasoning": third person ("The candidate..."/"Their..."), written for a RECRUITER reading about someone else's application.
+  - "candidateReasoning": second person ("You..."/"Your..."), written to be read directly BY the candidate. Same underlying facts as "reasoning", reframed as direct, constructive feedback. Never say "the candidate" — always "you"/"your". Keep it encouraging even when the score is low; state gaps factually without being harsh.
+  - Both must name at least 2 specific breakdown criteria (by label) or concrete skills/experience details — never generic filler like "good overall profile" or "some gaps exist" without specifics.
+  - Both must be internally consistent with "recommendation" and "matchScore" — a "Non retenu" recommendation must not read as if it were "Recommandé".
+
 ---
 EXPERIENCE LEVEL EXAMPLES
 
@@ -112,7 +119,8 @@ Return ONLY this JSON — no markdown, no extra text outside the object:
       "note": "<one sentence justification>"
     }
   ],
-  "reasoning": "<2–4 sentences in English: candidate strengths, gaps, and why this recommendation>"
+  "reasoning": "<THIRD PERSON, 2-4 sentences, English. Written for the RECRUITER reading about a candidate. Reference at least 2 of the breakdown criteria by their label — name specific skills/gaps found in resumeText/resumeAnalysis, not generic filler. Must state both a strength and a gap (unless score is at either extreme), and must justify the recommendation tied to the score bands (e.g. 'places them just under the Recommandé threshold because...').>",
+  "candidateReasoning": "<SECOND PERSON, 2-4 sentences, English. Written to be read BY the candidate directly, addressed as 'you'/'your'. Same underlying facts as reasoning (reference the same breakdown criteria by name) but reframed as direct, constructive feedback: what you did well, what's missing or could be stronger, and what it means for this role. Never say 'the candidate' — always 'you'/'your'. Keep it encouraging even when the score is low; state gaps factually without being harsh.>"
 }`;
 };
 

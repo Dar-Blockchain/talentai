@@ -71,6 +71,11 @@ const jobApplicationSchema = new mongoose.Schema(
       default: null,
       description: "Detailed AI reasoning explaining how the match score was computed"
     },
+    candidateReasoning: {
+      type: String,
+      default: null,
+      description: "Second-person AI reasoning written for the candidate, explaining their own match result"
+    },
     matchRecommendation: {
       type: String,
       default: null,

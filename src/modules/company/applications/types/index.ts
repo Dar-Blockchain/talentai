@@ -1,5 +1,13 @@
 // ─── Application summary (list row) ──────────────────────────────────────────
 
+export interface MatchBreakdownItem {
+  key: string;
+  label: string;
+  score: number;
+  maxScore: number;
+  note: string;
+}
+
 export interface ApplicationSummaryItem {
   id: string;
   candidateUserId: string | null;
@@ -8,6 +16,8 @@ export interface ApplicationSummaryItem {
   email: string | null;
   userImage: string | null;
   matchScore: number | null;
+  matchReasoning?: string | null;
+  matchBreakdown?: MatchBreakdownItem[];
   interviewScore: number | null;
   appliedAt: string | null;
   completedAt: string | null;
@@ -21,6 +31,11 @@ export interface ApplicationSummaryItem {
   /** Where the candidate said they saw the job post link. `detail` holds the free-text value when `type` is 'other'. */
   source?: { type: string; detail?: string | null } | null;
 }
+
+// ─── Everything below this line is currently unused (verified via grep — no
+// imports outside this file) and appears to be leftover from an earlier
+// version of the assessment page. Not cleaned up as part of this change;
+// flagged so it doesn't look like it's wired to something it isn't. ─────────
 
 // ─── CV / Profile shapes ──────────────────────────────────────────────────────
 
@@ -114,16 +129,6 @@ export interface InterviewData {
 export interface InterviewAssessment {
   _id?: string;
   interviewData?: InterviewData;
-}
-
-// ─── Match breakdown ──────────────────────────────────────────────────────────
-
-export interface MatchBreakdownItem {
-  key: string;
-  label: string;
-  score: number;
-  maxScore: number;
-  note: string;
 }
 
 // ─── Job post ─────────────────────────────────────────────────────────────────
