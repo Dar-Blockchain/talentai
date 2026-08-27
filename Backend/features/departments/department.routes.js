@@ -5,8 +5,9 @@ const { validateCreate, validateUpdate } = require("./department.validation");
 const { requireAuth }      = require("../../middleware/security/auth.middleware");
 const { controledAcces }   = require("../../middleware/authorize.middleware");
 const authLogMiddleware    = require("../../middleware/security/request-log.middleware");
+const resolveCompanyActor  = require("../../middleware/resolve-company-actor.middleware");
 
-router.use(requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("Department"));
+router.use(requireAuth, controledAcces(["Company", "Employee"]), authLogMiddleware("Department"), resolveCompanyActor);
 
 /**
  * @openapi

@@ -424,7 +424,7 @@ module.exports.getCompanyInvitations = async (ownerId) => {
  * @returns {Object} Statistics object with total count
  */
 module.exports.getInvitationStatsByCompany = async (companyId) => {
-  const total = await CompanyInvitationModel.countDocuments({ company: companyId });
+  const total = await CompanyInvitationModel.countDocuments({ company: companyId, status: "pending" });
   return { total };
 };
 

@@ -147,6 +147,43 @@ module.exports.getMembershipStats = async (req, res) => {
   }
 };
 
+// Get member count grouped by role
+module.exports.getRoleStats = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const stats = await CompanyMembershipService.getRoleStats(companyId);
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// Get recent member activity feed (joins, posts created, campaigns created)
+module.exports.getRecentActivity = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const limit = Math.min(parseInt(req.query.limit, 10) || 10, 100);
+    const stats = await CompanyMembershipService.getRecentActivity(companyId, limit);
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
+// Get active-employee permissions matrix (paged, searchable)
+module.exports.getPermissionsMatrix = async (req, res) => {
+  try {
+    const companyId = req.user._id;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 50);
+    const search = (req.query.search || "").trim();
+    const stats = await CompanyMembershipService.getPermissionsMatrix(companyId, page, limit, search);
+    res.json({ success: true, data: stats });
+  } catch (error) {
+    res.status(400).json({ success: false, message: error.message });
+  }
+};
+
 // Get membership by userId
 module.exports.getMembershipByUserId = async (req, res) => {
   try {

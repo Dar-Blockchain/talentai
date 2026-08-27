@@ -129,9 +129,9 @@
       "interviews_count": "Entretiens terminés",
       "active_job_posts": "Offres actives",
       "applicants": "Candidats",
-      "campaigns": "Campagnes",
       "departments": "Départements",
-      "team_members": "Membres de l'équipe",
+      "team_members": "Membres confirmés",
+      "pending_invitations": "Invitations en attente",
       "no_interviews_yet": "Aucun entretien",
       "no_posts_yet": "Aucune offre"
     },
@@ -252,23 +252,53 @@
     "not_started": "Non commencé"
   },
   "team": {
-    "growth": {
-      "title": "Croissance de l'équipe",
-      "subtitle": "Nouveaux membres au cours des 30 derniers jours",
-      "total_members": "Membres au total",
-      "pending_invitations": "Invitations en attente",
-      "new_members": "Nouveaux membres",
-      "no_data": "Aucun nouveau membre sur cette période"
-    },
     "by_department": {
       "title": "Membres par département",
       "subtitle": "Répartition des effectifs par département",
       "members": "Membres",
-      "empty": "Aucun département pour l'instant"
+      "empty": "Aucun département pour l'instant",
+      "show_all": "Voir tout ({{count}})",
+      "show_less": "Voir moins"
     },
     "campaign_status": {
       "title": "Répartition des campagnes",
       "subtitle": "Campagnes internes par statut"
+    },
+    "recent_activity": {
+      "title": "Activité récente",
+      "subtitle": "Dernières activités des membres, offres et campagnes",
+      "empty": "Aucune activité récente",
+      "member_joined": "a rejoint l'équipe",
+      "post_created": "a créé une offre",
+      "post_edited": "a modifié une offre",
+      "department_created": "a créé un département",
+      "department_edited": "a modifié un département",
+      "campaign_created": "a créé une campagne",
+      "show_all": "Voir tout"
+    },
+    "roles_breakdown": {
+      "title": "Répartition par rôle",
+      "subtitle": "Membres de l'équipe par rôle",
+      "other": "Autre",
+      "empty": "Aucun membre pour l'instant",
+      "show_more": "+{{count}} rôles supplémentaires",
+      "show_less": "Voir moins"
+    },
+    "pending_invitations": {
+      "title": "Invitations en attente",
+      "subtitle": "Invitations pas encore acceptées",
+      "empty": "Aucune invitation en attente",
+      "show_all": "Voir tout ({{count}})",
+      "expired": "Expirée",
+      "expires_hours": "{{count}}h restantes",
+      "expires_days": "{{count}}j restants"
+    },
+    "permissions_matrix": {
+      "title": "Matrice des permissions",
+      "subtitle": "Couverture des accès par catégorie, par employé",
+      "show_all": "Voir tout ({{count}})",
+      "empty": "Aucun employé pour l'instant",
+      "employee": "Employé"
     }
   },
   "campaigns_dashboard": {
@@ -357,6 +387,77 @@
       "loading": "Chargement…",
       "sort": "Trier",
       "settings": "Paramètres"
+    },
+    "team_activity": {
+      "title": "Activité de l'équipe",
+      "subtitle": "Toutes les actions récentes des membres, offres et campagnes",
+      "load_more": "Charger plus",
+      "loading": "Chargement…",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier",
+      "category": {
+        "members": "Membres",
+        "posts": "Offres",
+        "departments": "Départements",
+        "campaigns": "Campagnes"
+      }
+    },
+    "permissions_matrix": {
+      "title": "Matrice des permissions",
+      "subtitle": "Couverture des accès par catégorie, pour chaque employé",
+      "search_placeholder": "Rechercher par nom ou email…",
+      "no_results": "Aucun employé ne correspond à votre recherche",
+      "role": "Rôle",
+      "page_of": "Page {{page}} sur {{pages}} · {{total}} employés",
+      "category": {
+        "jobPosts": "Offres d'emploi",
+        "candidates": "Candidats",
+        "matching": "Matching",
+        "hrAgents": "Agents RH",
+        "team": "Gestion d'équipe",
+        "campaigns": "Campagnes",
+        "departments": "Départements",
+        "settings": "Paramètres"
+      },
+      "category_short": {
+        "jobPosts": "Offres",
+        "candidates": "Cand.",
+        "matching": "Match",
+        "hrAgents": "RH",
+        "team": "Équipe",
+        "campaigns": "Camp.",
+        "departments": "Dépt.",
+        "settings": "Param."
+      },
+      "flag": {
+        "canViewJobPosts": "Voir les offres d'emploi",
+        "canCreateJobPosts": "Créer des offres d'emploi",
+        "canViewCandidates": "Voir les candidats",
+        "canViewInterviewResults": "Voir les résultats d'entretien",
+        "canContactCandidates": "Contacter les candidats",
+        "canAccessMatching": "Accéder au matching IA",
+        "canUseHRAgents": "Utiliser les agents RH",
+        "canManageTeam": "Gérer l'équipe",
+        "canInviteMembers": "Inviter des membres",
+        "canAssignRoles": "Attribuer des rôles",
+        "canRemoveEmployee": "Retirer un employé",
+        "canUpdateEmployeeDepartment": "Modifier le département d'un employé",
+        "canManagePermissions": "Gérer les permissions",
+        "canViewCampaigns": "Voir les campagnes",
+        "canCreateCampaign": "Créer une campagne",
+        "canEditCampaign": "Modifier une campagne",
+        "canDeleteCampaign": "Supprimer une campagne",
+        "canPublishCampaign": "Publier une campagne",
+        "canViewDepartments": "Voir les départements",
+        "canCreateDepartment": "Créer un département",
+        "canEditDepartment": "Modifier un département",
+        "canDeleteDepartment": "Supprimer un département",
+        "canViewCompanyProfile": "Voir le profil de l'entreprise",
+        "canEditCompanyProfile": "Modifier le profil de l'entreprise",
+        "canManageSettings": "Gérer les paramètres",
+        "canManageBilling": "Gérer la facturation",
+        "canManageIntegrations": "Gérer les intégrations"
+      }
     },
     "kpi": {
       "title": "Tableau de bord KPI",

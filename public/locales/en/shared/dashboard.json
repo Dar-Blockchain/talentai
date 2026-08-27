@@ -129,9 +129,9 @@
       "interviews_count": "Interviews Completed",
       "active_job_posts": "Active Job Posts",
       "applicants": "Applicants",
-      "campaigns": "Campaigns",
       "departments": "Departments",
-      "team_members": "Team Members",
+      "team_members": "Confirmed Members",
+      "pending_invitations": "Pending Invitations",
       "no_interviews_yet": "No interviews yet",
       "no_posts_yet": "No posts yet"
     },
@@ -252,23 +252,53 @@
     "not_started": "Not Started"
   },
   "team": {
-    "growth": {
-      "title": "Team Growth",
-      "subtitle": "New members over the last 30 days",
-      "total_members": "Total members",
-      "pending_invitations": "Pending invitations",
-      "new_members": "New members",
-      "no_data": "No new members in this period"
-    },
     "by_department": {
       "title": "Members per Department",
       "subtitle": "Headcount distribution across departments",
       "members": "Members",
-      "empty": "No departments yet"
+      "empty": "No departments yet",
+      "show_all": "Show all ({{count}})",
+      "show_less": "Show less"
     },
     "campaign_status": {
       "title": "Campaign Status Breakdown",
       "subtitle": "Internal campaigns by status"
+    },
+    "recent_activity": {
+      "title": "Recent Activity",
+      "subtitle": "Latest member, post and campaign activity",
+      "empty": "No recent activity",
+      "member_joined": "joined the team",
+      "post_created": "created a post",
+      "post_edited": "edited a post",
+      "department_created": "created a department",
+      "department_edited": "edited a department",
+      "campaign_created": "created a campaign",
+      "show_all": "Show all"
+    },
+    "roles_breakdown": {
+      "title": "Roles Breakdown",
+      "subtitle": "Team members by role",
+      "other": "Other",
+      "empty": "No members yet",
+      "show_more": "+{{count}} more roles",
+      "show_less": "Show less"
+    },
+    "pending_invitations": {
+      "title": "Pending Invitations",
+      "subtitle": "Invites not yet accepted",
+      "empty": "No pending invitations",
+      "show_all": "Show all ({{count}})",
+      "expired": "Expired",
+      "expires_hours": "{{count}}h left",
+      "expires_days": "{{count}}d left"
+    },
+    "permissions_matrix": {
+      "title": "Permissions Matrix",
+      "subtitle": "Access coverage by category, per employee",
+      "show_all": "Show all ({{count}})",
+      "empty": "No employees yet",
+      "employee": "Employee"
     }
   },
   "campaigns_dashboard": {
@@ -357,6 +387,77 @@
       "loading": "Loading…",
       "sort": "Sort",
       "settings": "Settings"
+    },
+    "team_activity": {
+      "title": "Team Activity",
+      "subtitle": "Every recent member, post and campaign action",
+      "load_more": "Load more",
+      "loading": "Loading…",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "category": {
+        "members": "Members",
+        "posts": "Posts",
+        "departments": "Departments",
+        "campaigns": "Campaigns"
+      }
+    },
+    "permissions_matrix": {
+      "title": "Permissions Matrix",
+      "subtitle": "Access coverage by category, across every employee",
+      "search_placeholder": "Search by name or email…",
+      "no_results": "No employees match your search",
+      "role": "Role",
+      "page_of": "Page {{page}} of {{pages}} · {{total}} employees",
+      "category": {
+        "jobPosts": "Job Posts",
+        "candidates": "Candidates",
+        "matching": "Matching",
+        "hrAgents": "HR Agents",
+        "team": "Team Management",
+        "campaigns": "Campaigns",
+        "departments": "Departments",
+        "settings": "Settings"
+      },
+      "category_short": {
+        "jobPosts": "Posts",
+        "candidates": "Cand.",
+        "matching": "Match",
+        "hrAgents": "HR",
+        "team": "Team",
+        "campaigns": "Camp.",
+        "departments": "Dept.",
+        "settings": "Set."
+      },
+      "flag": {
+        "canViewJobPosts": "View Job Posts",
+        "canCreateJobPosts": "Create Job Posts",
+        "canViewCandidates": "View Candidates",
+        "canViewInterviewResults": "View Interview Results",
+        "canContactCandidates": "Contact Candidates",
+        "canAccessMatching": "Access AI Matching",
+        "canUseHRAgents": "Use HR Agents",
+        "canManageTeam": "Manage Team",
+        "canInviteMembers": "Invite Members",
+        "canAssignRoles": "Assign Roles",
+        "canRemoveEmployee": "Remove Employee",
+        "canUpdateEmployeeDepartment": "Update Employee Department",
+        "canManagePermissions": "Manage Permissions",
+        "canViewCampaigns": "View Campaigns",
+        "canCreateCampaign": "Create Campaign",
+        "canEditCampaign": "Edit Campaign",
+        "canDeleteCampaign": "Delete Campaign",
+        "canPublishCampaign": "Publish Campaign",
+        "canViewDepartments": "View Departments",
+        "canCreateDepartment": "Create Department",
+        "canEditDepartment": "Edit Department",
+        "canDeleteDepartment": "Delete Department",
+        "canViewCompanyProfile": "View Company Profile",
+        "canEditCompanyProfile": "Edit Company Profile",
+        "canManageSettings": "Manage Settings",
+        "canManageBilling": "Manage Billing",
+        "canManageIntegrations": "Manage Integrations"
+      }
     },
     "kpi": {
       "title": "KPI Dashboard",

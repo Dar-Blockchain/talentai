@@ -1,4 +1,5 @@
 import React, { memo, useState, useCallback, useMemo, useRef } from "react";
+import { useRouter } from "next/router";
 import { Users, Mail } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import EmployeeCard from "./EmployeeCard";
@@ -116,7 +117,13 @@ const EmployeesList: React.FC<EmployeesListProps> = memo(({
   total, page, pageSize, onPageChange,
 }) => {
   const { t } = useTranslation("dashboard");
-  const [tab, setTab] = useState<"employees" | "invitations">("employees");
+  const router = useRouter();
+  // Lets a link elsewhere in the app (e.g. the dashboard's Pending
+  // Invitations widget) open straight to the Invitations tab via
+  // /company/employees?tab=invitations, instead of always defaulting here.
+  const [tab, setTab] = useState<"employees" | "invitations">(
+    router.query.tab === "invitations" ? "invitations" : "employees",
+  );
   const handleTabChange = useCallback((id: "employees" | "invitations") => setTab(id), []);
   const panelRef = useRef<HTMLDivElement>(null);
 

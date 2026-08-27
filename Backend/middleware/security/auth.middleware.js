@@ -63,6 +63,12 @@ const requireAuthUser = async (req, res, next) => {
   if (!user)   return res.status(401).json({ code: "TOKEN_INVALID", message: "Invalid or expired token" });
 
   req.user = user;
+  // The real logged-in identity, captured before resolveCompanyActor (if the
+  // route applies it) overwrites req.user with the company account below.
+  // Controllers that need to attribute an action to the specific person
+  // (createdBy/updatedBy/invitedBy) read req.actualUser first, falling back
+  // to req.user for company-direct logins where the two are the same.
+  req.actualUser = user;
 
   // Company context — only when token carries a companyId and it differs from the user
   if (decoded.companyId && decoded.companyId !== decoded.id) {
@@ -150,6 +156,7 @@ const requireAuth = async (req, res, next) => {
       req.apiKeyId     = apiKeyDoc._id;
       req.userId       = apiKeyDoc.userId.toString();
       req.user         = user;
+      req.actualUser   = user;
 
       // Fire-and-forget lastUsed update — does not block the response
       ApiKey.updateOne({ _id: apiKeyDoc._id }, { lastUsed: new Date() }).catch(() => {});

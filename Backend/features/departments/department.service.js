@@ -98,7 +98,7 @@ exports.getDepartmentStats = async (companyId) => {
   ]);
   const countMap = Object.fromEntries(memberCounts.map(({ _id, count }) => [_id.toString(), count]));
   const byDepartment = depts
-    .map((d) => ({ name: d.name.length > 16 ? d.name.slice(0, 16) + "…" : d.name, members: countMap[d._id.toString()] || 0 }))
+    .map((d) => ({ name: d.name, members: countMap[d._id.toString()] || 0 }))
     .sort((a, b) => b.members - a.members)
     .slice(0, 8);
 

@@ -5,7 +5,7 @@ import { useQuery } from "@tanstack/react-query";
 import axiosInstance from "@/utils/axiosInstance";
 import { StatCard } from "./KpiAtoms";
 import {
-  Megaphone as CampaignOutlined,
+  Mail as MailOutlined,
   Network as AccountTreeOutlined,
   Users as GroupsOutlined,
 } from "lucide-react";
@@ -14,32 +14,21 @@ const STALE = 60_000;
 const sel       = (r: any) => r.data?.data ?? r.data;
 const selMember = (r: any) => r.data?.stats ?? r.data?.data ?? r.data;
 
-const fetchCampaignMetrics = () => axiosInstance.get("internal-campaigns/metrics").then(sel);
 const fetchDepartmentStats = () => axiosInstance.get("departments/stats").then(sel);
 const fetchMemberStats     = () => axiosInstance.get("company-memberships/memberships/stats").then(selMember);
 
 const TeamStatCards = memo(() => {
   const { t } = useTranslation("dashboard");
 
-  const { data: campMet,  isLoading: l0 } = useQuery({ queryKey: ["statCards", "campaigns"],   queryFn: fetchCampaignMetrics, staleTime: STALE });
   const { data: deptStat, isLoading: l1 } = useQuery({ queryKey: ["statCards", "departments"], queryFn: fetchDepartmentStats, staleTime: STALE });
   const { data: membStat, isLoading: l2 } = useQuery({ queryKey: ["statCards", "members"],     queryFn: fetchMemberStats,     staleTime: STALE });
-
-  const campaignValue = (
-    <span className="flex items-baseline gap-1.5">
-      <span>{campMet?.total ?? 0}</span>
-      {(campMet?.active ?? 0) > 0 && (
-        <span className="text-[13px] text-emerald-500 font-bold leading-none">+{campMet!.active}</span>
-      )}
-    </span>
-  );
 
   return (
     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
       <StatCard
         icon={GroupsOutlined}
         color="#A855F7" bg="#FDF4FF"
-        loading={l2} value={membStat?.total ?? 0}
+        loading={l2} value={membStat?.memberships?.total ?? 0}
         label={t("overview.stat.team_members")}
         href="/company/employees"
       />
@@ -51,11 +40,11 @@ const TeamStatCards = memo(() => {
         href="/company/departments"
       />
       <StatCard
-        icon={CampaignOutlined}
-        color="#F59E0B" bg="#FFFBEB"
-        loading={l0} value={campaignValue}
-        label={t("overview.stat.campaigns")}
-        href="/company/campaigns"
+        icon={MailOutlined}
+        color="#D97706" bg="#FFFBEB"
+        loading={l2} value={membStat?.invitations?.total ?? 0}
+        label={t("overview.stat.pending_invitations")}
+        href="/company/employees?tab=invitations"
       />
     </div>
   );

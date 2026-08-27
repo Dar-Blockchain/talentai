@@ -27,6 +27,68 @@ router.get(
 
 /**
  * @openapi
+ * /company-memberships/memberships/roles-stats:
+ *   get:
+ *     tags: [Company Memberships]
+ *     summary: Member count grouped by role
+ *     responses:
+ *       200:
+ *         description: Role breakdown
+ */
+router.get(
+  "/memberships/roles-stats",
+  resolveCompanyActor,
+  CompanyMembershipController.getRoleStats,
+);
+
+/**
+ * @openapi
+ * /company-memberships/memberships/recent-activity:
+ *   get:
+ *     tags: [Company Memberships]
+ *     summary: Recent member activity (joins, posts created, campaigns created)
+ *     parameters:
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 10 }
+ *     responses:
+ *       200:
+ *         description: Recent activity feed
+ */
+router.get(
+  "/memberships/recent-activity",
+  resolveCompanyActor,
+  CompanyMembershipController.getRecentActivity,
+);
+
+/**
+ * @openapi
+ * /company-memberships/memberships/permissions-matrix:
+ *   get:
+ *     tags: [Company Memberships]
+ *     summary: Active-employee permissions matrix (paged, searchable), collapsed to per-category coverage
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema: { type: integer, default: 1 }
+ *       - in: query
+ *         name: limit
+ *         schema: { type: integer, default: 20 }
+ *       - in: query
+ *         name: search
+ *         schema: { type: string }
+ *     responses:
+ *       200:
+ *         description: Permissions matrix
+ */
+router.get(
+  "/memberships/permissions-matrix",
+  resolveCompanyActor,
+  CompanyMembershipController.getPermissionsMatrix,
+);
+
+/**
+ * @openapi
  * /company-memberships/memberships:
  *   get:
  *     tags: [Company Memberships]

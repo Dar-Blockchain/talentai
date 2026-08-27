@@ -26,7 +26,7 @@ const CompanyDashboard: NextPageWithLayout = () => {
 
   return (
     <div className="max-w-[1440px] mx-auto flex flex-col gap-4 sm:gap-6">
-      {/* <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as DashboardTab)}>
+      <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as DashboardTab)}>
         <TabsList variant="line" className="h-9 gap-1 p-0">
           <TabsTrigger value="hiring" className={TAB_TRIGGER_CN}>
             <Target size={14} /> Hiring
@@ -38,7 +38,7 @@ const CompanyDashboard: NextPageWithLayout = () => {
             <BarChart3 size={14} /> Campaigns
           </TabsTrigger>
         </TabsList>
-      </Tabs> */}
+      </Tabs>
 
       {activeTab === "hiring" ? (
         <HiringDashboardContent />
