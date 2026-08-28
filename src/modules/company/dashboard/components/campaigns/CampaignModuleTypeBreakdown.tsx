@@ -2,6 +2,7 @@
 import React, { memo, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { PieChart, Pie, Cell, Tooltip as RechartsTooltip, ResponsiveContainer } from "recharts";
 import { KpiCard } from "../KpiAtoms";
 import { useCampaignsAnalytics } from "../../hooks/useCampaignsAnalytics";
@@ -54,7 +55,15 @@ const CampaignModuleTypeBreakdown = memo(() => {
   const isEmpty = rows.length === 0;
 
   return (
-    <KpiCard title={t("campaigns_dashboard.module_types.title", "Campaigns by Module Type")} subtitle={t("campaigns_dashboard.module_types.subtitle", "Distribution of module types across campaigns")}>
+    <KpiCard
+      title={t("campaigns_dashboard.module_types.title", "Campaigns by Module Type")}
+      subtitle={t("campaigns_dashboard.module_types.subtitle", "Distribution of module types across campaigns")}
+      headerFilter={!isEmpty && (
+        <Badge variant="outline" className="text-[11px] font-bold text-slate-500 border-slate-200 bg-slate-50">
+          {total}
+        </Badge>
+      )}
+    >
       {isLoading ? (
         <div className="flex items-center gap-5">
           <Skeleton className="size-[140px] rounded-full shrink-0" />
@@ -63,7 +72,7 @@ const CampaignModuleTypeBreakdown = memo(() => {
           </div>
         </div>
       ) : isEmpty ? (
-        <div className="h-[180px] flex items-center justify-center">
+        <div className="h-[180px] flex items-center justify-center rounded-2xl border border-slate-100 bg-white">
           <span className="text-[0.82rem] text-slate-400">{t("campaigns_dashboard.module_types.empty", "No campaigns yet")}</span>
         </div>
       ) : (

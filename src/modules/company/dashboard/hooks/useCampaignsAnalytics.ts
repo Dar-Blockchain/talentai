@@ -9,6 +9,7 @@ export interface CampaignRecentActivityItem {
   campaignTitle: string;
   moduleType: "QUESTIONNAIRE" | "AI_INTERVIEW" | "SKILL_TEST" | "TRAINING_PATH" | null;
   participantName: string;
+  participantUserId: string | null;
   completedAt: string;
   score: number | null;
 }
@@ -23,6 +24,7 @@ export interface CampaignsAnalytics {
   };
   participants: {
     total: number;
+    notStarted: number;
     completed: number;
     inProgress: number;
     invited: number;

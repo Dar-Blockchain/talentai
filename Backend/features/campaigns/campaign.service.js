@@ -174,7 +174,7 @@ exports.getCampaignAnalytics = async (companyId) => {
       return {
         totalCampaigns: 0,
         moduleTypes: moduleTypeCounts,
-        participants: { total: 0, completed: 0, inProgress: 0, invited: 0, dropped: 0, completionRate: 0 },
+        participants: { total: 0, notStarted: 0, completed: 0, inProgress: 0, invited: 0, dropped: 0, completionRate: 0 },
         avgScore: null,
         trend: buildEmptyTrend(),
         recentActivity: [],
@@ -234,6 +234,7 @@ exports.getCampaignAnalytics = async (companyId) => {
         campaignTitle: p.campaign?.title ?? "—",
         moduleType: p.campaign?.module?.type ?? p.moduleProgress?.moduleType ?? null,
         participantName,
+        participantUserId: p.employee?._id ? p.employee._id.toString() : null,
         completedAt: p.completedAt,
         score,
       };
@@ -244,6 +245,7 @@ exports.getCampaignAnalytics = async (companyId) => {
       moduleTypes: moduleTypeCounts,
       participants: {
         total: totalParticipants,
+        notStarted: participantStatus.NOT_STARTED,
         completed: participantStatus.COMPLETED,
         inProgress: participantStatus.IN_PROGRESS,
         invited: participantStatus.INVITED,
@@ -257,6 +259,118 @@ exports.getCampaignAnalytics = async (companyId) => {
   } catch (error) {
     throw new Error(`Error getting campaign analytics: ${error.message}`);
   }
+};
+
+// Paginated version of getCampaignAnalytics's recentActivity slice — that one
+// caps at 8 as part of a larger analytics bundle; this is the "Show all"
+// destination for a company with more completions than fit there.
+exports.getRecentCompletions = async (companyId, page = 1, limit = 20) => {
+  try {
+    const companyObjId = new mongoose.Types.ObjectId(companyId);
+    const campaigns = await InternalCampaign.find({ company: companyObjId }).select("_id").lean();
+    const campaignIds = campaigns.map((c) => c._id);
+
+    if (campaignIds.length === 0) {
+      return { activity: [], pagination: { total: 0, page, limit, pages: 0 } };
+    }
+
+    const query = { campaign: { $in: campaignIds }, status: "COMPLETED" };
+    const skip = (page - 1) * limit;
+    const [total, recentCompleted] = await Promise.all([
+      CampaignParticipant.countDocuments(query),
+      CampaignParticipant.find(query)
+        .sort({ completedAt: -1 }).skip(skip).limit(limit)
+        .populate({ path: "campaign", select: "title module" })
+        .populate({ path: "employee", select: "firstName lastName email" })
+        .populate({ path: "moduleProgress.responseRef", select: "aiScore testResults moduleType" })
+        .lean(),
+    ]);
+
+    const activity = recentCompleted.map((p) => {
+      const response = p.moduleProgress?.responseRef;
+      const score = response?.aiScore ?? response?.testResults?.score ?? null;
+      const participantName = p.employee
+        ? [p.employee.firstName, p.employee.lastName].filter(Boolean).join(" ") || p.employee.email
+        : (p.providerName || p.email || "Anonymous participant");
+      return {
+        id: p._id.toString(),
+        campaignId: p.campaign?._id?.toString() ?? null,
+        campaignTitle: p.campaign?.title ?? "—",
+        moduleType: p.campaign?.module?.type ?? p.moduleProgress?.moduleType ?? null,
+        participantName,
+        participantUserId: p.employee?._id ? p.employee._id.toString() : null,
+        completedAt: p.completedAt,
+        score,
+      };
+    });
+
+    return { activity, pagination: { total, page, limit, pages: Math.ceil(total / limit) } };
+  } catch (error) {
+    throw new Error(`Error getting recent completions: ${error.message}`);
+  }
+};
+
+const COMPLETIONS_ALLOWED_DAY_VALUES = [7, 14, 30];
+const COMPLETIONS_ALLOWED_MONTH_VALUES = [3, 6, 9, 12, 24, 36]; // 24/36 = "Year" tab at 2/3 years (12 * N)
+
+function normalizeCompletionsRange(unit, value) {
+  if (unit === "day" && COMPLETIONS_ALLOWED_DAY_VALUES.includes(value)) return { unit: "day", value };
+  if (unit === "month" && COMPLETIONS_ALLOWED_MONTH_VALUES.includes(value)) return { unit: "month", value };
+  return { unit: "day", value: 30 };
+}
+
+// Simple bar-chart-friendly completions count, bucketed by day or month with
+// a selectable range (mirrors the day/month range-filter pattern already
+// used elsewhere in this app, e.g. the hours/cost comparison KPIs) — the
+// "Years" UI tab just asks for a bigger month count (see toApiRange on the
+// frontend), there's no separate year bucketing here.
+exports.getCompletionsTrend = async (companyId, unit = "day", value = 30) => {
+  ({ unit, value } = normalizeCompletionsRange(unit, value));
+  const companyObjId = new mongoose.Types.ObjectId(companyId);
+  const campaigns = await InternalCampaign.find({ company: companyObjId }).select("_id").lean();
+  const campaignIds = campaigns.map((c) => c._id);
+
+  const now = new Date();
+  const buckets = [];
+  if (unit === "day") {
+    for (let i = value - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - i);
+      buckets.push({ key: `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`, label: d.toLocaleString("en", { month: "short", day: "numeric" }), count: 0 });
+    }
+  } else {
+    for (let i = value - 1; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      const label = value > 12
+        ? `${d.toLocaleString("en", { month: "short" })} '${String(d.getFullYear()).slice(-2)}`
+        : d.toLocaleString("en", { month: "short" });
+      buckets.push({ key: `${d.getFullYear()}-${d.getMonth()}`, label, count: 0 });
+    }
+  }
+
+  if (campaignIds.length === 0) {
+    return { trend: buckets.map(({ label, count }) => ({ period: label, count })), unit, value };
+  }
+
+  const rangeStart = unit === "day"
+    ? new Date(now.getFullYear(), now.getMonth(), now.getDate() - (value - 1))
+    : new Date(now.getFullYear(), now.getMonth() - (value - 1), 1);
+  const keyOf = unit === "day"
+    ? (d) => `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`
+    : (d) => `${d.getFullYear()}-${d.getMonth()}`;
+
+  const byKey = {};
+  buckets.forEach((b) => { byKey[b.key] = b; });
+
+  const completed = await CampaignParticipant.find({
+    campaign: { $in: campaignIds }, status: "COMPLETED", completedAt: { $gte: rangeStart },
+  }).select("completedAt").lean();
+
+  completed.forEach((p) => {
+    const bucket = byKey[keyOf(new Date(p.completedAt))];
+    if (bucket) bucket.count += 1;
+  });
+
+  return { trend: buckets.map(({ label, count }) => ({ period: label, count })), unit, value };
 };
 
 function buildEmptyTrend() {
@@ -317,10 +431,14 @@ exports.getCampaignsOverviewTable = async (companyId, page = 1, limit = 6, sortB
     let data = campaigns.map((c) => {
       const p = participantMap[String(c._id)] || { total: 0, completed: 0 };
       const avgScore = scoreMap[String(c._id)];
+      // Mirror getCampaignMetrics's reclassification: an ACTIVE campaign past
+      // its deadline reads as EXPIRED, so this table's badges agree with the
+      // stat cards / status breakdown widgets fed by that function.
+      const isPastDeadline = c.status === "ACTIVE" && c.deadline && new Date(c.deadline) < now;
       return {
         id: c._id.toString(),
         title: c.title,
-        status: c.status,
+        status: isPastDeadline ? "EXPIRED" : c.status,
         moduleType: c.module?.type ?? null,
         participants: p.total,
         completed: p.completed,
@@ -352,6 +470,14 @@ exports.getCampaignsOverviewTable = async (companyId, page = 1, limit = 6, sortB
           return 0;
         });
       }
+    } else {
+      // Default order (no column picked by the user): surface the most
+      // important campaigns first instead of pure recency, so a single ACTIVE
+      // campaign isn't pushed off the widget's first page by newer but less
+      // relevant DRAFT/CLOSED ones. Array.prototype.sort is stable, so within
+      // a tier campaigns keep the createdAt-desc order they already had.
+      const STATUS_PRIORITY = { ACTIVE: 0, PAUSED: 1, DRAFT: 2, CLOSED: 3, EXPIRED: 4 };
+      data = data.slice().sort((a, b) => (STATUS_PRIORITY[a.status] ?? 5) - (STATUS_PRIORITY[b.status] ?? 5));
     }
 
     const paged = data.slice(skip, skip + limitNum);

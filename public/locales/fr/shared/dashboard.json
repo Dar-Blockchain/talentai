@@ -306,12 +306,11 @@
       "total_campaigns": "Total campagnes",
       "total_participants": "Total participants",
       "completion_rate": "Taux de complétion",
-      "avg_score": "Score IA moyen",
-      "not_enough_data": "N/A"
+      "active_campaigns": "Campagnes actives"
     },
-    "trend": {
-      "title": "Tendance de complétion",
-      "subtitle": "Complétions de campagnes ces 30 derniers jours",
+    "completions_trend": {
+      "title": "Complétions",
+      "subtitle": "Complétions de campagnes dans le temps",
       "completed": "Terminées",
       "no_data": "Aucune complétion sur cette période"
     },
@@ -332,17 +331,20 @@
       "subtitle": "Dernières complétions de campagnes",
       "empty": "Aucune complétion pour l'instant",
       "score": "Score",
-      "completed_campaign": "Terminé"
+      "completed_campaign": "Terminé",
+      "show_all": "Voir tout"
     },
     "table": {
       "title": "Aperçu des campagnes",
+      "subtitle": "Vos campagnes les plus récentes en un coup d'œil",
       "col_campaign": "Campagne",
       "col_status": "Statut",
       "col_participants": "Participants",
       "col_completion": "Complétion",
       "col_score": "Score moyen",
       "col_deadline": "Échéance",
-      "empty": "Aucune campagne pour l'instant"
+      "empty": "Aucune campagne pour l'instant",
+      "show_all": "Voir tout"
     }
   },
   "sidebar": {
@@ -386,15 +388,21 @@
       "dashboard": "Tableau de bord",
       "loading": "Chargement…",
       "sort": "Trier",
-      "settings": "Paramètres"
+      "settings": "Paramètres",
+      "today": "Aujourd'hui",
+      "yesterday": "Hier"
+    },
+    "campaign_activity": {
+      "title": "Activité des campagnes",
+      "subtitle": "Toutes les complétions récentes de campagnes",
+      "load_more": "Charger plus",
+      "loading": "Chargement…"
     },
     "team_activity": {
       "title": "Activité de l'équipe",
       "subtitle": "Toutes les actions récentes des membres, offres et campagnes",
       "load_more": "Charger plus",
       "loading": "Chargement…",
-      "today": "Aujourd'hui",
-      "yesterday": "Hier",
       "category": {
         "members": "Membres",
         "posts": "Offres",

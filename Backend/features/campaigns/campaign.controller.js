@@ -18,6 +18,8 @@ const {
   getCampaignsByCompanyPaginated,
   getCampaignMetrics,
   getCampaignAnalytics,
+  getRecentCompletions,
+  getCompletionsTrend,
   getCampaignsOverviewTable,
   updateCampaignStatus,
 } = require("./campaign.service");
@@ -340,6 +342,30 @@ exports.getCampaignAnalytics = async (req, res) => {
     const companyId = req.auth?.companyId || req.user._id;
     const analytics = await getCampaignAnalytics(companyId);
     res.status(200).json({ success: true, data: analytics });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.getRecentCompletions = async (req, res) => {
+  try {
+    const companyId = req.auth?.companyId || req.user._id;
+    const page = Math.max(parseInt(req.query.page, 10) || 1, 1);
+    const limit = Math.min(parseInt(req.query.limit, 10) || 20, 50);
+    const result = await getRecentCompletions(companyId, page, limit);
+    res.status(200).json({ success: true, data: result });
+  } catch (error) {
+    res.status(500).json({ success: false, error: error.message });
+  }
+};
+
+exports.getCompletionsTrend = async (req, res) => {
+  try {
+    const companyId = req.auth?.companyId || req.user._id;
+    const unit = req.query.unit === "month" ? "month" : "day";
+    const value = parseInt(req.query.value, 10) || 30;
+    const result = await getCompletionsTrend(companyId, unit, value);
+    res.status(200).json({ success: true, data: result });
   } catch (error) {
     res.status(500).json({ success: false, error: error.message });
   }

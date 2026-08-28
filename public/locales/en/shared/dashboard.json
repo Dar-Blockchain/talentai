@@ -306,12 +306,11 @@
       "total_campaigns": "Total Campaigns",
       "total_participants": "Total Participants",
       "completion_rate": "Completion Rate",
-      "avg_score": "Avg. AI Score",
-      "not_enough_data": "N/A"
+      "active_campaigns": "Active Campaigns"
     },
-    "trend": {
-      "title": "Completion Trend",
-      "subtitle": "Campaign completions over the last 30 days",
+    "completions_trend": {
+      "title": "Completions",
+      "subtitle": "Campaign completions over time",
       "completed": "Completed",
       "no_data": "No completions in this period"
     },
@@ -332,17 +331,20 @@
       "subtitle": "Latest campaign completions",
       "empty": "No completions yet",
       "score": "Score",
-      "completed_campaign": "Completed"
+      "completed_campaign": "Completed",
+      "show_all": "Show all"
     },
     "table": {
       "title": "Campaigns Overview",
+      "subtitle": "Your most recent campaigns at a glance",
       "col_campaign": "Campaign",
       "col_status": "Status",
       "col_participants": "Participants",
       "col_completion": "Completion",
       "col_score": "Avg. Score",
       "col_deadline": "Deadline",
-      "empty": "No campaigns yet"
+      "empty": "No campaigns yet",
+      "show_all": "Show all"
     }
   },
   "sidebar": {
@@ -386,15 +388,21 @@
       "dashboard": "Dashboard",
       "loading": "Loading…",
       "sort": "Sort",
-      "settings": "Settings"
+      "settings": "Settings",
+      "today": "Today",
+      "yesterday": "Yesterday"
+    },
+    "campaign_activity": {
+      "title": "Campaign Activity",
+      "subtitle": "Every recent campaign completion",
+      "load_more": "Load more",
+      "loading": "Loading…"
     },
     "team_activity": {
       "title": "Team Activity",
       "subtitle": "Every recent member, post and campaign action",
       "load_more": "Load more",
       "loading": "Loading…",
-      "today": "Today",
-      "yesterday": "Yesterday",
       "category": {
         "members": "Members",
         "posts": "Posts",

@@ -3,23 +3,20 @@ import React, { memo, useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useRouter } from "next/router";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import { Card } from "@/modules/shared/ui/shadcn/card";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 import {
-  ListChecks as ListChecksOutlined,
   Users as GroupsOutlined,
-  ChevronLeft as ChevronLeftOutlined,
-  ChevronRight as ChevronRightOutlined,
   AlertTriangle as WarningAmberOutlined,
   ArrowUp as ArrowUpOutlined,
   ArrowDown as ArrowDownOutlined,
   ArrowUpDown as ArrowUpDownOutlined,
 } from "lucide-react";
-import { ZoneHeading } from "../KpiAtoms";
+import { KpiCard } from "../KpiAtoms";
 import { MODULE_TYPE_META } from "./moduleTypeMeta";
 import { useCampaignsTable, type CampaignsTableSortColumn } from "../../hooks/useCampaignsTable";
 
-const PAGE_SIZE = 6;
+const WIDGET_LIMIT = 6;
 const SKEL_COLS = [220, 90, 90, 110, 70, 70] as const;
 
 const STATUS_COLORS: Record<string, string> = {
@@ -53,16 +50,11 @@ const CampaignsOverviewTable = memo(() => {
   const { t } = useTranslation("dashboard");
   const router = useRouter();
 
-  const [page, setPage] = useState(1);
   const [sortBy, setSortBy] = useState<CampaignsTableSortColumn | "">("");
   const [sortDir, setSortDir] = useState<"" | "asc" | "desc">("");
 
-  const { data, isLoading } = useCampaignsTable({ page, limit: PAGE_SIZE, sortBy, sortDir });
+  const { data, isLoading } = useCampaignsTable({ page: 1, limit: WIDGET_LIMIT, sortBy, sortDir });
   const rows = data?.data ?? [];
-  const totalPages = data?.pagination.totalPages ?? 1;
-
-  const goPrev = useCallback(() => setPage((p) => Math.max(1, p - 1)), []);
-  const goNext = useCallback(() => setPage((p) => p + 1), []);
 
   const handleSortChange = useCallback((column: CampaignsTableSortColumn) => {
     if (sortBy !== column) {
@@ -74,7 +66,6 @@ const CampaignsOverviewTable = memo(() => {
       setSortBy("");
       setSortDir("");
     }
-    setPage(1);
   }, [sortBy, sortDir]);
 
   const headers = useMemo(() => [
@@ -87,11 +78,23 @@ const CampaignsOverviewTable = memo(() => {
   ], [t]);
 
   return (
-    <>
-      <ZoneHeading icon={ListChecksOutlined} label={t("campaigns_dashboard.table.title", "Campaigns Overview")} color="#0891B2" />
-      <Card className="rounded-2xl overflow-hidden py-0 gap-0">
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[680px] table-fixed">
+    <KpiCard
+      className="h-full overflow-hidden"
+      contentClassName="px-0 pb-0 pt-4"
+      title={t("campaigns_dashboard.table.title", "Campaigns Overview")}
+      subtitle={t("campaigns_dashboard.table.subtitle", "Your most recent campaigns at a glance")}
+      headerFilter={
+        <Button
+          variant="ghost" size="xs"
+          onClick={() => router.push("/company/campaigns")}
+          className="text-[11px] font-semibold text-slate-500 hover:text-slate-700"
+        >
+          {t("campaigns_dashboard.table.show_all", "Show all")}
+        </Button>
+      }
+    >
+      <div className="overflow-x-auto pb-1">
+        <table className="w-full min-w-[680px] table-fixed">
             <colgroup>
               <col className="w-[30%]" />
               <col className="w-[13%]" />
@@ -134,7 +137,7 @@ const CampaignsOverviewTable = memo(() => {
             </thead>
             <tbody>
               {isLoading ? (
-                Array.from({ length: PAGE_SIZE }, (_, i) => <RowSkeleton key={i} />)
+                Array.from({ length: WIDGET_LIMIT }, (_, i) => <RowSkeleton key={i} />)
               ) : rows.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="text-center py-12 text-[13px] text-slate-400">
@@ -204,31 +207,8 @@ const CampaignsOverviewTable = memo(() => {
               )}
             </tbody>
           </table>
-        </div>
-
-        {totalPages > 1 && (
-          <div className="px-4 py-3 border-t border-slate-100 flex items-center justify-between">
-            <span className="text-[12px] font-semibold text-slate-500">{page} / {totalPages}</span>
-            <div className="flex items-center gap-1 shrink-0">
-              <button
-                disabled={page <= 1 || isLoading}
-                onClick={goPrev}
-                className="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center disabled:opacity-35 hover:bg-slate-50 shrink-0 transition-colors"
-              >
-                <ChevronLeftOutlined size={16} />
-              </button>
-              <button
-                disabled={page >= totalPages || isLoading}
-                onClick={goNext}
-                className="w-8 h-8 border border-slate-200 rounded-lg flex items-center justify-center disabled:opacity-35 hover:bg-slate-50 shrink-0 transition-colors"
-              >
-                <ChevronRightOutlined size={16} />
-              </button>
-            </div>
-          </div>
-        )}
-      </Card>
-    </>
+      </div>
+    </KpiCard>
   );
 });
 CampaignsOverviewTable.displayName = "CampaignsOverviewTable";

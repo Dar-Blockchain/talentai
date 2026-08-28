@@ -1,26 +1,15 @@
 "use client";
 import React, { memo } from "react";
+import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
-import { FileText as FileTextOutlined, History as HistoryOutlined } from "lucide-react";
+import { Button } from "@/modules/shared/ui/shadcn/button";
+import { History as HistoryOutlined } from "lucide-react";
 import { KpiCard } from "../KpiAtoms";
 import { useCampaignsAnalytics, type CampaignRecentActivityItem } from "../../hooks/useCampaignsAnalytics";
-import { MODULE_TYPE_META } from "./moduleTypeMeta";
+import { CampaignActivityRow } from "./campaignActivityShared";
 
-const timeAgo = (iso: string): string => {
-  const diffMs = Date.now() - new Date(iso).getTime();
-  const mins = Math.floor(diffMs / 60000);
-  if (mins < 60) return `${Math.max(mins, 0)}m`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h`;
-  const days = Math.floor(hours / 24);
-  return `${days}d`;
-};
-
-const initialsOf = (name: string) => {
-  const parts = name.trim().split(/\s+/);
-  return ((parts[0]?.[0] ?? "") + (parts[1]?.[0] ?? "")).toUpperCase() || "?";
-};
+const WIDGET_LIMIT = 5;
 
 const RowSkeleton = () => (
   <div className="flex items-start gap-3 py-3">
@@ -34,62 +23,38 @@ const RowSkeleton = () => (
 
 const CampaignRecentActivity = memo(() => {
   const { t } = useTranslation("dashboard");
+  const router = useRouter();
   const { data, isLoading } = useCampaignsAnalytics();
-  const items: CampaignRecentActivityItem[] = data?.recentActivity ?? [];
+  const items: CampaignRecentActivityItem[] = (data?.recentActivity ?? []).slice(0, WIDGET_LIMIT);
+  const isEmpty = !isLoading && items.length === 0;
 
   return (
-    <KpiCard title={t("campaigns_dashboard.recent_activity.title", "Recent Activity")} subtitle={t("campaigns_dashboard.recent_activity.subtitle", "Latest campaign completions")}>
+    <KpiCard
+      className="h-full"
+      title={t("campaigns_dashboard.recent_activity.title", "Recent Activity")}
+      subtitle={t("campaigns_dashboard.recent_activity.subtitle", "Latest campaign completions")}
+      headerFilter={!isEmpty && (
+        <Button
+          variant="ghost" size="xs"
+          onClick={() => router.push("/company/campaigns/activity")}
+          className="text-[11px] font-semibold text-slate-500 hover:text-slate-700"
+        >
+          {t("campaigns_dashboard.recent_activity.show_all", "Show all")}
+        </Button>
+      )}
+    >
       {isLoading ? (
         <div className="divide-y divide-slate-100">
           {[0, 1, 2, 3].map((i) => <RowSkeleton key={i} />)}
         </div>
-      ) : items.length === 0 ? (
+      ) : isEmpty ? (
         <div className="h-[180px] flex flex-col items-center justify-center gap-2 text-slate-400">
           <HistoryOutlined size={22} />
           <span className="text-[0.82rem]">{t("campaigns_dashboard.recent_activity.empty", "No completions yet")}</span>
         </div>
       ) : (
         <div className="divide-y divide-slate-100">
-          {items.map((item) => {
-            const meta = item.moduleType ? MODULE_TYPE_META[item.moduleType] : null;
-            const Icon = meta?.icon ?? FileTextOutlined;
-            return (
-              <div key={item.id} className="flex items-start gap-3 py-3 first:pt-0 last:pb-0">
-                <div
-                  className="w-9 h-9 rounded-full flex items-center justify-center font-bold text-[12px] shrink-0"
-                  style={{ background: meta?.bg ?? "#F1F5F9", color: meta?.color ?? "#64748B" }}
-                >
-                  {initialsOf(item.participantName)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-baseline justify-between gap-2">
-                    <span className="font-semibold text-[13px] text-slate-900 truncate">{item.participantName}</span>
-                    <span className="text-[10px] text-slate-400 shrink-0">{timeAgo(item.completedAt)}</span>
-                  </div>
-                  <div className="text-[11.5px] text-slate-400 truncate mt-0.5">
-                    {t("campaigns_dashboard.recent_activity.completed_campaign", "Completed")}{" "}
-                    <span className="text-slate-500 font-medium">{item.campaignTitle}</span>
-                  </div>
-                  <div className="flex items-center flex-wrap gap-x-2 gap-y-1 mt-1.5">
-                    {item.moduleType && (
-                      <span
-                        className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full font-bold text-[10px] whitespace-nowrap"
-                        style={{ background: meta?.bg, color: meta?.color }}
-                      >
-                        <Icon size={11} />
-                        {t(`campaigns_dashboard.module_types.types.${item.moduleType}`)}
-                      </span>
-                    )}
-                    {item.score != null && (
-                      <span className="text-[10px] font-semibold text-emerald-600">
-                        {t("campaigns_dashboard.recent_activity.score", "Score")} {item.score}%
-                      </span>
-                    )}
-                  </div>
-                </div>
-              </div>
-            );
-          })}
+          {items.map((item) => <CampaignActivityRow key={item.id} item={item} />)}
         </div>
       )}
     </KpiCard>

@@ -9,40 +9,9 @@ import type { NextPageWithLayout } from "@/pages/_app";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { fetchRecentActivity, toActivityRows, ActivityCard, type Activity, type ActivityRow } from "@/modules/company/dashboard/components/team/activityShared";
+import { groupByDay } from "@/utils/dayGrouping";
 
 const PAGE_SIZE = 30;
-
-function dayKey(dateStr: string): string {
-  const d = new Date(dateStr);
-  return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
-}
-
-function dayLabel(dateStr: string, t: (key: string, fallback: string) => string, lang: string): string {
-  const d = new Date(dateStr);
-  const now = new Date();
-  const startOf = (dt: Date) => new Date(dt.getFullYear(), dt.getMonth(), dt.getDate()).getTime();
-  const diffDays = Math.round((startOf(now) - startOf(d)) / 86_400_000);
-  if (diffDays === 0) return t("pages.team_activity.today", "Today");
-  if (diffDays === 1) return t("pages.team_activity.yesterday", "Yesterday");
-  return d.toLocaleDateString(lang?.startsWith("fr") ? "fr-FR" : "en-US", {
-    weekday: diffDays < 7 ? "long" : undefined,
-    month: "short", day: "numeric",
-    year: d.getFullYear() !== now.getFullYear() ? "numeric" : undefined,
-  });
-}
-
-// Rows are already sorted newest-first by the backend — bucket them into
-// day groups by walking the list once, no re-sort needed.
-function groupByDay(rows: ActivityRow[], t: (key: string, fallback: string) => string, lang: string) {
-  const groups: { key: string; label: string; rows: ActivityRow[] }[] = [];
-  rows.forEach((row) => {
-    const key = dayKey(row.createdAt);
-    const last = groups[groups.length - 1];
-    if (last && last.key === key) { last.rows.push(row); return; }
-    groups.push({ key, label: dayLabel(row.createdAt, t, lang), rows: [row] });
-  });
-  return groups;
-}
 
 const TeamActivityPage: NextPageWithLayout = () => {
   const { t, i18n } = useTranslation("dashboard");
@@ -57,7 +26,10 @@ const TeamActivityPage: NextPageWithLayout = () => {
 
   const activities: Activity[] = data?.activities ?? [];
   const rows = useMemo(() => toActivityRows(activities, t, i18n.language), [activities, t, i18n.language]);
-  const groups = useMemo(() => groupByDay(rows, t, i18n.language), [rows, t, i18n.language]);
+  const groups = useMemo(
+    () => groupByDay<ActivityRow>(rows, (row) => row.createdAt, t, i18n.language),
+    [rows, t, i18n.language],
+  );
   const isEmpty = !isLoading && rows.length === 0;
   // The feed is capped server-side at 100 — once we've fetched that many and
   // still got a full page back, there's a good chance more exist; once a
@@ -93,7 +65,7 @@ const TeamActivityPage: NextPageWithLayout = () => {
                   <div className="flex-1 h-px bg-slate-100" />
                 </div>
                 <div className="space-y-2">
-                  {group.rows.map((row) => (
+                  {group.items.map((row) => (
                     <ActivityCard key={row.key} row={row} onNavigate={(href) => router.push(href)} />
                   ))}
                 </div>
