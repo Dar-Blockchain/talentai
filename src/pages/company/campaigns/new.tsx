@@ -144,7 +144,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
     handleSubmit,
     trigger,
     watch,
-    formState: { errors, isSubmitting },
+    formState: { errors, isSubmitting, isValid },
   } = useForm<CreateCampaignFormValues>({
     resolver: zodResolver(createCampaignFormSchema),
     mode: "onChange",
@@ -425,6 +425,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
                 type="button"
                 className="gap-2 px-6 w-full sm:w-auto"
                 loading={!isAccounts && isSubmitting}
+                disabled={!isAccounts && !isValid}
                 onClick={isAccounts ? handleNext : handleSubmit(onSubmit)}
               >
                 {isAccounts ? "Next: Participants" : isSubmitting ? "Creating…" : "Create Campaign"}
@@ -475,6 +476,7 @@ const NewCampaignPage: NextPageWithLayout = () => {
                   type="button"
                   className="gap-2 px-6 w-full sm:w-auto"
                   loading={isSubmitting}
+                  disabled={!isValid}
                   onClick={handleSubmit(onSubmit)}
                 >
                   {isSubmitting ? "Creating…" : "Create Campaign"}
