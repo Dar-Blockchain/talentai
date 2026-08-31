@@ -1,8 +1,8 @@
 import React, { useState } from "react";
 import { useSelector } from "react-redux";
+import ActionNeededBanner  from "./ActionNeededBanner";
 import DashboardStats      from "./DashboardStats";
 import RecentApplications  from "./RecentApplications";
-import QuickActionCard     from "./QuickActionCard";
 import SkillsSnapshot      from "./SkillsSnapshot";
 import AssessmentModal     from "@/modules/candidate/interviews/components/AssessmentModal";
 
@@ -27,11 +27,11 @@ const CandidateDashboard: React.FC = () => {
           </div>
         )}
 
+        <ActionNeededBanner />
+
         <DashboardStats />
 
         <RecentApplications />
-
-        <QuickActionCard onOpen={() => setDialogOpen(true)} />
 
         <SkillsSnapshot onStartInterview={() => setDialogOpen(true)} />
 

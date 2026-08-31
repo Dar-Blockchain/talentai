@@ -84,6 +84,15 @@ const CandidateApplicationsList: React.FC = () => {
     setSortBy("date_desc"); setScoreMin(""); setScoreMax(""); setDateFrom(""); setDateTo("");
   };
 
+  // Pick up an initial status filter from the URL (e.g. the dashboard's
+  // "Pending Interviews" card links here with ?status=visited) so a deep
+  // link actually lands pre-filtered instead of showing "all".
+  useEffect(() => {
+    if (!router.isReady) return;
+    const q = router.query.status;
+    if (typeof q === "string" && q) setActiveFilter(q);
+  }, [router.isReady, router.query.status]);
+
   // Debounce search
   useEffect(() => {
     const t = setTimeout(() => setDebounced(search), 400);

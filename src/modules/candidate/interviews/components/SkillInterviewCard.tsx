@@ -49,17 +49,23 @@ interface Props {
 }
 
 const SkillInterviewCard: React.FC<Props> = ({ assessment, accentBg, accentBorder, accentText, icon: Icon, s }) => {
-  const router   = useRouter();
-  const score    = getScore(assessment);
-  const levelKey = getLevelKey(score);
-  const date     = assessment.updatedAt || assessment.createdAt;
-  const timeAgo  = date ? dayjs(date).fromNow() : "";
+  const router     = useRouter();
+  const score      = getScore(assessment);
+  const levelKey   = getLevelKey(score);
+  const date       = assessment.updatedAt || assessment.createdAt;
+  const timeAgo    = date ? dayjs(date).fromNow() : "";
+  const hasReport  = score > 0;
+  const goToReport = () => router.push(`/candidate/skills/interviews/${assessment._id}`);
 
   return (
-    <div className={cn(
-      "flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-white p-4",
-      "transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md",
-    )}>
+    <div
+      onClick={hasReport ? goToReport : undefined}
+      className={cn(
+        "flex flex-col gap-3 rounded-xl border border-[#E2E8F0] bg-white p-4",
+        "transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md",
+        hasReport && "cursor-pointer",
+      )}
+    >
       <div className="flex items-start gap-3">
         <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl border", accentBg, accentBorder)}>
           <Icon className={cn("h-4 w-4", accentText)} />
@@ -101,10 +107,11 @@ const SkillInterviewCard: React.FC<Props> = ({ assessment, accentBg, accentBorde
 
       <div className="flex items-center justify-between">
         <span className="text-[0.6rem] text-[#CBD5E1]">{timeAgo || s("just_added")}</span>
-        {score > 0 && (
+        {hasReport && (
           <Button
             size="sm"
             variant="outline"
+            onClick={(e) => { e.stopPropagation(); goToReport(); }}
             className="h-7 gap-1 border-green-200 bg-green-50 px-3 text-[0.68rem] font-bold text-green-700 hover:bg-green-100"
           >
             {s("report")}

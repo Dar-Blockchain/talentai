@@ -4,6 +4,7 @@ export interface SkillInterviewAssessment {
   _id: string;
   id?: string;
   skill: string;
+  skillType?: 'technical' | 'soft';
   proficiency: string;
   candidateId?: any;
   interviewerId?: any;
