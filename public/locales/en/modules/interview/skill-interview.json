@@ -10,46 +10,33 @@
     "back": "Back to my skills"
   },
   "header": {
-    "subtitle": "Technical Skill Assessment · AI-Powered",
-    "subtitle_soft": "Soft Skill Assessment · AI-Powered",
-    "adaptive_difficulty": "Adaptive difficulty"
+    "subtitle": "Technical skill assessment",
+    "subtitle_soft": "Soft skill assessment"
   },
   "preview": {
-    "what_assessed": "What will be assessed",
-    "focus_areas_label": "Focus areas",
-    "format_title": "Interview format",
-    "tips_title": "Tips to succeed",
-    "areas": [
-      "Core concepts and fundamentals",
-      "Practical problem-solving",
-      "Best practices and patterns",
-      "Real-world scenarios",
-      "Performance and optimization"
-    ],
-    "focus_chips": ["Concepts", "Application", "Problem Solving", "Patterns", "Best Practices"],
-    "format_items": [
-      "Voice-based conversation with an AI interviewer",
-      "Difficulty adapts in real-time based on your answers",
-      "Real-time coverage tracking as you answer",
-      "Your level is revealed in the report after the session"
-    ],
-    "format_icons": ["🎤", "⚡", "📊", "📝"],
-    "tips": [
-      "Think out loud — the AI adapts to your explanation style",
-      "Take reading time to understand each question fully",
-      "Use concrete examples from your experience",
-      "It's okay to ask for clarification before answering"
+    "facts": {
+      "format": "Voice-based",
+      "difficulty": "Adaptive",
+      "outcome": "Scored report"
+    },
+    "covers_title": "What it covers",
+    "covers_intro": "An adaptive voice conversation about your {{skill}} knowledge, across:",
+    "focus_chips": ["Core concepts", "Practical application", "Problem solving", "Best practices", "Real-world scenarios"],
+    "get_title": "What you'll get",
+    "get_items": [
+      "An overall score out of 100",
+      "A confirmed skill level (Entry to Expert)",
+      "Your strengths and areas to focus on"
     ]
   },
   "start": {
-    "ready_badge": "Ready to assess",
-    "title": "Start your assessment",
-    "description": "Prove your {{skill}} skills with an AI-powered adaptive assessment. Your level will be determined by the results.",
-    "features": [
-      "AI adapts questions to your level",
-      "Camera & voice recording",
-      "Real-time skill coverage tracker",
-      "Detailed report after completion"
+    "ready_badge": "Ready to start",
+    "title": "Ready when you are",
+    "description": "Your level is set by how you do — no preparation needed.",
+    "checklist_title": "Before you begin",
+    "checklist": [
+      "A quiet spot where you can speak freely",
+      "Camera & microphone access"
     ],
     "button": "Start Assessment",
     "login": {

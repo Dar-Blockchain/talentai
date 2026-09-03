@@ -10,46 +10,33 @@
     "back": "Retour à mes compétences"
   },
   "header": {
-    "subtitle": "Évaluation de compétence technique · Propulsée par l'IA",
-    "subtitle_soft": "Évaluation de soft skill · Propulsée par l'IA",
-    "adaptive_difficulty": "Difficulté adaptative"
+    "subtitle": "Évaluation de compétence technique",
+    "subtitle_soft": "Évaluation de soft skill"
   },
   "preview": {
-    "what_assessed": "Ce qui sera évalué",
-    "focus_areas_label": "Axes d'évaluation",
-    "format_title": "Format de l'entretien",
-    "tips_title": "Conseils pour réussir",
-    "areas": [
-      "Concepts fondamentaux",
-      "Résolution de problèmes pratiques",
-      "Bonnes pratiques et patterns",
-      "Scénarios réels",
-      "Performance et optimisation"
-    ],
-    "focus_chips": ["Concepts", "Application", "Résolution de problèmes", "Patterns", "Bonnes pratiques"],
-    "format_items": [
-      "Conversation vocale avec un intervieweur IA",
-      "La difficulté s'adapte en temps réel selon vos réponses",
-      "Suivi de couverture en temps réel",
-      "Votre niveau est révélé dans le rapport après la session"
-    ],
-    "format_icons": ["🎤", "⚡", "📊", "📝"],
-    "tips": [
-      "Pensez à voix haute — l'IA s'adapte à votre style d'explication",
-      "Prenez le temps de lire et comprendre chaque question",
-      "Utilisez des exemples concrets tirés de votre expérience",
-      "N'hésitez pas à demander des clarifications avant de répondre"
+    "facts": {
+      "format": "À l'oral",
+      "difficulty": "Adaptatif",
+      "outcome": "Rapport noté"
+    },
+    "covers_title": "Ce qui est évalué",
+    "covers_intro": "Une conversation vocale adaptative sur vos connaissances en {{skill}}, autour de :",
+    "focus_chips": ["Concepts clés", "Application pratique", "Résolution de problèmes", "Bonnes pratiques", "Scénarios réels"],
+    "get_title": "Ce que vous obtenez",
+    "get_items": [
+      "Un score global sur 100",
+      "Un niveau confirmé (Débutant à Expert)",
+      "Vos points forts et vos axes de progression"
     ]
   },
   "start": {
-    "ready_badge": "Prêt pour l'évaluation",
-    "title": "Démarrez votre évaluation",
-    "description": "Prouvez vos compétences en {{skill}} avec une évaluation adaptative propulsée par l'IA. Votre niveau sera déterminé par vos résultats.",
-    "features": [
-      "L'IA adapte les questions à votre niveau",
-      "Caméra et enregistrement vocal",
-      "Suivi de couverture en temps réel",
-      "Rapport détaillé après complétion"
+    "ready_badge": "Prêt à démarrer",
+    "title": "Quand vous voulez",
+    "description": "Votre niveau dépend de votre performance — aucune préparation nécessaire.",
+    "checklist_title": "Avant de commencer",
+    "checklist": [
+      "Un endroit calme où vous pouvez parler librement",
+      "L'accès à la caméra et au micro"
     ],
     "button": "Démarrer l'évaluation",
     "login": {

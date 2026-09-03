@@ -19,9 +19,9 @@ export default function SkillPreviewPanel({
   onStartInterview,
 }: SkillPreviewPanelProps) {
   return (
-    <div className="bg-background min-h-[calc(100vh-60px)] py-8 md:py-10">
-      <div className="max-w-[1100px] mx-auto px-4 md:px-8 flex flex-col md:flex-row gap-6 items-stretch md:items-start">
-        <div className="flex-1 flex flex-col gap-6">
+    <div className="bg-background min-h-[calc(100vh-60px)] py-6 md:py-9">
+      <div className="max-w-[1040px] mx-auto px-4 md:px-8 flex flex-col md:flex-row gap-5 items-stretch md:items-start">
+        <div className="flex-1 flex flex-col gap-4 min-w-0">
           <SkillHeaderCard skill={skill} category={category} language={language} isSoftSkill={isSoftSkill} />
           <SkillDetailsColumn skill={skill} />
         </div>

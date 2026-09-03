@@ -21,10 +21,10 @@ export default function SkillStartPanel({ skill, onStartInterview }: SkillStartP
 
   const isAuthenticated = !!authUser && !!onStartInterview;
 
-  const rawFeatures = t('start.features',    { returnObjects: true });
-  const rawSteps    = t('start.login.steps', { returnObjects: true });
-  const features = Array.isArray(rawFeatures) ? rawFeatures as string[]                           : [];
-  const steps    = Array.isArray(rawSteps)    ? rawSteps    as { label: string; sub: string }[]   : [];
+  const rawChecklist = t('start.checklist',    { returnObjects: true });
+  const rawSteps     = t('start.login.steps',  { returnObjects: true });
+  const checklist = Array.isArray(rawChecklist) ? rawChecklist as string[]                          : [];
+  const steps     = Array.isArray(rawSteps)     ? rawSteps     as { label: string; sub: string }[]  : [];
 
   return (
     <div className="w-full md:w-[320px] shrink-0 md:sticky md:top-6">
@@ -43,10 +43,13 @@ export default function SkillStartPanel({ skill, onStartInterview }: SkillStartP
               {t('start.description', { skill })}
             </p>
 
-            {features.map((item) => (
-              <div key={item} className="flex items-center gap-2 mb-3">
-                <CheckCircle size={15} className="shrink-0 text-primary" />
-                <span className="font-sans text-[0.78rem] text-foreground/80">{item}</span>
+            <p className="font-sans text-[0.68rem] font-bold text-muted-foreground uppercase tracking-[0.5px] mb-2.5">
+              {t('start.checklist_title')}
+            </p>
+            {checklist.map((item) => (
+              <div key={item} className="flex items-start gap-2 mb-2.5">
+                <CheckCircle size={14} className="shrink-0 mt-0.5 text-primary" />
+                <span className="font-sans text-[0.78rem] text-foreground/75 leading-relaxed">{item}</span>
               </div>
             ))}
 
