@@ -25,6 +25,8 @@ async function persistSkillInterviewResults(sessionId, result, socket) {
       finalReport:   result?.finalReport,
       analytics:     result?.sessionAnalytics,
       conversation:  result?.conversation || [],
+      status:            result?.interrupted ? 'interrupted' : 'completed',
+      disconnectReason:  result?.interrupted ? result?.disconnectReason : undefined,
     },
   };
 

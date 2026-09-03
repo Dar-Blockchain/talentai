@@ -3,8 +3,15 @@
     "title": "Chargement de l'entretien de compétence",
     "subtitle": "Préparation de votre évaluation…"
   },
+  "quota_reached": {
+    "title": "Quota de tests de compétences atteint",
+    "desc": "Vous avez utilisé vos {{max}} tests de compétences. Votre quota se réinitialise automatiquement — revenez après cela pour tester d'autres compétences.",
+    "desc_reset": "Vous avez utilisé vos {{max}} tests de compétences. Réinitialisation du quota le {{date}}.",
+    "back": "Retour à mes compétences"
+  },
   "header": {
     "subtitle": "Évaluation de compétence technique · Propulsée par l'IA",
+    "subtitle_soft": "Évaluation de soft skill · Propulsée par l'IA",
     "adaptive_difficulty": "Difficulté adaptative"
   },
   "preview": {

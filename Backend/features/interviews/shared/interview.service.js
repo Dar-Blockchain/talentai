@@ -215,7 +215,9 @@ class IntelligentInterviewService {
       } catch (greetingError) {
         console.error('âš ï¸ AI greeting failed, using fallback:', greetingError.message);
         greeting = {
-          content: `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`,
+          content: (['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'].includes(config.interviewType))
+            ? `Hello! I'm excited to discuss your ${config.context.targetRole} skills today. To start, how would you describe your experience with ${config.context.targetRole}?`
+            : `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`,
           metadata: { fallback: true, error: greetingError.message },
         };
       }
@@ -957,8 +959,18 @@ class IntelligentInterviewService {
     const session = await this.sessionManager.getSession(sessionId);
     if (session?.status !== 'active') return { wasActive: false };
 
+    // Skill-interview persistence (skill-interview.persistence.js) tags the
+    // saved record's status from this flag. Post-interview persistence
+    // ignores it entirely and keeps its existing (separate) completion
+    // semantics untouched -- see the isSkillInterview branch below, which
+    // only affects the failure/fallback path for skill interviews.
+    const isSkillInterview = session?.config?.interviewType === 'TECHNICAL_SKILL'
+      || session?.config?.interviewType === 'SOFT_SKILL';
+
     try {
       const result = await this.endInterview(sessionId);
+      result.interrupted = true;
+      result.disconnectReason = reason;
       return { wasActive: true, result };
     } catch (endErr) {
       await this.sessionManager.updateSession(sessionId, {
@@ -966,6 +978,32 @@ class IntelligentInterviewService {
         disconnectReason: reason,
         disconnectTime:   new Date().toISOString(),
       }).catch(() => {});
+
+      // For skill interviews specifically: don't let a report-generation
+      // failure silently drop the session with nothing saved at all -- fall
+      // back to a minimal result built from whatever the session already
+      // has, so the candidate still ends up with a record (tagged
+      // 'interrupted') instead of the session just vanishing. Every other
+      // interview type keeps the original re-throw-on-failure behavior.
+      if (isSkillInterview) {
+        console.warn('âš ï¸ [Interview] Final report generation failed on disconnect, saving a minimal fallback report:', endErr.message);
+        const analytics = await this.sessionManager.getSessionAnalytics(sessionId).catch(() => null);
+        const fallbackResult = {
+          success: false,
+          finalReport: {
+            summary: 'Interview ended early -- the candidate disconnected before a full report could be generated.',
+            scores: { overall: 0 },
+            coverage: { overall: session?.coverage?.overall || 0, areas: session?.coverage?.areas || {} },
+            timestamp: new Date().toISOString(),
+          },
+          sessionAnalytics: analytics,
+          conversation: [],
+          interrupted: true,
+          disconnectReason: reason,
+        };
+        return { wasActive: true, result: fallbackResult };
+      }
+
       throw endErr;
     }
   }

@@ -3,8 +3,15 @@
     "title": "Loading skill interview",
     "subtitle": "Preparing your assessment…"
   },
+  "quota_reached": {
+    "title": "Skill test quota reached",
+    "desc": "You've used all {{max}} of your skill tests. Your quota resets automatically — come back after that to test more skills.",
+    "desc_reset": "You've used all {{max}} of your skill tests. Your quota resets {{date}}.",
+    "back": "Back to my skills"
+  },
   "header": {
     "subtitle": "Technical Skill Assessment · AI-Powered",
+    "subtitle_soft": "Soft Skill Assessment · AI-Powered",
     "adaptive_difficulty": "Adaptive difficulty"
   },
   "preview": {

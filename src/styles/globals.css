@@ -324,6 +324,9 @@ html body[data-scroll-locked] {
 @keyframes iv-timer-pulse  { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
 @keyframes iv-fade-in      { from { opacity: 0; } to { opacity: 1; } }
 
+/* Applications — filter panel reveal */
+@keyframes filter-reveal { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
 /* Hide all scrollbars inside interview screen */
 .iv-root *, .iv-root *::before, .iv-root *::after { scrollbar-width: none; -ms-overflow-style: none; }
 .iv-root *::-webkit-scrollbar { display: none; }

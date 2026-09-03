@@ -109,12 +109,43 @@ interface PaginationProps {
   onPageChange: (page: number) => void;
   size?: "sm" | "default";
   className?: string;
+  /** Arrows-only, no page-number links/ellipsis — for tight spaces (e.g. next to a search input). */
+  compact?: boolean;
 }
 
-function Pagination({ page, totalPages, onPageChange, size = "default", className }: PaginationProps) {
+function Pagination({ page, totalPages, onPageChange, size = "default", className, compact = false }: PaginationProps) {
   if (totalPages <= 1) return null;
 
   const iconSize = size === "sm" ? "icon-sm" : "icon";
+
+  if (compact) {
+    return (
+      <PaginationRoot className={cn("w-auto", className)}>
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationLink
+              aria-label="Go to previous page"
+              size={iconSize}
+              onClick={(e) => { e.preventDefault(); if (page > 1) onPageChange(page - 1); }}
+              className={cn("cursor-pointer", page <= 1 && "pointer-events-none opacity-40")}
+            >
+              <ChevronLeft className="size-4" />
+            </PaginationLink>
+          </PaginationItem>
+          <PaginationItem>
+            <PaginationLink
+              aria-label="Go to next page"
+              size={iconSize}
+              onClick={(e) => { e.preventDefault(); if (page < totalPages) onPageChange(page + 1); }}
+              className={cn("cursor-pointer", page >= totalPages && "pointer-events-none opacity-40")}
+            >
+              <ChevronRight className="size-4" />
+            </PaginationLink>
+          </PaginationItem>
+        </PaginationContent>
+      </PaginationRoot>
+    );
+  }
 
   return (
     <PaginationRoot className={className}>

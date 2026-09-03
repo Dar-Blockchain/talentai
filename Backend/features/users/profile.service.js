@@ -2,6 +2,7 @@ const Profile = require("./profile.model");
 const User = require("./user.model");
 const Post = require("../posts/post.model");
 const CompanyMembership = require("../company-members/company-membership.model");
+const { QUOTA_RESET_MS } = require("../../cron/quota.constants");
 const fs = require("fs");
 const path = require("path");
 
@@ -109,6 +110,24 @@ module.exports.getProfileByUserId = async (userId) => {
     ]);
     profile.skills     = skills;
     profile.softSkills = softSkills;
+
+    // The skill-test quota resets on a rolling window (QUOTA_RESET_DAYS)
+    // anchored to the first test of the current cycle -- skill-interview
+    // .service.js stamps quotaUpdatedAt when quota goes 0 -> 1, and
+    // reset-quota.cron.js clears it that many days later. Compute the exact
+    // reset datetime here so the frontend shows it instead of hardcoding a
+    // period of its own. Only meaningful while the candidate has actually
+    // used some quota -- at quota 0 there is nothing pending to reset.
+    //
+    // quotaResetAt isn't a declared schema path, so a plain
+    // `profile.quotaResetAt = ...` assignment silently no-ops under this
+    // schema's strict:true mode (confirmed: it neither throws nor appears in
+    // toJSON/toObject output) -- .set(..., { strict: false }) is required to
+    // actually attach it to the document that gets serialized in the response.
+    if ((profile.quota || 0) > 0 && profile.quotaUpdatedAt) {
+      const quotaResetAt = new Date(new Date(profile.quotaUpdatedAt).getTime() + QUOTA_RESET_MS);
+      profile.set("quotaResetAt", quotaResetAt, { strict: false });
+    }
   }
 
   let planLimits = profile?.planLimits || null;

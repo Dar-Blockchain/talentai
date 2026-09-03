@@ -11,12 +11,13 @@ const handleError = (res, error) => {
 module.exports.getMySkills = async (req, res) => {
   try {
     const profileId = await skillService.resolveProfileId(req.user._id);
-    const { kind, search, verified, page, limit, sortBy, sortOrder } = req.query;
+    const { kind, search, verified, level, page, limit, sortBy, sortOrder } = req.query;
 
     const result = await skillService.getSkillsByProfile(profileId, {
       kind,
       search,
       verified: verified === "true",
+      level,
       page,
       limit,
       sortBy,

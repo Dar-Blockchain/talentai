@@ -49,12 +49,9 @@ const ApplicationCard: React.FC<Props> = ({
   return (
     <Card
       onClick={onClick}
-      className="gap-0 py-0 cursor-pointer overflow-hidden hover:shadow-md hover:-translate-y-px transition-all duration-200"
+      className="gap-0 py-0 cursor-pointer overflow-hidden border-gray-200 hover:border-gray-300 hover:shadow-sm transition-all duration-200"
     >
-      {/* status stripe */}
-      <div className={cn("h-0.5 w-full", sc.stripe)} />
-
-      <CardContent className="px-4 py-3 flex items-start gap-3">
+      <CardContent className="px-4 py-3.5 flex items-start gap-3">
         {/* Company logo */}
         <Avatar className="size-10 rounded-xl border border-gray-200 bg-gray-50 shrink-0">
           <AvatarImage

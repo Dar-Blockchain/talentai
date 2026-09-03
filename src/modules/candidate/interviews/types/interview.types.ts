@@ -40,6 +40,8 @@ export interface SkillInterviewAssessment {
     };
     sessionId?: string;
     interviewType?: string;
+    status?: 'completed' | 'interrupted';
+    disconnectReason?: string;
     timestamp?: string;
   };
   exportedAt?: string;

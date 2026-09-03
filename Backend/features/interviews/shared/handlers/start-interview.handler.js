@@ -1,10 +1,32 @@
 ﻿const { v4: uuidv4 } = require('uuid');
 const { withTimeout, safeEmit, AI_TIMEOUT_MS } = require('../interview.utils');
 const logger = require('../../../../utils/logger');
+const Profile = require('../../../users/profile.model');
+
+// Standalone skill assessments that draw down the candidate's skill-test quota
+// (Profile.quota). Job/campaign interviews are gated by plan limits elsewhere.
+const QUOTA_SKILL_TYPES = ['TECHNICAL_SKILL', 'SOFT_SKILL'];
+const SKILL_TEST_QUOTA = 5;
 
 async function handleStartInterview(socket, data, { service, activeSessions, onSessionStarted }) {
   try {
     const { config, candidateId, postId, source } = data;
+
+    // Reject a skill test the candidate has no quota left for -- the frontend
+    // gates the entry points, but the /interviews/<session> link can be
+    // opened directly. Never trust the client for this.
+    if (candidateId && QUOTA_SKILL_TYPES.includes(config?.interviewType)) {
+      const profile = await Profile.findOne({ userId: candidateId }).select('quota').lean();
+      if (profile && (profile.quota || 0) >= SKILL_TEST_QUOTA) {
+        logger.warn('start_interview blocked — skill-test quota reached', { candidateId, interviewType: config.interviewType });
+        safeEmit(socket, 'interview_error', {
+          error: 'quota_reached',
+          message: `You've used all ${SKILL_TEST_QUOTA} of your skill tests. Your quota resets automatically.`,
+        });
+        return;
+      }
+    }
+
     const sessionId = uuidv4();
 
     socket.candidateId     = candidateId || null;

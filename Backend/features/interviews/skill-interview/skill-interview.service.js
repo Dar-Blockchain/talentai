@@ -98,6 +98,18 @@ const createAssessment = async (data, rawInterviewData, userId) => {
         throw new Error(`Profile not found for candidate: ${candidateId}`);
       }
 
+      // Anchor the rolling quota-reset window to the FIRST test of the cycle.
+      // When quota just went 0 -> 1 this is the start of a new window, so
+      // stamp quotaUpdatedAt now -- the cron (reset-quota.cron.js) clears the
+      // quota QUOTA_RESET_DAYS after this timestamp, and profile.service.js
+      // derives the candidate-facing quotaResetAt from it. Later tests in the
+      // same cycle must not touch it, or the window would never elapse.
+      if (updatedProfile.quota === 1) {
+        const now = new Date();
+        await Profile.updateOne({ _id: profileId }, { $set: { quotaUpdatedAt: now } });
+        updatedProfile.quotaUpdatedAt = now;
+      }
+
 
       // Handle skill type - manage technical vs soft skills
       const skillType = data.skillType || 'technical';
@@ -113,6 +125,11 @@ const createAssessment = async (data, rawInterviewData, userId) => {
               testScore:      overallScore,
               levelConfirmed: levelconfirmedValue,
             },
+            // Was missing here (only incremented for technical below) --
+            // testScore defaults to 0 in the schema, identical to a genuine
+            // 0% result, so numberTestPassed is the only reliable "has this
+            // skill actually been tested" signal for BOTH kinds.
+            $inc:         { numberTestPassed: 1 },
             $setOnInsert: { sourceCvAnalyses: [] },
           },
           { upsert: true, new: true }

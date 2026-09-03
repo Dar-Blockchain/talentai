@@ -43,6 +43,7 @@ function InterviewPage() {
             skill={params.skill}
             category={params.category}
             language={params.language}
+            skillType={params.skillType}
             onPhaseChange={setPhase}
           />
         )}

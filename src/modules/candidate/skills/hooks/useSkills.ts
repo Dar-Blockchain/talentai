@@ -5,6 +5,8 @@ import type { Skill, SkillsPagination, SkillKind } from '../types/skill.types';
 interface UseSkillsOptions {
   kind: SkillKind;
   limit?: number;
+  /** 1-5 (entry..expert) to filter server-side; null/undefined = all levels. */
+  level?: number | null;
 }
 
 export interface UseSkillsReturn {
@@ -21,7 +23,7 @@ export interface UseSkillsReturn {
   goToPage: (page: number) => void;
 }
 
-export function useSkills({ kind, limit = 8 }: UseSkillsOptions): UseSkillsReturn {
+export function useSkills({ kind, limit = 12, level = null }: UseSkillsOptions): UseSkillsReturn {
   const [skills, setSkills]           = useState<Skill[]>([]);
   const [pagination, setPagination]   = useState<SkillsPagination | null>(null);
   const [loading, setLoading]         = useState(true);
@@ -30,11 +32,13 @@ export function useSkills({ kind, limit = 8 }: UseSkillsOptions): UseSkillsRetur
   const [search, setSearchState]      = useState('');
 
   const kindRef   = useRef(kind);
+  const levelRef  = useRef(level);
   const searchRef = useRef('');
   const pageRef   = useRef(0);
   const debounce  = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
 
-  kindRef.current = kind;
+  kindRef.current  = kind;
+  levelRef.current = level;
 
   const doFetch = async (q: string, p: number, append: boolean) => {
     append ? setLoadingMore(true) : setLoading(true);
@@ -42,6 +46,7 @@ export function useSkills({ kind, limit = 8 }: UseSkillsOptions): UseSkillsRetur
       const data = await fetchMySkills({
         kind:   kindRef.current,
         search: q || undefined,
+        level:  levelRef.current ?? undefined,
         page:   p,
         limit,
       });
@@ -57,13 +62,14 @@ export function useSkills({ kind, limit = 8 }: UseSkillsOptions): UseSkillsRetur
     }
   };
 
+  // Refetch from page 0 whenever the kind or the level filter changes.
   useEffect(() => {
     searchRef.current = '';
     pageRef.current   = 0;
     setSearchState('');
     setPage(0);
     doFetch('', 0, false);
-  }, [kind]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [kind, level]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const setSearch = (val: string) => {
     setSearchState(val);

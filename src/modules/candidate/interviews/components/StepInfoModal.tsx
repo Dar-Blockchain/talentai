@@ -309,7 +309,7 @@ const StepInfoModal: React.FC<StepInfoModalProps> = ({
                     </Button>
                   </span>
                 </TooltipTrigger>
-                <TooltipContent>You have reached your monthly limit of 5 tests. Please try again next month.</TooltipContent>
+                <TooltipContent>You've reached your limit of 5 skill tests. Your quota resets automatically — try again after that.</TooltipContent>
               </Tooltip>
             ) : (
               <Button

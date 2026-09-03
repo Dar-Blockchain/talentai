@@ -145,11 +145,19 @@ export function useInterviewSession({
     }
   }, [interviewConfig]);
 
-  const handleInterviewError = useCallback((error: { message: string }) => {
+  const handleInterviewError = useCallback((error: { message: string; error?: string }) => {
+    // Hard rejections from the server (e.g. no skill-test quota left) — surface
+    // the reason and drop back to idle instead of silently sitting on "connecting".
+    if (error.error === 'quota_reached') {
+      notify(error.message || 'You have no skill tests left right now.', 'error');
+      setInterviewStatusRef.current('idle');
+      dispatch(getMyProfile());
+      return;
+    }
     audioRef.current?.setAgentState('waiting');
     audioRef.current?.setAgentMessage('Something went wrong. You can re-submit your answer or continue.');
     console.error('Interview error received:', error.message);
-  }, []);
+  }, [dispatch]);
 
   const handleGreetingComplete = useCallback((data: { text?: string; sessionId?: string }) => {
     if (data.text) {

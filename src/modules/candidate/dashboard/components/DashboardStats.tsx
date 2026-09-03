@@ -44,7 +44,10 @@ const DashboardStats: React.FC = () => {
   const totalApps           = stats ? Object.values(stats.statusCounts).reduce((a, n) => a + n, 0) : 0;
   const pendingInterviews   = stats?.statusCounts["visited"] ?? 0;
   const completedInterviews = stats?.totalInterviews ?? 0;
-  const skillsCount         = (techData?.results.length ?? 0) + (softData?.results.length ?? 0);
+  // .results is capped by the limit passed to the query (3, just enough to
+  // know "is this list non-empty" for these two calls) -- .total is the
+  // real, unbounded count and is what the stat card should show.
+  const skillsCount         = (techData?.total ?? 0) + (softData?.total ?? 0);
 
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">

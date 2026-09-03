@@ -8,7 +8,12 @@ export async function fetchSkillAssessmentsByType(params: { skillType: "technica
   });
   const data = res.data;
   const results = data.data || data.results || [];
-  const total = data.pagination?.totalCount || data.total || results.length;
+  // Backend (skill-interview.service.js getAllAssessments) returns the real
+  // unbounded count as pagination.total, not pagination.totalCount -- that
+  // mismatch meant this always silently fell through to results.length
+  // (capped at whatever `limit` was requested), undercounting anywhere this
+  // was used as a total instead of a page of results.
+  const total = data.pagination?.total ?? data.total ?? results.length;
   return { results, total, skillType: params.skillType };
 }
 

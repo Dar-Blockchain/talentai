@@ -66,6 +66,10 @@ export interface ConnectedUserProfile {
   };
 
   quota?: number;
+  // When the quota next resets -- computed server-side (profile.service.js)
+  // from quotaUpdatedAt + the QUOTA_RESET_DAYS env var, since the reset is a
+  // rolling window, not a calendar-month boundary.
+  quotaResetAt?: string;
   skills?: any[] | null;
   softSkills?: any[] | null;
   planUsage?: any;

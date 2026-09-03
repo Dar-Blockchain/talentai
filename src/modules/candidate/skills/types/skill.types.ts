@@ -34,6 +34,8 @@ export interface SkillsParams {
   kind?: SkillKind;
   search?: string;
   verified?: boolean;
+  /** 1-5 (entry..expert); server filters to tested skills in that score band. */
+  level?: number;
   page?: number;
   limit?: number;
   sortBy?: string;

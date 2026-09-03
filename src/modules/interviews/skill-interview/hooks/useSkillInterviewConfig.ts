@@ -7,6 +7,7 @@ export interface SkillInterviewOverrides {
   skill?: string | null;
   category?: string | null;
   language?: string;
+  skillType?: 'technical' | 'soft';
 }
 
 export interface UseSkillInterviewConfigReturn {
@@ -22,10 +23,14 @@ export const useSkillInterviewConfig = (overrides?: SkillInterviewOverrides): Us
   const router = useRouter();
   const hasOverrides = overrides !== undefined;
 
-  const skill    = hasOverrides ? (overrides.skill    ?? null) : (router.isReady ? (router.query.skill    as string) || null : null);
-  const category = hasOverrides ? (overrides.category ?? null) : (router.isReady ? (router.query.category as string) || null : null);
-  const language = hasOverrides ? (overrides.language ?? 'en') : (router.isReady ? (router.query.language as string) || 'en' : 'en');
-  const isReady  = hasOverrides ? true : router.isReady;
+  const skill      = hasOverrides ? (overrides.skill    ?? null) : (router.isReady ? (router.query.skill    as string) || null : null);
+  const category   = hasOverrides ? (overrides.category ?? null) : (router.isReady ? (router.query.category as string) || null : null);
+  const language   = hasOverrides ? (overrides.language ?? 'en') : (router.isReady ? (router.query.language as string) || 'en' : 'en');
+  // Defaults to 'technical' for back-compat with links generated before this
+  // field existed -- but every current entry point (AssessmentModal,
+  // ConfirmTestDialog) always sends it explicitly now.
+  const skillType  = hasOverrides ? (overrides.skillType ?? 'technical') : (router.isReady ? ((router.query.skillType as string) === 'soft' ? 'soft' : 'technical') : 'technical');
+  const isReady    = hasOverrides ? true : router.isReady;
 
   const [interviewConfig, setInterviewConfig] = useState<InterviewConfig>({
     interviewType: 'TECHNICAL_SKILL',
@@ -38,7 +43,7 @@ export const useSkillInterviewConfig = (overrides?: SkillInterviewOverrides): Us
     if (!isReady || !skill) return;
 
     const config: InterviewConfig = {
-      interviewType: 'TECHNICAL_SKILL',
+      interviewType: skillType === 'soft' ? 'SOFT_SKILL' : 'TECHNICAL_SKILL',
       testReason: `Skill assessment: ${skill}`,
       context: {
         targetRole:    skill,
@@ -61,7 +66,7 @@ export const useSkillInterviewConfig = (overrides?: SkillInterviewOverrides): Us
     };
 
     setInterviewConfig(config);
-  }, [isReady, skill, language, category]);
+  }, [isReady, skill, language, category, skillType]);
 
   return {
     interviewConfig,

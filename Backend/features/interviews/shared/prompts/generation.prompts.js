@@ -79,7 +79,31 @@ function buildQuestionGeneratorSystem({
   styleInstruction,
   questionStyleBlock,
   questionStyleId,
+  isSkillAssessment = false,
 }) {
+  // Standalone skill assessments (TECHNICAL_SKILL/SOFT_SKILL) have no job
+  // description to anchor on -- the JD-relevance rules below don't just do
+  // nothing for them, they actively contradict questionGuidelines' own
+  // instruction to draw on real-world knowledge of the skill regardless of
+  // any JD, so they're omitted entirely rather than left as dead/confusing
+  // noise (mirrors campaign-interview's SKILL_TEST prompt, which never
+  // mixes in JD-relevance language at all).
+  const jdRules = isSkillAssessment ? '' : `- Questions MUST be directly relevant to the JOB REQUIREMENTS and RESPONSIBILITIES listed above. Do NOT ask about technologies, tools, or concepts not mentioned in the JD.
+- PRIORITIZE asking about skills from the "JD SKILLS NOT YET ASKED ABOUT" list. Each question should target a DIFFERENT uncovered skill.
+`;
+  const difficultyRules = isSkillAssessment
+    ? `- CALIBRATE question difficulty to the EXPERIENCE LEVEL above:
+  * Junior/Entry: ONLY basic concepts, "what is", "how would you", simple practical scenarios. NO system design, NO advanced patterns. Keep questions SIMPLE and FOUNDATIONAL.
+  * Mid-Level: Practical experience questions, trade-off discussions, real project examples
+  * Senior: Architecture decisions, system design, edge cases, performance/scale
+  * Lead/Principal: Strategic/architectural depth, org-wide technical impact`
+    : `- CALIBRATE question difficulty to the EXPERIENCE LEVEL above:
+  * Junior/Entry: ONLY basic concepts, "what is", "how would you", simple practical scenarios. NO system design, NO advanced patterns, NO questions about tools/technologies NOT listed in the JD (e.g., do NOT ask about GraphQL if the JD only mentions REST APIs). Keep questions SIMPLE and FOUNDATIONAL.
+  * Mid-Level: Practical experience questions, trade-off discussions, real project examples
+  * Senior: Architecture decisions, system design, leadership, cross-team impact
+  * Lead/Principal: Strategic thinking, org-wide impact, technical vision
+  HARD RULE: For Junior/Entry level, NEVER ask about: system design, microservices, GraphQL (unless in JD), distributed systems, architecture patterns, caching strategies, or any advanced topic. Stick to BASICS of the required skills.`;
+
   return `You are an expert interviewer. Generate ONE targeted question.${langInstruction ? '\n\n' + langInstruction : ''}
 ${personaBlock}
 ${profileBlock}
@@ -96,17 +120,10 @@ RULES:
 - Target the specified coverage gap
 - Be natural and conversational
 - NEVER ask the candidate to write, read, or review actual code snippets. This is a verbal interview — all questions must be conversational.
-- Questions MUST be directly relevant to the JOB REQUIREMENTS and RESPONSIBILITIES listed above. Do NOT ask about technologies, tools, or concepts not mentioned in the JD.
-- PRIORITIZE asking about skills from the "JD SKILLS NOT YET ASKED ABOUT" list. Each question should target a DIFFERENT uncovered skill.
-- NEVER ask a question similar to any in the "ALREADY ASKED" list
+${jdRules}- NEVER ask a question similar to any in the "ALREADY ASKED" list
 - Each question must explore a NEW angle or sub-topic not yet covered
 - Within the same focus area, each question MUST explore a DIFFERENT sub-topic. If you already asked about middleware, ask about database design, caching, API design, or another sub-topic next. Check the "TOPICS ALREADY EXPLORED" list below.
-- CALIBRATE question difficulty to the EXPERIENCE LEVEL above:
-  * Junior/Entry: ONLY basic concepts, "what is", "how would you", simple practical scenarios. NO system design, NO advanced patterns, NO questions about tools/technologies NOT listed in the JD (e.g., do NOT ask about GraphQL if the JD only mentions REST APIs). Keep questions SIMPLE and FOUNDATIONAL.
-  * Mid-Level: Practical experience questions, trade-off discussions, real project examples
-  * Senior: Architecture decisions, system design, leadership, cross-team impact
-  * Lead/Principal: Strategic thinking, org-wide impact, technical vision
-  HARD RULE: For Junior/Entry level, NEVER ask about: system design, microservices, GraphQL (unless in JD), distributed systems, architecture patterns, caching strategies, or any advanced topic. Stick to BASICS of the required skills.
+${difficultyRules}
 
 RESPONSE FORMAT (JSON only):
 {

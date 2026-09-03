@@ -190,6 +190,15 @@ const skillInterviewAssessmentSchema = new mongoose.Schema({
       enum: ['HR_INTERVIEW', 'TECHNICAL_INTERVIEW', 'TECHNICAL_SKILL', 'SOFT_SKILL', 'SALARY_INTERVIEW', 'PSYCHOTECHNIC', 'ASSESSMENT', 'EVALUATION'],
       default: 'HR_INTERVIEW'
     },
+    // 'interrupted' = the candidate disconnected/closed the tab before the
+    // interview ended normally -- finalReport/scores are still populated
+    // best-effort from whatever was answered, but may be thin or empty.
+    status: {
+      type: String,
+      enum: ['completed', 'interrupted'],
+      default: 'completed',
+    },
+    disconnectReason: String,
     timestamp: Date
   },
 

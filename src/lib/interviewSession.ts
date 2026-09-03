@@ -8,6 +8,11 @@ export interface InterviewSessionParams {
   skill?: string;
   category?: string;
   language?: string;
+  // 'soft' vs 'technical' -- without this, the backend has no way to tell a
+  // soft-skill assessment (e.g. Communication) from a technical one, so it
+  // silently defaults to TECHNICAL_SKILL for both (wrong prompt framing +
+  // the result gets saved/categorized as a technical skill).
+  skillType?: 'technical' | 'soft';
   // campaign-interview
   campaignId?: string;
   moduleType?: 'SKILL_TEST' | 'AI_INTERVIEW';
