@@ -39,7 +39,6 @@ export interface SkillInterviewAssessment {
       interactionStyle?: string;
     };
     sessionId?: string;
-    interviewType?: string;
     status?: 'completed' | 'interrupted';
     disconnectReason?: string;
     timestamp?: string;

@@ -26,6 +26,15 @@ export type { UseInterviewSessionOptions };
 const notify = (message: string, severity: 'success' | 'error' | 'warning' | 'info') =>
   toast[severity](message);
 
+// Server rejections of start_interview that the candidate can't recover from in
+// this session — show the reason and return to idle rather than sit on "connecting".
+const HARD_REJECTION_CODES = new Set([
+  'quota_reached',
+  'not_found', 'archived', 'expired', 'completed', 'withdrawn',
+  'no_cv', 'under_threshold', 'limit_reached',
+  'company_blocked', 'employee_blocked',
+]);
+
 export function useInterviewSession({
   interviewConfig,
   setInterviewConfig,
@@ -146,12 +155,13 @@ export function useInterviewSession({
   }, [interviewConfig]);
 
   const handleInterviewError = useCallback((error: { message: string; error?: string }) => {
-    // Hard rejections from the server (e.g. no skill-test quota left) — surface
-    // the reason and drop back to idle instead of silently sitting on "connecting".
-    if (error.error === 'quota_reached') {
-      notify(error.message || 'You have no skill tests left right now.', 'error');
+    // Hard rejections from the server (no skill-test quota, not eligible for this
+    // job interview, posting closed, …) — surface the reason and drop back to idle
+    // instead of silently sitting on "connecting".
+    if (error.error && HARD_REJECTION_CODES.has(error.error)) {
+      notify(error.message || 'You can\'t start this interview right now.', 'error');
       setInterviewStatusRef.current('idle');
-      dispatch(getMyProfile());
+      if (error.error === 'quota_reached') dispatch(getMyProfile());
       return;
     }
     audioRef.current?.setAgentState('waiting');

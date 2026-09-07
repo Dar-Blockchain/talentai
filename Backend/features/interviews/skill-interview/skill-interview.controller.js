@@ -1,43 +1,5 @@
 const SkillInterviewAssessmentService = require("./skill-interview.service");
 
-// ========== GET - Retrieve all assessments ==========
-const getAll = async (req, res) => {
-  try {
-    const {
-      page = 1,
-      limit = 10,
-      interviewType,
-      candidateId,
-      interviewerId,
-      archived,
-    } = req.query;
-
-    const filters = {};
-    if (interviewType) filters.interviewType = interviewType;
-    if (candidateId) filters.candidateId = candidateId;
-    if (interviewerId) filters.interviewerId = interviewerId;
-    if (archived !== undefined) filters.archived = archived;
-
-    const result = await SkillInterviewAssessmentService.getAllAssessments(
-      parseInt(page),
-      parseInt(limit),
-      filters,
-    );
-
-    return res.status(200).json({
-      success: true,
-      message: "Assessments retrieved successfully",
-      ...result,
-    });
-  } catch (error) {
-    console.error("Error in getAll:", error);
-    return res.status(500).json({
-      success: false,
-      message: error.message || "Internal server error",
-    });
-  }
-};
-
 // ========== GET - Retrieve by ID ==========
 const getById = async (req, res) => {
   try {
@@ -88,7 +50,6 @@ const getMy = async (req, res) => {
 };
 
 module.exports = {
-  getAll,
   getMy,
   getById,
 };

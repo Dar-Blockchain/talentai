@@ -36,7 +36,7 @@ interface CandidateData {
   contactInformation?: { email?: string; phone?: string; address?: string; linkedinUrl?: string; githubUrl?: string; personalWebsite?: string; location?: string };
 }
 interface SkillInterviewAssessmentData {
-  _id: string; candidateId: CandidateData; interviewerId?: { _id: string; username?: string; email?: string }; exportedAt?: string; type?: string; skill?: string; role?: string; category?: string; proficiency?: string;
+  _id: string; candidateId: CandidateData; skill?: string; category?: string; proficiency?: string; skillType?: 'technical' | 'soft';
   interviewData?: {
     finalReport?: {
       summary?: string;
@@ -48,7 +48,7 @@ interface SkillInterviewAssessmentData {
       timestamp?: string;
     };
     analytics?: { duration?: number; messageCount?: number; silenceEvents?: number; coveragePercentage?: number; completedAreas?: number; totalAreas?: number; averageResponseLength?: number; interactionStyle?: string };
-    sessionId?: string; interviewType?: string; timestamp?: string;
+    sessionId?: string; status?: 'completed' | 'interrupted';
   };
   createdAt: string; updatedAt?: string; archived?: boolean;
 }
@@ -218,7 +218,7 @@ const SkillInterviewAssessments: React.FC<SkillInterviewAssessmentsProps> = ({ a
                   <td className={TD}><Badge variant="outline" className="border-transparent bg-teal-50 text-teal-700 font-semibold">{a.skill || 'N/A'}</Badge></td>
                   <td className={TD}><Badge variant="outline" className="border-slate-200 text-slate-500">{a.proficiency || 'N/A'}</Badge></td>
                   <td className={TD}><ScoreBadge score={getScore(a)} /></td>
-                  <td className={TD}><span className="capitalize text-slate-500">{a.interviewData?.interviewType?.replace(/_/g, ' ').toLowerCase() || 'N/A'}</span></td>
+                  <td className={TD}><span className="capitalize text-slate-500">{a.skillType || 'N/A'}</span></td>
                   <td className={TD}><span className="text-slate-500">{formatDate(a.createdAt)}</span></td>
                   <td className={cn(TD, "flex items-center gap-0.5")}>
                     <Tooltip>

@@ -40,32 +40,4 @@ router.get("/my", skillsInterviewAssessment.getMy);
  */
 router.get("/:id", skillsInterviewAssessment.getById);
 
-/**
- * @openapi
- * /skill-interview-assessments:
- *   get:
- *     tags: [Skill Interview Assessments]
- *     summary: List all skill interview assessments (paginated)
- *     parameters:
- *       - in: query
- *         name: page
- *         schema: { type: integer, default: 1 }
- *       - in: query
- *         name: limit
- *         schema: { type: integer, default: 10 }
- *       - in: query
- *         name: interviewType
- *         schema: { type: string }
- *       - in: query
- *         name: candidateId
- *         schema: { type: string }
- *       - in: query
- *         name: interviewerId
- *         schema: { type: string }
- *     responses:
- *       200:
- *         description: Paginated assessments
- */
-router.get("/", skillsInterviewAssessment.getAll);
-
 module.exports = router;

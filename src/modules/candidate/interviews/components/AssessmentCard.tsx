@@ -30,7 +30,6 @@ export interface PostAssessment {
   };
   skillType?: string;
   interviewData?: {
-    interviewType?: string;
     finalReport?: {
       scores?: { overall?: number };
       coverage?: { overall?: number; areas?: Record<string, any> };

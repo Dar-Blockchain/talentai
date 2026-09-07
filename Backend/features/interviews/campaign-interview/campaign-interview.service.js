@@ -1,6 +1,6 @@
 ﻿const mongoose = require("mongoose");
 const bedrock = require("../../../utils/bedrock-client");
-const sessionMgr = require("../shared/redis-session-manager");
+const sessionMgr = require("../shared/interview.session");
 const Campaign = require("../../campaigns/campaign.model");
 const CampaignParticipant = require("../../campaigns/campaign-participant.model");
 require("dotenv").config();
@@ -350,8 +350,8 @@ class CampaignInterviewService {
       const res = await bedrock.callLLM({
         systemPrompt,
         messages: [{ role: "user", content: userMsg }],
-        temperature: 0.65,
-        maxTokens: 1000,
+        temperature: 0.7,
+        maxTokens: 1100,
         timeout: 30000,
         useFastModel: false,
       });

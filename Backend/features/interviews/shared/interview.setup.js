@@ -1,13 +1,12 @@
 ﻿'use strict';
 
 const bedrock = require('../../../utils/bedrock-client');
-const AIUtils  = require('./ai/ai.utils');
-const { detectJobCategory, getEvaluationFramework } = require('./config-manager');
-const { buildGreetingSystem, buildSilenceUser } = require('./prompts/generation.prompts');
-const { buildPostInterviewGreetingUser, buildAgentPersonaUser, buildFinalReportUser } = require('../post-interview/prompts/post-interview.prompts');
-const { buildSkillInterviewGreetingUser } = require('../skill-interview/prompts/skill-interview.prompts');
-
-const SKILL_INTERVIEW_TYPES = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
+const { AIUtils } = require('./interview.ai');
+const { detectJobCategory, getEvaluationFramework } = require('./interview.config');
+const promptBundle = require('../prompt-bundle');
+const flowFor      = require('../interview-flow');
+// buildAgentPersona / generateFinalReport only ever run for job interviews.
+const { buildAgentPersonaUser, buildFinalReportUser } = require('../post-interview/prompts/post-interview.prompts');
 
 /**
  * Build agent persona from job description â€” ONE LLM call at interview start.
@@ -102,12 +101,11 @@ async function generateIntelligentGreeting(config, onChunk = null, persona = nul
     try {
       const startTime = Date.now();
 
-      const greetingUser = SKILL_INTERVIEW_TYPES.includes(config.interviewType)
-        ? buildSkillInterviewGreetingUser(config, persona)
-        : buildPostInterviewGreetingUser(config, persona);
+      const P = promptBundle(config.interviewType);
+      const greetingUser = P.buildGreetingUser(config, persona);
 
       const llmOptions = {
-        systemPrompt: buildGreetingSystem(config),
+        systemPrompt: P.buildGreetingSystem(config),
         messages: [{ role: 'user', content: greetingUser }],
         temperature: 0.6,
         maxTokens: 400,
@@ -148,12 +146,8 @@ async function generateIntelligentGreeting(config, onChunk = null, persona = nul
   }
 
   console.error('âŒ [Greeting] All attempts failed, using fallback');
-  const fallbackGreeting = SKILL_INTERVIEW_TYPES.includes(config.interviewType)
-    ? `Hello! I'm excited to discuss your ${config.context.targetRole} skills today. Let's explore your expertise together!`
-    : `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`;
-
   return {
-    content: fallbackGreeting,
+    content: flowFor(config.interviewType).fallbackGreeting(config),
     metadata: {
       fallback: true,
       error: lastError?.message,
@@ -161,70 +155,6 @@ async function generateIntelligentGreeting(config, onChunk = null, persona = nul
       attemptedModel: config.models.fastModel,
       attempts: maxRetries,
     },
-  };
-}
-
-/**
- * Generate an intelligent silence prompt.
- */
-async function generateSilencePrompt(session, silenceData) {
-  const maxRetries = 2;
-  let lastError = null;
-
-  const recentMessages = session.conversation.slice(-3).map(entry =>
-    `${entry.type === 'interviewer' ? 'Interviewer' : 'Candidate'}: ${entry.content?.substring(0, 100) || '[no content]'}`
-  ).join('\n');
-
-  for (let attempt = 1; attempt <= maxRetries; attempt++) {
-    try {
-      const config = session.config;
-
-      const response = await bedrock.callLLM({
-        systemPrompt: 'You are a supportive interviewer. Your task is to generate ONLY the encouraging text - nothing else. Be empathetic and natural.',
-        messages: [{ role: 'user', content: buildSilenceUser({ config, recentMessages, silenceData }) }],
-        temperature: 0.7,
-        maxTokens: 300,
-        timeout: 30000,
-        useFastModel: true,
-      });
-
-      const silencePrompt = response.content.trim();
-
-      if (silencePrompt.length < 15) {
-        throw new Error(`Malformed silence prompt (too short): "${silencePrompt}"`);
-      }
-      if (/^[a-z]+\d*$/i.test(silencePrompt) || !silencePrompt.includes(' ')) {
-        throw new Error(`Invalid silence prompt format: "${silencePrompt}"`);
-      }
-
-      return {
-        content: silencePrompt,
-        metadata: {
-          model: config.models.fastModel,
-          silenceCount: silenceData.silenceCount,
-          silenceDuration: silenceData.silenceDuration,
-          type: 'silence_prompt',
-          attempt,
-        },
-      };
-    } catch (error) {
-      lastError = error;
-      console.error(`âŒ [Silence] Attempt ${attempt}/${maxRetries} failed:`, error.message);
-      if (attempt < maxRetries) {
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
-  }
-
-  const fallbacks = [
-    "Take your time to think about it. I'm here when you're ready to continue.",
-    'No rush at all. Would you like me to rephrase the question?',
-    'Feel free to take a moment to gather your thoughts. How would you like to approach this?',
-  ];
-
-  return {
-    content: fallbacks[silenceData.silenceCount % fallbacks.length],
-    metadata: { fallback: true, silenceCount: silenceData.silenceCount, error: lastError?.message, attempts: maxRetries },
   };
 }
 
@@ -426,7 +356,6 @@ async function incrementAreaQuestionCount(sessionManager, sessionId, areaName) {
 module.exports = {
   buildAgentPersona,
   generateIntelligentGreeting,
-  generateSilencePrompt,
   generateFinalReport,
   incrementAreaQuestionCount,
 };

@@ -181,9 +181,8 @@ module.exports.hardDeletePostInterviewAssessmentAdmin = async (req, res) => {
 // ========== ADMIN MODERATION — Skill Interview Assessments ==========
 module.exports.getAllSkillInterviewAssessmentsForAdmin = async (req, res) => {
   try {
-    const { page = 1, limit = 10, interviewType, skillType, candidateId, archived } = req.query;
+    const { page = 1, limit = 10, skillType, candidateId, archived } = req.query;
     const filters = {};
-    if (interviewType) filters.interviewType = interviewType;
     if (skillType) filters.skillType = skillType;
     if (candidateId) filters.candidateId = candidateId;
     if (archived !== undefined) filters.archived = archived;

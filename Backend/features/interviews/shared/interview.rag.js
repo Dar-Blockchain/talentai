@@ -2,7 +2,6 @@
 const { generateEmbedding, generateEmbeddings } = require("../../../utils/bedrock-client");
 require("dotenv").config();
 
-const EMBEDDING_DIMS = 1024; // Titan Text Embeddings V2 default
 const SIMILARITY_THRESHOLD = 0.72; // Lowered from 0.85 to catch theme-similar questions
 function isVectorSearchUnavailable(error) {
   return (
@@ -243,34 +242,9 @@ async function retrieveContext(jobId, interviewId, candidateLastResponse) {
   return { jdContext, askedQuestions };
 }
 
-// â”€â”€â”€ Index Setup â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
-
-/**
- * Ensure MongoDB collections and standard indexes exist.
- * Vector search indexes must be created in Atlas UI or via Atlas API.
- */
-async function ensureIndexes() {
-  try {
-    const jdCol = getJdChunksCollection();
-    const qCol = getInterviewQuestionsCollection();
-
-    // Standard indexes for filtering
-    await jdCol.createIndex({ jobId: 1 });
-    await qCol.createIndex({ interviewId: 1 });
-    await qCol.createIndex({ interviewId: 1, createdAt: 1 });
-
-  } catch (error) {
-    console.warn("âš ï¸ Could not create RAG indexes:", error.message);
-  }
-}
-
 module.exports = {
-  generateEmbedding,
-  generateEmbeddings,
   indexJobDescription,
   indexAskedQuestion,
   findSimilarQuestions,
   retrieveContext,
-  ensureIndexes,
-  EMBEDDING_DIMS,
 };

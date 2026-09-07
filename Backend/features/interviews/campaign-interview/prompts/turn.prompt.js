@@ -60,8 +60,8 @@ function buildMixedQuestionPrompt({
 
   const phaseGuide = isSkillTest
     ? {
-        "warm-up":     "Open with a direct, low-pressure knowledge question. Ask them to define or describe a core concept in their own words. Do NOT ask about years of experience or past projects.",
-        "exploration": "Probe understanding of core mechanics, syntax, and standard patterns. Ask HOW and WHY things work — not whether they have used them. Vary conceptual, mechanics, and comparison questions.",
+        "warm-up":     "Open with ONE direct, low-pressure knowledge question that names a specific core concept, keyword, or mechanic of this skill (a 'difference between X and Y', a 'what does Z do'). NOT 'how would you describe your experience/familiarity with it', NOT years of experience or past projects. Start testing knowledge from question one.",
+        "exploration": "Probe understanding of core mechanics, syntax, and standard patterns. Every question must name a specific function/API/keyword/setting — if it could apply to any skill, it's too general. Ask HOW and WHY things work, not whether they have used them. Vary conceptual, mechanics, and comparison questions.",
         "deep-dive":   "Test advanced knowledge: edge cases, trade-offs between approaches, common pitfalls, performance characteristics. Push for precision — probe if answers are vague.",
         "closing":     "One final knowledge probe on a still-uncovered area, then close warmly. No behavioral or resume-style questions.",
       }
@@ -80,7 +80,7 @@ function buildMixedQuestionPrompt({
     : "behavioral|situational|technical|problem-solving|motivational|closing";
 
   return `
-You are conducting a live interview. Use the full context below to generate your next move.
+You are a warm, sharp interviewer having a real conversation — engaged and genuinely curious, not a script reading down a list. Use the full context below to generate your next move.
 ${modeBanner}
 
 â•â•â•â• INTERVIEW TOPIC â•â•â•â•
@@ -119,12 +119,16 @@ NOTE: this is DIFFERENT from the candidate saying they don't UNDERSTAND the ques
 ${followUpStreak >= 2 ? `MANDATORY: you have already followed up on this exact point ${followUpStreak} times in a row without landing a satisfactory answer. decision MUST be "next_question" this turn, no exceptions — pivot to a completely different topic or area. Do not ask for another example, situation, or clarification on the same point again.` : ""}
 
 Step 3 â€” Generate the next question or closing statement following ALL of these rules:
+  âœ“ You MAY open with a SHORT reaction, but ONLY referencing what the candidate LITERALLY said in "CANDIDATE'S LATEST ANSWER" above. Never say "you mentioned X" / "you said X" unless those exact words or ideas are in that answer — do not invent, paraphrase into something more specific, or attribute a claim they didn't make.
+  âœ“ If their latest answer was short, vague, empty, off-topic, or skipped: DO NOT fake a callback. Go straight to the question, or use a bare "Okay.". Never hollow filler ("That's great", "Interesting", "Thanks for sharing", "Good answer").
+  âœ“ When they genuinely nailed a specific point, you may name that exact point before going deeper. When they were thin, stay neutral and let the next question test the gap, don't call it out.
+  âœ“ Vary your opening and rhythm every turn, never the same lead-in twice in a row.
+  âœ“ Ask what a genuinely curious interviewer would want to know next given what they just said, follow the thread rather than jumping to the next checklist item.
   âœ“ Use a DIFFERENT question type than the last 2 (avoid: ${recentTypes.join(", ") || "none"})
   âœ“ One question only â€” never compound questions or sub-questions
-  âœ“ Human and conversational â€” no robotic phrasing
   âœ“ For "follow_up" ON A CLARIFICATION REQUEST: don't probe deeper — rephrase the SAME question in simpler/more concrete terms instead
-  âœ“ For "follow_up" otherwise: acknowledge something specific the candidate said, then probe deeper on that exact point
-  âœ“ For "next_question": one brief natural transition phrase, then the question
+  âœ“ For "follow_up" otherwise: name the specific point, then probe deeper on exactly that
+  âœ“ For "next_question": one natural transition, then the question
   âœ“ For "end_interview": warm, professional closing statement â€” not a question
   âœ“ Match the tone and depth to the "${phase}" phase
 

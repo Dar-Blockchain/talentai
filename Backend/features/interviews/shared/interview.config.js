@@ -3,6 +3,8 @@
  * Handles rich configuration for adaptive interview experiences
  */
 
+const flowFor = require('../interview-flow');
+
 /**
  * Detect job category from title and description keywords.
  * Used by Agent Persona to select category-specific evaluation frameworks.
@@ -912,9 +914,8 @@ class ConfigManager {
       throw new Error(`Missing required configuration fields: ${missing.join(', ')}`);
     }
 
-    const skillTypes = ['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'];
-    const isSkillInterview = skillTypes.includes(config.interviewType);
-    if (!config.context.targetRole || (!isSkillInterview && !config.context.targetCompany)) {
+    const companyRequired = flowFor(config.interviewType).requiresCompany;
+    if (!config.context.targetRole || (companyRequired && !config.context.targetCompany)) {
       throw new Error('Target role and company are required in context');
     }
 

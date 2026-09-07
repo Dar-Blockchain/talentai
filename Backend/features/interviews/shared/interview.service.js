@@ -7,20 +7,18 @@
  */
 'use strict';
 
-const ragService       = require('./rag.service');
-const configManager    = require('./config-manager');
-const redisSessionManager = require('./redis-session-manager');
+const ragService       = require('./interview.rag');
+const configManager    = require('./interview.config');
+const redisSessionManager = require('./interview.session');
 const Post             = require('../../posts/post.model');
+const flowFor          = require('../interview-flow');
 
-// AI sub-modules
-const AIUtils            = require('./ai/ai.utils');
-const MemoryAI           = require('./ai/memory.ai');
-const CoverageAnalysisAI = require('./ai/coverage-analysis.ai');
-const QuestionGeneratorAI = require('./ai/question-generator.ai');
-const DecisionEngineAI   = require('./ai/decision-engine.ai');
+// LLM-wrapper helpers
+const { AIUtils, MemoryAI, CoverageAnalysisAI, QuestionGeneratorAI } = require('./interview.ai');
 
-// Focused sub-modules
+// Per-turn logic (transcript cleanup, analysis, scoring, strategy, termination)
 const {
+  cleanupTranscript,
   combinedAnalysis,
   updateCandidateProfile,
   decideQuestionStrategy,
@@ -28,16 +26,13 @@ const {
   computeRunningScore,
   detectQuestionComplexity,
   updateRealTimeReportIntelligently,
-} = require('./interview.analysis');
-
-const { updateQualityCounters, shouldEndInterview } = require('./interview.termination');
-
-const { cleanupTranscript } = require('./helpers/transcript-cleanup');
+  updateQualityCounters,
+  shouldEndInterview,
+} = require('./interview.turn');
 
 const {
   buildAgentPersona,
   generateIntelligentGreeting,
-  generateSilencePrompt,
   generateFinalReport,
   incrementAreaQuestionCount,
 } = require('./interview.setup');
@@ -51,7 +46,6 @@ class IntelligentInterviewService {
     this.memoryAI    = new MemoryAI();
     this.coverageAI  = new CoverageAnalysisAI();
     this.questionAI  = new QuestionGeneratorAI();
-    this.decisionAI  = new DecisionEngineAI();
   }
 
   // â”€â”€ Service Lifecycle â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€
@@ -215,9 +209,7 @@ class IntelligentInterviewService {
       } catch (greetingError) {
         console.error('âš ï¸ AI greeting failed, using fallback:', greetingError.message);
         greeting = {
-          content: (['TECHNICAL_SKILL', 'SOFT_SKILL', 'ASSESSMENT', 'EVALUATION'].includes(config.interviewType))
-            ? `Hello! I'm excited to discuss your ${config.context.targetRole} skills today. To start, how would you describe your experience with ${config.context.targetRole}?`
-            : `Hello! I'm excited to speak with you today about the ${config.context.targetRole} position at ${config.context.targetCompany}. Let's start our conversation!`,
+          content: flowFor(config.interviewType).fallbackGreeting(config),
           metadata: { fallback: true, error: greetingError.message },
         };
       }
@@ -322,7 +314,7 @@ class IntelligentInterviewService {
           15000,
           'generateIntelligentQuestion-greeting'
         ).catch(() => ({
-          question: `Tell me about your experience with ${session.config.context?.targetRole || 'this role'}.`,
+          question: flowFor(session.config.interviewType).fallbackFirstQuestion(session.config),
           targetAreas: [Object.keys(session.coverage?.areas || {})[0] || 'General'],
           reasoning: 'Fallback first question',
         }));
@@ -343,7 +335,7 @@ class IntelligentInterviewService {
           await this.sessionManager.updateSession(sessionId, { currentFocusArea: questionTargetAreas[0] });
         }
 
-        const complexity = await detectQuestionComplexity(questionContent);
+        const complexity = await detectQuestionComplexity(questionContent, session.config.interviewType);
         await this.sessionManager.saveCurrentQuestion(sessionId, questionContent, complexity);
 
         return {
@@ -707,7 +699,8 @@ class IntelligentInterviewService {
               finalCoverage.areas[strategy.targetArea] || {},
               finalSession.conversation,
               finalSession.config.context,
-              finalSession.config.sessionSettings?.language || 'en'
+              finalSession.config.sessionSettings?.language || 'en',
+              finalSession.config.interviewType
             );
             finalQuestion = { ...altQuestion, targetAreas: [strategy.targetArea] };
           } catch (altErr) {
@@ -761,7 +754,7 @@ class IntelligentInterviewService {
         await this.sessionManager.updateSession(sessionId, { jdSkillsChecklist: skillChecklist });
       }
 
-      const complexity = await detectQuestionComplexity(questionContent);
+      const complexity = await detectQuestionComplexity(questionContent, session.config.interviewType);
       await this.sessionManager.saveCurrentQuestion(sessionId, questionContent, complexity);
 
       ragService.indexAskedQuestion(sessionId, questionContent).catch(err =>
@@ -924,6 +917,7 @@ class IntelligentInterviewService {
       session.coverage,
       session.config.intelligenceContext.focusAreas,
       session.conversation,
+      session.config.interviewType,
     );
 
     const nextQuestion = await this.questionAI.generateIntelligentQuestion(
@@ -959,13 +953,10 @@ class IntelligentInterviewService {
     const session = await this.sessionManager.getSession(sessionId);
     if (session?.status !== 'active') return { wasActive: false };
 
-    // Skill-interview persistence (skill-interview.persistence.js) tags the
-    // saved record's status from this flag. Post-interview persistence
-    // ignores it entirely and keeps its existing (separate) completion
-    // semantics untouched -- see the isSkillInterview branch below, which
-    // only affects the failure/fallback path for skill interviews.
-    const isSkillInterview = session?.config?.interviewType === 'TECHNICAL_SKILL'
-      || session?.config?.interviewType === 'SOFT_SKILL';
+    // On a disconnect where generateFinalReport throws, skill assessments save a
+    // minimal stub record (quota was already spent) while job interviews keep
+    // the re-throw behaviour -- the flow decides.
+    const saveMinimalOnFailure = flowFor(session?.config?.interviewType).saveMinimalReportOnDisconnectFailure;
 
     try {
       const result = await this.endInterview(sessionId);
@@ -979,13 +970,7 @@ class IntelligentInterviewService {
         disconnectTime:   new Date().toISOString(),
       }).catch(() => {});
 
-      // For skill interviews specifically: don't let a report-generation
-      // failure silently drop the session with nothing saved at all -- fall
-      // back to a minimal result built from whatever the session already
-      // has, so the candidate still ends up with a record (tagged
-      // 'interrupted') instead of the session just vanishing. Every other
-      // interview type keeps the original re-throw-on-failure behavior.
-      if (isSkillInterview) {
+      if (saveMinimalOnFailure) {
         console.warn('âš ï¸ [Interview] Final report generation failed on disconnect, saving a minimal fallback report:', endErr.message);
         const analytics = await this.sessionManager.getSessionAnalytics(sessionId).catch(() => null);
         const fallbackResult = {
@@ -1014,11 +999,6 @@ class IntelligentInterviewService {
    */
   async processCandidateResponseIntelligently(sessionId, transcript, audioMetadata = {}) {
     return await this.processCandidateResponse(sessionId, transcript, audioMetadata);
-  }
-
-  // Expose generateSilencePrompt for controllers that call it directly
-  generateSilencePrompt(session, silenceData) {
-    return generateSilencePrompt(session, silenceData);
   }
 }
 

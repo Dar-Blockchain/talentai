@@ -629,7 +629,6 @@ module.exports.getAllSkillInterviewAssessmentsForAdmin = async (filters = {}, pa
     const skip = (pageNum - 1) * limitNum;
 
     const query = {};
-    if (filters.interviewType) query['interviewData.interviewType'] = filters.interviewType;
     if (filters.skillType) query.skillType = filters.skillType;
     if (filters.candidateId) query.candidateId = filters.candidateId;
     if (filters.archived === true || filters.archived === 'true') query.archived = true;
