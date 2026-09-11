@@ -25,10 +25,13 @@
     "monthly_tests": "Monthly Tests",
     "maxed": "Maxed",
     "left": "{{count}} left",
-    "profile_strength": "Profile Strength"
+    "profile_strength": "Profile Strength",
+    "edit_profile": "Edit profile",
+    "profile_complete": "Complete"
   },
   "checklist": {
     "complete_profile": "Complete your profile",
+    "upload_resume": "Upload your resume",
     "add_target_role": "Add a target role",
     "set_experience": "Set experience level",
     "first_skill_test": "Take your first skill test",

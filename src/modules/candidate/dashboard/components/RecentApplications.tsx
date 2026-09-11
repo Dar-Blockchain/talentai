@@ -58,7 +58,7 @@ const RecentApplications: React.FC = () => {
     <TooltipProvider delayDuration={150}>
     <div>
       <SectionHeader
-        icon={Briefcase} iconClass="text-secondary-dark"
+        icon={Briefcase} iconClass="text-gray-500"
         title="Recent Applications" href="/candidate/applications"
       />
 
@@ -110,7 +110,7 @@ const RecentApplications: React.FC = () => {
                       >
                         <td className="py-2.5 px-3 border-b border-gray-50">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <Avatar className="h-8 w-11 rounded-md border border-gray-200 bg-gray-50 shrink-0">
+                            <Avatar className="size-8 rounded-md border border-gray-200 bg-gray-50 shrink-0">
                               <AvatarImage src={logoUrl} alt={company.companyName} className="size-full object-cover" />
                               <AvatarFallback className="rounded-md bg-gray-50">
                                 <Briefcase className="size-3.5 text-gray-400" />

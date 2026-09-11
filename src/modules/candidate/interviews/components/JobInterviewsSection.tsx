@@ -23,7 +23,7 @@ const jobDate = (a: any) => new Date(a.appliedAt || a.createdAt || 0).getTime();
 
 const RowSkeleton = () => (
   <tr>
-    <td className="py-3 px-3"><div className="flex items-center gap-2.5"><Skeleton className="h-8 w-11 rounded-md shrink-0" /><Skeleton className="h-3.5 w-36" /></div></td>
+    <td className="py-3 px-3"><div className="flex items-center gap-2.5"><Skeleton className="size-8 rounded-md shrink-0" /><Skeleton className="h-3.5 w-36" /></div></td>
     <td className="py-3 px-3 text-center"><Skeleton className="h-5 w-20 rounded-full mx-auto" /></td>
     <td className="py-3 px-3 text-center"><Skeleton className="h-3.5 w-12 mx-auto" /></td>
     <td className="py-3 px-3 text-center"><Skeleton className="h-3.5 w-16 mx-auto" /></td>
@@ -165,7 +165,7 @@ const JobInterviewsSection: React.FC = () => {
                   <tr key={application._id} className="hover:bg-gray-50/80 transition-colors">
                     <td className="py-2.5 px-3 border-b border-gray-50">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <Avatar className="h-8 w-11 rounded-md border border-gray-200 bg-gray-50 shrink-0">
+                        <Avatar className="size-8 rounded-md border border-gray-200 bg-gray-50 shrink-0">
                           <AvatarImage src={logoUrl} alt={company?.companyName} className="size-full object-cover" />
                           <AvatarFallback className="rounded-md bg-gray-50">
                             <Briefcase className="size-3.5 text-gray-400" />

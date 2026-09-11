@@ -62,7 +62,7 @@ const ApplicationCard: React.FC<Props> = ({
     >
       <CardContent className="px-4 py-3.5 flex items-start gap-3">
         {/* Company logo */}
-        <Avatar className="h-10 w-14 rounded-lg border border-gray-200 bg-gray-50 shrink-0">
+        <Avatar className="size-10 rounded-lg border border-gray-200 bg-gray-50 shrink-0">
           <AvatarImage
             src={logoUrl}
             alt={company.companyName}

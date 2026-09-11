@@ -23,7 +23,7 @@ const SectionHeader: React.FC<Props> = ({ icon: Icon, iconClass, title, href }) 
         <Button
           variant="ghost"
           onClick={() => router.push(href)}
-          className="p-0 h-auto text-[0.72rem] font-bold text-secondary-dark hover:bg-transparent hover:text-secondary-dark/80"
+          className="p-0 h-auto text-[0.72rem] font-bold text-gray-500 hover:bg-transparent hover:text-gray-900"
         >
           View all <ArrowRight className="size-3" />
         </Button>

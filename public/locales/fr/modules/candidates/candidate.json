@@ -25,10 +25,13 @@
     "monthly_tests": "Tests mensuels",
     "maxed": "Maximum atteint",
     "left": "{{count}} restant",
-    "profile_strength": "Force du profil"
+    "profile_strength": "Force du profil",
+    "edit_profile": "Modifier le profil",
+    "profile_complete": "Complet"
   },
   "checklist": {
     "complete_profile": "Compléter votre profil",
+    "upload_resume": "Ajouter votre CV",
     "add_target_role": "Ajouter un rôle cible",
     "set_experience": "Définir votre niveau",
     "first_skill_test": "Passer votre premier test",

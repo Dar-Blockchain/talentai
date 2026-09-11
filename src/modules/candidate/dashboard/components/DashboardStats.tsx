@@ -53,28 +53,28 @@ const DashboardStats: React.FC = () => {
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
       <StatCard
         icon={Briefcase}     label="Applications"        value={totalApps}
-        bg="bg-secondary-light" border="border-secondary-border" text="text-secondary-dark"
+        bg="bg-gray-100" border="border-gray-200" text="text-gray-700"
         href="/candidate/applications"
       />
       {/* "visited" = a recruiter unlocked the assessment and it's waiting on
           the candidate — the one status here that actually needs action, so
-          it gets warning styling instead of the neutral blue every other
-          card uses, and a direct link to the filtered list. */}
+          it's the only card that gets color (amber), and a direct link to
+          the filtered list. Every other card stays neutral gray. */}
       <StatCard
         icon={Clock}         label="Pending Interviews"  value={pendingInterviews}
-        bg={pendingInterviews > 0 ? "bg-warning/10" : "bg-gray-50"}
+        bg={pendingInterviews > 0 ? "bg-warning/10" : "bg-gray-100"}
         border={pendingInterviews > 0 ? "border-warning/20" : "border-gray-200"}
         text={pendingInterviews > 0 ? "text-warning" : "text-gray-400"}
         href="/candidate/applications?status=visited"
       />
       <StatCard
         icon={GraduationCap} label="Completed Interviews" value={completedInterviews}
-        bg="bg-green-50"        border="border-green-200"        text="text-green-600"
+        bg="bg-gray-100"        border="border-gray-200"        text="text-gray-700"
         href="/candidate/applications?status=interview_completed"
       />
       <StatCard
         icon={Brain}         label="Skills tested"       value={skillsCount}
-        bg="bg-warning/10"      border="border-warning/20"       text="text-warning"
+        bg="bg-gray-100"      border="border-gray-200"       text="text-gray-700"
         href="/candidate/skills"
       />
     </div>
