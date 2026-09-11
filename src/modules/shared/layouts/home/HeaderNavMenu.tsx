@@ -155,15 +155,18 @@ const HeaderNavMenu: React.FC<HeaderNavMenuProps> = ({ direction = "row", invert
                   "data-[active=true]:after:scale-x-100 data-[active=false]:after:scale-x-0 hover:after:scale-x-100",
                   // colour — inactive
                   inverted
-                    ? "text-muted-foreground hover:text-foreground"
-                    : "text-gray-500 hover:text-foreground",
+                    ? "text-muted-foreground hover:text-foreground focus:text-foreground"
+                    : "text-gray-500 hover:text-foreground focus:text-foreground",
                   // colour — active (override shadcn accent defaults)
                   inverted
-                    ? "data-[active=true]:text-foreground data-[active=true]:hover:text-foreground"
-                    : "data-[active=true]:text-foreground data-[active=true]:hover:text-foreground",
-                  // background (override shadcn accent defaults)
-                  "hover:bg-primary/10",
-                  "data-[active=true]:bg-primary/10 data-[active=true]:hover:bg-primary/10",
+                    ? "data-[active=true]:text-foreground data-[active=true]:hover:text-foreground data-[active=true]:focus:text-foreground"
+                    : "data-[active=true]:text-foreground data-[active=true]:hover:text-foreground data-[active=true]:focus:text-foreground",
+                  // background — clicking a link triggers :focus, and the
+                  // shadcn NavigationMenuLink base styles default that to the
+                  // darker `bg-accent`/`text-accent-foreground` pair; override
+                  // it here so click looks the same soft green as hover.
+                  "hover:bg-primary/10 focus:bg-primary/10",
+                  "data-[active=true]:bg-primary/10 data-[active=true]:hover:bg-primary/10 data-[active=true]:focus:bg-primary/10",
                 )}
               >
                 {item.label}
