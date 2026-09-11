@@ -1,45 +1,50 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Code2, MessageCircle, Zap, RotateCcw } from "lucide-react";
+import { Code2, MessageCircle, Zap, RotateCcw, FileText } from "lucide-react";
 import dayjs from "@/lib/dayjs";
 import { Progress } from "@/modules/shared/ui/shadcn/progress";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { cn } from "@/lib/utils";
 import { scoreToLevelKey, wasSkillTested } from "../utils/level";
+import SkillReportModal from "@/modules/candidate/interviews/components/SkillReportModal";
 
 interface SkillCardProps {
   type: "technical" | "soft";
   skill: any;
   last: boolean;
   onTest?: () => void;
+  /** Id of the skill's most recent completed assessment, if any — shows a "Report" CTA. */
+  reportId?: string;
 }
 
 // Grayscale progression (lightest -> darkest = entry -> expert) so level is
-// still legible at a glance without relying on color.
+// still legible at a glance without relying on color -- except "expert",
+// which gets the brand mint accent so a top-tier skill stands out (same
+// treatment as the top score tier in SkillInterviewReport).
 const LEVEL_CLASSES: Record<string, string> = {
-  entry:  "bg-gray-50  text-gray-400 border-gray-200",
-  junior: "bg-gray-100 text-gray-500 border-gray-200",
-  mid:    "bg-gray-100 text-gray-600 border-gray-300",
-  senior: "bg-gray-200 text-gray-700 border-gray-300",
-  expert: "bg-gray-800 text-white   border-gray-800",
-  new:    "bg-gray-50  text-gray-400 border-gray-200",
+  entry:  "bg-gray-50  text-gray-400     border-gray-200",
+  junior: "bg-gray-100 text-gray-500     border-gray-200",
+  mid:    "bg-gray-100 text-gray-600     border-gray-300",
+  senior: "bg-gray-200 text-gray-700     border-gray-300",
+  expert: "bg-primary-dark text-white    border-primary-dark",
+  new:    "bg-gray-50  text-gray-400     border-gray-200",
 };
 
-// Same idea for score: darker = higher, instead of a red/amber/green tier.
+// Same idea for score: darker = higher, except the top tier which uses the
+// brand accent instead of a red/amber/green tier system.
 const SCORE_TEXT_CLASS: Record<string, string> = {
-  high:   "text-gray-900",
+  high:   "text-primary-dark",
   mid:    "text-gray-700",
   low:    "text-gray-600",
   crit:   "text-gray-500",
 };
 
 const SCORE_BAR_CLASS: Record<string, string> = {
-  high:   "[&>[data-slot=progress-indicator]]:bg-gray-700",
+  high:   "[&>[data-slot=progress-indicator]]:bg-primary",
   mid:    "[&>[data-slot=progress-indicator]]:bg-gray-500",
   low:    "[&>[data-slot=progress-indicator]]:bg-gray-400",
   crit:   "[&>[data-slot=progress-indicator]]:bg-gray-300",
-  empty:  "[&>[data-slot=progress-indicator]]:bg-gray-200",
 };
 
 // A genuine 0% is a real, meaningful score now that "tested" is tracked
@@ -49,9 +54,10 @@ function scoreTier(s: number) {
   return s >= 80 ? "high" : s >= 60 ? "mid" : s >= 40 ? "low" : "crit";
 }
 
-const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onTest }) => {
+const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onTest, reportId }) => {
   const { t } = useTranslation("dashboard");
   const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
+  const [reportOpen, setReportOpen] = useState(false);
 
   // "tested" and the derived level both come from the shared helper so the
   // level filter (TechnicalSkills/SoftSkills) and this badge never disagree.
@@ -94,56 +100,77 @@ const SkillCard: React.FC<SkillCardProps> = ({ skill, type, onTest }) => {
         </Badge>
       </div>
 
-      {/* Score bar — single line: bar + % (or "Not tested") */}
-      <div className="flex items-center gap-2">
-        <Progress
-          // A 0%-wide fill is visually indistinguishable from "nothing
-          // rendered" against the light track -- for the untested state,
-          // fill the bar fully with a flat muted tone instead so "no data"
-          // reads as an intentional state, not a broken/empty bar.
-          value={wasTested ? Math.min(score, 100) : 100}
-          className={cn("h-1.5 flex-1 bg-gray-100", wasTested ? SCORE_BAR_CLASS[tier] : SCORE_BAR_CLASS.empty)}
-        />
-        <span className={cn(
-          "text-[0.78rem] font-black shrink-0",
-          wasTested ? SCORE_TEXT_CLASS[tier] : "text-gray-500",
-        )}>
-          {wasTested ? `${score}%` : "—"}
-        </span>
-      </div>
+      {/* Score bar — only meaningful once the skill has an actual score */}
+      {wasTested && (
+        <div className="flex items-center gap-2">
+          <Progress
+            value={Math.min(score, 100)}
+            className={cn("h-1.5 flex-1 bg-gray-100", SCORE_BAR_CLASS[tier])}
+          />
+          <span className={cn("text-[0.78rem] font-black shrink-0", SCORE_TEXT_CLASS[tier])}>
+            {score}%
+          </span>
+        </div>
+      )}
 
-      {/* Timestamp / test / retest CTA */}
-      {wasTested ? (
-        <div className="flex items-center justify-between gap-2">
-          <p className="text-[0.66rem] font-medium text-gray-500 leading-none truncate">
-            {timeAgo ? `${s("table_tested")} ${timeAgo}` : s("just_added")}
+      {/* Timestamp / test / retest CTA — pinned to the bottom so the button
+          lines up across cards even when the score row above is skipped
+          (untested skills) and the grid stretches this card taller. */}
+      <div className="mt-auto">
+        {wasTested ? (
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[0.66rem] font-medium text-gray-500 leading-none truncate">
+              {timeAgo ? `${s("table_tested")} ${timeAgo}` : s("just_added")}
+            </p>
+            <div className="flex items-center gap-1 shrink-0">
+              {reportId && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={() => setReportOpen(true)}
+                  className="group h-6 gap-1 px-2 text-[0.6rem] font-bold rounded-md shrink-0 cursor-pointer border border-gray-300 text-gray-700 bg-transparent hover:bg-gray-800 hover:text-white hover:border-gray-800"
+                >
+                  <FileText className="size-2.5 text-gray-500 group-hover:text-white" />
+                  {s("report")}
+                </Button>
+              )}
+              {onTest && (
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  onClick={onTest}
+                  className="group h-6 gap-1 px-2 text-[0.6rem] font-bold rounded-md shrink-0 cursor-pointer border border-gray-300 text-gray-700 bg-transparent hover:bg-gray-800 hover:text-white hover:border-gray-800"
+                >
+                  <RotateCcw className="size-2.5 text-gray-500 group-hover:text-white" />
+                  {s("retest")}
+                </Button>
+              )}
+            </div>
+          </div>
+        ) : !onTest ? (
+          <p className="text-[0.66rem] font-medium text-gray-500 leading-none">
+            {timeAgo ?? s("just_added")}
           </p>
-          {onTest && (
+        ) : (
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[0.66rem] font-medium text-gray-500 leading-none truncate">
+              {timeAgo ?? s("just_added")}
+            </p>
             <Button
               size="sm"
               variant="ghost"
               onClick={onTest}
-              className="group h-6 gap-1 px-2 text-[0.6rem] font-bold rounded-md shrink-0 cursor-pointer border border-gray-300 text-gray-700 bg-transparent hover:bg-gray-800 hover:text-white hover:border-gray-800"
+              className="group h-6 gap-1 px-2.5 text-[0.6rem] font-bold rounded-md shrink-0 cursor-pointer border border-gray-300 text-gray-700 bg-transparent hover:bg-gray-800 hover:text-white hover:border-gray-800"
             >
-              <RotateCcw className="size-2.5 text-gray-500 group-hover:text-white" />
-              {s("retest")}
+              <Zap className="size-2.5 text-gray-500 group-hover:text-white" />
+              {s("test")}
             </Button>
-          )}
-        </div>
-      ) : !onTest ? (
-        <p className="text-[0.66rem] font-medium text-gray-500 leading-none">
-          {timeAgo ?? s("just_added")}
-        </p>
-      ) : (
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={onTest}
-          className="group h-6 gap-1 px-2.5 text-[0.6rem] font-bold rounded-md self-start cursor-pointer border border-gray-300 text-gray-700 bg-transparent hover:bg-gray-800 hover:text-white hover:border-gray-800"
-        >
-          <Zap className="size-2.5 text-gray-500 group-hover:text-white" />
-          {s("test")}
-        </Button>
+          </div>
+        )}
+      </div>
+
+      {reportId && (
+        <SkillReportModal interviewId={reportOpen ? reportId : null} onClose={() => setReportOpen(false)} />
       )}
     </div>
   );

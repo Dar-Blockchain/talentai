@@ -8,7 +8,11 @@ import type { NextPageWithLayout } from '@/pages/_app';
 function SkillInterviewReportPage() {
   const { interviewId } = useRouter().query;
   useCandidateLayout('Skill Interview Report');
-  return interviewId ? <SkillInterviewReport interviewId={interviewId as string} /> : null;
+  return interviewId ? (
+    <div className="max-w-3xl mx-auto bg-card border rounded-2xl">
+      <SkillInterviewReport interviewId={interviewId as string} />
+    </div>
+  ) : null;
 }
 
 const Dynamic = dynamic(() => Promise.resolve(SkillInterviewReportPage), { ssr: false }) as NextPageWithLayout;

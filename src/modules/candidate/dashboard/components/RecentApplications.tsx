@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/modules/shared/ui/shadcn/card";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/modules/shared/ui/shadcn/avatar";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import { STATUS_CLASSES, SCORE_CLASSES } from "@/modules/candidate/applications/constants";
 import { useApplicationsQuery } from "@/modules/candidate/applications/queries/useApplicationsQuery";
 import SectionHeader from "./SectionHeader";
@@ -54,6 +55,7 @@ const RecentApplications: React.FC = () => {
   };
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div>
       <SectionHeader
         icon={Briefcase} iconClass="text-secondary-dark"
@@ -91,6 +93,11 @@ const RecentApplications: React.FC = () => {
                     const rawStatus = (app.status || "visited").toLowerCase();
                     const sc = STATUS_CLASSES[rawStatus as keyof typeof STATUS_CLASSES] ?? STATUS_CLASSES.visited;
                     const matchScore = app.matchScore != null ? Math.round(app.matchScore) : null;
+                    const matchReason = app.candidateReasoning ?? app.matchReasoning ?? null;
+                    const threshold = app.post?.thresholdScore != null ? Math.round(app.post.thresholdScore) : null;
+                    const hasThreshold = threshold !== null && threshold > 0;
+                    const belowThreshold = matchScore !== null && hasThreshold && matchScore < (threshold as number);
+                    const isExpired = !!app.post?.expirationDate && new Date(app.post.expirationDate).getTime() < Date.now();
                     const logoUrl = company.logo
                       ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}`
                       : undefined;
@@ -103,16 +110,23 @@ const RecentApplications: React.FC = () => {
                       >
                         <td className="py-2.5 px-3 border-b border-gray-50">
                           <div className="flex items-center gap-2.5 min-w-0">
-                            <Avatar className="size-8 rounded-lg border border-gray-200 bg-gray-50 shrink-0">
-                              <AvatarImage src={logoUrl} alt={company.companyName} className="object-contain p-1" />
-                              <AvatarFallback className="rounded-lg bg-gray-50">
+                            <Avatar className="h-8 w-11 rounded-md border border-gray-200 bg-gray-50 shrink-0">
+                              <AvatarImage src={logoUrl} alt={company.companyName} className="size-full object-cover" />
+                              <AvatarFallback className="rounded-md bg-gray-50">
                                 <Briefcase className="size-3.5 text-gray-400" />
                               </AvatarFallback>
                             </Avatar>
                             <div className="min-w-0">
-                              <p className="text-[0.78rem] font-bold text-gray-900 truncate leading-tight">
-                                {jd.title || "Untitled Position"}
-                              </p>
+                              <div className="flex items-center gap-1.5 min-w-0">
+                                <p className="min-w-0 text-[0.78rem] font-bold text-gray-900 truncate leading-tight">
+                                  {jd.title || "Untitled Position"}
+                                </p>
+                                {isExpired && (
+                                  <span className="shrink-0 inline-flex items-center rounded border border-amber-200 bg-amber-50 px-1 py-px text-[0.5rem] font-bold uppercase tracking-wide text-amber-600">
+                                    Expired
+                                  </span>
+                                )}
+                              </div>
                               <p className="text-[0.68rem] text-gray-400 truncate">
                                 {company.companyName || "—"}
                               </p>
@@ -129,14 +143,37 @@ const RecentApplications: React.FC = () => {
                           </Badge>
                         </td>
                         <td className="py-2.5 px-3 text-center border-b border-gray-50">
-                          {matchScore !== null ? (
-                            <span className={cn("inline-flex items-center gap-0.5 text-[0.72rem] font-bold", SCORE_CLASSES[scoreTier(matchScore)])}>
-                              <TrendingUp className="size-2.5" />
-                              {matchScore}%
-                            </span>
-                          ) : (
-                            <span className="text-[0.72rem] text-gray-300">—</span>
-                          )}
+                          <div className="inline-flex flex-col items-center leading-tight">
+                            {matchScore === null ? (
+                              <span className="text-[0.72rem] text-gray-300">—</span>
+                            ) : matchReason ? (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <span className={cn("inline-flex items-center gap-0.5 text-[0.72rem] font-bold cursor-help underline decoration-dotted underline-offset-2", belowThreshold ? "text-red-500" : SCORE_CLASSES[scoreTier(matchScore)])}>
+                                    <TrendingUp className="size-2.5" />
+                                    {matchScore}%
+                                  </span>
+                                </TooltipTrigger>
+                                <TooltipContent side="left" className="max-w-64 text-left text-[0.7rem] leading-snug">
+                                  {matchReason}
+                                </TooltipContent>
+                              </Tooltip>
+                            ) : (
+                              <span className={cn("inline-flex items-center gap-0.5 text-[0.72rem] font-bold", belowThreshold ? "text-red-500" : SCORE_CLASSES[scoreTier(matchScore)])}>
+                                <TrendingUp className="size-2.5" />
+                                {matchScore}%
+                              </span>
+                            )}
+                            {threshold !== null && (
+                              <span className={cn("text-[0.58rem] font-medium", belowThreshold ? "text-red-400" : "text-gray-400")}>
+                                {threshold === 0
+                                  ? "No threshold"
+                                  : belowThreshold
+                                    ? `below ${threshold}% min`
+                                    : `min ${threshold}%`}
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2.5 px-3 text-right border-b border-gray-50">
                           <span className="text-[0.7rem] text-gray-400 whitespace-nowrap">
@@ -153,6 +190,7 @@ const RecentApplications: React.FC = () => {
         </Card>
       )}
     </div>
+    </TooltipProvider>
   );
 };
 

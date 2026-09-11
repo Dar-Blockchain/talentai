@@ -11,6 +11,7 @@ import {
 } from "@/modules/shared/ui/shadcn/avatar";
 import { Badge } from "@/modules/shared/ui/shadcn/badge";
 import { Button } from "@/modules/shared/ui/shadcn/button";
+import { Tooltip, TooltipTrigger, TooltipContent } from "@/modules/shared/ui/shadcn/tooltip";
 import type {
   CandidateApplication,
   ApplicationStatus,
@@ -45,6 +46,14 @@ const ApplicationCard: React.FC<Props> = ({
   const logoUrl = company.logo
     ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}`
     : undefined;
+  const threshold = app.post?.thresholdScore != null ? Math.round(app.post.thresholdScore) : null;
+  const hasThreshold = threshold !== null && threshold > 0;
+  const belowThreshold = matchScore !== null && hasThreshold && matchScore < (threshold as number);
+  const isExpired = !!app.post?.expirationDate && new Date(app.post.expirationDate).getTime() < Date.now();
+  const matchReason = app.candidateReasoning ?? app.matchReasoning ?? null;
+  const scoreClass = matchScore !== null
+    ? belowThreshold ? "text-red-500" : SCORE_CLASSES[scoreTier(matchScore)]
+    : "";
 
   return (
     <Card
@@ -53,13 +62,13 @@ const ApplicationCard: React.FC<Props> = ({
     >
       <CardContent className="px-4 py-3.5 flex items-start gap-3">
         {/* Company logo */}
-        <Avatar className="size-10 rounded-xl border border-gray-200 bg-gray-50 shrink-0">
+        <Avatar className="h-10 w-14 rounded-lg border border-gray-200 bg-gray-50 shrink-0">
           <AvatarImage
             src={logoUrl}
             alt={company.companyName}
-            className="object-contain p-1"
+            className="size-full object-cover"
           />
-          <AvatarFallback className="rounded-xl bg-gray-50">
+          <AvatarFallback className="rounded-lg bg-gray-50">
             <Building2 className="size-4 text-gray-300" />
           </AvatarFallback>
         </Avatar>
@@ -68,9 +77,16 @@ const ApplicationCard: React.FC<Props> = ({
         <div className="flex-1 min-w-0">
           {/* Title + status badge */}
           <div className="flex items-start justify-between gap-2 mb-0.5">
-            <p className="text-[0.88rem] font-bold text-gray-900 truncate leading-tight">
-              {jd.title || "Untitled Position"}
-            </p>
+            <div className="flex items-center gap-1.5 min-w-0">
+              <p className="min-w-0 text-[0.88rem] font-bold text-gray-900 truncate leading-tight">
+                {jd.title || "Untitled Position"}
+              </p>
+              {isExpired && (
+                <span className="shrink-0 inline-flex items-center rounded border border-amber-200 bg-amber-50 px-1 py-px text-[0.55rem] font-bold uppercase tracking-wide text-amber-600">
+                  Expired
+                </span>
+              )}
+            </div>
             <Badge
               variant="outline"
               className={cn(
@@ -110,14 +126,28 @@ const ApplicationCard: React.FC<Props> = ({
               </span>
             )}
             {matchScore !== null && (
-              <span
-                className={cn(
-                  "flex items-center gap-0.5 text-[0.7rem] font-semibold",
-                  SCORE_CLASSES[scoreTier(matchScore)],
-                )}
-              >
-                <TrendingUp className="size-2.5" />
-                {matchScore}% match
+              matchReason ? (
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <span className={cn("flex items-center gap-0.5 text-[0.7rem] font-semibold cursor-help underline decoration-dotted underline-offset-2", scoreClass)}>
+                      <TrendingUp className="size-2.5" />
+                      {matchScore}% match
+                    </span>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-72 text-left text-[0.7rem] leading-snug">
+                    {matchReason}
+                  </TooltipContent>
+                </Tooltip>
+              ) : (
+                <span className={cn("flex items-center gap-0.5 text-[0.7rem] font-semibold", scoreClass)}>
+                  <TrendingUp className="size-2.5" />
+                  {matchScore}% match
+                </span>
+              )
+            )}
+            {threshold !== null && (
+              <span className={cn("text-[0.7rem]", belowThreshold ? "text-red-500 font-semibold" : "text-gray-400")}>
+                {threshold === 0 ? "No threshold" : belowThreshold ? `below ${threshold}% min` : `min ${threshold}%`}
               </span>
             )}
             {appliedDate !== "—" && (

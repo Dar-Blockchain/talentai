@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Briefcase, ExternalLink, Search } from "lucide-react";
+import { Briefcase, ExternalLink, Search, TrendingUp, MapPin } from "lucide-react";
 import dayjs from "@/lib/dayjs";
 import { cn } from "@/lib/utils";
 import { Card } from "@/modules/shared/ui/shadcn/card";
@@ -8,9 +8,12 @@ import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
 import { Button } from "@/modules/shared/ui/shadcn/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/modules/shared/ui/shadcn/avatar";
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/modules/shared/ui/shadcn/select";
+import { SCORE_CLASSES } from "@/modules/candidate/applications/constants";
+import { scoreTier } from "@/utils/functions";
 import { useJobInterviewsQuery } from "../queries/useInterviewsQuery";
 
 type StatusFilter = "all" | "ongoing" | "completed";
@@ -20,8 +23,9 @@ const jobDate = (a: any) => new Date(a.appliedAt || a.createdAt || 0).getTime();
 
 const RowSkeleton = () => (
   <tr>
-    <td className="py-3 px-3"><div className="flex items-center gap-2.5"><Skeleton className="size-8 rounded-lg shrink-0" /><Skeleton className="h-3.5 w-36" /></div></td>
+    <td className="py-3 px-3"><div className="flex items-center gap-2.5"><Skeleton className="h-8 w-11 rounded-md shrink-0" /><Skeleton className="h-3.5 w-36" /></div></td>
     <td className="py-3 px-3 text-center"><Skeleton className="h-5 w-20 rounded-full mx-auto" /></td>
+    <td className="py-3 px-3 text-center"><Skeleton className="h-3.5 w-12 mx-auto" /></td>
     <td className="py-3 px-3 text-center"><Skeleton className="h-3.5 w-16 mx-auto" /></td>
     <td className="py-3 px-3 text-right"><Skeleton className="h-7 w-20 ml-auto" /></td>
   </tr>
@@ -66,6 +70,7 @@ const JobInterviewsSection: React.FC = () => {
   }
 
   return (
+    <TooltipProvider delayDuration={150}>
     <div className="flex flex-col gap-3">
       {/* Filters */}
       <div className="flex flex-wrap items-center gap-2">
@@ -107,11 +112,12 @@ const JobInterviewsSection: React.FC = () => {
 
     <Card className="gap-0 py-0 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[480px]">
+        <table className="w-full min-w-[560px]">
           <thead>
             <tr className="bg-gray-50/80">
               <th className="text-left  py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("table_role")}</th>
               <th className="text-center py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("table_status")}</th>
+              <th className="text-center py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("table_match")}</th>
               <th className="text-center py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("table_date")}</th>
               <th className="text-right py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100" />
             </tr>
@@ -121,14 +127,15 @@ const JobInterviewsSection: React.FC = () => {
               Array.from({ length: 4 }).map((_, i) => <RowSkeleton key={i} />)
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-10 text-[0.78rem] text-gray-400">
+                <td colSpan={5} className="text-center py-10 text-[0.78rem] text-gray-400">
                   {s("no_filter_results")}
                 </td>
               </tr>
             ) : (
               items.map((application: any) => {
                 const completed  = application.status === "interview_completed";
-                const jobTitle   = application.post?.jobDetails?.title ?? s("job_application");
+                const jd         = application.post?.jobDetails ?? {};
+                const jobTitle   = jd.title ?? s("job_application");
                 const company    = application.company;
                 const logoUrl    = company?.logo
                   ? `${process.env.NEXT_PUBLIC_API_BASE_URL}uploads/images/${company.logo}`
@@ -136,19 +143,53 @@ const JobInterviewsSection: React.FC = () => {
                 const dateStr    = application.appliedAt ?? application.createdAt;
                 const timeAgo    = dateStr ? dayjs(dateStr).fromNow() : "—";
 
+                const matchScore  = application.matchScore != null ? Math.round(application.matchScore) : null;
+                const matchReason = application.candidateReasoning ?? application.matchReasoning ?? null;
+                const threshold   = application.post?.thresholdScore != null ? Math.round(application.post.thresholdScore) : null;
+                const belowThreshold = matchScore !== null && threshold !== null && threshold > 0 && matchScore < threshold;
+                const isExpired   = !!application.post?.expirationDate
+                  && new Date(application.post.expirationDate).getTime() < Date.now();
+
+                const scoreSpan = matchScore === null ? null : (
+                  <span className={cn(
+                    "inline-flex items-center gap-0.5 text-[0.72rem] font-bold",
+                    matchReason && "cursor-help underline decoration-dotted underline-offset-2",
+                    belowThreshold ? "text-red-500" : SCORE_CLASSES[scoreTier(matchScore)],
+                  )}>
+                    <TrendingUp className="size-2.5" />
+                    {matchScore}%
+                  </span>
+                );
+
                 return (
                   <tr key={application._id} className="hover:bg-gray-50/80 transition-colors">
                     <td className="py-2.5 px-3 border-b border-gray-50">
                       <div className="flex items-center gap-2.5 min-w-0">
-                        <Avatar className="size-8 rounded-lg border border-gray-200 bg-gray-50 shrink-0">
-                          <AvatarImage src={logoUrl} alt={company?.companyName} className="object-contain p-1" />
-                          <AvatarFallback className="rounded-lg bg-gray-50">
+                        <Avatar className="h-8 w-11 rounded-md border border-gray-200 bg-gray-50 shrink-0">
+                          <AvatarImage src={logoUrl} alt={company?.companyName} className="size-full object-cover" />
+                          <AvatarFallback className="rounded-md bg-gray-50">
                             <Briefcase className="size-3.5 text-gray-400" />
                           </AvatarFallback>
                         </Avatar>
                         <div className="min-w-0">
-                          <p className="text-[0.78rem] font-bold text-gray-900 truncate leading-tight">{jobTitle}</p>
-                          <p className="text-[0.68rem] text-gray-400 truncate">{company?.companyName || "—"}</p>
+                          <div className="flex items-center gap-1.5 min-w-0">
+                            <p className="min-w-0 text-[0.78rem] font-bold text-gray-900 truncate leading-tight">{jobTitle}</p>
+                            {isExpired && (
+                              <span className="shrink-0 inline-flex items-center rounded border border-amber-200 bg-amber-50 px-1 py-px text-[0.5rem] font-bold uppercase tracking-wide text-amber-600">
+                                {s("expired")}
+                              </span>
+                            )}
+                          </div>
+                          <p className="flex items-center gap-1 text-[0.68rem] text-gray-400 truncate">
+                            <span className="truncate">{company?.companyName || "—"}</span>
+                            {jd.location && (
+                              <>
+                                <span className="text-gray-300">·</span>
+                                <MapPin className="size-2.5 shrink-0" />
+                                <span className="truncate">{jd.location}</span>
+                              </>
+                            )}
+                          </p>
                         </div>
                       </div>
                     </td>
@@ -159,6 +200,31 @@ const JobInterviewsSection: React.FC = () => {
                       )}>
                         {completed ? s("completed") : s("ongoing")}
                       </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-center border-b border-gray-50">
+                      {matchScore === null ? (
+                        <span className="text-[0.7rem] text-gray-300">—</span>
+                      ) : (
+                        <div className="inline-flex flex-col items-center leading-tight">
+                          {matchReason ? (
+                            <Tooltip>
+                              <TooltipTrigger asChild>{scoreSpan}</TooltipTrigger>
+                              <TooltipContent side="top" className="max-w-72 text-left text-[0.7rem] leading-snug">
+                                {matchReason}
+                              </TooltipContent>
+                            </Tooltip>
+                          ) : scoreSpan}
+                          {threshold !== null && (
+                            <span className={cn("text-[0.56rem] font-medium", belowThreshold ? "text-red-400" : "text-gray-400")}>
+                              {threshold === 0
+                                ? s("no_threshold")
+                                : belowThreshold
+                                  ? (t("candidate.interviews.match_below", { n: threshold }) as string)
+                                  : (t("candidate.interviews.match_min", { n: threshold }) as string)}
+                            </span>
+                          )}
+                        </div>
+                      )}
                     </td>
                     <td className="py-2.5 px-3 text-center border-b border-gray-50">
                       <span className="text-[0.7rem] text-gray-400 whitespace-nowrap">{timeAgo}</span>
@@ -190,6 +256,7 @@ const JobInterviewsSection: React.FC = () => {
       </div>
     </Card>
     </div>
+    </TooltipProvider>
   );
 };
 

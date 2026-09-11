@@ -11,6 +11,7 @@ import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/modules/shared/ui/shadcn/select";
+import { TooltipProvider } from "@/modules/shared/ui/shadcn/tooltip";
 import { cn } from "@/lib/utils";
 import type { SortBy } from "@/modules/candidate/applications/types/application.types";
 import { buildInterviewUrl } from "@/lib/interviewSession";
@@ -332,18 +333,20 @@ const CandidateApplicationsList: React.FC = () => {
         ) : applications.length === 0 ? (
           <ApplicationsEmpty title={s("empty_title")} subtitle={s("empty_subtitle")} />
         ) : (
-          <div className="flex flex-col gap-2 p-3">
-            {applications.map((app: any, i: number) => (
-              <ApplicationCard
-                key={app._id || i}
-                app={app}
-                statusLabel={statusLabelOf(app.status || "visited")}
-                onClick={() => handleCardClick(app)}
-                onWithdraw={setWithdrawId}
-                onReactivate={setReactivateId}
-              />
-            ))}
-          </div>
+          <TooltipProvider delayDuration={150}>
+            <div className="flex flex-col gap-2 p-3">
+              {applications.map((app: any, i: number) => (
+                <ApplicationCard
+                  key={app._id || i}
+                  app={app}
+                  statusLabel={statusLabelOf(app.status || "visited")}
+                  onClick={() => handleCardClick(app)}
+                  onWithdraw={setWithdrawId}
+                  onReactivate={setReactivateId}
+                />
+              ))}
+            </div>
+          </TooltipProvider>
         )}
 
         {/* ── Pagination ── */}

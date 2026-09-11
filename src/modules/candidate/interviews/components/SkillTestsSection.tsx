@@ -1,15 +1,20 @@
 import React, { useMemo, useState } from "react";
 import { useRouter } from "next/router";
 import { useTranslation } from "react-i18next";
-import { Code2, MessageCircle, Brain, Search } from "lucide-react";
+import { Code2, MessageCircle, Brain, Search, MoreVertical, FileText, RotateCcw } from "lucide-react";
 import { cn } from "@/lib/utils";
 import dayjs from "@/lib/dayjs";
 import { Card } from "@/modules/shared/ui/shadcn/card";
 import { Input } from "@/modules/shared/ui/shadcn/input";
 import { Skeleton } from "@/modules/shared/ui/shadcn/skeleton";
+import { Button } from "@/modules/shared/ui/shadcn/button";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/modules/shared/ui/shadcn/select";
+import {
+  DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem,
+} from "@/modules/shared/ui/shadcn/dropdown-menu";
+import { buildInterviewUrl, type InterviewSessionParams } from "@/lib/interviewSession";
 import { useSkillAssessmentsQuery } from "../queries/useInterviewsQuery";
 import type { SkillInterviewAssessment } from "../types/interview.types";
 
@@ -36,19 +41,31 @@ const LEVEL_BADGE: Record<string, string> = {
 const scoreColor = (n: number) =>
   n >= 80 ? "text-gray-900" : n >= 60 ? "text-gray-700" : n >= 40 ? "text-gray-600" : "text-gray-500";
 
+const skillKey = (a: any) => `${a.skillType}::${(a.skill ?? "").toLowerCase()}`;
+
+// Retake the same skill test — mirrors ConfirmTestDialog's param shape. The
+// interview flow itself enforces the quota (shows SkillQuotaReached when full).
+const retestParams = (a: any): InterviewSessionParams =>
+  a.skillType === "soft"
+    ? a.skill === "Communication"
+      ? { type: "skill", skill: a.skill, language: a.category || "English", skillType: "soft" }
+      : { type: "skill", skill: a.skill, category: a.category, skillType: "soft" }
+    : { type: "skill", skill: a.skill, category: a.category, skillType: "technical" };
+
 const RowSkeleton = () => (
   <tr>
     <td className="py-3 px-3"><div className="flex items-center gap-2.5"><Skeleton className="size-8 rounded-lg shrink-0" /><Skeleton className="h-3.5 w-28" /></div></td>
     <td className="py-3 px-3 text-center"><Skeleton className="h-5 w-14 rounded-full mx-auto" /></td>
     <td className="py-3 px-3 text-center"><Skeleton className="h-3.5 w-10 mx-auto" /></td>
-    <td className="py-3 px-3 text-right"><Skeleton className="h-3.5 w-16 ml-auto" /></td>
+    <td className="py-3 px-3 text-center"><Skeleton className="h-3.5 w-16 mx-auto" /></td>
+    <td className="py-3 px-3 text-right"><Skeleton className="h-7 w-24 ml-auto" /></td>
   </tr>
 );
 
 const SkillTestsSection: React.FC = () => {
   const { t }  = useTranslation("dashboard");
   const router = useRouter();
-  const s = (k: string) => t(`candidate.interviews.${k}`) as string;
+  const s = (k: string, opts?: any) => t(`candidate.interviews.${k}`, opts) as string;
 
   const { data: techData, isLoading: techLoading } = useSkillAssessmentsQuery("technical");
   const { data: softData, isLoading: softLoading } = useSkillAssessmentsQuery("soft");
@@ -66,6 +83,17 @@ const SkillTestsSection: React.FC = () => {
 
   const hasItems = allItems.length > 0;
 
+  // How many completed (non-interrupted) assessments exist per skill — shown
+  // on every row for that skill so the candidate sees their attempt history.
+  const attemptsBySkill = useMemo(() => {
+    const m: Record<string, number> = {};
+    for (const a of allItems) {
+      if (a.interviewData?.status === "interrupted") continue;
+      m[skillKey(a)] = (m[skillKey(a)] ?? 0) + 1;
+    }
+    return m;
+  }, [allItems]);
+
   const items = useMemo(() => {
     const q = search.trim().toLowerCase();
     const ts = (a: any) => new Date(a.updatedAt || a.createdAt || 0).getTime();
@@ -81,6 +109,9 @@ const SkillTestsSection: React.FC = () => {
         return sort === "score_high" ? getScore(b) - getScore(a) : getScore(a) - getScore(b);
       });
   }, [allItems, typeFilter, levelFilter, search, sort]);
+
+  const openReport = (id: string) => router.push(`/candidate/skills/interviews/${id}`);
+  const retake     = (a: any) => router.push(buildInterviewUrl(retestParams(a)));
 
   if (!loading && !hasItems) {
     return (
@@ -154,13 +185,14 @@ const SkillTestsSection: React.FC = () => {
 
     <Card className="gap-0 py-0 overflow-hidden">
       <div className="overflow-x-auto">
-        <table className="w-full min-w-[380px]">
+        <table className="w-full min-w-[480px]">
           <thead>
             <tr className="bg-gray-50/80">
               <th className="text-left  py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("table_skill")}</th>
               <th className="text-center py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("table_level")}</th>
               <th className="text-center py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("score")}</th>
-              <th className="text-right py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("table_tested")}</th>
+              <th className="text-center py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100">{s("table_tested")}</th>
+              <th className="text-right py-2.5 px-3 text-[0.6rem] font-bold text-gray-400 uppercase tracking-wide border-b border-gray-100" />
             </tr>
           </thead>
           <tbody>
@@ -168,7 +200,7 @@ const SkillTestsSection: React.FC = () => {
               Array.from({ length: 6 }).map((_, i) => <RowSkeleton key={i} />)
             ) : items.length === 0 ? (
               <tr>
-                <td colSpan={4} className="text-center py-10 text-[0.78rem] text-gray-400">
+                <td colSpan={5} className="text-center py-10 text-[0.78rem] text-gray-400">
                   {s("no_filter_results")}
                 </td>
               </tr>
@@ -186,11 +218,12 @@ const SkillTestsSection: React.FC = () => {
                 // only "interrupted" for a disconnected/abandoned session).
                 const isInterrupted = a.interviewData?.status === "interrupted";
                 const hasReport = !isInterrupted;
+                const attempts  = attemptsBySkill[skillKey(a)] ?? 0;
 
                 return (
                   <tr
                     key={a._id}
-                    onClick={hasReport ? () => router.push(`/candidate/skills/interviews/${a._id}`) : undefined}
+                    onClick={hasReport ? () => openReport(a._id) : undefined}
                     className={cn("transition-colors", hasReport && "cursor-pointer hover:bg-gray-50/80")}
                   >
                     <td className="py-2.5 px-3 border-b border-gray-50">
@@ -198,9 +231,16 @@ const SkillTestsSection: React.FC = () => {
                         <div className="size-8 rounded-lg border border-gray-200 bg-gray-100 flex items-center justify-center shrink-0">
                           <Icon className="size-3.5 text-gray-500" />
                         </div>
-                        <p className="text-[0.78rem] font-bold text-gray-900 truncate leading-tight">
-                          {a.skill || s("skill_assessment")}
-                        </p>
+                        <div className="min-w-0">
+                          <p className="text-[0.78rem] font-bold text-gray-900 truncate leading-tight">
+                            {a.skill || s("skill_assessment")}
+                          </p>
+                          {attempts > 0 && (
+                            <p className="text-[0.62rem] text-gray-400 leading-tight">
+                              {attempts === 1 ? s("times_tested_one") : s("times_tested_other", { count: attempts })}
+                            </p>
+                          )}
+                        </div>
                       </div>
                     </td>
                     <td className="py-2.5 px-3 text-center border-b border-gray-50">
@@ -217,10 +257,43 @@ const SkillTestsSection: React.FC = () => {
                         <span className={cn("text-[0.72rem] font-extrabold", scoreColor(score))}>{score}%</span>
                       )}
                     </td>
-                    <td className="py-2.5 px-3 text-right border-b border-gray-50">
+                    <td className="py-2.5 px-3 text-center border-b border-gray-50">
                       <span className="text-[0.7rem] text-gray-400 whitespace-nowrap">
                         {date ? dayjs(date).fromNow() : s("just_added")}
                       </span>
+                    </td>
+                    <td className="py-2.5 px-3 border-b border-gray-50" onClick={(e) => e.stopPropagation()}>
+                      <div className="flex items-center justify-end gap-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => retake(a)}
+                          className="h-7 gap-1 px-2.5 text-[0.65rem] font-bold border-gray-300 text-gray-700 hover:bg-gray-100"
+                        >
+                          <RotateCcw className="size-2.5" />
+                          {s("retest")}
+                        </Button>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <button
+                              className="shrink-0 size-7 inline-flex items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700"
+                              aria-label={s("more_actions")}
+                            >
+                              <MoreVertical className="size-3.5" />
+                            </button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="min-w-[9rem]">
+                            <DropdownMenuItem disabled={!hasReport} onSelect={() => hasReport && openReport(a._id)} className="text-[0.75rem] gap-2">
+                              <FileText className="size-3.5" />
+                              {s("view_results")}
+                            </DropdownMenuItem>
+                            <DropdownMenuItem onSelect={() => retake(a)} className="text-[0.75rem] gap-2">
+                              <RotateCcw className="size-3.5" />
+                              {s("retest")}
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </td>
                   </tr>
                 );

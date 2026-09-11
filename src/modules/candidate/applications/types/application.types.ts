@@ -33,7 +33,7 @@ export interface CandidateApplication {
   matchBreakdown?: MatchBreakdownItem[];
   appliedAt?: string;
   createdAt?: string;
-  post?: { _id?: string; jobDetails?: ApplicationJobDetails };
+  post?: { _id?: string; jobDetails?: ApplicationJobDetails; expirationDate?: string; thresholdScore?: number };
   company?: ApplicationCompany;
   interviewDate?: string;
   interviewTime?: string;

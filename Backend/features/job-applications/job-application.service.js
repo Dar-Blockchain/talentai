@@ -507,15 +507,34 @@ module.exports.getApplicationsByCandidate = async (profileId, filters = {}, page
 
     const applications = await JobApplication.find(query)
       .populate("post")
-      .populate("company", "-notifications")
+      .populate({
+        path: "company",
+        select: "username email role profile",
+        populate: { path: "profile", select: "companyDetails.name user_image" },
+      })
       .populate("cvAnalysis")
       .populate("interviewAssessment")
       .sort(sortOrder)
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
+    // Flatten the company user + its profile into the shape the candidate UI
+    // expects: the display name lives on the profile's companyDetails.name
+    // (falling back to the account username), the logo is the profile's user_image.
+    const data = applications.map((app) => ({
+      ...app,
+      company: app.company
+        ? {
+            _id: app.company._id,
+            companyName: app.company.profile?.companyDetails?.name || app.company.username || null,
+            logo: app.company.profile?.user_image || null,
+          }
+        : app.company,
+    }));
 
     return {
-      data: applications,
+      data,
       currentPage: page,
       totalPages,
       totalCount,

@@ -9,7 +9,7 @@ import type { Skill } from "../types/skill.types";
 import SkillCard from "./SkillCard";
 import EmptySkills from "./EmptySkills";
 
-type Props = UseSkillsReturn & { levelFilter?: number | null; onTest?: (skill: Skill) => void };
+type Props = UseSkillsReturn & { levelFilter?: number | null; onTest?: (skill: Skill) => void; getReportId?: (skill: Skill) => string | undefined };
 
 function SkeletonGrid() {
   return (
@@ -27,6 +27,7 @@ function TechnicalSkills({
   currentPage, totalPages, goToPage,
   levelFilter = null,
   onTest,
+  getReportId,
 }: Props) {
   const { t } = useTranslation("dashboard");
   const s = (k: string, opts?: any) => t(`candidate.skills.${k}`, opts) as string;
@@ -70,7 +71,7 @@ function TechnicalSkills({
       ) : (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-2.5 p-2.5 rounded-xl bg-gray-100">
           {skills.map(item => (
-            <SkillCard key={item._id} skill={item} type="technical" last={false} onTest={onTest ? () => onTest(item) : undefined} />
+            <SkillCard key={item._id} skill={item} type="technical" last={false} onTest={onTest ? () => onTest(item) : undefined} reportId={getReportId?.(item)} />
           ))}
         </div>
       )}

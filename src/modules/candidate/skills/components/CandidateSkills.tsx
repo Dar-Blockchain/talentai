@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useTranslation } from "react-i18next";
 import { Code2, MessageCircle, Brain, Layers, Plus, SlidersHorizontal, X, Zap } from "lucide-react";
@@ -16,6 +16,7 @@ import AssessmentModal from "@/modules/candidate/interviews/components/Assessmen
 import ConfirmTestDialog from "./ConfirmTestDialog";
 import TechnicalSkills from "./TechnicalSkills";
 import SoftSkills from "./SoftSkills";
+import { useSkillAssessmentsQuery } from "@/modules/candidate/interviews/queries/useInterviewsQuery";
 
 const MONTHLY_QUOTA = 5;
 
@@ -95,6 +96,24 @@ function CandidateSkills() {
   const techCount  = tech.pagination?.total ?? 0;
   const softCount  = soft.pagination?.total ?? 0;
   const totalCount = techCount + softCount;
+
+  // Completed assessments aren't linked to ProfileSkill docs by id, so match
+  // them by kind+name (same key scheme as SkillTestsSection) to find each
+  // skill's most recent report to link the "Report" button to.
+  const { data: techAssessments } = useSkillAssessmentsQuery("technical");
+  const { data: softAssessments } = useSkillAssessmentsQuery("soft");
+  const reportIdBySkill = useMemo(() => {
+    const all = [...(techAssessments?.results ?? []), ...(softAssessments?.results ?? [])];
+    const latest: Record<string, { id: string; ts: number }> = {};
+    for (const a of all as any[]) {
+      if (a.interviewData?.status === "interrupted") continue;
+      const key = `${a.skillType ?? "technical"}::${(a.skill ?? "").toLowerCase()}`;
+      const ts = new Date(a.updatedAt || a.createdAt || 0).getTime();
+      if (!latest[key] || ts > latest[key].ts) latest[key] = { id: a._id, ts };
+    }
+    return Object.fromEntries(Object.entries(latest).map(([k, v]) => [k, v.id]));
+  }, [techAssessments, softAssessments]);
+  const getReportId = (skill: Skill) => reportIdBySkill[`${skill.kind}::${skill.name.toLowerCase()}`];
 
   const dispatch  = useDispatch<AppDispatch>();
   const profile   = useSelector((state: RootState) => state.user.connectedUser.profile);
@@ -283,7 +302,7 @@ function CandidateSkills() {
             icon={Code2} label={s("technical")}
             count={techCount} loading={tech.loading}
           />
-          <TechnicalSkills {...tech} levelFilter={levelFilter} onTest={quotaFull ? undefined : (skill) => setConfirmTarget({ skill, type: "technical" })} />
+          <TechnicalSkills {...tech} levelFilter={levelFilter} onTest={quotaFull ? undefined : (skill) => setConfirmTarget({ skill, type: "technical" })} getReportId={getReportId} />
         </div>
       )}
 
@@ -294,7 +313,7 @@ function CandidateSkills() {
             icon={MessageCircle} label={s("soft")}
             count={softCount} loading={soft.loading}
           />
-          <SoftSkills {...soft} levelFilter={levelFilter} onTest={quotaFull ? undefined : (skill) => setConfirmTarget({ skill, type: "soft" })} />
+          <SoftSkills {...soft} levelFilter={levelFilter} onTest={quotaFull ? undefined : (skill) => setConfirmTarget({ skill, type: "soft" })} getReportId={getReportId} />
         </div>
       )}
 
